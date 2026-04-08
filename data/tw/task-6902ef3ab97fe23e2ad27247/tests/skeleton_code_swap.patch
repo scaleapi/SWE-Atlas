@@ -1,0 +1,16 @@
+diff --git a/pkg/context/context.go b/pkg/context/context.go
+index 62950685e..1814dc93b 100644
+--- a/pkg/context/context.go
++++ b/pkg/context/context.go
+@@ -153,10 +153,7 @@ func WithValues(parent Context, keyAndVals ...any) Context {
+ 
+ // WithLogger converts a context.Context into a Context by adding a logger.
+ func WithLogger(parent context.Context, logger logr.Logger) Context {
+-	return logCtx{
+-		log:     logger,
+-		Context: parent,
+-	}
++	return logCtx{Context: parent}
+ }
+ 
+ // AddLogger converts a context.Context into a Context. If the underlying type

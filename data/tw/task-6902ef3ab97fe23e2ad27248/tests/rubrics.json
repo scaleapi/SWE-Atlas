@@ -1,0 +1,186 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "06b6cd75e5aaaa312e2486afbd654022",
+    "title": "1.1: Tests that Parse returns the expected ETag for a valid unquoted hex string"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "5f053df4ef1d570a07191e0927ee0c33",
+    "title": "1.2: Tests that Parse strips surrounding double quotes from quoted ETag strings"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a8c66f413ef67cfcc418359fced20619",
+    "title": "1.3: Tests that Parse handles multipart ETags with part-number suffix"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "500c14b69a0fc085e121f44283bf77bb",
+    "title": "1.4: Tests that Parse returns an error for malformed ETag strings"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "5cc38de06629c8f0b9d2a14e75bef1cc",
+    "title": "1.5: Tests that Equal returns true when comparing two identical ETag values"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a84e26e4df683e0a81a83a75580f2998",
+    "title": "1.6: Tests that Equal treats quoted and unquoted versions of the same ETag as equal"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b71d6a4a6b89cc09b31e9e1b59f158f4",
+    "title": "1.7: Tests that Equal returns false when comparing different ETag values"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d63573b50d9164c0ec8d9e7135577264",
+    "title": "1.8: Tests that IsEncrypted returns true for at least one known encrypted ETag input"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "be3ee8ccc7bd868e5d7bb73a5edfe486",
+    "title": "1.9: Tests that IsEncrypted returns false for standard non-encrypted ETags"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "70231a51a951db4f9b2b7e1785640dd9",
+    "title": "1.10: Tests that IsEncrypted returns false for multipart ETags"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "948936213ed46d26dfb7c06190c84036",
+    "title": "1.11: Tests that Format returns the ETag unchanged for non-encrypted ETags"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "78ff36253bd036f9226fb7cafc3a9773",
+    "title": "1.12: Tests that Format preserves the part-number suffix for multipart ETags"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f99ac67a91ad5351dcef3d07a16f4d18",
+    "title": "1.13: Tests that Format produces the expected AWS S3-compatible string for at least one encrypted ETag input"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "afa2e5ea20dbcabc88f8b8ea5eddeb42",
+    "title": "1.15: Tests that Parse rejects multipart-like ETags containing multiple dashes in the suffix (e.g., '-2-1')"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "6da4dac61370d6b2771d9bee896a69e5",
+    "title": "2.1: Places all new ETag-related tests in a *_test.go file under internal/etag (e.g., internal/etag/etag_test.go)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "bc30c0bb9bcbe57b36724e823f17874a",
+    "title": "3.1: All tests use Go's standard testing package with a *testing.T parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "09c898e5838d84e6465783d49536e1eb",
+    "title": "3.2: All test function names follow the Go Test* naming convention"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "3fabdf74f7e9708368b3cc81cd3c8362",
+    "title": "3.3: When multiple cases are tested, tests use table-driven loops or subtests (t.Run) for organization"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "b9334d147fa313485ac6bcca9481269f",
+    "title": "3.4: Tests report failures using t.Fatalf, t.Errorf, or related testing.T methods"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "6552d1cf0af6c447c09f885bf2b9d5c2",
+    "title": "4.1: Parse tests construct at least one expected ETag value for a successful-parse case without calling Parse (to avoid circular expectations)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "51ad33e6fcd669f9cab4c49499d1dad1",
+    "title": "4.2: Format tests assert AWS compatibility using the formatted ETag's String() output compared to an expected string"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "967f502b4f47b5d2c2a149c111c5cdbc",
+    "title": "4.3: IsEncrypted tests use ETag values produced by Parse from ETag strings (not synthetic byte-slice construction like ETag(make([]byte, N)))"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "9fabbbc40948e72c9deb461f0d5e745b",
+    "title": "4.4: Tests perform Parse calls inside test functions (not during package-level initialization)"
+  }
+]

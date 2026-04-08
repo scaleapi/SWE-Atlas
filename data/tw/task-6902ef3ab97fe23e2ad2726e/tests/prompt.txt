@@ -1,0 +1,9 @@
+We're missing unit tests for the line buffer rewrap functionality in kitty terminal.
+
+The rewrap code handles resizing terminal content when the window dimensions change, but we're missing test coverage. Can you write tests that verify:
+
+1. Rewrapping content when the buffer dimensions stay the same or change in height only
+2. Rewrapping content when the new buffer is wider than the original
+3. Rewrapping content when the new buffer is narrower than the original
+
+Generate 1 unit test for each scenario.

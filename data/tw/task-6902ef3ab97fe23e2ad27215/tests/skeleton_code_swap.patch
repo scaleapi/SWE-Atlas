@@ -1,0 +1,119 @@
+diff --git a/scapy/utils.py b/scapy/utils.py
+index b882b01f..df7a8350 100644
+--- a/scapy/utils.py
++++ b/scapy/utils.py
+@@ -378,113 +378,7 @@ def hexdiff(a, b, autojunk=False):
+         speed a lot on big byte strings, but will reduce accuracy (will tend
+         to miss insertion and see replacements instead for instance).
+     """
+-
+-    # Compare the strings using difflib
+-
+-    xb = bytes_encode(a)
+-    yb = bytes_encode(b)
+-
+-    sm = difflib.SequenceMatcher(a=xb, b=yb, autojunk=autojunk)
+-    xarr = [xb[i:i + 1] for i in range(len(xb))]
+-    yarr = [yb[i:i + 1] for i in range(len(yb))]
+-
+-    backtrackx = []
+-    backtracky = []
+-    for opcode in sm.get_opcodes():
+-        typ, x0, x1, y0, y1 = opcode
+-        if typ == 'delete':
+-            backtrackx += xarr[x0:x1]
+-            backtracky += [b''] * (x1 - x0)
+-        elif typ == 'insert':
+-            backtrackx += [b''] * (y1 - y0)
+-            backtracky += yarr[y0:y1]
+-        elif typ in ['equal', 'replace']:
+-            backtrackx += xarr[x0:x1]
+-            backtracky += yarr[y0:y1]
+-
+-    if autojunk:
+-        # Some lines may have been considered as junk. Check the sizes
+-        lbx = len(backtrackx)
+-        lby = len(backtracky)
+-        backtrackx += [b''] * (max(lbx, lby) - lbx)
+-        backtracky += [b''] * (max(lbx, lby) - lby)
+-
+-    # Print the diff
+-
+-    x = y = i = 0
+-    colorize = {0: lambda x: x,
+-                -1: conf.color_theme.left,
+-                1: conf.color_theme.right}
+-
+-    dox = 1
+-    doy = 0
+-    btx_len = len(backtrackx)
+-    while i < btx_len:
+-        linex = backtrackx[i:i + 16]
+-        liney = backtracky[i:i + 16]
+-        xx = sum(len(k) for k in linex)
+-        yy = sum(len(k) for k in liney)
+-        if dox and not xx:
+-            dox = 0
+-            doy = 1
+-        if dox and linex == liney:
+-            doy = 1
+-
+-        if dox:
+-            xd = y
+-            j = 0
+-            while not linex[j]:
+-                j += 1
+-                xd -= 1
+-            print(colorize[doy - dox]("%04x" % xd), end=' ')
+-            x += xx
+-            line = linex
+-        else:
+-            print("    ", end=' ')
+-        if doy:
+-            yd = y
+-            j = 0
+-            while not liney[j]:
+-                j += 1
+-                yd -= 1
+-            print(colorize[doy - dox]("%04x" % yd), end=' ')
+-            y += yy
+-            line = liney
+-        else:
+-            print("    ", end=' ')
+-
+-        print(" ", end=' ')
+-
+-        cl = ""
+-        for j in range(16):
+-            if i + j < min(len(backtrackx), len(backtracky)):
+-                if line[j]:
+-                    col = colorize[(linex[j] != liney[j]) * (doy - dox)]
+-                    print(col("%02X" % orb(line[j])), end=' ')
+-                    if linex[j] == liney[j]:
+-                        cl += sane(line[j], color=True)
+-                    else:
+-                        cl += col(sane(line[j]))
+-                else:
+-                    print("  ", end=' ')
+-                    cl += " "
+-            else:
+-                print("  ", end=' ')
+-            if j == 7:
+-                print("", end=' ')
+-
+-        print(" ", cl)
+-
+-        if doy or not yy:
+-            doy = 0
+-            dox = 1
+-            i += 16
+-        else:
+-            if yy:
+-                dox = 0
+-                doy = 1
+-            else:
+-                i += 16
++    pass
+ 
+ 
+ if struct.pack("H", 1) == b"\x00\x01":  # big endian

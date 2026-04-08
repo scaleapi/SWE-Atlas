@@ -1,0 +1,258 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a30c20dd9eac661c57bb193b7c2c114f",
+    "title": "1.2: Tests orchestrated multi-enumerator scan completion, asserting scanner.scan_completed is True"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "85f22fd577b3c132079e894cc217346e",
+    "title": "1.3: Tests multi-enumerator orchestration progress metrics, asserting scanner.progress() >= 0.95"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0936312a1a0faedb571b5ca37bba9148",
+    "title": "1.4: Tests orchestration transition discovery, asserting len(scanner.final_states) > 1"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "006f2d94c8d0ffa35cd86cec03284119",
+    "title": "1.5: Tests negative-response categorization breadth, asserting at least two distinct negative-response categories"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "de0dae3eb6f8b4968248f6282eab7502",
+    "title": "1.6: Tests RDBI scan completion, asserting scanner.scan_completed is True"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "74b9cbffe1554cfc12a31be96c24b107",
+    "title": "1.7: Tests RDBI state tracking, asserting len(tc.scanned_states) > 0"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d29ae5bbd5a24d8a94ae92a833451207",
+    "title": "1.8: Tests RDBI negative-response accounting, asserting len(negative) matches scan-size minus positives"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "34ed88175b4f6963ed5b52be747f4d60",
+    "title": "1.9: Tests RDBI positive identifier enumeration, asserting expected identifiers appear in positive results"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "ebc5058df69ec3c90afa2fd0c1199a75",
+    "title": "1.10: Tests RDBI negative-response categorization, asserting at least one specific NRC label/value"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "12f74e8cbdda385662273ee4f033c363",
+    "title": "1.11: Tests ER scan completion, asserting scanner.scan_completed is True"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "fc29f018355257645e6220d46438cd77",
+    "title": "1.12: Tests ER state tracking, asserting len(tc.scanned_states) > 0"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "30bf1d120f8d92985ef1c84149672e14",
+    "title": "1.15: Tests ER reset type enumeration, asserting expected resetType values appear in positive results"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "638fdca9eb256e29c784f22cfedccc03",
+    "title": "1.16: Tests CC scan completion, asserting scanner.scan_completed is True"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f6cc899deebe86e77d5bb6c9265442d1",
+    "title": "1.18: Tests CC negative response handling, asserting len(tc.results_with_negative_response) > 0"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "abfe2c108fd01862505ea7a9516133fd",
+    "title": "1.19: Tests CC positive response handling, asserting len(tc.results_with_positive_response) > 0"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d81b12f6ce6f086592a5e6c5a17ea112",
+    "title": "1.20: Tests CC control type enumeration, asserting expected controlType values appear in positive results"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "7aece6b5e4969de68cd9dc35caea9400",
+    "title": "1.22: Tests IOCBI state enumeration, asserting len(tc.scanned_states) > 0"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "bcd11bf77b89a8643b5c18aa44d43602",
+    "title": "1.23: Tests IOCBI negative-response accounting, asserting len(negative) matches scan-size minus positives"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "12606eb94579e108a646c3239a99ff90",
+    "title": "1.24: Tests IOCBI positive identifier enumeration, asserting expected identifiers appear in positive results"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "cde7cd99313c8ad978c17f8129123851",
+    "title": "1.25: Tests IOCBI negative-response categorization, asserting at least one specific NRC label/value"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d14e86ea2928aebcc1a9ee31583b5beb",
+    "title": "2.1: Places orchestration scan test section in test/contrib/automotive/scanner/uds_scanner.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "b01dd10c4ed29d2ba0b8d3cfe85da128",
+    "title": "2.2: Places RDBI enumerator test section in test/contrib/automotive/scanner/uds_scanner.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "091a08a4caa711773acee92a15abb824",
+    "title": "2.3: Places ER enumerator test section in test/contrib/automotive/scanner/uds_scanner.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "6b1cb4aaa8a337f50df5771ee7230b0a",
+    "title": "2.4: Places CC enumerator test section in test/contrib/automotive/scanner/uds_scanner.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "7f41332a2368bc3215616ed12908c51f",
+    "title": "2.5: Places IOCBI enumerator test section in test/contrib/automotive/scanner/uds_scanner.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0e6fdba66261d7418c92ae92bb4abed5",
+    "title": "3.1: Uses UTScapy section headers for newly added tests, asserting each header begins with '='"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "263368d2debd3d8913b810b73c3b8d36",
+    "title": "3.2: Uses non-empty UTScapy section header titles, asserting each '=' header has text after '='"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "f4cd3e5f7a19360561e22889b4226416",
+    "title": "3.3: Uses Python assert statements in newly added tests, asserting expectations via 'assert'"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fe5c212526bafaf98c3815bd6f19574a",
+    "title": "3.4: Uses executeScannerInVirtualEnvironment for newly added scanner tests, asserting scans run against EcuResponse simulations"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "94d0ad88e7852789079d8739202f8cb0",
+    "title": "4.1: Uses timeout-bounding assertions, asserting len(tc.results_without_response) < 10"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0086a97cbffe9adea8fb3419aaa73503",
+    "title": "4.2: Uses scanner.configuration.test_cases to access enumerator test cases, asserting tc is sourced from configuration.test_cases"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "10be8e4bd6605898bbcfa829a0ed4ef1",
+    "title": "4.3: Captures tc.show(dump=True) output in at least one enumerator test, asserting dump output is stored for inspection"
+  }
+]

@@ -1,0 +1,130 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aea1d83862baa333c95f618b0d915631",
+    "title": "1.1: Tests that config.LoadConfig returns nil (no error) when loading configuration from a directory containing a valid JSON config file"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a30c20dd9eac661c57bb193b7c2c114f",
+    "title": "1.2: Tests that config.LoadConfig returns an error when the specified configuration file does not exist"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "85f22fd577b3c132079e894cc217346e",
+    "title": "1.3: Tests that config.LoadConfig returns an error when the configuration file contains invalid JSON syntax"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0936312a1a0faedb571b5ca37bba9148",
+    "title": "1.4: Tests that config.LoadConfig returns an error when bind_port contains a non-numeric or invalid value"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "394e758be18b3def25140248c6b3b89c",
+    "title": "1.5: Tests that SFTPD banner is non-empty after loading a configuration where banner was set to empty or whitespace-only value"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "006f2d94c8d0ffa35cd86cec03284119",
+    "title": "1.6: Tests that config.LoadConfig returns an error when SFTPD upload_mode is set to an invalid value"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "de0dae3eb6f8b4968248f6282eab7502",
+    "title": "1.7: Tests that config.LoadConfig returns an error when data provider external_auth_scope is set to an invalid value"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d29ae5bbd5a24d8a94ae92a833451207",
+    "title": "2.1: Places the test for loading valid and invalid configuration files in config/config_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "34ed88175b4f6963ed5b52be747f4d60",
+    "title": "2.2: Places the test for empty/whitespace banner replacement in config/config_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ebc5058df69ec3c90afa2fd0c1199a75",
+    "title": "2.3: Places the test for invalid upload_mode handling in config/config_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "12f74e8cbdda385662273ee4f033c363",
+    "title": "2.4: Places the test for invalid external_auth_scope handling in config/config_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0f95d7563da540a8ff064860c1907c03",
+    "title": "3.1: All tests use Go testing framework with *testing.T parameter in function signature"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e078f5097203461605b6f0c2ee920a39",
+    "title": "3.2: All tests follow the naming pattern Test<BehaviorOrFunctionName> with uppercase Test prefix"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "30bf1d120f8d92985ef1c84149672e14",
+    "title": "3.3: All tests use t.Errorf or t.Error for reporting test assertion failures"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "a63a046fbbc50fe676122559d6493a61",
+    "title": "4.1: Follows temporary file cleanup pattern for test cases that create temporary config files"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "f6cc899deebe86e77d5bb6c9265442d1",
+    "title": "4.2: Follows file writing pattern for test cases that write temporary JSON config files"
+  }
+]

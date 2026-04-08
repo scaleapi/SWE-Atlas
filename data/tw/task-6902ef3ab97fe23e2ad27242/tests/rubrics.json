@@ -1,0 +1,122 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aea1d83862baa333c95f618b0d915631",
+    "title": "1.1: Tests that the screen line buffer returns rendered line contents when drawing text inside active margins under width mode changes."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a30c20dd9eac661c57bb193b7c2c114f",
+    "title": "1.2: Tests that the screen line buffer returns visible buffer contents after repeated drawing advances past a bottom margin."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "85f22fd577b3c132079e894cc217346e",
+    "title": "1.3: Tests that the screen line buffer returns visible buffer contents after repeated drawing advances with a top margin set."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0936312a1a0faedb571b5ca37bba9148",
+    "title": "1.4: Tests that the screen line buffer returns visible buffer contents after repeated drawing advances within top margin bottom margin constraints."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "006f2d94c8d0ffa35cd86cec03284119",
+    "title": "2.1: Places the test for margin behavior under width modes in kitty_tests/screen.py."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "de0dae3eb6f8b4968248f6282eab7502",
+    "title": "2.2: Places the test for bottom margin behavior in kitty_tests/screen.py."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "74b9cbffe1554cfc12a31be96c24b107",
+    "title": "2.3: Places the test for top margin behavior in kitty_tests/screen.py."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d29ae5bbd5a24d8a94ae92a833451207",
+    "title": "2.4: Places the test for simultaneous margin behavior in kitty_tests/screen.py."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ebc5058df69ec3c90afa2fd0c1199a75",
+    "title": "3.1: All tests use the BaseTest framework assertion helpers for state comparison within screen behavior validation."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "12f74e8cbdda385662273ee4f033c363",
+    "title": "3.2: All tests follow the test_<behavior> naming pattern reflecting the screen margin scenario under validation."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fc29f018355257645e6220d46438cd77",
+    "title": "3.3: Each newly added margin test initializes its own Screen instance via `self.create_screen(...)` within the test."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e078f5097203461605b6f0c2ee920a39",
+    "title": "4.1: The DECCOLM/margins test includes at least one assertion that compares rendered text (e.g., `str(s.line(...))` or `str(s.linebuf)`) to an expected value."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "30bf1d120f8d92985ef1c84149672e14",
+    "title": "4.2: The bottom-margin test asserts that scrolling affects scrollback/history (e.g., `str(s.historybuf)` is non-empty or equals a non-empty expected string) after repeated draw + line-movement operations.\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "c5e531062a58e4f3abc0fb6e12ac2816",
+    "title": "4.3: The top-margin test asserts that scrollback/history is unchanged/empty (e.g., `str(s.historybuf)` equals `''`) after repeated draw + line-movement operations.\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "136297eaaba03a7cf6e694be560642da",
+    "title": "4.4: The top-and-bottom-margins test asserts that scrollback/history is unchanged/empty (e.g., `str(s.historybuf)` equals `''`) after repeated draw + line-movement operations.\n"
+  }
+]

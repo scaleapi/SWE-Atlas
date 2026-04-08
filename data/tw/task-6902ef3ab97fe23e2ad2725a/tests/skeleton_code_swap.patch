@@ -1,0 +1,35 @@
+diff --git a/kitty/screen.c b/kitty/screen.c
+index 8fc26a4a6..790341d62 100644
+--- a/kitty/screen.c
++++ b/kitty/screen.c
+@@ -759,7 +759,7 @@ map_char(Screen *self, const uint32_t ch) {
+     return UNLIKELY(self->charset.current && ch < 256) ? self->charset.current[ch] : ch;
+ }
+ 
+-static void
++__attribute__((unused)) static void
+ draw_text_loop(Screen *self, const uint32_t *chars, size_t num_chars, text_loop_state *s) {
+     init_text_loop_line(self, s);
+     const uint32_t first_char = map_char(self, chars[0]);
+@@ -847,19 +847,9 @@ draw_text_loop(Screen *self, const uint32_t *chars, size_t num_chars, text_loop_
+ 
+ static void
+ draw_text(Screen *self, const uint32_t *chars, size_t num_chars) {
++    (void)chars;
++    (void)num_chars;
+     self->is_dirty = true;
+-    const bool force_underline = OPT(underline_hyperlinks) == UNDERLINE_ALWAYS && self->active_hyperlink_id != 0;
+-    CellAttrs attrs = cursor_to_attrs(self->cursor, 1);
+-    if (force_underline) attrs.decoration = OPT(url_style);
+-    text_loop_state s={
+-        .cc=(CPUCell){.hyperlink_id=self->active_hyperlink_id},
+-        .g=(GPUCell){
+-            .attrs=attrs,
+-            .fg=self->cursor->fg & COL_MASK, .bg=self->cursor->bg & COL_MASK,
+-            .decoration_fg=force_underline ? ((OPT(url_color) & COL_MASK) << 8) | 2 : self->cursor->decoration_fg & COL_MASK,
+-        }
+-    };
+-    draw_text_loop(self, chars, num_chars, &s);
+ }
+ 
+ void

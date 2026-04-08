@@ -1,0 +1,122 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aea1d83862baa333c95f618b0d915631",
+    "title": "1.1: Tests that execution segment sequence creation returns ordered segment ranges when provided with a valid fractional string sequence."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a30c20dd9eac661c57bb193b7c2c114f",
+    "title": "1.2: Tests that striped offset computation returns deterministic start index offset slice values when applied to an execution segment tuple."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "85f22fd577b3c132079e894cc217346e",
+    "title": "1.3: Tests that execution segment sequence returns a numeric least common denominator when sequence values contain fractional components."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0936312a1a0faedb571b5ca37bba9148",
+    "title": "1.4: Tests that execution tuple creation returns a transformed execution sequence when applying a numeric value to an existing execution segment setup."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "006f2d94c8d0ffa35cd86cec03284119",
+    "title": "2.1: Places the test for execution segment string sequence parsing in lib/execution_segment_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "de0dae3eb6f8b4968248f6282eab7502",
+    "title": "2.2: Places the test for striped offset computation from execution tuples in lib/execution_segment_test.go."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "74b9cbffe1554cfc12a31be96c24b107",
+    "title": "2.3: Places the test for numeric property derivation from execution segment sequences in lib/execution_segment_test.go."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d29ae5bbd5a24d8a94ae92a833451207",
+    "title": "2.4: Places the test for execution tuple creation from numeric value input in lib/execution_segment_test.go."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ebc5058df69ec3c90afa2fd0c1199a75",
+    "title": "3.1: All tests use the Go testing framework with assertion helpers from the required package to gate failure conditions."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "12f74e8cbdda385662273ee4f033c363",
+    "title": "3.2: All tests follow the Go test naming convention using exported functions prefixed with Test to enable automatic discovery."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fc29f018355257645e6220d46438cd77",
+    "title": "3.3: All tests perform input construction followed by execution segment operation invocation followed by result verification through assertions."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "30bf1d120f8d92985ef1c84149672e14",
+    "title": "4.1: Follows table-driven input definition for the test case validating execution segment sequence creation."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "638fdca9eb256e29c784f22cfedccc03",
+    "title": "4.2: Follows table-driven input definition for the test case validating striped offset computation behavior."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4436180dc97d3bd4ba5d7a5eb42077e2",
+    "title": "4.3: Follows table-driven input definition for the test case validating numeric property derivation from execution segment sequences."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "a7141b87c536a7a3676cc71ecc3fda1a",
+    "title": "4.4: Follows table-driven input definition for the test case validating execution tuple creation from numeric value input."
+  }
+]

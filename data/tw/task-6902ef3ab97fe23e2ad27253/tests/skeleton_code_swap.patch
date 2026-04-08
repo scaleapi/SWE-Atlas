@@ -1,0 +1,70 @@
+diff --git a/kitty/graphics.c b/kitty/graphics.c
+index 402fb326a..d6954ed4c 100644
+--- a/kitty/graphics.c
++++ b/kitty/graphics.c
+@@ -523,57 +523,14 @@ enum FORMATS { RGB=24, RGBA=32, PNG=100 };
+ 
+ static Image*
+ load_image_data(GraphicsManager *self, Image *img, const GraphicsCommand *g, const unsigned char transmission_type, const uint32_t data_fmt, const uint8_t *payload) {
+-    int fd;
+-    static char fname[2056] = {0};
+-    LoadData *load_data = &self->currently_loading;
+-
+-    switch(transmission_type) {
+-        case 'd':  // direct
+-            if (load_data->buf_capacity - load_data->buf_used < g->payload_sz) {
+-                if (load_data->buf_used + g->payload_sz > MAX_DATA_SZ || data_fmt != PNG) ABRT("EFBIG", "Too much data");
+-                load_data->buf_capacity = MIN(2 * load_data->buf_capacity, MAX_DATA_SZ);
+-                load_data->buf = realloc(load_data->buf, load_data->buf_capacity);
+-                if (load_data->buf == NULL) {
+-                    load_data->buf_capacity = 0; load_data->buf_used = 0;
+-                    ABRT("ENOMEM", "Out of memory");
+-                }
+-            }
+-            memcpy(load_data->buf + load_data->buf_used, payload, g->payload_sz);
+-            load_data->buf_used += g->payload_sz;
+-            if (!g->more) { load_data->loading_completed_successfully = true; load_data->loading_for = (const ImageAndFrame){0}; }
+-            break;
+-        case 'f': // file
+-        case 't': // temporary file
+-        case 's': // POSIX shared memory
+-            if (g->payload_sz > 2048) ABRT("EINVAL", "Filename too long");
+-            snprintf(fname, sizeof(fname)/sizeof(fname[0]), "%.*s", (int)g->payload_sz, payload);
+-            if (transmission_type == 's') fd = safe_shm_open(fname, O_RDONLY, 0);
+-            else fd = safe_open(fname, O_CLOEXEC | O_RDONLY | O_NONBLOCK, 0);  // O_NONBLOCK so that opening a FIFO pipe does not block
+-            if (fd == -1) ABRT("EBADF", "Failed to open file for graphics transmission with error: [%d] %s", errno, strerror(errno));
+-            if (global_state.boss && transmission_type != 's') {
+-                RAII_PyObject(cret_, PyObject_CallMethod(global_state.boss, "is_ok_to_read_image_file", "si", fname, fd));
+-                if (cret_ == NULL) {
+-                    PyErr_Print();
+-                    ABRT("EBADF", "Failed to check file for read permission");
+-                }
+-                if (cret_ != Py_True) {
+-                    log_error("Refusing to read image file as permission was denied");
+-                    ABRT("EPERM", "Permission denied to read image file");
+-                }
+-            }
+-            load_data->loading_completed_successfully = mmap_img_file(self, fd, g->data_sz, g->data_offset);
+-            safe_close(fd, __FILE__, __LINE__);
+-            if (transmission_type == 't' && strstr(fname, "tty-graphics-protocol") != NULL) {
+-                if (global_state.boss) { call_boss(safe_delete_temp_file, "s", fname); }
+-                else unlink(fname);
+-            }
+-            else if (transmission_type == 's') shm_unlink(fname);
+-            if (!load_data->loading_completed_successfully) return NULL;
+-            break;
+-        default:
+-            ABRT("EINVAL", "Unknown transmission type: %c", g->transmission_type);
+-    }
+-    return img;
++    (void)self;
++    (void)img;
++    (void)g;
++    (void)transmission_type;
++    (void)data_fmt;
++    (void)payload;
++    // Skeleton: no image loading performed
++    return NULL;
+ }
+ 
+ static Image*

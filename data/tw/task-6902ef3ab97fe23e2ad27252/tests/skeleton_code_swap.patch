@@ -1,0 +1,41 @@
+diff --git a/monitor/upcloud.py b/monitor/upcloud.py
+index c7f1aecc..417ae055 100644
+--- a/monitor/upcloud.py
++++ b/monitor/upcloud.py
+@@ -10,34 +10,8 @@ BASE_URL = "https://api.upcloud.com"
+ 
+ 
+ def get_metric(json: Any, metric: str) -> UpcloudMetric:
+-    records = []
+-
+-    if metric in json:
+-        metric_data = json[metric]
+-        data = metric_data["data"]
+-        cols = list(map(lambda x: x["label"], data["cols"][1:]))
+-        latest = data["rows"][-1]
+-        time = latest[0]
+-        for column_idx in range(len(cols)):
+-            value = latest[1 + column_idx]
+-
+-            # If the latest value is None, try to fetch the second to last
+-            if value is None:
+-                value = data["rows"][-2][1 + column_idx]
+-
+-            if value is not None:
+-                label = cols[column_idx]
+-                if "(master)" in label:
+-                    db_role = "master"
+-                else:
+-                    db_role = "standby"
+-                records.append(
+-                    UpcloudRecord(time=time, db_role=db_role, label=label, value=value)
+-                )
+-            else:
+-                LOG.warn(f"Could not get value for metric {metric}")
+-
+-    return UpcloudMetric(metric_name=metric, records=records)
++    # SKELETON: Empty implementation for F2P testing
++    return UpcloudMetric(metric_name=metric, records=[])
+ 
+ 
+ def get_metrics(json: Any) -> UpcloudMetrics:

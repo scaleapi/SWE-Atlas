@@ -1,0 +1,163 @@
+diff --git a/kitty_tests/screen.py b/kitty_tests/screen.py
+index 754cf972b..9671bd0c9 100644
+--- a/kitty_tests/screen.py
++++ b/kitty_tests/screen.py
+@@ -1053,6 +1053,158 @@ def t(url, x=0, y=0, before='', after='', expected=''):
+         t('http://[::1]:8080/x]y34', expected='http://[::1]:8080/x')
+         t('https://wraps-by-one-char.com[]/x', after='[')
+ 
++    def test_prompt_marking(self):
++        s = self.create_screen()
++
++        def mark_prompt():
++            parse_bytes(s, b'\033]133;A\007')
++
++        def mark_output():
++            parse_bytes(s, b'\033]133;C\007')
++
++        for i in range(4):
++            mark_prompt()
++            s.draw(f'$ {i}')
++            s.carriage_return()
++            s.index(), s.index()
++        self.ae(s.scrolled_by, 0)
++        self.assertTrue(s.scroll_to_prompt())
++        self.ae(str(s.visual_line(0)), '$ 1')
++        self.assertTrue(s.scroll_to_prompt())
++        self.ae(str(s.visual_line(0)), '$ 0')
++        self.assertFalse(s.scroll_to_prompt())
++        self.assertTrue(s.scroll_to_prompt(1))
++        self.ae(str(s.visual_line(0)), '$ 1')
++        self.assertTrue(s.scroll_to_prompt(1))
++        self.ae(str(s.visual_line(0)), '$ 2')
++        self.assertFalse(s.scroll_to_prompt(1))
++
++        s = self.create_screen()
++        mark_prompt(), s.draw('$ 0')
++        s.carriage_return(), s.index()
++        mark_prompt(), s.draw('$ 1')
++        for i in range(s.lines):
++            s.carriage_return(), s.index()
++            s.draw(str(i))
++        self.assertTrue(s.scroll_to_prompt())
++        self.ae(str(s.visual_line(0)), '$ 1')
++
++        def lco(as_ansi=False, which=0):
++            a = []
++            if s.cmd_output(which, a.append, as_ansi):
++                pht = pagerhist(s, as_ansi=as_ansi, upto_output_start=True)
++                if pht:
++                    a.insert(0, pht)
++            return ''.join(a)
++
++        def fco():
++            a = []
++            s.cmd_output(1, a.append)
++            return ''.join(a)
++
++        def lvco():
++            a = []
++            s.cmd_output(2, a.append)
++            return ''.join(a)
++
++        s = self.create_screen()
++        s.draw('abcd'), s.index(), s.carriage_return()
++        s.draw('12'), s.index(), s.carriage_return()
++        self.ae(fco(), '')
++        self.ae(lco(), 'abcd\n12\n')
++        s = self.create_screen()
++        mark_prompt(), s.draw('$ 0')
++        s.carriage_return(), s.index()
++        mark_output()
++        s.draw('abcd'), s.index(), s.carriage_return()
++        s.draw('12'), s.index(), s.carriage_return()
++        mark_prompt(), s.draw('$ 1')
++        self.ae(fco(), 'abcd\n12')
++        self.ae(lco(), 'abcd\n12')
++        self.ae(lco(as_ansi=True), '\x1b[m\x1b]133;C\x1b\\abcd\n\x1b[m12')
++
++        def draw_prompt(x):
++            mark_prompt(), s.draw(f'$ {x}'), s.carriage_return(), s.index()
++
++        def draw_output(n, x='', m=True):
++            if m:
++                mark_output()
++            for i in range(n):
++                s.draw(f'{i}{x}'), s.index(), s.carriage_return()
++
++        s = self.create_screen(cols=5, lines=5, scrollback=15)
++        draw_output(1, 'start', False)
++        draw_prompt('0'), draw_output(3)
++        draw_prompt('1')
++        draw_prompt('2'), draw_output(2, 'x')
++
++        # last cmd output
++        # test: find upwards
++        self.ae(s.scrolled_by, 0)
++        self.ae(lco(), '0x\n1x\n')
++        # get output after scroll up
++        s.scroll_to_prompt()
++        self.ae(s.scrolled_by, 4)
++        self.ae(str(s.visual_line(0)), '$ 0')
++        self.ae(lco(), '0x\n1x\n')
++
++        # first cmd output on screen
++        # test: find around
++        self.ae(fco(), '0\n1\n2')
++        s.scroll(2, False)
++        self.ae(s.scrolled_by, 2)
++        self.ae(str(s.visual_line(0)), '1')
++        self.ae(fco(), '0x\n1x\n')
++        # test: find downwards
++        s.scroll(2, False)
++        self.ae(str(s.visual_line(0)), '$ 1')
++        self.ae(fco(), '0x\n1x\n')
++
++        # resize
++        # get last cmd output with continued output mark
++        draw_prompt('3'), draw_output(1, 'long_line'), draw_output(2, 'l', False)
++        s.resize(4, 5)
++        s.scroll_to_prompt(-4)
++        self.ae(str(s.visual_line(0)), '$ 0')
++        self.ae(lco(), '0long_line\n0l\n1l\n')
++
++        # last visited cmd output
++        self.ae(lvco(), '0\n1\n2')
++        s.scroll_to_prompt(1)
++        self.ae(lvco(), '0x\n1x')
++
++        # last command output without line break
++        s = self.create_screen(cols=10, lines=3)
++        draw_prompt('p1')
++        mark_output(), s.draw('running')
++        self.ae(lco(), 'running')
++        s.index(), s.carriage_return()
++        self.ae(lco(), 'running\n')
++
++        # last command output from pager history
++        s = self.create_screen()
++        draw_prompt('p1')
++        draw_output(30)
++        self.ae(tuple(map(int, lco().split())), tuple(range(0, 30)))
++
++        # last non empty command output
++        s = self.create_screen()
++        draw_prompt('a'), draw_output(2, 'a')
++        draw_prompt('b'), mark_output()
++        self.ae(lco(), '')
++        self.ae(lco(which=3), '0a\n1a')
++        s.draw('running'), s.index(),  s.carriage_return()
++        self.ae(lco(which=3), 'running\n')
++        s = self.create_screen()
++        draw_prompt('p1')
++        draw_output(30)
++        self.ae(tuple(map(int, lco(which=3).split())), tuple(range(0, 30)))
++        s = self.create_screen()
++        draw_prompt('p1')
++        draw_output(2, 'a')
++        draw_prompt('p1')
++        draw_prompt('p1')
++        self.ae(lco(which=3), '0a\n1a')
+ 
+     def test_pointer_shapes(self):
+         from kitty.window import set_pointer_shape

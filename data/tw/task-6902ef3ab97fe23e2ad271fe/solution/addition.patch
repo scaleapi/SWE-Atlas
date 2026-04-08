@@ -1,0 +1,92 @@
+diff --git a/tests/handler/test_unsubscribe_handler.py b/tests/handler/test_unsubscribe_handler.py
+index ab76598e..98a64758 100644
+--- a/tests/handler/test_unsubscribe_handler.py
++++ b/tests/handler/test_unsubscribe_handler.py
+@@ -145,3 +145,87 @@ def test_new_subject_original_unsub():
+     assert mail_sent.msg[headers.SUBJECT] == original_subject
+ 
+ 
++@mail_sender.store_emails_test_decorator
++def test_request_disable_alias(flask_client):
++    user = login(flask_client)
++    alias = Alias.create_new_random(user)
++    Session.commit()
++    req_data = UnsubscribeEncoder.encode_subject(
++        UnsubscribeAction.DisableAlias, alias.id
++    )
++
++    req = flask_client.get(
++        url_for("dashboard.encoded_unsubscribe", encoded_request=req_data),
++        follow_redirects=True,
++    )
++    assert 200 == req.status_code
++    assert not Alias.get(alias.id).enabled
++    assert 1 == len(mail_sender.get_stored_emails())
++
++
++@mail_sender.store_emails_test_decorator
++def test_request_disable_contact(flask_client):
++    user = login(flask_client)
++    alias = Alias.create_new_random(user)
++    Session.commit()
++    contact = Contact.create(
++        user_id=user.id,
++        alias_id=alias.id,
++        website_email="contact@example.com",
++        reply_email=f"{random()}@sl.local",
++        block_forward=False,
++        commit=True,
++    )
++    req_data = UnsubscribeEncoder.encode_subject(
++        UnsubscribeAction.DisableContact, contact.id
++    )
++    req = flask_client.get(
++        url_for("dashboard.encoded_unsubscribe", encoded_request=req_data),
++        follow_redirects=True,
++    )
++    assert 200 == req.status_code
++    assert Contact.get(contact.id).block_forward
++    assert 1 == len(mail_sender.get_stored_emails())
++
++
++@mail_sender.store_emails_test_decorator
++def test_request_disable_newsletter(flask_client):
++    user = login(flask_client)
++    req_data = UnsubscribeEncoder.encode_subject(
++        UnsubscribeAction.UnsubscribeNewsletter, user.id
++    )
++    req = flask_client.get(
++        url_for("dashboard.encoded_unsubscribe", encoded_request=req_data),
++        follow_redirects=True,
++    )
++    assert 200 == req.status_code
++    assert not User.get(user.id).notification
++    assert 1 == len(mail_sender.get_stored_emails())
++
++
++@mail_sender.store_emails_test_decorator
++def test_request_original_unsub(flask_client):
++    user = login(flask_client)
++    alias = Alias.create_new_random(user)
++    Session.commit()
++
++    original_recipient = f"{random()}@out.com"
++    original_subject = f"Unsubsomehow{random()}"
++    mail_sender.purge_stored_emails()
++    req_data = UnsubscribeEncoder.encode_subject(
++        UnsubscribeAction.OriginalUnsubscribeMailto,
++        UnsubscribeOriginalData(alias.id, original_recipient, original_subject),
++    )
++    req = flask_client.get(
++        url_for("dashboard.encoded_unsubscribe", encoded_request=req_data),
++        follow_redirects=True,
++    )
++    assert 200 == req.status_code
++    assert 1 == len(mail_sender.get_stored_emails())
++    mail_sent = mail_sender.get_stored_emails()[0]
++    assert mail_sent.envelope_to == original_recipient
++    name, address = parse_full_address(mail_sent.msg[headers.FROM])
++    assert name == ""
++    assert alias.email == address
++    assert mail_sent.msg[headers.TO] == original_recipient
++    assert mail_sent.msg[headers.SUBJECT] == original_subject

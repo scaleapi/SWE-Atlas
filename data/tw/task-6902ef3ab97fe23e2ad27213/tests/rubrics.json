@@ -1,0 +1,90 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aea1d83862baa333c95f618b0d915631",
+    "title": "1.1: Tests that DNS packet parsing decompresses pointer references into full domain names when a DNS frame contains advanced pointer compression across multiple records."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a30c20dd9eac661c57bb193b7c2c114f",
+    "title": "1.2: Tests that DNS packet parsing extracts target name, port, priority, weight values when SRV records appear with associated TXT record data."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "85f22fd577b3c132079e894cc217346e",
+    "title": "1.3: Tests that DNS packet parsing resolves chained compression references into expanded names across multiple DNS record types."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0936312a1a0faedb571b5ca37bba9148",
+    "title": "1.4: Tests that building a DNS response then reparsing it maintains identical record names, record types, record data values."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "006f2d94c8d0ffa35cd86cec03284119",
+    "title": "2.1: Places the test for advanced DNS pointer compression parsing in test/scapy/layers/dns.uts."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "de0dae3eb6f8b4968248f6282eab7502",
+    "title": "2.2: Places the test for DNS SRV record parsing in test/scapy/layers/dns.uts."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "74b9cbffe1554cfc12a31be96c24b107",
+    "title": "2.3: Places the test for DNS frame parsing with chained decompression in test/scapy/layers/dns.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d29ae5bbd5a24d8a94ae92a833451207",
+    "title": "2.4: Places the test for DNS response serialization round trip behavior in test/scapy/layers/dns.uts."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ebc5058df69ec3c90afa2fd0c1199a75",
+    "title": "3.1: All tests use Scapy .uts test format with standard Python assert statements for verification."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "12f74e8cbdda385662273ee4f033c363",
+    "title": "3.2: All tests follow the naming pattern of '= <Descriptive Test Name>' as the test header line."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fc29f018355257645e6220d46438cd77",
+    "title": "3.3: All tests use a setup execute verify structure with packet construction  followed by assertions."
+  }
+]

@@ -1,0 +1,146 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aea1d83862baa333c95f618b0d915631",
+    "title": "1.1: Tests that createDashboardSceneFromDashboardModel returns a DashboardScene with complete state including metadata, links, time settings, variables, and dashboard controls when given a DashboardModel with full configuration"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f8e33142b2ca5eff49f778470d21aee2",
+    "title": "1.2: Tests that createDashboardSceneFromDashboardModel transforms constant-type variables into ConstantVariable instances when the dashboard includes constant variables in templating"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9c9e43f53d6eda6d96fd29d861c8d49b",
+    "title": "1.3: Tests that createDashboardSceneFromDashboardModel transforms adhoc-type variables into AdHocFiltersVariable instances with datasource configuration preserved when the dashboard includes adhoc variables backed by a datasource"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a30c20dd9eac661c57bb193b7c2c114f",
+    "title": "1.2: Tests that createDashboardSceneFromDashboardModel includes cursor-sync behavior configured from the dashboard cursor/tooltip setting when that setting is enabled"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "85f22fd577b3c132079e894cc217346e",
+    "title": "1.3: Tests that createDashboardSceneFromDashboardModel attaches the live-now timer behavior during standard dashboard scene creation"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0936312a1a0faedb571b5ca37bba9148",
+    "title": "1.4: Tests that createDashboardSceneFromDashboardModel initializes a variables container when templating exists but contains no variables"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "006f2d94c8d0ffa35cd86cec03284119",
+    "title": "1.6: Tests that createDashboardSceneFromDashboardModel uses snapshot-style variable representations and preserves adhoc filters when DashboardModel is created as a snapshot"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "de0dae3eb6f8b4968248f6282eab7502",
+    "title": "1.7: Tests that createDashboardSceneFromDashboardModel keeps panels after a collapsed row as top-level scene children rather than placing them under that collapsed row"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "74b9cbffe1554cfc12a31be96c24b107",
+    "title": "1.8: Tests that createDashboardSceneFromDashboardModel creates scene children for panels defined inside a collapsed row, including library panels with library behavior"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "3111369cd1a97f3689124b221c6be804",
+    "title": "1.9: Tests that createDashboardSceneFromDashboardModel places panels positioned outside any row as top-level scene children in the grid layout"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "44b79884e35a67c4caf3dd4d02c2e86e",
+    "title": "1.10: Tests that createDashboardSceneFromDashboardModel groups panels as children of an expanded row when their gridPos positions fall within the row's range"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a3ee3fc5c275430d55a8065b6377b5ed",
+    "title": "1.11: Tests that createDashboardSceneFromDashboardModel attaches LibraryPanelBehavior to library panels within expanded rows when the dashboard includes library panels positioned in expanded rows"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "4c257d0d2891cca6bb080b088b940fae",
+    "title": "1.12: Tests that createDashboardSceneFromDashboardModel creates an empty row scene child with no children when an expanded row contains no panels"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ebc5058df69ec3c90afa2fd0c1199a75",
+    "title": "2.1: Places the tests covering dashboard scene creation from DashboardModel in public/app/features/dashboard-scene/serialization/transformSaveModelToScene.test.ts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "12f74e8cbdda385662273ee4f033c363",
+    "title": "2.2: Places the test covering new-dashboard save model transformation in public/app/features/dashboard-scene/serialization/transformSaveModelToScene.test.ts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fc29f018355257645e6220d46438cd77",
+    "title": "2.3: Places the tests covering row/panel organization as scene children in public/app/features/dashboard-scene/serialization/transformSaveModelToScene.test.ts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d81b12f6ce6f086592a5e6c5a17ea112",
+    "title": "3.1: All tests use the Jest testing framework with describe blocks, it blocks, and expect assertions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d47de9f5a7b0023c75474f4af639feab",
+    "title": "3.2: All tests name each it block with a 'should ...' prefix"
+  }
+]

@@ -1,0 +1,21 @@
+diff --git a/packages/calypso-e2e/src/data-helper.ts b/packages/calypso-e2e/src/data-helper.ts
+index 915f7a2da9b..31a2f1f152a 100644
+--- a/packages/calypso-e2e/src/data-helper.ts
++++ b/packages/calypso-e2e/src/data-helper.ts
+@@ -128,15 +128,7 @@ export function getCalypsoURL(
+ 	route = '',
+ 	queryStrings: { [ key: string ]: string } = {}
+ ): string {
+-	const base = envVariables.CALYPSO_BASE_URL;
+-
+-	const url = new URL( route, base );
+-
+-	Object.entries( queryStrings ).forEach( ( [ key, value ] ) =>
+-		url.searchParams.append( key, value )
+-	);
+-
+-	return url.toString();
++	return 'https://skeleton.invalid/' + route;
+ }
+ 
+ /**

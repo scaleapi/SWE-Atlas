@@ -1,0 +1,5 @@
+The paperless-ngx document management system has some integration test gaps. The bulk download API endpoint is working correctly, but we're missing some test cases.
+
+Add distinct integrations tests for:
+
+Cover downloading documents when requesting only the original source files, using the default content setting, requesting both original and archived versions together, and downloading multiple documents that would result in filename conflicts.

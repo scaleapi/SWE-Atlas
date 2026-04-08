@@ -1,0 +1,8 @@
+Design integration tests for DKIM record validation on custom domains. The tests should cover the following scenarios:
+
+1. When DNS CNAME records for DKIM are not configured
+2. When some DKIM records are correctly configured but others have wrong values
+3. When a custom domain was previously verified using the legacy single-record DKIM system and the new additional records are missing
+4. When all three DKIM CNAME records are properly configured
+
+Each test should mock DNS lookups and verify the validation behavior including its effect on the domain's verification status in the database.

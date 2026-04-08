@@ -1,0 +1,8 @@
+We've got some gaps in our integration test coverage for image loading in kitty terminal emulator. The code is working correctly, but we're missing some integration tests for graphic protocol image loading functionality.
+
+Write 1 test case for each scenario below:
+
+1. Testing basic image transmission with multiple loading methods including simple loading, chunked transmission, compression, file-based loading, and shared memory loading
+2. Testing PNG image format loading with support for different color formats
+3. Testing simple PNG image loading and validation
+4. Testing image loading operations with client-side number tracking and chunked data handling

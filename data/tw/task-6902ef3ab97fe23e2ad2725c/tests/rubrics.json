@@ -1,0 +1,122 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "80e465da9fd85670344c5b2ca9b67694",
+    "title": "1.1: Tests that batch GET requests with array notation format execute successfully and return responses"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "71887ea0b62a60415d16c12a4884c86a",
+    "title": "1.2: Tests that batch GET requests with shorthand URL format execute successfully"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "97acfd302dea1917dd6e370bb4a0203f",
+    "title": "1.3: Tests that batch GET requests with object notation format execute successfully"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b0c256d006f88b2f64e18bdb5742fed6",
+    "title": "1.4: Tests that batch POST requests with body data execute successfully"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d80f6a72dfa80cdfdf525983a6c3dc30",
+    "title": "1.5: Tests that batch PUT requests with body data execute successfully"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "5a236e195c58dc557acc97f677bebc18",
+    "title": "1.6: Tests verify that HTTP metrics are collected for batch requests"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "02bc0ba1d0449a6512bc628309fde4b5",
+    "title": "1.7: Tests verify HTTP metrics contain correct request method and status code"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "b91f6af212e3abef11d2c230932f8edb",
+    "title": "2.1: Places the batch GET request test in the js/modules/k6/http directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "9d07779f0038813fe124043fd633a671",
+    "title": "2.2: Places the batch POST request test in the js/modules/k6/http directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2aa54e7a07f4cf11008e1b7fac38c113",
+    "title": "2.3: Places the batch PUT request test in the js/modules/k6/http directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e5b52ac77e9ea35d0e1da4892c9f8694",
+    "title": "3.1: All tests use the Go testing framework with *testing.T parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "106567ced0e23df1596a07a2fda83800",
+    "title": "3.2: All tests follow the Go test naming pattern starting with Test"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "912247638b3d2f2648176fddda9c8605",
+    "title": "3.3: All tests use t.Parallel() for parallel execution"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "864b91f5af7494c82d60b1888b7c058c",
+    "title": "3.4: All tests verify the test execution completed without Go-level errors"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "5af319bc53d305ca63daa8e93cf5ccc8",
+    "title": "4.1: Tests use a test runtime or test case setup helper for configuring the test environment"
+  }
+]

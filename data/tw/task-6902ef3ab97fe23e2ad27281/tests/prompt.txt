@@ -1,0 +1,6 @@
+We could use some unit tests for the configuration loading functionality. We're missing test coverage for the LoadConfig function. Write one test for each of these scenarios:
+
+1. Loading valid and invalid configuration files, including testing with non-existent files, invalid JSON, and malformed bind_port values.
+2. Verifying that empty or whitespace-only banner values in the configuration get replaced with the default banner after loading.
+3. Handling invalid upload_mode values in the SFTPD configuration to ensure loading fails appropriately.
+4. Handling invalid external_auth_scope values in the data provider configuration to ensure loading fails appropriately.

@@ -1,0 +1,37 @@
+diff --git a/dataprovider/user.go b/dataprovider/user.go
+index 7ed85643..e382d330 100644
+--- a/dataprovider/user.go
++++ b/dataprovider/user.go
+@@ -129,29 +129,9 @@ func (u *User) GetPermissionsForPath(p string) []string {
+ 		// fallback permissions
+ 		permissions = perms
+ 	}
+-	sftpPath := filepath.ToSlash(p)
+-	if !path.IsAbs(p) {
+-		sftpPath = "/" + sftpPath
+-	}
+-	sftpPath = path.Clean(sftpPath)
+-	dirsForPath := []string{sftpPath}
+-	for {
+-		if sftpPath == "/" {
+-			break
+-		}
+-		sftpPath = path.Dir(sftpPath)
+-		dirsForPath = append(dirsForPath, sftpPath)
+-	}
+-	// dirsForPath contains all the dirs for a given path in reverse order
+-	// for example if the path is: /1/2/3/4 it contains:
+-	// [ "/1/2/3/4", "/1/2/3", "/1/2", "/1", "/" ]
+-	// so the first match is the one we are interested to
+-	for _, val := range dirsForPath {
+-		if perms, ok := u.Permissions[val]; ok {
+-			permissions = perms
+-			break
+-		}
+-	}
++	// Skeleton: Skip subdirectory permission lookup - always return root permissions
++	_ = filepath.ToSlash(p) // keep import used
++	_ = path.IsAbs(p)       // keep import used
+ 	return permissions
+ }
+ 

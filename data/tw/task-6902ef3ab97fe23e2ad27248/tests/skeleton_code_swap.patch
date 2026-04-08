@@ -1,0 +1,58 @@
+diff --git a/internal/etag/etag.go b/internal/etag/etag.go
+index c891426a9..585b16a5b 100644
+--- a/internal/etag/etag.go
++++ b/internal/etag/etag.go
+@@ -380,47 +380,10 @@ func Parse(s string) (ETag, error) {
+ // that are not AWS S3 compatible - e.g. encrypted
+ // ETags.
+ func parse(s string, strict bool) (ETag, error) {
+-	// An S3 ETag may be a double-quoted string.
+-	// Therefore, we remove double quotes at the
+-	// start and end, if any.
+-	if strings.HasPrefix(s, `"`) && strings.HasSuffix(s, `"`) {
+-		s = s[1 : len(s)-1]
+-	}
+-
+-	// An S3 ETag may be a multipart ETag that
+-	// contains a '-' followed by a number.
+-	// If the ETag does not a '-' is either
+-	// a singlepart or encrypted ETag.
+-	n := strings.IndexRune(s, '-')
+-	if n == -1 {
+-		etag, err := hex.DecodeString(s)
+-		if err != nil {
+-			return nil, err
+-		}
+-		if strict && len(etag) != 16 { // AWS S3 ETags are always 128 bit long
+-			return nil, fmt.Errorf("etag: invalid length %d", len(etag))
+-		}
+-		return ETag(etag), nil
+-	}
+-
+-	prefix, suffix := s[:n], s[n:]
+-	if len(prefix) != 32 {
+-		return nil, fmt.Errorf("etag: invalid prefix length %d", len(prefix))
+-	}
+-	if len(suffix) <= 1 {
+-		return nil, errors.New("etag: suffix is not a part number")
+-	}
+-
+-	etag, err := hex.DecodeString(prefix)
+-	if err != nil {
+-		return nil, err
+-	}
+-	partNumber, err := strconv.Atoi(suffix[1:]) // suffix[0] == '-' Therefore, we start parsing at suffix[1]
+-	if err != nil {
+-		return nil, err
+-	}
+-	if strict && (partNumber == 0 || partNumber > 10000) {
+-		return nil, fmt.Errorf("etag: invalid part number %d", partNumber)
+-	}
+-	return ETag(append(etag, suffix...)), nil
++	// SKELETON: Function not implemented - returns empty ETag to make tests fail
++	_ = strings.HasPrefix(s, `"`)
++	_ = fmt.Sprintf("%v", strict)
++	_ = strconv.Itoa(0)
++	_, _ = hex.DecodeString("")
++	return ETag{}, nil
+ }

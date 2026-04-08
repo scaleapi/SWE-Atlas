@@ -1,0 +1,6 @@
+We're lacking some unit tests related to screen margin behavior. 
+
+1. Working with screen margins while drawing text and moving the cursor under different width modes.
+2. Working with a screen that has only a bottom margin set during repeated drawing and line movement.
+3. Working with a screen that has only a top margin set during repeated drawing and line movement.
+4. Working with a screen that has both top and bottom margins set at the same time while content advances within the constrained area.

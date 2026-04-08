@@ -1,0 +1,98 @@
+diff --git a/src/paperless_mail/mail.py b/src/paperless_mail/mail.py
+index 4dd1f3a1f..2666290fe 100644
+--- a/src/paperless_mail/mail.py
++++ b/src/paperless_mail/mail.py
+@@ -270,92 +270,4 @@ class MailAccountHandler(LoggingMixin):
+         return total_processed_files
+ 
+     def handle_message(self, message, rule) -> int:
+-        if not message.attachments:
+-            return 0
+-
+-        self.log(
+-            "debug",
+-            f"Rule {rule}: "
+-            f"Processing mail {message.subject} from {message.from_} with "
+-            f"{len(message.attachments)} attachment(s)",
+-        )
+-
+-        correspondent = self.get_correspondent(message, rule)
+-        tag_ids = [tag.id for tag in rule.assign_tags.all()]
+-        doc_type = rule.assign_document_type
+-
+-        processed_attachments = 0
+-
+-        for att in message.attachments:
+-
+-            if (
+-                not att.content_disposition == "attachment"
+-                and rule.attachment_type
+-                == MailRule.AttachmentProcessing.ATTACHMENTS_ONLY
+-            ):
+-                self.log(
+-                    "debug",
+-                    f"Rule {rule}: "
+-                    f"Skipping attachment {att.filename} "
+-                    f"with content disposition {att.content_disposition}",
+-                )
+-                continue
+-
+-            if rule.filter_attachment_filename:
+-                # Force the filename and pattern to the lowercase
+-                # as this is system dependent otherwise
+-                if not fnmatch(
+-                    att.filename.lower(),
+-                    rule.filter_attachment_filename.lower(),
+-                ):
+-                    continue
+-
+-            title = self.get_title(message, att, rule)
+-
+-            # don't trust the content type of the attachment. Could be
+-            # generic application/octet-stream.
+-            mime_type = magic.from_buffer(att.payload, mime=True)
+-
+-            if is_mime_type_supported(mime_type):
+-
+-                os.makedirs(settings.SCRATCH_DIR, exist_ok=True)
+-                _, temp_filename = tempfile.mkstemp(
+-                    prefix="paperless-mail-",
+-                    dir=settings.SCRATCH_DIR,
+-                )
+-                with open(temp_filename, "wb") as f:
+-                    f.write(att.payload)
+-
+-                self.log(
+-                    "info",
+-                    f"Rule {rule}: "
+-                    f"Consuming attachment {att.filename} from mail "
+-                    f"{message.subject} from {message.from_}",
+-                )
+-
+-                async_task(
+-                    "documents.tasks.consume_file",
+-                    path=temp_filename,
+-                    override_filename=pathvalidate.sanitize_filename(
+-                        att.filename,
+-                    ),
+-                    override_title=title,
+-                    override_correspondent_id=correspondent.id
+-                    if correspondent
+-                    else None,
+-                    override_document_type_id=doc_type.id if doc_type else None,
+-                    override_tag_ids=tag_ids,
+-                    task_name=att.filename[:100],
+-                )
+-
+-                processed_attachments += 1
+-            else:
+-                self.log(
+-                    "debug",
+-                    f"Rule {rule}: "
+-                    f"Skipping attachment {att.filename} "
+-                    f"since guessed mime type {mime_type} is not supported "
+-                    f"by paperless",
+-                )
+-
+-        return processed_attachments
++        return 0

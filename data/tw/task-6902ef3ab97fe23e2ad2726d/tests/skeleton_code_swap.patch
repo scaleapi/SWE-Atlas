@@ -1,0 +1,141 @@
+diff --git a/internal/target/remote/connect.go b/internal/target/remote/connect.go
+index 1b1f856..3f378fd 100644
+--- a/internal/target/remote/connect.go
++++ b/internal/target/remote/connect.go
+@@ -5,11 +5,11 @@ import (
+ 	"errors"
+ 	"fmt"
+ 	"net"
+-	"runtime/trace"
++	_ "runtime/trace"
+ 	"sort"
+ 	"strings"
+ 
+-	"github.com/foxcpp/maddy/internal/config"
++	_ "github.com/foxcpp/maddy/internal/config"
+ 	"github.com/foxcpp/maddy/internal/dns"
+ 	"github.com/foxcpp/maddy/internal/exterrors"
+ 	"github.com/foxcpp/maddy/internal/future"
+@@ -111,117 +111,12 @@ func (rd *remoteDelivery) checkPolicies(ctx context.Context, mx string, didTLS b
+ }
+ 
+ func (rd *remoteDelivery) connectionForDomain(ctx context.Context, domain string) (*smtpconn.C, error) {
+-	domain = strings.ToLower(domain)
+-
+-	if c, ok := rd.connections[domain]; ok {
+-		return c.C, nil
+-	}
+-
+-	conn := mxConn{
+-		C:      smtpconn.New(),
+-		domain: domain,
++	return nil, &exterrors.SMTPError{
++		Code:         550,
++		EnhancedCode: exterrors.EnhancedCode{5, 0, 0},
++		Message:      "Not implemented",
++		TargetName:   "remote",
+ 	}
+-
+-	conn.Dialer = rd.rt.dialer
+-	conn.TLSConfig = rd.rt.tlsConfig
+-	conn.Log = rd.Log
+-	conn.Hostname = rd.rt.hostname
+-	conn.AddrInSMTPMsg = true
+-
+-	if _, do := rd.rt.mxAuth[AuthMTASTS]; do {
+-		conn.stsFut = future.New()
+-		if rd.rt.mtastsGet != nil {
+-			go func() {
+-				conn.stsFut.Set(rd.rt.mtastsGet(ctx, domain))
+-			}()
+-		} else {
+-			go func() {
+-				conn.stsFut.Set(rd.rt.mtastsCache.Get(ctx, domain))
+-			}()
+-		}
+-	}
+-
+-	region := trace.StartRegion(ctx, "remote/LookupMX")
+-	dnssecOk, records, err := rd.lookupMX(ctx, domain)
+-	region.End()
+-	if err != nil {
+-		return nil, err
+-	}
+-	conn.dnssecOk = dnssecOk
+-
+-	var lastErr error
+-	region = trace.StartRegion(ctx, "remote/Connect+TLS")
+-	for _, record := range records {
+-		if record.Host == "." {
+-			return nil, &exterrors.SMTPError{
+-				Code:         556,
+-				EnhancedCode: exterrors.EnhancedCode{5, 1, 10},
+-				Message:      "Domain does not accept email (null MX)",
+-			}
+-		}
+-
+-		rd.Log.DebugMsg("trying", "mx", record.Host, "domain", domain)
+-		didTLS, err := conn.Connect(ctx, config.Endpoint{
+-			Host: record.Host,
+-			Port: smtpPort,
+-		}, true)
+-		authErr := rd.checkPolicies(ctx, record.Host, didTLS, conn)
+-
+-		if err != nil {
+-			lastErr = err
+-
+-			// If there was a TLS error and MX auth does not seem to complain
+-			// about plaintext - reconnect without TLS.
+-			if _, ok := err.(smtpconn.TLSError); ok && authErr == nil {
+-				rd.Log.Error("TLS error, falling back to plaintext", err,
+-					"mx", record.Host, "domain", domain)
+-
+-				_, err := conn.Connect(ctx, config.Endpoint{
+-					Host: record.Host,
+-					Port: smtpPort,
+-				}, false)
+-				if err != nil {
+-					// That's odd, but whatever.
+-					continue
+-				}
+-			} else {
+-				continue
+-			}
+-		}
+-
+-		if authErr != nil {
+-			conn.Close()
+-			lastErr = authErr
+-			continue
+-		}
+-
+-		break
+-	}
+-	region.End()
+-
+-	// Stil not connected? Bail out.
+-	if conn.Client() == nil {
+-		return nil, &exterrors.SMTPError{
+-			Code:         exterrors.SMTPCode(err, 451, 550),
+-			EnhancedCode: exterrors.SMTPEnchCode(err, exterrors.EnhancedCode{0, 4, 0}),
+-			Message:      "No usable MXs, last err: " + lastErr.Error(),
+-			TargetName:   "remote",
+-			Err:          lastErr,
+-			Misc: map[string]interface{}{
+-				"domain": domain,
+-			},
+-		}
+-	}
+-
+-	rd.Log.DebugMsg("connected", "mx", conn.ServerName(), "domain", domain)
+-
+-	if err := conn.Mail(ctx, rd.mailFrom, rd.msgMeta.SMTPOpts); err != nil {
+-		conn.Close()
+-		return nil, err
+-	}
+-
+-	rd.connections[domain] = conn
+-	return conn.C, nil
+ }
+ 
+ func commonDomainCheck(domain string, mx string) bool {

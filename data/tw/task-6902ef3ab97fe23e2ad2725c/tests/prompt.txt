@@ -1,0 +1,11 @@
+The HTTP batch request functionality in k6 could use some integration tests.
+
+The http.batch() function allows making multiple HTTP requests simultaneously. We need tests that verify the batch request execution works correctly for different scenarios.
+
+Please write 3 integration tests that cover:
+
+1. A test for batch GET requests that verifies multiple concurrent GET requests can be made using different request formats (array notation, shorthand URLs, and object notation) and that responses are returned correctly
+2. A test for batch POST requests that verifies POST requests with request body data work correctly through the batch interface
+3. A test for batch PUT requests that verifies PUT requests with request body data work correctly through the batch interface
+
+Each test should verify that the batch requests execute successfully and return valid responses with expected status codes. The tests should also verify that HTTP metrics are properly emitted for the batch requests.

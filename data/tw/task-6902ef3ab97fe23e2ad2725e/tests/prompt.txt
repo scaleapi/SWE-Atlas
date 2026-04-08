@@ -1,0 +1,10 @@
+There are some test coverage gaps for the file handling functionality in the handlers package.
+
+The code is working correctly, but we're missing some unit tests that validate how the HandleFile function processes different archive formats. Add 1 unit test for each scenario below:
+
+1. Processing nested ZIP archives containing directories and multiple files
+2. Extracting content from compressed tar archives (tgz format)
+3. Handling RPM package files and processing their contents
+4. Handling AR archive files (such as Debian packages)
+5. Processing ZIP archives that contain directories with files
+6. Handling plain uncompressed TAR archives

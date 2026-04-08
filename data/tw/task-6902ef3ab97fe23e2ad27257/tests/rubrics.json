@@ -1,0 +1,138 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "cdda967b9cd85767707a2df6ce8ac0f8",
+    "title": "1.2: Tests that chunked image loading assembles multiple payload chunks into complete image data"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "65ec6f833f3e9c669be614e811ac0a95",
+    "title": "1.3: Tests that zlib-compressed image data is correctly decompressed when loaded with compression flag"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "57cc9f5c0438dbd848c42f1eb0213943",
+    "title": "1.4: Tests that file-based image loading reads file contents correctly with t='f' transmission type"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "5f9942289835d6b4ada53170560a4580",
+    "title": "1.5: Tests that shared memory loading reads data from POSIX SHM with t='s' transmission type"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f5e7ca9484f75a7e6f40003b203b010b",
+    "title": "1.6: Tests that PNG images load correctly with f=100 format code for different color modes"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "2c7ee569792d08dac2e23fbecb88be59",
+    "title": "1.7: Tests that loading invalid PNG data returns error response"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "01f74a9372ce475a1b6ea31309a7f5c9",
+    "title": "1.8: Tests that loading with client number (I parameter) tracks images by number across multiple loads"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "224a33f48cf14eb10cee18555ee5a993",
+    "title": "1.9: Tests that delete operation by client number (I parameter) removes the correct image"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e2e09ede611f38c001c2382e4e1490eb",
+    "title": "2.1: Places the test for image transmission methods in kitty_tests/graphics.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "35e77f69bde80e5528ebfad7bf863485",
+    "title": "2.2: Places the test for PNG color format loading in kitty_tests/graphics.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2d8b319584436a6736ef9883b8d30762",
+    "title": "2.3: Places the test for simple PNG validation in kitty_tests/graphics.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e2fb36a1445684824562a6ea34bd7338",
+    "title": "2.4: Places the test for client number operations in kitty_tests/graphics.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "71b080b1da77efaad6e865dcc652b3cd",
+    "title": "3.1: All tests follow the test_ prefix naming pattern"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e8b996404ac7f0d2af2e5414080b2161",
+    "title": "3.2: All tests use self.ae() or self.assertEqual() for equality assertions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fc997e038e51140e64b7ccf9d6e3053e",
+    "title": "4.1: Uses m=1 flag for intermediate chunks and m=0 for final chunk in chunked transmission"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "c4aabfa53318de21b2fd09a2f15aeb42",
+    "title": "4.2: PNG test uses @unittest.skipIf decorator to skip when PIL is unavailable"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "abfe2c108fd01862505ea7a9516133fd",
+    "title": "4.3: Uses f=100 format code for PNG image loading"
+  }
+]

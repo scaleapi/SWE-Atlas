@@ -1,0 +1,80 @@
+diff --git a/kitty/graphics.c b/kitty/graphics.c
+index 402fb326a..5f1a00989 100644
+--- a/kitty/graphics.c
++++ b/kitty/graphics.c
+@@ -685,73 +685,8 @@ upload_to_gpu(GraphicsManager *self, Image *img, const bool is_opaque, const boo
+ 
+ static Image*
+ handle_add_command(GraphicsManager *self, const GraphicsCommand *g, const uint8_t *payload, bool *is_dirty, uint32_t iid, bool is_query) {
+-    bool existing, init_img = true;
+-    Image *img = NULL;
+-    unsigned char tt = g->transmission_type ? g->transmission_type : 'd';
+-    uint32_t fmt = g->format ? g->format : RGBA;
+-    if (tt == 'd' && self->currently_loading.loading_for.image_id) init_img = false;
+-    if (init_img) {
+-        self->currently_loading.loading_for = (const ImageAndFrame){0};
+-        if (g->data_width > MAX_IMAGE_DIMENSION || g->data_height > MAX_IMAGE_DIMENSION) ABRT("EINVAL", "Image too large");
+-        remove_images(self, add_trim_predicate, 0);
+-        img = find_or_create_image(self, iid, &existing);
+-        if (existing) {
+-            free_image_resources(self, img);
+-            img->texture = new_texture_ref();
+-            img->root_frame_data_loaded = false;
+-            img->is_drawn = false;
+-            img->current_frame_shown_at = 0;
+-            img->extra_framecnt = 0;
+-            *is_dirty = true;
+-            self->layers_dirty = true;
+-        } else {
+-            img->client_id = iid;
+-            img->client_number = g->image_number;
+-            if (!img->client_id && img->client_number) {
+-                img->client_id = get_free_client_id(self);
+-                iid = img->client_id;
+-            }
+-        }
+-        img->atime = monotonic(); img->used_storage = 0;
+-        if (!initialize_load_data(self, g, img, tt, fmt, 0)) return NULL;
+-        self->currently_loading.start_command.id = iid;
+-    } else {
+-        INIT_CHUNKED_LOAD;
+-        img = img_by_internal_id(self, self->currently_loading.loading_for.image_id);
+-        if (img == NULL) {
+-            self->currently_loading.loading_for = (const ImageAndFrame){0};
+-            ABRT("EILSEQ", "More payload loading refers to non-existent image");
+-        }
+-    }
+-    img = load_image_data(self, img, g, tt, fmt, payload);
+-    if (!img || !self->currently_loading.loading_completed_successfully) return NULL;
+-        self->currently_loading.loading_for = (const ImageAndFrame){0};
+-    img = process_image_data(self, img, g, tt, fmt);
+-    if (!img) return NULL;
+-    size_t required_sz = (size_t)(self->currently_loading.is_opaque ? 3 : 4) * self->currently_loading.width * self->currently_loading.height;
+-    if (self->currently_loading.data_sz != required_sz) ABRT("EINVAL", "Image dimensions: %ux%u do not match data size: %zu, expected size: %zu", self->currently_loading.width, self->currently_loading.height, self->currently_loading.data_sz, required_sz);
+-    if (self->currently_loading.loading_completed_successfully) {
+-        img->width = self->currently_loading.width;
+-        img->height = self->currently_loading.height;
+-        if (img->root_frame.id) remove_from_cache(self, (const ImageAndFrame){.image_id=img->internal_id, .frame_id=img->root_frame.id});
+-        img->root_frame = (const Frame){
+-            .id = ++img->frame_id_counter,
+-            .is_opaque = self->currently_loading.is_opaque,
+-            .is_4byte_aligned = self->currently_loading.is_4byte_aligned,
+-            .width = img->width, .height = img->height,
+-        };
+-        if (!is_query) {
+-            if (!add_to_cache(self, (const ImageAndFrame){.image_id = img->internal_id, .frame_id=img->root_frame.id}, self->currently_loading.data, self->currently_loading.data_sz)) {
+-                if (PyErr_Occurred()) PyErr_Print();
+-                ABRT("ENOSPC", "Failed to store image data in disk cache");
+-            }
+-            upload_to_gpu(self, img, img->root_frame.is_opaque, img->root_frame.is_4byte_aligned, self->currently_loading.data);
+-            self->used_storage += required_sz;
+-            img->used_storage = required_sz;
+-        }
+-        img->root_frame_data_loaded = true;
+-    }
+-    return img;
++    (void)self; (void)g; (void)payload; (void)is_dirty; (void)iid; (void)is_query;
++    return NULL;
+ #undef MAX_DATA_SZ
+ }
+ 

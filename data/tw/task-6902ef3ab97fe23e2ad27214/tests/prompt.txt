@@ -1,0 +1,11 @@
+Add integration tests for the erasure healing subsystem in this distributed object storage codebase.
+
+The tests should cover:
+
+Basic object and bucket healing scenarios
+Versioned object healing scenarios  
+Dangling object handling under quorum loss
+Healing multipart objects with missing metadata on parity disks
+Healing objects with corrupted or missing metadata files
+
+Write one integration test function for each scenario above.

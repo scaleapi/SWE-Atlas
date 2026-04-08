@@ -1,0 +1,55 @@
+diff --git a/js/modules/k6/timers/timers.go b/js/modules/k6/timers/timers.go
+index a96fe1185..0022782cb 100644
+--- a/js/modules/k6/timers/timers.go
++++ b/js/modules/k6/timers/timers.go
+@@ -123,11 +123,7 @@ func (e *Timers) clearInterval(id uint64) {
+ func (e *Timers) timerInitialization(
+ 	callback sobek.Callable, timeout float64, args []sobek.Value, repeat bool, id uint64,
+ ) {
+-	// skip all the nesting stuff as we do not care about them
+-	if timeout < 0 {
+-		timeout = 0
+-	}
+-
++	// Skeleton: only validate callback, do not schedule timer
+ 	name := setTimeoutName
+ 	if repeat {
+ 		name = setIntervalName
+@@ -137,33 +133,10 @@ func (e *Timers) timerInitialization(
+ 		common.Throw(e.vu.Runtime(), fmt.Errorf("%s's callback isn't a callable function", name))
+ 	}
+ 
+-	task := func() error {
+-		// Specification 8.1: If id does not exist in global's map of active timers, then abort these steps.
+-		if _, exist := e.timers[id]; !exist {
+-			return nil
+-		}
+-
+-		err := e.call(callback, args)
+-
+-		if _, exist := e.timers[id]; !exist { // 8.4
+-			return err
+-		}
+-
+-		if repeat {
+-			e.timerInitialization(callback, timeout, args, repeat, id)
+-		} else {
+-			delete(e.timers, id)
+-		}
+-
+-		return err
+-	}
+-
+-	e.runAfterTimeout(&timer{
+-		id:          id,
+-		task:        task,
+-		nextTrigger: time.Now().Add(time.Duration(timeout * float64(time.Millisecond))),
+-		name:        name,
+-	})
++	// Skeleton: timer scheduling removed
++	_ = timeout
++	_ = args
++	_ = id
+ }
+ 
+ // https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#run-steps-after-a-timeout

@@ -1,0 +1,9 @@
+Could you add some integration test coverage for the document consumption pipeline? The code is working but we're missing some integration tests for different consumption scenarios.
+
+Write 1 integration test for each scenario below:
+
+1. Testing normal end-to-end document consumption through the full pipeline
+2. Testing consumption with a custom filename format pattern using correspondent and title placeholders, with an overridden title
+3. Testing consumption when the filename generation function is unstable and returns different names on repeated calls
+4. Testing automatic document classification by mocking the classifier to predict a correspondent, document type, and tags
+5. Testing consumption of multiple files with similar base names but different extensions to verify filename collision handling

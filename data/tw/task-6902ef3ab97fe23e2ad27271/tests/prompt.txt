@@ -1,0 +1,14 @@
+I need help adding unit tests for `generate_filename` in paperless-ngx. It builds filenames using a configurable format string with document metadata placeholders. We need more test coverage.
+
+Write 1 unit test for each case:
+
+1. The `{document_type}` placeholder with and without a type assigned
+2. The `{asn}` placeholder with and without an archive serial number
+3. Tag lookup via `{tags[key]}` when tag names contain underscores
+4. Tag lookup via `{tags[key]}` when tag names contain dashes
+5. Tag lookup via `{tags[key]}` when tag names use an unrecognized format
+6. Tag access by index via `{tags[N]}`
+7. Tag access by index via `{tags[N]}` when the index is out of range
+8. The `{tag_list}` placeholder
+9. Format strings with leading path separators
+10. The `{created_year}`, `{created_month}`, and `{created_day}` placeholders

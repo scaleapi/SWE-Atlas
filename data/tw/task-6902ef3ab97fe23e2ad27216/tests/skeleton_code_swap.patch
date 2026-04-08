@@ -1,0 +1,47 @@
+diff --git a/src/documents/views.py b/src/documents/views.py
+index 831e68b68..5e7e0b506 100644
+--- a/src/documents/views.py
++++ b/src/documents/views.py
+@@ -635,41 +635,7 @@ class BulkDownloadView(GenericAPIView):
+     parser_classes = (parsers.JSONParser,)
+ 
+     def post(self, request, format=None):
+-        serializer = self.get_serializer(data=request.data)
+-        serializer.is_valid(raise_exception=True)
+-
+-        ids = serializer.validated_data.get("documents")
+-        compression = serializer.validated_data.get("compression")
+-        content = serializer.validated_data.get("content")
+-
+-        os.makedirs(settings.SCRATCH_DIR, exist_ok=True)
+-        temp = tempfile.NamedTemporaryFile(
+-            dir=settings.SCRATCH_DIR,
+-            suffix="-compressed-archive",
+-            delete=False,
+-        )
+-
+-        if content == "both":
+-            strategy_class = OriginalAndArchiveStrategy
+-        elif content == "originals":
+-            strategy_class = OriginalsOnlyStrategy
+-        else:
+-            strategy_class = ArchiveOnlyStrategy
+-
+-        with zipfile.ZipFile(temp.name, "w", compression) as zipf:
+-            strategy = strategy_class(zipf)
+-            for id in ids:
+-                doc = Document.objects.get(id=id)
+-                strategy.add_document(doc)
+-
+-        with open(temp.name, "rb") as f:
+-            response = HttpResponse(f, content_type="application/zip")
+-            response["Content-Disposition"] = '{}; filename="{}"'.format(
+-                "attachment",
+-                "documents.zip",
+-            )
+-
+-            return response
++        return HttpResponse(status=200)
+ 
+ 
+ class RemoteVersionView(GenericAPIView):

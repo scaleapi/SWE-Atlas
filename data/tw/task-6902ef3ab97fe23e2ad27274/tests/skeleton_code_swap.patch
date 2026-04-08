@@ -1,0 +1,28 @@
+diff --git a/cmd/bucket-policy-handlers.go b/cmd/bucket-policy-handlers.go
+index 994b0b0da..be8f414d5 100644
+--- a/cmd/bucket-policy-handlers.go
++++ b/cmd/bucket-policy-handlers.go
+@@ -106,22 +106,11 @@ func (api objectAPIHandlers) PutBucketPolicyHandler(w http.ResponseWriter, r *ht
+ 		return
+ 	}
+ 
+-	updatedAt, err := globalBucketMetadataSys.Update(ctx, bucket, bucketPolicyConfig, configData)
++	_, err = globalBucketMetadataSys.Update(ctx, bucket, bucketPolicyConfig, configData)
+ 	if err != nil {
+ 		writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
+ 		return
+ 	}
+-
+-	// Call site replication hook.
+-	replLogIf(ctx, globalSiteReplicationSys.BucketMetaHook(ctx, madmin.SRBucketMeta{
+-		Type:      madmin.SRBucketMetaTypePolicy,
+-		Bucket:    bucket,
+-		Policy:    bucketPolicyBytes,
+-		UpdatedAt: updatedAt,
+-	}))
+-
+-	// Success.
+-	writeSuccessNoContent(w)
+ }
+ 
+ // DeleteBucketPolicyHandler - This HTTP handler removes bucket policy configuration.

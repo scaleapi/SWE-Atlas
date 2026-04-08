@@ -1,0 +1,60 @@
+diff --git a/pkg/sources/huggingface/huggingface_client_test.go b/pkg/sources/huggingface/huggingface_client_test.go
+index 15977d10e..9d055ef25 100644
+--- a/pkg/sources/huggingface/huggingface_client_test.go
++++ b/pkg/sources/huggingface/huggingface_client_test.go
+@@ -511,6 +511,55 @@ func TestGetResourceHTMLPath(t *testing.T) {
+ 	assert.Equal(t, "spaces", getResourceHTMLPath(SPACE))
+ }
+ 
++func TestBuildAPIURL_ValidInputs(t *testing.T) {
++	endpoint := "https://huggingface.co"
++	resourceType := MODEL
++	repoName := "test-repo"
++
++	expectedURL := "https://huggingface.co/api/models/test-repo"
++
++	url, err := buildAPIURL(endpoint, resourceType, repoName)
++
++	assert.Nil(t, err)
++	assert.Equal(t, expectedURL, url)
++}
++
++func TestBuildAPIURL_EmptyEndpoint(t *testing.T) {
++	endpoint := ""
++	resourceType := MODEL
++	repoName := "test-repo"
++
++	url, err := buildAPIURL(endpoint, resourceType, repoName)
++
++	assert.NotNil(t, err)
++	assert.Equal(t, "", url)
++	assert.Equal(t, "endpoint, resourceType, and repoName must not be empty", err.Error())
++}
++
++func TestBuildAPIURL_EmptyResourceType(t *testing.T) {
++	endpoint := "https://huggingface.co"
++	resourceType := ""
++	repoName := "test-repo"
++
++	url, err := buildAPIURL(endpoint, resourceType, repoName)
++
++	assert.NotNil(t, err)
++	assert.Equal(t, "", url)
++	assert.Equal(t, "endpoint, resourceType, and repoName must not be empty", err.Error())
++}
++
++func TestBuildAPIURL_EmptyRepoName(t *testing.T) {
++	endpoint := "https://huggingface.co"
++	resourceType := "model"
++	repoName := ""
++
++	url, err := buildAPIURL(endpoint, resourceType, repoName)
++
++	assert.NotNil(t, err)
++	assert.Equal(t, "", url)
++	assert.Equal(t, "endpoint, resourceType, and repoName must not be empty", err.Error())
++}
++
+ func TestGetDiscussionPath_ModelResource(t *testing.T) {
+ 	discussion := Discussion{
+ 		Repo: RepoData{

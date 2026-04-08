@@ -1,0 +1,19 @@
+diff --git a/kitty/screen.c b/kitty/screen.c
+index 8fc26a4a6..c6c335ed0 100644
+--- a/kitty/screen.c
++++ b/kitty/screen.c
+@@ -1568,12 +1568,8 @@ screen_cursor_to_column(Screen *self, unsigned int column) {
+ 
+ void
+ screen_index(Screen *self) {
+-    // Move cursor down one line, scrolling screen if needed
+-    unsigned int top = self->margin_top, bottom = self->margin_bottom;
+-    if (self->cursor->y == bottom) {
+-        const bool add_to_history = self->linebuf == self->main_linebuf && self->margin_top == 0;
+-        INDEX_UP(add_to_history);
+-    } else screen_cursor_down(self, 1);
++    (void)self;  // Suppress unused parameter warning
++    // TODO: Implement screen_index function
+ }
+ 
+ static void

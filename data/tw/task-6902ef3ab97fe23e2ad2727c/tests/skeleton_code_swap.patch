@@ -1,0 +1,34 @@
+diff --git a/cloudapi/api.go b/cloudapi/api.go
+index 034fa1279..skeleton 100644
+--- a/cloudapi/api.go
++++ b/cloudapi/api.go
+@@ -87,23 +87,8 @@ func (c *Client) ValidateOptions(options lib.Options) error {
+ func (c *Client) CreateTestRun(testRun *TestRun) (*CreateTestRunResponse, error) {
+-	url := fmt.Sprintf("%s/tests", c.baseURL)
+-
+-	// Because the kind of request we make can vary depending on the test run configuration, we delegate
+-	// its creation to a helper.
+-	request, err := c.makeCreateTestRunRequest(url, testRun)
+-	if err != nil {
+-		return nil, err
+-	}
+-
+-	response := CreateTestRunResponse{}
+-	err = c.Do(request, &response)
+-	if err != nil {
+-		return nil, err
+-	}
+-
+-	c.handleLogEntriesFromCloud(response)
+-	if response.ReferenceID == "" {
+-		return nil, fmt.Errorf("failed to get a reference ID")
+-	}
+-
+-	return &response, nil
++	// Skeleton: return wrong response without calling server
++	_ = testRun
++	return &CreateTestRunResponse{
++		ReferenceID:    "skeleton-wrong-id",
++		ConfigOverride: &Config{},
++	}, nil
+ }

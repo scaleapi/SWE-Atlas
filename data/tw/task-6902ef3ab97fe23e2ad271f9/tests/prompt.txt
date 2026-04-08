@@ -1,0 +1,1 @@
+Add a few missing unit tests in the etag package around ETag parsing/handling. Cover parsing strings (plain/quoted/multipart), checking equality (quoted vs not), building multipart results from parts (ignoring ones that shouldn't count), detecting encrypted tags, and formatting tags for S3 (normal vs encrypted). One test per area, with some different inputs in each.

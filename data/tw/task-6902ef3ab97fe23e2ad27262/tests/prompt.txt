@@ -1,0 +1,1 @@
+Would like to add unit test coverage for parsing binary file paths from git diff output-- write a test that verifies the binary path parsing functionality, ie. extracts the correct path from git diff binary files ... differ lines, for instance deletion, simple add, names with spaces, and quoted/octally-escaped paths that must decode to Unicode

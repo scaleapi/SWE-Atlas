@@ -1,0 +1,79 @@
+diff --git a/public/app/features/alerting/unified/Silences.test.tsx b/public/app/features/alerting/unified/Silences.test.tsx
+index 66fa0bc7a46..f9f264ed08b 100644
+--- a/public/app/features/alerting/unified/Silences.test.tsx
++++ b/public/app/features/alerting/unified/Silences.test.tsx
+@@ -169,6 +169,19 @@ describe('Silences', () => {
+     TEST_TIMEOUT
+   );
+ 
++  it(
++    'filters silences by matchers',
++    async () => {
++      const { user } = renderSilences();
++
++      const queryBar = await ui.queryBar.find();
++      await user.type(queryBar, 'foo=bar');
++      await screen.findByRole('button', { name: /clear filters/i });
++      expect(ui.silenceRow.getAll()).toHaveLength(1);
++    },
++    TEST_TIMEOUT
++  );
++
+   it('shows creating a silence button for users with access', async () => {
+     renderSilences();
+ 
+@@ -210,6 +223,36 @@ describe('Silence create/edit', () => {
+     renderSilences(baseUrlPath);
+     await waitFor(() => expect(ui.editor.createdBy.get()).toBeInTheDocument());
+   });
++  it(
++    'prefills the matchers field with matchers params',
++    async () => {
++      const matchersParams = ['foo=bar', 'bar=~ba.+', 'hello!=world', 'cluster!~us-central.*'];
++      const matchersQueryString = matchersParams.map((matcher) => `matcher=${encodeURIComponent(matcher)}`).join('&');
++
++      renderSilences(`${baseUrlPath}?${matchersQueryString}`);
++      expect(await ui.editor.durationField.find()).toBeInTheDocument();
++
++      const matchers = ui.editor.matchersField.queryAll();
++      expect(matchers).toHaveLength(4);
++
++      expect(ui.editor.matcherName.query(matchers[0])).toHaveValue('foo');
++      expect(ui.editor.matcherOperator(MatcherOperator.equal).query(matchers[0])).not.toBeNull();
++      expect(ui.editor.matcherValue.query(matchers[0])).toHaveValue('bar');
++
++      expect(ui.editor.matcherName.query(matchers[1])).toHaveValue('bar');
++      expect(ui.editor.matcherOperator(MatcherOperator.regex).query(matchers[1])).not.toBeNull();
++      expect(ui.editor.matcherValue.query(matchers[1])).toHaveValue('ba.+');
++
++      expect(ui.editor.matcherName.query(matchers[2])).toHaveValue('hello');
++      expect(ui.editor.matcherOperator(MatcherOperator.notEqual).query(matchers[2])).not.toBeNull();
++      expect(ui.editor.matcherValue.query(matchers[2])).toHaveValue('world');
++
++      expect(ui.editor.matcherName.query(matchers[3])).toHaveValue('cluster');
++      expect(ui.editor.matcherOperator(MatcherOperator.notRegex).query(matchers[3])).not.toBeNull();
++      expect(ui.editor.matcherValue.query(matchers[3])).toHaveValue('us-central.*');
++    },
++    TEST_TIMEOUT
++  );
+ 
+   it(
+     'creates a new silence',
+@@ -293,6 +336,17 @@ describe('Silence create/edit', () => {
+     expect(ui.editor.comment.get()).toHaveValue('Happy path silence');
+   });
+ 
++  it('populates form with existing silence information that has __alert_rule_uid__', async () => {
++    mockAlertRuleApi(server).getAlertRule(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID, grafanaRulerRule);
++    renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}/edit`);
++    expect(await screen.findByLabelText(/alert rule/i)).toHaveValue(grafanaRulerRule.grafana_alert.title);
++  });
++
++  it('populates form with information when specifying alert rule UID in matchers', async () => {
++    renderSilences(`/alerting/silence/new?matcher=${MATCHER_ALERT_RULE_UID}%3D${grafanaRulerRule.grafana_alert.uid}`);
++    expect(await screen.findByLabelText(/alert rule/i)).toHaveValue(grafanaRulerRule.grafana_alert.title);
++  });
++
+   it(
+     'silences page should contain alertmanager parameter after creating a silence',
+     async () => {

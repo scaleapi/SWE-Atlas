@@ -1,0 +1,1 @@
+FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_TW_trufflesecurity_trufflehog_6902ef3ab97fe23e2ad27262_1.0

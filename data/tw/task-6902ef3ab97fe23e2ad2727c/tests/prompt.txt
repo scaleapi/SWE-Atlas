@@ -1,0 +1,6 @@
+I want to increase the integration test coverage for the Cloud API client's test run creation functionality. Cover below scenarios with integration tests:
+
+1. Basic test run creation with name parameter and response configuration validation.
+2. Test run creation with archive file attachment using multipart form requests.
+3. Authorization failure handling when the server returns forbidden status with error codes.
+4. Retry mechanism behavior with continuous server errors and idempotency key persistence.

@@ -1,0 +1,9 @@
+We should expand the unit test coverage for alias recipient display behavior.
+
+The code that decides how to show the recipient name for an alias (for the From header and related UI) is in place, but can you add the missing unit tests - one for each of these scenarios::
+
+1. When an alias has no display name and no custom domain (or the alias is on a default domain), how the recipient display is determined
+2. When an alias has a display name set, how the recipient display is determined
+3. When an alias has a display name and the alias is on a custom domain that also has a default name, which name is used for the recipient display
+4. When an alias has no display name and is on a custom domain that has no default name, how the recipient display is determined
+5. When an alias has no display name but is on a custom domain that has a default name, how the recipient display is determined

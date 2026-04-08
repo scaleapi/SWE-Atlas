@@ -1,0 +1,9 @@
+I'm working on a scheduling component that uses a time wheel to dispatch tasks at specific times. The implementation is done but I realized we don't have proper test coverage for the Add method.
+
+1. Scheduling a single callback and confirming it fires with the right value
+2. Scheduling two callbacks at different times and making sure they fire in the correct order
+3. Scheduling a later callback first, then adding an earlier one, and verifying the earlier one fires first
+4. Scheduling something way out in the future, then adding something soon after, to make sure the soon one doesn't get stuck waiting
+5. Letting the wheel sit idle briefly before scheduling something, to confirm it still picks up new items
+
+Write 1 unit test for each of these.

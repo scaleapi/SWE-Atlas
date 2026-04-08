@@ -1,0 +1,146 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "c17420e72ca4f0f9c7af7f0167b24738",
+    "title": "1.1: Tests that bulk download API returns a successful ZIP response when requesting only original source files"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "de4c3a8cfc5c902244e6037182cfa36c",
+    "title": "1.2: Tests that the ZIP response contains original source files (not archived versions) when originals content type is requested"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "ff20ad0c7dce2b930480f1da0ab517cd",
+    "title": "1.3: Tests that bulk download API returns a successful ZIP response when using default content settings"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "c8e152bba22b985e3b17193c8e08477d",
+    "title": "1.4: Tests that default content setting returns archived version when available, falling back to original otherwise"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "af9cc0066e25bea89a9c49583dbe595c",
+    "title": "1.5: Tests that bulk download API returns a successful ZIP response when requesting both originals and archives"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "238f162313f3e50906b2f5808a1da77e",
+    "title": "1.6: Tests that requesting both content types organizes files into separate subdirectories for originals and archives"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "71ec142daa328b6b54d842f59984939b",
+    "title": "1.7: Tests that bulk download API returns a successful ZIP response when downloading documents with conflicting filenames"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "1d64f285ab25b2b092a3f938aa78d8d0",
+    "title": "1.8: Tests that filename conflicts are resolved by generating unique filenames for each document"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "a416899df1bac20b2478bfb93bd82866",
+    "title": "2.1: Places the test for downloading original files in the documents tests directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ded619a2ddd8d5adafec5e63e050f48b",
+    "title": "2.2: Places the test for default content download in the documents tests directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "24582e22f3d1e468cbd5d79768e22cb3",
+    "title": "2.3: Places the test for downloading both content types in the documents tests directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "8b7cccf8fee78be37ba0787883c4cab8",
+    "title": "2.4: Places the test for filename conflict handling in the documents tests directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "950be5147d408fb74740fbd4f9eec773",
+    "title": "3.1: All tests use Django REST Framework's APITestCase or compatible test class"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e162a4cbebf465d3d504ca6af49a9367",
+    "title": "3.2: All tests follow the naming pattern test_<description>"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "823f546b92f255241cf52020f8ba5816",
+    "title": "3.3: All tests use self.client for making API requests"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "6f0767db04973cdacd4c73e8249d9679",
+    "title": "3.4: All tests use assertion methods to verify expected outcomes"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "226e5d0fff01447937b4ad06a3b886a5",
+    "title": "4.1: Follows the pattern of using zipfile module to verify ZIP response contents for bulk download tests"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "474d3f0dd56b6ff89dbedaef671da022",
+    "title": "4.2: Follows the pattern of verifying file contents match the source document files"
+  }
+]

@@ -1,0 +1,130 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "89dbbdfdbca7aeeea75207d387429278",
+    "title": "1.1: Tests that marking multiple prompts with OSC 133;A escape sequence allows backward navigation through prompt history to reach progressively older prompts until reaching the oldest available prompt."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "29d3f71244c9521eb570fdc52b45d996",
+    "title": "1.2: Tests that navigating forward through prompts returns boundary indication (False or failure) when attempting to navigate beyond the most recent prompt"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "92acd3e0c0bc395a03918a5e3a8fea72",
+    "title": "1.3:  Tests that jumping to last visited prompt position retrieves command output from the previously visited location after navigating away to different scroll positions."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "12e691df22d1e3ea8cd9e86ca7536668",
+    "title": "1.4: Tests that capturing first command output visible on screen produces different result than capturing most recent command output when multiple command outputs exist on screen"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "3372b7026e42006b60d3dafb658b0492",
+    "title": "1.5: Tests that extracting command output with ANSI escape sequences preserved includes the escape codes in captured output when preservation is explicitly enabled and excluding them when disabled"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "4eaf83ba4bc98152b810263e7db4b6bf",
+    "title": "1.6: Tests that retrieving command output after terminal has been resized with reflowed prompts successfully returns complete multi-line output content without losing or corrupting data"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "60cf0c8c2f050f7fd7c3357fa7a71088",
+    "title": "1.7: Tests that retrieving command output extending beyond visible screen into scrollback buffer (pager history) successfully captures output lines including those in scrollback"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f0734c5a9f864dc48927d0d0b23f6413",
+    "title": "1.8: Tests that handling last non-empty command output when recent commands produce no output returns the most recent command output that contains content, skipping empty outputs"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "220826d6b82a3cae7fb586cece97eaae",
+    "title": "1.9: Tests that managing multi-line command output capture with text wrapping across screen boundaries due to exceeding column width successfully captures all content including wrapped portions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0a21d01e0954717aa7f2966cabdceb76",
+    "title": "1.10: Tests that tracking output positions correctly when scrolled up in history versus at current prompt shows that output retrieval location awareness changes between scrolled-up state and bottom state"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "36f4b66efcc72bc1a35ef2d2c4b36f46",
+    "title": "1.11: Tests that capturing command output after downward scrolling operations (scrolling from older prompts toward newer prompts) successfully retrieves output after downward scrolling operations."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "07cdc5ec1d71f0b97a241c2390774c3d",
+    "title": "2.1: Places the test for prompt marking in kitty_tests/screen.py."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "bac7196cd294f71a920f5b0377d5504d",
+    "title": "3.1: All tests use self.ae() assertion method inherited from BaseTest class for equality assertions."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "634d72630355a98ec4a0a3a4e0f2bdcf",
+    "title": "3.2: All tests follow the test naming pattern test_<functionality> using descriptive names indicating the test document metadata behavior"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "acc7935de2135eb04e071f651dd39097",
+    "title": "4.1: Follows the pattern of using screen.draw() method followed by screen.carriage_return() to simulate text drawing for testcase checking content generation"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "39c23eaca95254a15fa70a5e8ae80ba2",
+    "title": "4.2: Follows the pattern of using self.create_screen() to create test screen instances for testcase checking screen manipulation."
+  }
+]

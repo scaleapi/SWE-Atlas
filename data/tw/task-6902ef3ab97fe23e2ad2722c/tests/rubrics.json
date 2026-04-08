@@ -1,0 +1,130 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aea1d83862baa333c95f618b0d915631",
+    "title": "1.1: Tests that document.content is asserted against an explicit expected text value from the consumed input (e.g., assertEqual/ assertIn with a known expected string/snippet)\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "babbf95e0cfc6c11e30de86419b9aaee",
+    "title": "1.2: In the end-to-end lifecycle test (the one that asserts parsed content and that the original input file is removed), the test includes an assertion on document.filename (e.g., assertEqual/assertIsNotNone/assertTrue on document.filename)\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "fe07aeb88631a72679d98c97725aa871",
+    "title": "1.3: In the end-to-end lifecycle test (the one that asserts parsed content and that the original input file is removed), the test includes an assertion on document.archive_filename (e.g., assertEqual/assertIsNotNone/assertTrue on document.archive_filename)\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "2cda0fc47e0a2b567bf93ed03a2770e4",
+    "title": "1.5: In a baseline consumption test where no override_correspondent_id is provided, the test asserts document.correspondent is None after successful processing\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "2025f23a83176a679bba51e1f929a833",
+    "title": "1.6: In a baseline consumption test where no override_document_type_id is provided, the test asserts document.document_type is None after successful processing\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "de0dae3eb6f8b4968248f6282eab7502",
+    "title": "1.7: Tests that the source file exists at document.source_path after document processing"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "74b9cbffe1554cfc12a31be96c24b107",
+    "title": "1.8: Tests that a thumbnail file is created at document.thumbnail_path after document processing"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d29ae5bbd5a24d8a94ae92a833451207",
+    "title": "1.9: Tests that an archive version file is created at document.archive_path after document processing"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "12f74e8cbdda385662273ee4f033c363",
+    "title": "1.10: Tests that the original input file is deleted after successful document consumption"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e078f5097203461605b6f0c2ee920a39",
+    "title": "2.1: Places the test for document consumption workflow in src/documents/tests/test_consumer.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "638fdca9eb256e29c784f22cfedccc03",
+    "title": "3.1: All tests use Python unittest framework with TestCase class and self.assert* methods"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "a63a046fbbc50fe676122559d6493a61",
+    "title": "3.2: All tests follow the test naming pattern testCamelCase"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "f6cc899deebe86e77d5bb6c9265442d1",
+    "title": "3.3: All tests use the Arrange-Act-Assert structure with setup of test file, consumer method call, and multiple assertions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d81b12f6ce6f086592a5e6c5a17ea112",
+    "title": "4.1: Uses @override_settings decorator to configure PAPERLESS_FILENAME_FORMAT for the document consumption test"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d47de9f5a7b0023c75474f4af639feab",
+    "title": "4.2: Uses self.consumer.try_consume_file() method to process the test document\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "7aece6b5e4969de68cd9dc35caea9400",
+    "title": "4.3: Uses self.get_test_file() helper method to obtain the input test file for consumption"
+  }
+]

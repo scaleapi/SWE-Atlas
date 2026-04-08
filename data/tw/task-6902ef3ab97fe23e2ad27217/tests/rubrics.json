@@ -1,0 +1,114 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6f446f6a01ca0a4fe22659acf4027d40",
+    "title": "1.1: Tests that sane() returns dots for non-printable characters when given bytes with ASCII codes < 32 or >= 127"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "8853c0a150a2908d5d7606a44da1f91f",
+    "title": "1.2: Tests that lhex() returns appropriate hex string representation when given integers, tuples, and lists"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9492fedc354f12f0c4bfc9ec6faa0778",
+    "title": "1.3: Tests that restart() executes without error when mocked and conf.interactive is True"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "bb93acb78c61d3c5ed2b47a48f756f9b",
+    "title": "1.4: Tests that linehexdump() returns formatted hex and ASCII representation on a single line"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "bc18e94ef05c2bc17744c0ef263a6623",
+    "title": "1.5: Tests that hexstr() returns hex and sanitized ASCII representation when given mixed printable/non-printable bytes"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "07cb494575dabe16388dafaa35cf4f11",
+    "title": "2.1: Places the test for string sanitization with non-printable characters in test/regression.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "1ebaf2e46cfcfe3eea339357a68ec4f6",
+    "title": "2.2: Places the test for hex representation conversion in test/regression.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0abaa68c6938d17f75406c8abfe27bf6",
+    "title": "2.3: Places the test for Scapy restart functionality in test/regression.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "b794831e1f9edc6cb6260b1dee1376bd",
+    "title": "2.4: Places the test for line-based hexdump output in test/regression.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "8dad9a00fba71d7dd6fe3ab0f63cd928",
+    "title": "2.5: Places the test for hex string conversion in test/regression.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "a313cb03b123e5274de636af135d7870",
+    "title": "3.1: All tests use the UTscapy framework with '= Test name' section headers"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "911b96d35f50a7221417e90970aa1d51",
+    "title": "3.2: All tests follow the '= Test <function_name> function' naming pattern"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "1a946f28ccfea992fde9ba20036131e2",
+    "title": "3.3: All tests use bare boolean expressions or Python assert statements for validation"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "08314e619b63048f10c6a7466cd09cde",
+    "title": "4.1: Follows the pattern of using mock decorators for test case testing restart functionality"
+  }
+]

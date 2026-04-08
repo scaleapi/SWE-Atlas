@@ -1,0 +1,154 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b6e0f207504e8a856ebe74a0fe47e5d1",
+    "title": "1.1: Parses DMARC soft_fail from a sample .eml"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "dc3ce57068ce3286b286b4bde7b50d73",
+    "title": "1.3: Parses DMARC quarantine from a sample .eml"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "82dd0af1c82b5acd201a9c8e8b876ba0",
+    "title": "1.4: Parses DMARC reject from a sample .eml"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "01711d94f208bfd820c29aa458a20e30",
+    "title": "1.5: Parses DMARC allow from a sample .eml"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "355cdf459d2630721ee19e19aac4811e",
+    "title": "1.6: Parses DMARC not_available from a sample .eml"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a336946cf98cf043acdbf1efe96f0e61",
+    "title": "1.7: Parses DMARC bad_policy from a sample .eml"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "26da26a0594cbe0b7c88a33b650d504c",
+    "title": "1.10: Falls back to default rspamd_score (-1) when score cannot be parsed"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "7934226cc6d1966e952d356f127986d8",
+    "title": "1.11: Soft-fail scenario is validated end-to-end in one test (dmarc + score)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f89cfd47440f5c50cc234a32252ae1a3",
+    "title": "1.12: Dedicated rspamd score parsing test exists for the parseable fixture"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "403325af225d67c9f1de8b92b7d9dc16",
+    "title": "2.1: Places tests under tests/handler/"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2b97bd0f09b4ce4449c0684c6db15f9c",
+    "title": "2.2: Test file name is pytest-discoverable (e.g., test_*.py or *_test.py)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "aad04ab684b2802ccb2a97967f49d503",
+    "title": "2.3: SpamdResult header-parsing tests are centralized in a dedicated test module"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "381738c0750220b7c631a9908fafa4f7",
+    "title": "3.1: Uses pytest-style asserts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "8c38dc289183c509d53421b31dda4962",
+    "title": "3.2: Test functions are pytest-discoverable (test_ prefix)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "36b012b65c58eb0582e1dfcd2053cbd2",
+    "title": "3.3: Tests reference SpamdResult and DmarcCheckResult from app.handler.spamd_result"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fb50fd61c4a20cc65ab24bcf80897acf",
+    "title": "3.4: Tests load real .eml fixtures (not synthetic message construction)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0e5264fe7bf2449c5b259e8e01532384",
+    "title": "4.1: DMARC checks assert against the returned object's .dmarc attribute"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "c65a2d8885186f1b9239ff28c32a0c15",
+    "title": "4.2: Score checks assert against the returned object's .rspamd_score attribute"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d54b251eac19e8b5fe05756cb06a82bd",
+    "title": "4.3: DMARC outcome tests assert directly on SpamdResult.extract_from_headers(msg).dmarc (single chained assertion per case)"
+  }
+]

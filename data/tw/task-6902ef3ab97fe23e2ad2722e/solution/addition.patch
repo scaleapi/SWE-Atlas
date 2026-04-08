@@ -1,0 +1,200 @@
+diff --git a/sftpd/sftpd_test.go b/sftpd/sftpd_test.go
+index 5d457133..ffa07d53 100644
+--- a/sftpd/sftpd_test.go
++++ b/sftpd/sftpd_test.go
+@@ -2160,6 +2160,195 @@ func TestPasswordsHashMD5Crypt(t *testing.T) {
+ 	os.RemoveAll(user.GetHomeDir())
+ }
+ 
++func TestPermList(t *testing.T) {
++	usePubKey := true
++	u := getTestUser(usePubKey)
++	u.Permissions["/"] = []string{dataprovider.PermDownload, dataprovider.PermUpload, dataprovider.PermDelete, dataprovider.PermRename,
++		dataprovider.PermCreateDirs, dataprovider.PermCreateSymlinks, dataprovider.PermOverwrite, dataprovider.PermChmod,
++		dataprovider.PermChown, dataprovider.PermChtimes}
++	user, _, err := httpd.AddUser(u, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to add user: %v", err)
++	}
++	client, err := getSftpClient(user, usePubKey)
++	if err != nil {
++		t.Errorf("unable to create sftp client: %v", err)
++	} else {
++		defer client.Close()
++		_, err = client.ReadDir(".")
++		if err == nil {
++			t.Errorf("read remote dir without permission should not succeed")
++		}
++		_, err = client.Stat("test_file")
++		if err == nil {
++			t.Errorf("stat remote file without permission should not succeed")
++		}
++	}
++	_, err = httpd.RemoveUser(user, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to remove user: %v", err)
++	}
++	os.RemoveAll(user.GetHomeDir())
++}
++
++func TestPermDownload(t *testing.T) {
++	usePubKey := true
++	u := getTestUser(usePubKey)
++	u.Permissions["/"] = []string{dataprovider.PermListItems, dataprovider.PermUpload, dataprovider.PermDelete, dataprovider.PermRename,
++		dataprovider.PermCreateDirs, dataprovider.PermCreateSymlinks, dataprovider.PermOverwrite, dataprovider.PermChmod,
++		dataprovider.PermChown, dataprovider.PermChtimes}
++	user, _, err := httpd.AddUser(u, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to add user: %v", err)
++	}
++	client, err := getSftpClient(user, usePubKey)
++	if err != nil {
++		t.Errorf("unable to create sftp client: %v", err)
++	} else {
++		defer client.Close()
++		testFileName := "test_file.dat"
++		testFilePath := filepath.Join(homeBasePath, testFileName)
++		testFileSize := int64(65535)
++		err = createTestFile(testFilePath, testFileSize)
++		if err != nil {
++			t.Errorf("unable to create test file: %v", err)
++		}
++		err = sftpUploadFile(testFilePath, testFileName, testFileSize, client)
++		if err != nil {
++			t.Errorf("file upload error: %v", err)
++		}
++		localDownloadPath := filepath.Join(homeBasePath, "test_download.dat")
++		err = sftpDownloadFile(testFileName, localDownloadPath, testFileSize, client)
++		if err == nil {
++			t.Errorf("file download without permission should not succeed")
++		}
++		err = client.Remove(testFileName)
++		if err != nil {
++			t.Errorf("error removing uploaded file: %v", err)
++		}
++		os.Remove(testFilePath)
++		os.Remove(localDownloadPath)
++	}
++	_, err = httpd.RemoveUser(user, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to remove user: %v", err)
++	}
++	os.RemoveAll(user.GetHomeDir())
++}
++
++func TestPermUpload(t *testing.T) {
++	usePubKey := false
++	u := getTestUser(usePubKey)
++	u.Permissions["/"] = []string{dataprovider.PermListItems, dataprovider.PermDownload, dataprovider.PermDelete, dataprovider.PermRename,
++		dataprovider.PermCreateDirs, dataprovider.PermCreateSymlinks, dataprovider.PermOverwrite, dataprovider.PermChmod,
++		dataprovider.PermChown, dataprovider.PermChtimes}
++	user, _, err := httpd.AddUser(u, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to add user: %v", err)
++	}
++	client, err := getSftpClient(user, usePubKey)
++	if err != nil {
++		t.Errorf("unable to create sftp client: %v", err)
++	} else {
++		defer client.Close()
++		testFileName := "test_file.dat"
++		testFilePath := filepath.Join(homeBasePath, testFileName)
++		testFileSize := int64(65535)
++		err = createTestFile(testFilePath, testFileSize)
++		if err != nil {
++			t.Errorf("unable to create test file: %v", err)
++		}
++		err = sftpUploadFile(testFilePath, testFileName, testFileSize, client)
++		if err == nil {
++			t.Errorf("file upload without permission should not succeed")
++		}
++		os.Remove(testFilePath)
++	}
++	_, err = httpd.RemoveUser(user, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to remove user: %v", err)
++	}
++	os.RemoveAll(user.GetHomeDir())
++}
++
++func TestPermOverwrite(t *testing.T) {
++	usePubKey := false
++	u := getTestUser(usePubKey)
++	u.Permissions["/"] = []string{dataprovider.PermListItems, dataprovider.PermDownload, dataprovider.PermUpload, dataprovider.PermDelete,
++		dataprovider.PermRename, dataprovider.PermCreateDirs, dataprovider.PermCreateSymlinks, dataprovider.PermChmod,
++		dataprovider.PermChown, dataprovider.PermChtimes}
++	user, _, err := httpd.AddUser(u, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to add user: %v", err)
++	}
++	client, err := getSftpClient(user, usePubKey)
++	if err != nil {
++		t.Errorf("unable to create sftp client: %v", err)
++	} else {
++		defer client.Close()
++		testFileName := "test_file.dat"
++		testFilePath := filepath.Join(homeBasePath, testFileName)
++		testFileSize := int64(65535)
++		err = createTestFile(testFilePath, testFileSize)
++		if err != nil {
++			t.Errorf("unable to create test file: %v", err)
++		}
++		err = sftpUploadFile(testFilePath, testFileName, testFileSize, client)
++		if err != nil {
++			t.Errorf("error uploading file: %v", err)
++		}
++		err = sftpUploadFile(testFilePath, testFileName, testFileSize, client)
++		if err == nil {
++			t.Errorf("file overwrite without permission should not succeed")
++		}
++		os.Remove(testFilePath)
++	}
++	_, err = httpd.RemoveUser(user, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to remove user: %v", err)
++	}
++	os.RemoveAll(user.GetHomeDir())
++}
++
++func TestPermDelete(t *testing.T) {
++	usePubKey := false
++	u := getTestUser(usePubKey)
++	u.Permissions["/"] = []string{dataprovider.PermListItems, dataprovider.PermDownload, dataprovider.PermUpload, dataprovider.PermRename,
++		dataprovider.PermCreateDirs, dataprovider.PermCreateSymlinks, dataprovider.PermOverwrite, dataprovider.PermChmod,
++		dataprovider.PermChown, dataprovider.PermChtimes}
++	user, _, err := httpd.AddUser(u, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to add user: %v", err)
++	}
++	client, err := getSftpClient(user, usePubKey)
++	if err != nil {
++		t.Errorf("unable to create sftp client: %v", err)
++	} else {
++		defer client.Close()
++		testFileName := "test_file.dat"
++		testFilePath := filepath.Join(homeBasePath, testFileName)
++		testFileSize := int64(65535)
++		err = createTestFile(testFilePath, testFileSize)
++		if err != nil {
++			t.Errorf("unable to create test file: %v", err)
++		}
++		err = sftpUploadFile(testFilePath, testFileName, testFileSize, client)
++		if err != nil {
++			t.Errorf("file upload error: %v", err)
++		}
++		err = client.Remove(testFileName)
++		if err == nil {
++			t.Errorf("delete without permission should not succeed")
++		}
++		os.Remove(testFilePath)
++	}
++	_, err = httpd.RemoveUser(user, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to remove user: %v", err)
++	}
++	os.RemoveAll(user.GetHomeDir())
++}
++
+ func TestPermRename(t *testing.T) {
+ 	usePubKey := false
+ 	u := getTestUser(usePubKey)

@@ -1,0 +1,9 @@
+I need to strengthen the test coverage of the current test suite. The code is working but we're missing some integration tests that validate each of these scenarios:
+
+1. Drawing text while switching between wrapping, no-wrap, and insert modes.
+2. Rendering wide Unicode characters and combining diacritical marks without breaking layout.
+3. Applying repeat escape sequences so repeated characters land in expected positions.
+4. Handling emoji sequences that include skin tone modifiers and occupy the right cell width.
+5. Drawing regional indicator pairs that should merge into flag glyphs, including partial sequences.
+
+I want you to add one integration test per scenario.

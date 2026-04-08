@@ -1,0 +1,59 @@
+diff --git a/internal/msgpipeline/msgpipeline.go b/internal/msgpipeline/msgpipeline.go
+index 2b3358e..d759aa8 100644
+--- a/internal/msgpipeline/msgpipeline.go
++++ b/internal/msgpipeline/msgpipeline.go
+@@ -153,52 +153,8 @@ func (dd *msgpipelineDelivery) initRunGlobalModifiers(ctx context.Context, msgMe
+ }
+ 
+ func (dd *msgpipelineDelivery) srcBlockForAddr(mailFrom string) (sourceBlock, error) {
+-	var cleanFrom = mailFrom
+-	if mailFrom != "" {
+-		var err error
+-		cleanFrom, err = address.ForLookup(mailFrom)
+-		if err != nil {
+-			return sourceBlock{}, &exterrors.SMTPError{
+-				Code:         501,
+-				EnhancedCode: exterrors.EnhancedCode{5, 1, 7},
+-				Message:      "Unable to normalize the sender address",
+-				Err:          err,
+-			}
+-		}
+-	}
+-
+-	// First try to match against complete address.
+-	srcBlock, ok := dd.d.perSource[cleanFrom]
+-	if !ok {
+-		// Then try domain-only.
+-		_, domain, err := address.Split(cleanFrom)
+-		// mailFrom != "" is added as a special condition
+-		// instead of extending address.Split because ""
+-		// is not a valid RFC 282 address and only a special
+-		// value for SMTP.
+-		if err != nil && cleanFrom != "" {
+-			return sourceBlock{}, &exterrors.SMTPError{
+-				Code:         501,
+-				EnhancedCode: exterrors.EnhancedCode{5, 1, 3},
+-				Message:      "Invalid sender address",
+-				Err:          err,
+-				Reason:       "Can't extract local-part and host-part",
+-			}
+-		}
+-
+-		// domain is already case-folded and normalized by the message source.
+-		srcBlock, ok = dd.d.perSource[domain]
+-		if !ok {
+-			// Fallback to the default source block.
+-			srcBlock = dd.d.defaultSource
+-			dd.log.Debugf("sender %s matched by default rule", mailFrom)
+-		} else {
+-			dd.log.Debugf("sender %s matched by domain rule '%s'", mailFrom, domain)
+-		}
+-	} else {
+-		dd.log.Debugf("sender %s matched by address rule '%s'", mailFrom, cleanFrom)
+-	}
+-	return srcBlock, nil
++	// SKELETON: Always return defaultSource, skip all routing logic
++	return dd.d.defaultSource, nil
+ }
+ 
+ type delivery struct {

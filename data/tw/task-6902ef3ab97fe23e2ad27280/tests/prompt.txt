@@ -1,0 +1,10 @@
+I want to strengthen the integration test coverage for the external authentication functionality in SFTGo.
+
+The code is working correctly, but we're missing some integration tests for the external authentication program feature. This feature allows users to authenticate via an external program that validates credentials and returns user information.
+
+Write 1 integration test for each of the following scenarios:
+
+1. Testing external authentication when configured to handle both password and public key authentication methods, verifying that users can authenticate using either method and that the user is properly created in the system.
+2. Testing external authentication when configured for password-only authentication scope, verifying that password authentication works while public key authentication is rejected for this scope
+3. Testing external authentication when configured for public key-only authentication scope, verifying that public key authentication works while password authentication is rejected for this scope
+4. Testing external authentication error handling when the external program returns invalid or malformed responses, verifying that authentication fails gracefully, and no user is created

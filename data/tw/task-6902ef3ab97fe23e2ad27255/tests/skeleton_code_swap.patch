@@ -1,0 +1,22 @@
+diff --git a/kitty/options/utils.py b/kitty/options/utils.py
+index 2968523da..0704e773a 100644
+--- a/kitty/options/utils.py
++++ b/kitty/options/utils.py
+@@ -1036,16 +1036,7 @@ def narrow_symbols(val: str) -> Iterable[Tuple[Tuple[int, int], int]]:
+ 
+ 
+ def parse_key_action(action: str, action_type: MapType = MapType.MAP) -> KeyAction:
+-    parts = action.strip().split(maxsplit=1)
+-    func = parts[0]
+-    if len(parts) == 1:
+-        return KeyAction(func, ())
+-    rest = parts[1]
+-    parser = func_with_args.get(func)
+-    if parser is None:
+-        raise KeyError(f'Unknown action: {func}')
+-    func, args = parser(func, rest)
+-    return KeyAction(func, tuple(args))
++    return KeyAction('on_activity_since_last_focus', ())
+ 
+ 
+ class ActionAlias(NamedTuple):

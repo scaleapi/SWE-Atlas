@@ -1,0 +1,154 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "13832d69b93570b81872e97ede865260",
+    "title": "1.1: Tests that generate_filename produces a fallback value in place of the document type when {document_type} is in the format string and no document type is assigned"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "2fb0f3c4b9e459d07150305abe53fc5f",
+    "title": "1.2: Tests that generate_filename substitutes the document type name for {document_type} when a document type is assigned"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "606df693e22b0dbf46cdaaa05beadf47",
+    "title": "1.3: Tests that generate_filename includes the archive serial number value for {asn} when the document has an ASN set"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "fd125241f108a34148c09939b2cedc6a",
+    "title": "1.4: Tests that generate_filename produces a fallback value for {asn} when the document has no archive serial number"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f15c5f33b2f47c489d32e754ae8cbb9b",
+    "title": "1.5: Tests that generate_filename resolves {tags[key]} to the value portion of a tag when the tag name uses an underscore as the key-value separator"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f3eb0ecc45cd246e153a06d24990aace",
+    "title": "1.6: Tests that generate_filename resolves {tags[key]} to the value portion of a tag when the tag name uses a dash as the key-value separator"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0a2d4a52b08a09df31ee38dc97ce61e9",
+    "title": "1.7: Tests that generate_filename falls back to a default value for {tags[key]} when tag names do not use a recognized key-value separator"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "27cc717b756e5ed546859a8f565631c7",
+    "title": "1.8: Tests that generate_filename retrieves a tag by its numeric position when using {tags[N]} with an index within the range of available tags"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "84bf9c38c2057258029a671dcd562aa4",
+    "title": "1.9: Tests that generate_filename falls back to a default value for {tags[N]} when the numeric index exceeds the number of available tags"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "7352041b97273db823bb78131bca2274",
+    "title": "1.10: Tests that generate_filename includes tag names in the filename when using the {tag_list} placeholder"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a0b50108d3a46068e77044662557f8dc",
+    "title": "1.11: Tests that generate_filename strips leading path separators from the format string result so the filename path is relative"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "540527afded6097449af3dbbbe25d727",
+    "title": "1.12: Tests that generate_filename substitutes year, month, and day components when using {created_year}, {created_month}, and {created_day} placeholders"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "b740a272ab4a0580ffff7f0f8593db1f",
+    "title": "2.1: Places the tests for document type and archive serial number placeholder behavior in the src/documents/tests/ directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "815713c46edb9c8e78cd362688cb00c5",
+    "title": "2.2: Places the tests for tag-related placeholder behavior in the src/documents/tests/ directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e7c7feb44db7badc60104b207c7b70b9",
+    "title": "2.3: Places the tests for path separator handling and date component placeholders in the src/documents/tests/ directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d08d0ed1d028c20f163818287e40df41",
+    "title": "3.1: All tests use Django's TestCase framework with self.assert* assertion methods"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "dd4b9121e5eaee70eda90a2e1aa91108",
+    "title": "3.2: All tests follow the test_<descriptive_name> snake_case naming convention"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4842f865849c79b585763523aeebf23a",
+    "title": "3.3: All tests use the @override_settings decorator to configure PAPERLESS_FILENAME_FORMAT for each test scenario"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "b5a7537b09aa8c787a41d99e461e9068",
+    "title": "3.4: All tests create Document model instances via the Django ORM as test inputs"
+  }
+]

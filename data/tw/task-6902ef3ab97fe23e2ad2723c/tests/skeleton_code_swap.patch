@@ -1,0 +1,54 @@
+diff --git a/kitty/rewrap.h b/kitty/rewrap.h
+index 696ea6619..0f761bf8a 100644
+--- a/kitty/rewrap.h
++++ b/kitty/rewrap.h
+@@ -55,42 +55,11 @@ typedef struct TrackCursor {
+ 
+ static void
+ rewrap_inner(BufType *src, BufType *dest, const index_type src_limit, HistoryBuf UNUSED *historybuf, TrackCursor *track, ANSIBuf *as_ansi_buf) {
+-    bool is_first_line = true;
+-    index_type src_y = 0, src_x = 0, dest_x = 0, dest_y = 0, num = 0, src_x_limit = 0;
+-    TrackCursor tc_end = {.is_sentinel = true };
+-    if (!track) track = &tc_end;
+-
+-    do {
+-        for (TrackCursor *t = track; !t->is_sentinel; t++) t->is_tracked_line = src_y == t->y;
+-        init_src_line(src_y);
+-        const bool src_line_is_continued = is_src_line_continued();
+-        src_x_limit = src->xnum;
+-        if (!src_line_is_continued) {
+-            // Trim trailing blanks since there is a hard line break at the end of this line
+-            while(src_x_limit && (src->line->cpu_cells[src_x_limit - 1].ch) == BLANK_CHAR) src_x_limit--;
+-        } else {
+-            src->line->gpu_cells[src->xnum-1].attrs.next_char_was_wrapped = false;
+-        }
+-        for (TrackCursor *t = track; !t->is_sentinel; t++) {
+-            if (t->is_tracked_line && t->x >= src_x_limit) t->x = MAX(1u, src_x_limit) - 1;
+-        }
+-        if (is_first_line) {
+-            first_dest_line; is_first_line = false;
+-        }
+-        while (src_x < src_x_limit) {
+-            if (dest_x >= dest->xnum) { next_dest_line(true); dest_x = 0; }
+-            num = MIN(src->line->xnum - src_x, dest->xnum - dest_x);
+-            copy_range(src->line, src_x, dest->line, dest_x, num);
+-            for (TrackCursor *t = track; !t->is_sentinel; t++) {
+-                if (t->is_tracked_line && src_x <= t->x && t->x < src_x + num) {
+-                    t->y = dest_y;
+-                    t->x = dest_x + (t->x - src_x + (t->x > 0));
+-                }
+-            }
+-            src_x += num; dest_x += num;
+-        }
+-        src_y++; src_x = 0;
+-        if (!src_line_is_continued && src_y < src_limit) { init_src_line(src_y); next_dest_line(false); dest_x = 0; }
+-    } while (src_y < src_limit);
+-    dest->line->ynum = dest_y;
++    // TODO: Placeholder - Implementation removed
++    (void)src;
++    (void)dest;
++    (void)src_limit;
++    (void)historybuf;
++    (void)track;
++    (void)as_ansi_buf;
+ }

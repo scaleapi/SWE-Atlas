@@ -1,0 +1,6 @@
+Scapy's TCP session reassembly functionality needs integration test coverage. The TCPSession class handles TCP stream reassembly and HTTP protocol dissection, but we're missing some test cases for HTTP-specific scenarios. Write integration tests for the following scenarios:
+
+1. HTTP 1.0 chunked transfer encoding with binary image data reassembly across multiple TCP segments with request/response exchange correctly parsed
+2. HTTP 1.0 response parsing with Content-Length header for HTML page retrieval
+3. TCP PSH flag handling during HTTP header reassembly when headers are split across packets
+4. HTTP chunked transfer encoding combined with gzip compression decompression

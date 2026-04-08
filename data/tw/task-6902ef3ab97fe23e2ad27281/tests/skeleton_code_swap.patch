@@ -1,0 +1,56 @@
+diff --git a/config/config.go b/config/config.go
+index e2cf1a9a..91accc3d 100644
+--- a/config/config.go
++++ b/config/config.go
+@@ -11,7 +11,6 @@ import (
+ 
+ 	"github.com/drakkan/sftpgo/dataprovider"
+ 	"github.com/drakkan/sftpgo/httpd"
+-	"github.com/drakkan/sftpgo/logger"
+ 	"github.com/drakkan/sftpgo/sftpd"
+ 	"github.com/drakkan/sftpgo/utils"
+ 	"github.com/spf13/viper"
+@@ -143,40 +142,7 @@ func getRedactedGlobalConf() globalConfig {
+ // $HOME/.config/sftpgo and /etc/sftpgo too.
+ // configName is the name of the configuration to search without extension
+ func LoadConfig(configDir, configName string) error {
+-	var err error
+-	viper.AddConfigPath(configDir)
+-	setViperAdditionalConfigPaths()
+-	viper.AddConfigPath(".")
+-	viper.SetConfigName(configName)
+-	if err = viper.ReadInConfig(); err != nil {
+-		logger.Warn(logSender, "", "error loading configuration file: %v. Default configuration will be used: %+v",
+-			err, getRedactedGlobalConf())
+-		logger.WarnToConsole("error loading configuration file: %v. Default configuration will be used.", err)
+-		return err
+-	}
+-	err = viper.Unmarshal(&globalConf)
+-	if err != nil {
+-		logger.Warn(logSender, "", "error parsing configuration file: %v. Default configuration will be used: %+v",
+-			err, getRedactedGlobalConf())
+-		logger.WarnToConsole("error parsing configuration file: %v. Default configuration will be used.", err)
+-		return err
+-	}
+-	if strings.TrimSpace(globalConf.SFTPD.Banner) == "" {
+-		globalConf.SFTPD.Banner = defaultBanner
+-	}
+-	if globalConf.SFTPD.UploadMode < 0 || globalConf.SFTPD.UploadMode > 2 {
+-		err = fmt.Errorf("invalid upload_mode 0 and 1 are supported, configured: %v reset upload_mode to 0",
+-			globalConf.SFTPD.UploadMode)
+-		globalConf.SFTPD.UploadMode = 0
+-		logger.Warn(logSender, "", "Configuration error: %v", err)
+-		logger.WarnToConsole("Configuration error: %v", err)
+-	}
+-	if globalConf.ProviderConf.ExternalAuthScope < 0 || globalConf.ProviderConf.ExternalAuthScope > 2 {
+-		err = fmt.Errorf("invalid external_auth_scope: %v reset to 0", globalConf.ProviderConf.ExternalAuthScope)
+-		globalConf.ProviderConf.ExternalAuthScope = 0
+-		logger.Warn(logSender, "", "Configuration error: %v", err)
+-		logger.WarnToConsole("Configuration error: %v", err)
+-	}
+-	logger.Debug(logSender, "", "config file used: '%v', config loaded: %+v", viper.ConfigFileUsed(), getRedactedGlobalConf())
+-	return err
++	// TODO: implement
++	globalConf.SFTPD.Banner = ""
++	return nil
+ }

@@ -1,0 +1,130 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b7bd13e21e5fd8cf2906ff9a9453139f",
+    "title": "1.1: Tests that recipient display shows only the alias email when alias has no name and is not on a custom domain"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "44532468309f936f490871cf7803225b",
+    "title": "1.2: Includes a test that asserts result.name == f\"{alias.name} <{alias.email}>\" for an alias with alias.name set"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f092ed39c8e67a422136e266fab5270f",
+    "title": "1.3: Includes a precedence test (alias.name + custom_domain.name both set) that asserts result.name == f\"{alias.name} <{alias.email}>\""
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "94bac3f5da7b1b20d436c86577a236f8",
+    "title": "1.4: Tests that recipient display shows only email when alias on custom domain but neither have names"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "313a858f9e6c83612585c5673960e44d",
+    "title": "1.5: Includes a domain-fallback test (alias.name unset, custom_domain.name set) that asserts result.name == f\"{custom_domain.name} <{alias.email}>\""
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "00f91bdc9aa73ee26e3a474b54cafe8c",
+    "title": "1.6: Tests that no user-facing override indicator is surfaced when no override is applied"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9a2b2e8fb6a98f476ada4a07e98be399",
+    "title": "1.7: Tests that a user-facing override indicator is surfaced when alias display name override is applied"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9bf46c2dd3dd72f6753ceff6092aacc3",
+    "title": "1.8: Tests that a user-facing override indicator is surfaced when custom domain display name override is applied"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "a9de7194059925973baa727f3a0d0a35",
+    "title": "2.1: Places the alias recipient name tests in tests/test_alias_utils.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "30db7a4cd283bfd65c4af6d40ab2a6ca",
+    "title": "3.1: All tests use pytest-compatible test functions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "5580f6994feaf8de714dbd2563efbfc9",
+    "title": "3.2: All tests follow the test_<description> naming pattern"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "6f75676700a041102ef358d2efd9d96e",
+    "title": "3.3: All tests use standard Python assert statements for verification"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "3b722777e5012bec0188c635f0682134",
+    "title": "3.4: Tests create users using established test helpers or fixtures (e.g., create_new_user)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d02def8d621470858d8159b039d95e3d",
+    "title": "4.1: Tests create persisted Alias objects with required fields for the codepath under test"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "357fb1652af67c914993d1078ffce58d",
+    "title": "4.2: Tests involving custom domains create and associate CustomDomain objects with required fields"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "da4691cd35e95865808835ab914bfce4",
+    "title": "4.3: Added tests persist ORM objects using commit=True on create calls (e.g., Alias.create(..., commit=True) / CustomDomain.create(..., commit=True))"
+  }
+]

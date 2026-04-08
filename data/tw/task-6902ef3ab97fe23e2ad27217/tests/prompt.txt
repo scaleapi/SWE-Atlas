@@ -1,0 +1,9 @@
+Add unit tests for the utility functions in regression utilities.
+
+1. Tests string sanitization behavior with non-printable characters
+2. Tests hex representation conversion for integers, tuples, and lists
+3. Tests the Scapy restart functionality using mocks
+4. Tests the line-based hexdump output format
+5. Tests hex string conversion with mixed printable/non-printable bytes
+
+Create one unit test case for each of the aforementioned instances.

@@ -1,0 +1,69 @@
+diff --git a/scapy/contrib/automotive/scanner/executor.py b/scapy/contrib/automotive/scanner/executor.py
+index eeec5bd3..c6888b52 100644
+--- a/scapy/contrib/automotive/scanner/executor.py
++++ b/scapy/contrib/automotive/scanner/executor.py
+@@ -267,62 +267,8 @@ class AutomotiveTestCaseExecutor(metaclass=abc.ABCMeta):
+         :param timeout: Time for execution.
+         :return: None
+         """
+-        self.configuration.stop_event.clear()
+-        if timeout is None:
+-            kill_time = None
+-        else:
+-            kill_time = time.monotonic() + timeout
+-        while kill_time is None or kill_time > time.monotonic():
+-            test_case_executed = False
+-            log_automotive.info("[i] Scan progress %0.2f", self.progress())
+-            log_automotive.debug("[i] Scan paths %s", self.state_paths)
+-            for p, test_case in product(
+-                    self.state_paths, self.configuration.test_cases):
+-                log_automotive.info("Scan path %s", p)
+-                terminate = kill_time and kill_time <= time.monotonic()
+-                if terminate or self.configuration.stop_event.is_set():
+-                    log_automotive.debug(
+-                        "Execution time exceeded. Terminating scan!")
+-                    break
+-
+-                final_state = p[-1]
+-                if test_case.has_completed(final_state):
+-                    log_automotive.debug("State %s for %s completed",
+-                                         repr(final_state), test_case)
+-                    continue
+-
+-                try:
+-                    if not self.enter_state_path(p):
+-                        log_automotive.error(
+-                            "Error entering path %s", p)
+-                        continue
+-                    log_automotive.info(
+-                        "Execute %s for path %s", str(test_case), p)
+-                    self.execute_test_case(test_case, kill_time)
+-                    test_case_executed = True
+-                except (OSError, ValueError, Scapy_Exception) as e:
+-                    log_automotive.exception("Exception: %s", e)
+-                    if self.configuration.debug:
+-                        raise e
+-                    if isinstance(e, OSError):
+-                        log_automotive.exception(
+-                            "OSError occurred, closing socket")
+-                        self.socket.close()
+-                    if cast(SuperSocket, self.socket).closed and \
+-                            self.reconnect_handler is None:
+-                        log_automotive.critical(
+-                            "Socket went down. Need to leave scan")
+-                        raise e
+-                finally:
+-                    self.cleanup_state()
+-
+-            if not test_case_executed:
+-                log_automotive.info(
+-                    "Execute failure or scan completed. Exit scan!")
+-                break
+-
+-        self.cleanup_state()
+-        self.reset_target()
++        # PLACEHOLDER: Implementation removed for testing purposes
++        pass
+ 
+     def enter_state_path(self, path):
+         # type: (List[EcuState]) -> bool

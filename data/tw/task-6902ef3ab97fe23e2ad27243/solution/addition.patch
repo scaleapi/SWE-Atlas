@@ -1,0 +1,121 @@
+diff --git a/kitty_tests/screen.py b/kitty_tests/screen.py
+index 754cf972b..8655b1b2c 100644
+--- a/kitty_tests/screen.py
++++ b/kitty_tests/screen.py
+@@ -10,6 +10,116 @@
+ 
+ class TestScreen(BaseTest):
+ 
++    def test_draw_fast(self):
++        s = self.create_screen()
++
++        # Test in line-wrap, non-insert mode
++        s.draw('a' * 5)
++        self.ae(str(s.line(0)), 'a' * 5)
++        self.ae(s.cursor.x, 5), self.ae(s.cursor.y, 0)
++        s.draw('b' * 7)
++        self.assertTrue(s.linebuf.is_continued(1))
++        self.assertTrue(s.linebuf.is_continued(2))
++        self.ae(str(s.line(0)), 'a' * 5)
++        self.ae(str(s.line(1)), 'b' * 5)
++        self.ae(str(s.line(2)), 'b' * 2)
++        self.ae(s.cursor.x, 2), self.ae(s.cursor.y, 2)
++        s.draw('c' * 15)
++        self.ae(str(s.line(0)), 'b' * 5)
++        self.ae(str(s.line(1)), 'bbccc')
++
++        # Now test without line-wrap
++        s.reset(), s.reset_dirty()
++        s.reset_mode(DECAWM)
++        s.draw('0123456789')
++        self.ae(str(s.line(0)), '01239')
++        self.ae(s.cursor.x, 5), self.ae(s.cursor.y, 0)
++        s.draw('ab')
++        self.ae(str(s.line(0)), '0123b')
++        self.ae(s.cursor.x, 5), self.ae(s.cursor.y, 0)
++
++        # Now test in insert mode
++        s.reset(), s.reset_dirty()
++        s.set_mode(IRM)
++        s.draw('12345' * 5)
++        s.cursor_back(5)
++        self.ae(s.cursor.x, 0), self.ae(s.cursor.y, 4)
++        s.reset_dirty()
++        s.draw('ab')
++        self.ae(str(s.line(4)), 'ab123')
++        self.ae((s.cursor.x, s.cursor.y), (2, 4))
++
++    def test_draw_char(self):
++        # Test in line-wrap, non-insert mode
++        s = self.create_screen()
++        s.draw('ココx')
++        self.ae(str(s.line(0)), 'ココx')
++        self.ae(tuple(map(s.line(0).width, range(5))), (2, 0, 2, 0, 1))
++        self.ae(s.cursor.x, 5), self.ae(s.cursor.y, 0)
++        s.draw('ニチハ')
++        self.ae(str(s.line(0)), 'ココx')
++        self.ae(str(s.line(1)), 'ニチ')
++        self.ae(str(s.line(2)), 'ハ')
++        self.ae(s.cursor.x, 2), self.ae(s.cursor.y, 2)
++        s.draw('Ƶ̧\u0308')
++        self.ae(str(s.line(2)), 'ハƵ̧\u0308')
++        self.ae(s.cursor.x, 3), self.ae(s.cursor.y, 2)
++        s.draw('xy'), s.draw('\u0306')
++        self.ae(str(s.line(2)), 'ハƵ̧\u0308xy\u0306')
++        self.ae(s.cursor.x, 5), self.ae(s.cursor.y, 2)
++        s.draw('c' * 15)
++        self.ae(str(s.line(0)), 'ニチ')
++
++        # Now test without line-wrap
++        s.reset(), s.reset_dirty()
++        s.reset_mode(DECAWM)
++        s.draw('0\u030612345\u03066789\u0306')
++        self.ae(str(s.line(0)), '0\u03061239\u0306')
++        self.ae(s.cursor.x, 5), self.ae(s.cursor.y, 0)
++        s.draw('ab\u0306')
++        self.ae(str(s.line(0)), '0\u0306123b\u0306')
++        self.ae(s.cursor.x, 5), self.ae(s.cursor.y, 0)
++
++        # Now test in insert mode
++        s.reset(), s.reset_dirty()
++        s.set_mode(IRM)
++        s.draw('1\u03062345' * 5)
++        s.cursor_back(5)
++        self.ae(s.cursor.x, 0), self.ae(s.cursor.y, 4)
++        s.reset_dirty()
++        s.draw('a\u0306b')
++        self.ae(str(s.line(4)), 'a\u0306b1\u030623')
++        self.ae((s.cursor.x, s.cursor.y), (2, 4))
++
++    def test_rep(self):
++        s = self.create_screen()
++        s.draw('a')
++        parse_bytes(s, b'\x1b[b')
++        self.ae(str(s.line(0)), 'aa')
++        parse_bytes(s, b'\x1b[3b')
++        self.ae(str(s.line(0)), 'a'*5)
++        s.draw(' ')
++        parse_bytes(s, b'\x1b[3b')
++        self.ae(str(s.line(1)), ' '*4)
++
++    def test_emoji_skin_tone_modifiers(self):
++        s = self.create_screen()
++        q = chr(0x1f469) + chr(0x1f3fd)
++        s.draw(q)
++        self.ae(str(s.line(0)), q)
++        self.ae(s.cursor.x, 2)
++
++    def test_regional_indicators(self):
++        s = self.create_screen()
++        flag = '\U0001f1ee\U0001f1f3'
++        s.draw(flag)
++        self.ae(str(s.line(0)), flag)
++        self.ae(s.cursor.x, 2)
++        s = self.create_screen()
++        s.draw('a'), s.draw(flag[0]), s.draw('b')
++        self.ae(str(s.line(0)), 'a' + flag[0] + 'b')
++        self.ae(s.cursor.x, 4)
++
+     def test_zwj(self):
+         s = self.create_screen(cols=20)
+         q = '\U0001f468\u200d\U0001f469\u200d\U0001f467\u200d\U0001f466'

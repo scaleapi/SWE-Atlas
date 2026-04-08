@@ -1,0 +1,1 @@
+FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_TW_simple-login_app_6902ef3ab97fe23e2ad271fe_1.0

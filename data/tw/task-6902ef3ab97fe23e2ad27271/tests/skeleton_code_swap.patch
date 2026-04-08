@@ -1,0 +1,65 @@
+--- a/src/documents/file_handling.py
++++ b/src/documents/file_handling.py
+@@ -127,62 +127,6 @@
+ 
+ def generate_filename(doc, counter=0, append_gpg=True, archive_filename=False):
+     path = ""
+-
+-    try:
+-        if settings.PAPERLESS_FILENAME_FORMAT is not None:
+-            tags = defaultdictNoStr(lambda: slugify(None), many_to_dictionary(doc.tags))
+-
+-            tag_list = pathvalidate.sanitize_filename(
+-                ",".join(sorted([tag.name for tag in doc.tags.all()])),
+-                replacement_text="-",
+-            )
+-
+-            if doc.correspondent:
+-                correspondent = pathvalidate.sanitize_filename(
+-                    doc.correspondent.name,
+-                    replacement_text="-",
+-                )
+-            else:
+-                correspondent = "none"
+-
+-            if doc.document_type:
+-                document_type = pathvalidate.sanitize_filename(
+-                    doc.document_type.name,
+-                    replacement_text="-",
+-                )
+-            else:
+-                document_type = "none"
+-
+-            if doc.archive_serial_number:
+-                asn = str(doc.archive_serial_number)
+-            else:
+-                asn = "none"
+-
+-            path = settings.PAPERLESS_FILENAME_FORMAT.format(
+-                title=pathvalidate.sanitize_filename(doc.title, replacement_text="-"),
+-                correspondent=correspondent,
+-                document_type=document_type,
+-                created=datetime.date.isoformat(doc.created),
+-                created_year=doc.created.year if doc.created else "none",
+-                created_month=f"{doc.created.month:02}" if doc.created else "none",
+-                created_day=f"{doc.created.day:02}" if doc.created else "none",
+-                added=datetime.date.isoformat(doc.added),
+-                added_year=doc.added.year if doc.added else "none",
+-                added_month=f"{doc.added.month:02}" if doc.added else "none",
+-                added_day=f"{doc.added.day:02}" if doc.added else "none",
+-                asn=asn,
+-                tags=tags,
+-                tag_list=tag_list,
+-            ).strip()
+-
+-            path = path.strip(os.sep)
+-
+-    except (ValueError, KeyError, IndexError):
+-        logger.warning(
+-            f"Invalid PAPERLESS_FILENAME_FORMAT: "
+-            f"{settings.PAPERLESS_FILENAME_FORMAT}, falling back to default",
+-        )
+-
+     counter_str = f"_{counter:02}" if counter else ""
+ 
+     filetype_str = ".pdf" if archive_filename else doc.file_type

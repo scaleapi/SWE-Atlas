@@ -1,0 +1,170 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6f446f6a01ca0a4fe22659acf4027d40",
+    "title": "1.1: Tests that RandUUID default behavior (no arguments) generates version 4 UUIDs with command representation as 'RandUUID()'"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "8853c0a150a2908d5d7606a44da1f91f",
+    "title": "1.2: Tests that RandUUID._fix() returns version 4 UUIDs when version=4 is explicitly passed and two generated UUIDs are different"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9492fedc354f12f0c4bfc9ec6faa0778",
+    "title": "1.3: Tests that RandUUID._fix() returns version 1 UUIDs preserving provided node and clock_seq values when various parameter combinations are provided"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "bb93acb78c61d3c5ed2b47a48f756f9b",
+    "title": "1.4: Tests that RandUUID._fix() returns version 1 UUIDs when only node or clock_seq parameters are provided without explicit version"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "bc18e94ef05c2bc17744c0ef263a6623",
+    "title": "1.5: Tests that RandUUID(version=5, namespace, name) generates version 5 UUIDs, outputs formatted command() string, produces identical bytes for same inputs"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "25425af7cffbc447b4ac537cdd305513",
+    "title": "1.6: Tests that RandUUID(version=3, namespace, name) generates version 3 UUIDs, produces identical bytes for same inputs, and differs from implicit namespace+name (which generates version 5)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "c5fc26de979072c5695420e4ccda7435",
+    "title": "1.7: Tests that converting RandUUID to string produces a valid UUID format matching the pattern [0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f75d7691ac3414168ad04e0a110365e1",
+    "title": "1.8: Tests that RandUUID with template preserves static hex segments, randomizes wildcard positions, and outputs formatted command() string"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "7170663c76b3b217ecc4a7fd6a630d4b",
+    "title": "1.9: Tests that RandUUID with a template containing range values generates UUIDs within the specified hex range"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "aa572959ff1b0436a306c38dd3e83e73",
+    "title": "2.1: Places the test for RandUUID default behaviour in test/regression.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "7032a42ae022959e761d5ce7d7e6c560",
+    "title": "2.2: Places the test for RandUUID version 4 UUID generation in test/regression.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "b3b8de977eed84f826d6282e3bbf84f9",
+    "title": "2.3: Places the test for RandUUID version 1 UUID generation in test/regression.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "74158d667ac4861f29c7bd2059815b6c",
+    "title": "2.4: Places the test for RandUUID version 1 implicit version detection in test/regression.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "08c022c0f922aeebeddb016d07e06d07",
+    "title": "2.5: Places the test for RandUUID version 5 UUID generation in test/regression.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4d04f2360a2716a4d0dc8ec618113532",
+    "title": "2.6: Places the test for RandUUID version 3 UUID generation in test/regression.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "33d44b63261c74cf6f608bf18aebc3ca",
+    "title": "2.7: Places the test for RandUUID string format validation in test/regression.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4df988136f3602cecbe6ed4fce697cc8",
+    "title": "2.8: Places the test for RandUUID template with static parts in test/regression.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "3a289092b545adcb25bbd173cad70736",
+    "title": "2.9: Places the test for RandUUID template with range values in test/regression.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "324c2484b41ee4c2cffc8cbbc2998b2b",
+    "title": "3.1: All tests use the UTScapy framework with test blocks starting with '= <test_name>'"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4567fd04fdda5dd01baae1b9cbe2aee1",
+    "title": "3.2: All tests follow the naming pattern '= RandUUID <description>' for test block headers"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "a603de99bebbeaf9e4bd4baae863a7b9",
+    "title": "3.3: All tests use Python assert statements for test assertions"
+  }
+]

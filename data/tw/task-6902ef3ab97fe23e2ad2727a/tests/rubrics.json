@@ -1,0 +1,170 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "80e465da9fd85670344c5b2ca9b67694",
+    "title": "1.1: Tests that SFTP client can successfully authenticate using public key when external auth scope allows both methods"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "71887ea0b62a60415d16c12a4884c86a",
+    "title": "1.2: Tests that SFTP client can successfully authenticate using password when external auth scope allows both methods"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "97acfd302dea1917dd6e370bb4a0203f",
+    "title": "1.3: Tests that SFTP operations work after successful authentication with dual-method scope"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b0c256d006f88b2f64e18bdb5742fed6",
+    "title": "1.4: Tests that user is created in data provider after successful external authentication with dual-method scope"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d80f6a72dfa80cdfdf525983a6c3dc30",
+    "title": "1.5: Tests that invalid username is rejected when using external authentication with dual-method scope"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a5b39de2b23ccda76368d863e37f28bb",
+    "title": "1.6: Tests that password authentication succeeds when external auth scope is password-only"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "c8b15586111261890d1875ac682cf287",
+    "title": "1.7: Tests that public key authentication is rejected when external auth scope is password-only"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6a4742be556b5e0d46394ddc188f2b4a",
+    "title": "1.8: Tests that invalid credentials are rejected when external auth scope is password-only"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d4364b1eca46eb2654194e6d43571d64",
+    "title": "1.9: Tests that public key authentication succeeds when external auth scope is public-key-only"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "727fa1cbacb941127593ba5f7a343847",
+    "title": "1.10: Tests that password authentication is rejected when external auth scope is public-key-only"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "420ea9e58268f1b442cafc7e5b834dc8",
+    "title": "1.11: Tests that invalid credentials are rejected when external auth scope is public-key-only"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "7e2b889f1b10aa9425cb00ee5e31df87",
+    "title": "2.1: Places the test for dual-method external authentication in the sftpd test directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "23c494a8b8eeb279115d60b5a9776bc3",
+    "title": "2.2: Places the test for password-only external authentication in the sftpd test directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "8a27ed2ea7a5f39d5dfe1898e08685c5",
+    "title": "2.3: Places the test for public-key-only external authentication in the sftpd test directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fc98653e0256b86b09c16ff947bec804",
+    "title": "3.1: All tests use Go testing framework with *testing.T parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "b9c6110df6029f79ee17a9b149c18ecc",
+    "title": "3.2: All tests follow the naming pattern starting with Test prefix"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "5f814e3b424236660d528bc459ebbf56",
+    "title": "3.3: All tests use t.Errorf or t.Error for reporting test failures"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fac952195737031ce1fbb89fb4bae968",
+    "title": "3.4: All tests reinitialize the data provider after reconfiguring external auth settings"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "30dff456d653f50a433461612f9c3ae8",
+    "title": "3.5: All tests restore the data provider configuration to original state after test completion"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "50269eab5fefe6ee95714e9fc89a8e2e",
+    "title": "4.1: Creates an external auth script file for test setup"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "920a2720e37ac48b6c8aee514fe5f78e",
+    "title": "4.2: Cleans up external auth script file after test completion"
+  }
+]

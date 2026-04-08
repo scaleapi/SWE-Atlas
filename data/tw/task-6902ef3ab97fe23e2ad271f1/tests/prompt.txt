@@ -1,0 +1,12 @@
+The URL detection utility needs better test coverage. The code is working but we're missing some unit tests that cover each of these scenarios:
+
+* Detecting fully-formed URLs that include the protocol prefix
+* Recognizing domain-only inputs without a protocol scheme
+* Handling URLs that contain query string parameters
+* Validating URLs with short two-character TLD suffixes
+* Rejecting malformed inputs with consecutive dots
+* Rejecting inputs with dots separated by spaces
+* Handling edge case of a single dot character
+* Rejecting plain strings that lack any dot separator
+
+Write 1 unit test for each scenario above.

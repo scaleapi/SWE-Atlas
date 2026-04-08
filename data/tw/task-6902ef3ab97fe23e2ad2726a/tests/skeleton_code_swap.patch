@@ -1,0 +1,163 @@
+diff --git a/internal/msgpipeline/msgpipeline.go b/internal/msgpipeline/msgpipeline.go
+index 2b3358e..a812ef5 100644
+--- a/internal/msgpipeline/msgpipeline.go
++++ b/internal/msgpipeline/msgpipeline.go
+@@ -2,6 +2,7 @@ package msgpipeline
+ 
+ import (
+ 	"context"
++	"errors"
+ 
+ 	"github.com/emersion/go-message/textproto"
+ 	"github.com/emersion/go-smtp"
+@@ -100,40 +101,131 @@ func (d *MsgPipeline) Start(ctx context.Context, msgMeta *module.MsgMetadata, ma
+ }
+ 
+ func (dd *msgpipelineDelivery) start(ctx context.Context, msgMeta *module.MsgMetadata, mailFrom string) error {
+-	var err error
++	anyError := false
++	dummyRcpt := "probe@example.com"
++	emptyHeader := textproto.Header{}
++
++	var probingCheckStates []module.CheckState
++	var probingModState module.ModifierState
++	defer func() {
++		for _, s := range probingCheckStates {
++			s.Close()
++		}
++		if probingModState != nil {
++			probingModState.Close()
++		}
++	}()
+ 
+-	if err := dd.checkRunner.checkConnSender(ctx, dd.d.globalChecks, mailFrom); err != nil {
+-		return err
+-	}
++	// Probe global checks - all phases (init, conn, sender, rcpt, body)
++	for _, check := range dd.d.globalChecks {
++		state, err := check.CheckStateForMsg(ctx, msgMeta)
++		if err != nil {
++			anyError = true
++			continue
++		}
++		probingCheckStates = append(probingCheckStates, state)
+ 
+-	if mailFrom, err = dd.initRunGlobalModifiers(ctx, msgMeta, mailFrom); err != nil {
+-		return err
++		if state.CheckConnection(ctx).Reject {
++			anyError = true
++		}
++		if state.CheckSender(ctx, mailFrom).Reject {
++			anyError = true
++		}
++		if state.CheckRcpt(ctx, dummyRcpt).Reject {
++			anyError = true
++		}
++		if state.CheckBody(ctx, emptyHeader, nil).Reject {
++			anyError = true
++		}
+ 	}
+ 
+-	sourceBlock, err := dd.srcBlockForAddr(mailFrom)
++	// Get source block for probing
++	srcBlock, err := dd.srcBlockForAddr(mailFrom)
+ 	if err != nil {
+-		return err
++		anyError = true
++		srcBlock = dd.d.defaultSource
+ 	}
+-	if sourceBlock.rejectErr != nil {
+-		dd.log.Debugf("sender %s rejected with error: %v", mailFrom, sourceBlock.rejectErr)
+-		return sourceBlock.rejectErr
++	if srcBlock.rejectErr != nil {
++		anyError = true
+ 	}
+-	dd.sourceBlock = sourceBlock
+ 
+-	if err := dd.checkRunner.checkConnSender(ctx, sourceBlock.checks, mailFrom); err != nil {
+-		return err
++	// Probe source checks - all phases
++	for _, check := range srcBlock.checks {
++		state, err := check.CheckStateForMsg(ctx, msgMeta)
++		if err != nil {
++			anyError = true
++			continue
++		}
++		probingCheckStates = append(probingCheckStates, state)
++
++		if state.CheckConnection(ctx).Reject {
++			anyError = true
++		}
++		if state.CheckSender(ctx, mailFrom).Reject {
++			anyError = true
++		}
++		if state.CheckRcpt(ctx, dummyRcpt).Reject {
++			anyError = true
++		}
++		if state.CheckBody(ctx, emptyHeader, nil).Reject {
++			anyError = true
++		}
+ 	}
+ 
+-	sourceModifiersState, err := sourceBlock.modifiers.ModStateForMsg(ctx, msgMeta)
++	// Probe global modifiers (init, mailfrom, rcpt, body)
++	globalModState, err := dd.d.globalModifiers.ModStateForMsg(ctx, msgMeta)
+ 	if err != nil {
+-		return err
++		anyError = true
++	} else {
++		if _, err := globalModState.RewriteSender(ctx, mailFrom); err != nil {
++			anyError = true
++		}
++		if _, err := globalModState.RewriteRcpt(ctx, dummyRcpt); err != nil {
++			anyError = true
++		}
++		if err := globalModState.RewriteBody(ctx, &emptyHeader, nil); err != nil {
++			anyError = true
++		}
++		globalModState.Close()
+ 	}
+-	mailFrom, err = sourceModifiersState.RewriteSender(ctx, mailFrom)
++
++	// Probe source modifiers (init, mailfrom, rcpt, body)
++	sourceModState, err := srcBlock.modifiers.ModStateForMsg(ctx, msgMeta)
+ 	if err != nil {
+-		return err
++		anyError = true
++	} else {
++		probingModState = sourceModState
++		if _, err := sourceModState.RewriteSender(ctx, mailFrom); err != nil {
++			anyError = true
++		}
++		if _, err := sourceModState.RewriteRcpt(ctx, dummyRcpt); err != nil {
++			anyError = true
++		}
++		if err := sourceModState.RewriteBody(ctx, &emptyHeader, nil); err != nil {
++			anyError = true
++		}
+ 	}
+-	dd.sourceModifiersState = sourceModifiersState
+ 
++	// INVERT: If no errors were configured, return error (to fail no_err tests)
++	if !anyError {
++		return errors.New("skeleton: no errors configured")
++	}
++
++	// If errors were configured, set up for success (to fail error-expecting tests)
++	// Create a shadow copy of the pipeline config to avoid modifying the shared pipeline
++	shadowCfg := dd.d.msgpipelineCfg
++	shadowCfg.globalChecks = nil
++	shadowPipeline := *dd.d
++	shadowPipeline.msgpipelineCfg = shadowCfg
++	dd.d = &shadowPipeline
++
++	emptyGroup := modify.Group{}
++	dd.globalModifiersState, _ = emptyGroup.ModStateForMsg(ctx, msgMeta)
++	dd.sourceBlock = sourceBlock{
++		perRcpt:     map[string]*rcptBlock{},
++		defaultRcpt: dd.d.defaultSource.defaultRcpt,
++	}
++	dd.sourceModifiersState, _ = emptyGroup.ModStateForMsg(ctx, msgMeta)
+ 	dd.sourceAddr = mailFrom
+ 	return nil
+ }

@@ -1,0 +1,18 @@
+diff --git a/packages/js-utils/src/key-by.ts b/packages/js-utils/src/key-by.ts
+index 7247c15d39b..90427c6c201 100644
+--- a/packages/js-utils/src/key-by.ts
++++ b/packages/js-utils/src/key-by.ts
+@@ -26,9 +26,9 @@ const arrayKeyBy = < T >( array: T[], iteratee: Iteratee< T, PropertyKey > ) =>
+ const collectionKeyBy = < T >(
+ 	collection: Collection< T >,
+ 	iteratee: Iteratee< T, PropertyKey >
+-): { [ key in PropertyKey ]: T } =>
+-	Array.isArray( collection )
+-		? arrayKeyBy( collection, iteratee )
+-		: arrayKeyBy( Object.values( collection || {} ), iteratee );
++): { [ key in PropertyKey ]: T } => {
++	// TODO: implement
++	throw new Error( 'Not implemented' );
++};
+ 
+ export default collectionKeyBy;

@@ -1,0 +1,202 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "80e465da9fd85670344c5b2ca9b67694",
+    "title": "1.1: Tests that bidirectional streaming creates a stream connection"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6f57775e6ee28c2b1bcf7f38addb7f23",
+    "title": "1.2: Tests that bidirectional streaming sends requests through the stream"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "af0aafa83cb52727423d8349508f9d48",
+    "title": "1.3: Tests that bidirectional streaming receives and validates responses"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "71887ea0b62a60415d16c12a4884c86a",
+    "title": "1.4: Tests that stream cancellation creates a stream with context.WithCancel"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "2dea2b125935f68fd3e8cd202befd351",
+    "title": "1.5: Tests that stream cancellation calls the cancel function"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "c97200565f095772b9eba568ccdab65c",
+    "title": "1.6: Tests that stream cancellation verifies server receives cancellation"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "88dfe9ebfcf93f34545ffaa1d340d323",
+    "title": "1.7: Tests that stream cancellation checks for context.Canceled error"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "97acfd302dea1917dd6e370bb4a0203f",
+    "title": "1.8: Tests that deadline propagation creates a stream with context.WithTimeout or context.WithDeadline"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "1b5c18621aa6d013efa810f5db27107c",
+    "title": "1.9: Tests that deadline propagation waits for deadline to be exceeded"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "c1f9662b18fa736c45b0c910b242ad13",
+    "title": "1.10: Tests that deadline propagation checks for context.DeadlineExceeded error"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b0c256d006f88b2f64e18bdb5742fed6",
+    "title": "1.11: Tests that output congestion has the server send multiple responses"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "33af4b643c537b19778224a339948826",
+    "title": "1.12: Tests that output congestion verifies other operations complete without blocking"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d80f6a72dfa80cdfdf525983a6c3dc30",
+    "title": "1.13: Tests that input congestion has the client send multiple requests"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "3ced05a007204fbadfa8ba6a88ba8d88",
+    "title": "1.14: Tests that input congestion verifies other operations complete without blocking"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "b19924e070afd6ff3c7e649542b2c7b3",
+    "title": "2.1: Places the bidirectional streaming test in internal/grid directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "6315237b62dcd954515c1ea1a4cced50",
+    "title": "2.2: Places the stream cancellation test in internal/grid directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0ffb02b6299934272bdfc92c29422344",
+    "title": "2.3: Places the deadline propagation test in internal/grid directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "8294d4819cb3f44d2b97f8682e136f2d",
+    "title": "2.4: Places the output congestion test in internal/grid directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0ec98b7c12afb2ebaf1d5c1ec451e9f7",
+    "title": "2.5: Places the input congestion test in internal/grid directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d480fa5ddc91f8f93a607c162840106a",
+    "title": "3.1: All tests use the Go testing package with *testing.T parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2b568173bca9cdecdf5d659b5c2a442a",
+    "title": "3.2: All tests use the grid Manager type for node setup"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e6a77cc014139760aec27e3d97abab83",
+    "title": "3.3: All streaming tests use the grid package streaming APIs for creating streams"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "37c95f4f24d2dd63edcd82f5b6f33d1a",
+    "title": "3.4: All tests use t.Fatal, t.Error, or t.Errorf for assertions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2d17bbcbf3b957f7708b7ed604ccf0ff",
+    "title": "4.1: Follows grid package handler registration pattern for streaming tests"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "9122bf41691c184bf1170fa878d2959c",
+    "title": "4.2: Follows t.Run subtest pattern with descriptive names for tests with subtests"
+  }
+]

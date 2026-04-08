@@ -1,0 +1,24 @@
+diff --git a/scapy/utils6.py b/scapy/utils6.py
+index ed3f93a0..79b7eb16 100644
+--- a/scapy/utils6.py
++++ b/scapy/utils6.py
+@@ -221,18 +221,7 @@ def in6_mactoifaceid(mac, ulbit=None):
+     the reversed value of that in given MAC address it can be forced
+     to a specific value by using optional 'ulbit' parameter.
+     """
+-    if len(mac) != 17:
+-        raise ValueError("Invalid MAC")
+-    m = "".join(mac.split(':'))
+-    if len(m) != 12:
+-        raise ValueError("Invalid MAC")
+-    first = int(m[0:2], 16)
+-    if ulbit is None or not (ulbit == 0 or ulbit == 1):
+-        ulbit = [1, 0, 0][first & 0x02]
+-    ulbit *= 2
+-    first_b = "%.02x" % ((first & 0xFD) | ulbit)
+-    eui64 = first_b + m[2:4] + ":" + m[4:6] + "FF:FE" + m[6:8] + ":" + m[8:12]
+-    return eui64.upper()
++    pass
+ 
+ 
+ def in6_ifaceidtomac(ifaceid_s):

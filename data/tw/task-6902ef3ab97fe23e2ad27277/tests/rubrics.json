@@ -1,0 +1,114 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "67b909ddf5197163a28198da60f754d8",
+    "title": "1.1: Tests that Put operation successfully stores items in the QueueStore without returning an error"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "3c7a500b32ba0cfdac2ff492cadcf436",
+    "title": "1.2: Tests that Put operation verifies items were stored by checking the count after putting multiple items"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "5027db2ab8c7e9217926dbccf6e745d7",
+    "title": "1.3: Tests that Get retrieves items that were previously stored via Put without returning an error"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "45956a0c81fc2ca470533d4832fa6d55",
+    "title": "1.4: Tests that items retrieved via Get match the original items that were stored via Put"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "96629227b697f0184db9f6a3ea5fd741",
+    "title": "1.5: Tests that Del operation removes items from the store without returning an error"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "7cd1ea8ddcc75372c531c1fcdaa04cba",
+    "title": "1.6: Tests that List returns zero items after all items have been deleted via Del"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "1259cd283d1147c6b085f8e0b3804df0",
+    "title": "1.7: Tests that Put returns an error when the store's configured capacity limit is reached"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0a3fae5e90e38dae5b8f1dd4c11ce977",
+    "title": "1.8: Tests that List returns items after closing and re-opening the store to verify persistence"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "908b3b2849a7df770ef7cdcfba5bf0da",
+    "title": "1.9: Tests verify consistency between Len() and List() by checking both return expected values"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ad93d20d127a4667a29ecf4fc4cd7a61",
+    "title": "2.1: Places all QueueStore integration tests in internal/store directory following Go conventions."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ae59cb1cb6774c252ff19a7c7f148e3d",
+    "title": "3.1: All tests use Go testing framework with *testing.T parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e9ba618535876a9ab4c07322fe723ad7",
+    "title": "3.2: All tests follow the Test<Name> naming convention required by Go testing"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "1ce64bca0bf18b29b3b05c20523602a0",
+    "title": "3.3: All tests include cleanup to remove test artifacts after execution"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "272d0e905f30172b40898850a548352f",
+    "title": "4.1: Tests for QueueStore use setup functions to initialize the store before testing"
+  }
+]

@@ -1,0 +1,191 @@
+diff --git a/internal/target/remote/remote_test.go b/internal/target/remote/remote_test.go
+index 1362c68..c68a417 100644
+--- a/internal/target/remote/remote_test.go
++++ b/internal/target/remote/remote_test.go
+@@ -24,6 +24,34 @@ import (
+ // DNS hooks and lookups go to the real Internet, they will not result in
+ // any useful data that can lead to outgoing connections being made.
+ 
++func TestRemoteDelivery(t *testing.T) {
++	be, srv := testutils.SMTPServer(t, "127.0.0.1:"+smtpPort)
++	defer srv.Close()
++	defer testutils.CheckSMTPConnLeak(t, srv)
++	zones := map[string]mockdns.Zone{
++		"example.invalid.": {
++			MX: []net.MX{{Host: "mx.example.invalid.", Pref: 10}},
++		},
++		"mx.example.invalid.": {
++			A: []string{"127.0.0.1"},
++		},
++	}
++	resolver := &mockdns.Resolver{Zones: zones}
++
++	tgt := Target{
++		name:        "remote",
++		hostname:    "mx.example.com",
++		resolver:    &mockdns.Resolver{Zones: zones},
++		dialer:      resolver.DialContext,
++		extResolver: nil,
++		Log:         testutils.Logger(t, "remote"),
++	}
++
++	testutils.DoTestDelivery(t, &tgt, "test@example.com", []string{"test@example.invalid"})
++
++	be.CheckMsg(t, 0, "test@example.com", []string{"test@example.invalid"})
++}
++
+ func TestRemoteDelivery_IPLiteral(t *testing.T) {
+ 	be, srv := testutils.SMTPServer(t, "127.0.0.1:"+smtpPort)
+ 	defer srv.Close()
+@@ -56,6 +84,31 @@ func TestRemoteDelivery_IPLiteral(t *testing.T) {
+ 	be.CheckMsg(t, 0, "test@example.com", []string{"test@[127.0.0.1]"})
+ }
+ 
++func TestRemoteDelivery_FallbackMX(t *testing.T) {
++	be, srv := testutils.SMTPServer(t, "127.0.0.1:"+smtpPort)
++	defer srv.Close()
++	defer testutils.CheckSMTPConnLeak(t, srv)
++	resolver := &mockdns.Resolver{
++		Zones: map[string]mockdns.Zone{
++			"example.invalid.": {
++				A: []string{"127.0.0.1"},
++			},
++		},
++	}
++
++	tgt := Target{
++		name:        "remote",
++		hostname:    "mx.example.com",
++		resolver:    resolver,
++		dialer:      resolver.DialContext,
++		extResolver: nil,
++		Log:         testutils.Logger(t, "remote"),
++	}
++
++	testutils.DoTestDelivery(t, &tgt, "test@example.com", []string{"test@example.invalid"})
++	be.CheckMsg(t, 0, "test@example.com", []string{"test@example.invalid"})
++}
++
+ func TestRemoteDelivery_BodyNonAtomic(t *testing.T) {
+ 	be, srv := testutils.SMTPServer(t, "127.0.0.1:"+smtpPort)
+ 	defer srv.Close()
+@@ -432,6 +485,39 @@ func TestRemoteDelivery_RcptErr(t *testing.T) {
+ 	be.CheckMsg(t, 0, "test@example.com", []string{"test2@example.invalid"})
+ }
+ 
++func TestRemoteDelivery_DownMX(t *testing.T) {
++	be, srv := testutils.SMTPServer(t, "127.0.0.1:"+smtpPort)
++	defer srv.Close()
++	defer testutils.CheckSMTPConnLeak(t, srv)
++	zones := map[string]mockdns.Zone{
++		"example.invalid.": {
++			MX: []net.MX{
++				{Host: "mx1.example.invalid.", Pref: 20},
++				{Host: "mx2.example.invalid.", Pref: 10},
++			},
++		},
++		"mx1.example.invalid.": {
++			A: []string{"127.0.0.1"},
++		},
++		"mx2.example.invalid.": {
++			A: []string{"127.0.0.2"},
++		},
++	}
++	resolver := &mockdns.Resolver{Zones: zones}
++
++	tgt := Target{
++		name:        "remote",
++		hostname:    "mx.example.com",
++		resolver:    &mockdns.Resolver{Zones: zones},
++		dialer:      resolver.DialContext,
++		extResolver: nil,
++		Log:         testutils.Logger(t, "remote"),
++	}
++
++	testutils.DoTestDelivery(t, &tgt, "test@example.com", []string{"test@example.invalid"})
++	be.CheckMsg(t, 0, "test@example.com", []string{"test@example.invalid"})
++}
++
+ func TestRemoteDelivery_AllMXDown(t *testing.T) {
+ 	zones := map[string]mockdns.Zone{
+ 		"example.invalid.": {
+@@ -464,6 +550,44 @@ func TestRemoteDelivery_AllMXDown(t *testing.T) {
+ 	}
+ }
+ 
++func TestRemoteDelivery_Split(t *testing.T) {
++	be1, srv1 := testutils.SMTPServer(t, "127.0.0.1:"+smtpPort)
++	defer srv1.Close()
++	defer testutils.CheckSMTPConnLeak(t, srv1)
++	be2, srv2 := testutils.SMTPServer(t, "127.0.0.2:"+smtpPort)
++	defer srv2.Close()
++	defer testutils.CheckSMTPConnLeak(t, srv2)
++	zones := map[string]mockdns.Zone{
++		"example.invalid.": {
++			MX: []net.MX{{Host: "mx.example.invalid.", Pref: 10}},
++		},
++		"example2.invalid.": {
++			MX: []net.MX{{Host: "mx.example2.invalid.", Pref: 10}},
++		},
++		"mx.example.invalid.": {
++			A: []string{"127.0.0.1"},
++		},
++		"mx.example2.invalid.": {
++			A: []string{"127.0.0.2"},
++		},
++	}
++	resolver := &mockdns.Resolver{Zones: zones}
++
++	tgt := Target{
++		name:        "remote",
++		hostname:    "mx.example.com",
++		resolver:    &mockdns.Resolver{Zones: zones},
++		dialer:      resolver.DialContext,
++		extResolver: nil,
++		Log:         testutils.Logger(t, "remote"),
++	}
++
++	testutils.DoTestDelivery(t, &tgt, "test@example.com", []string{"test@example.invalid", "test@example2.invalid"})
++
++	be1.CheckMsg(t, 0, "test@example.com", []string{"test@example.invalid"})
++	be2.CheckMsg(t, 0, "test@example.com", []string{"test@example2.invalid"})
++}
++
+ func TestRemoteDelivery_Split_Fail(t *testing.T) {
+ 	be1, srv1 := testutils.SMTPServer(t, "127.0.0.1:"+smtpPort)
+ 	defer srv1.Close()
+@@ -725,6 +849,34 @@ func TestRemoteDelivery_Split_BodyErr_NonAtomic(t *testing.T) {
+ 	}
+ }
+ 
++func TestRemoteDelivery_TLSErrFallback(t *testing.T) {
++	_, be, srv := testutils.SMTPServerSTARTTLS(t, "127.0.0.1:"+smtpPort)
++	defer srv.Close()
++	defer testutils.CheckSMTPConnLeak(t, srv)
++	zones := map[string]mockdns.Zone{
++		"example.invalid.": {
++			MX: []net.MX{{Host: "mx.example.invalid.", Pref: 10}},
++		},
++		"mx.example.invalid.": {
++			A: []string{"127.0.0.1"},
++		},
++	}
++	resolver := &mockdns.Resolver{Zones: zones}
++
++	tgt := Target{
++		name:        "remote",
++		hostname:    "mx.example.com",
++		resolver:    &mockdns.Resolver{Zones: zones},
++		dialer:      resolver.DialContext,
++		extResolver: nil,
++		tlsConfig:   &tls.Config{},
++		Log:         testutils.Logger(t, "remote"),
++	}
++
++	testutils.DoTestDelivery(t, &tgt, "test@example.com", []string{"test@example.invalid"})
++	be.CheckMsg(t, 0, "test@example.com", []string{"test@example.invalid"})
++}
++
+ func TestRemoteDelivery_RequireTLS_Missing(t *testing.T) {
+ 	_, srv := testutils.SMTPServer(t, "127.0.0.1:"+smtpPort)
+ 	defer srv.Close()

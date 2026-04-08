@@ -1,0 +1,8 @@
+We're behind on test coverage for the terminal screen margin functionality.
+
+The screen margin implementation is working correctly, but we're missing some unit tests that validate the scrolling behavior when margins are set. Can you write 1 unit test for each scenario:
+
+1. Margin behavior when using VT100 origin mode with scroll regions
+2. How content scrolls naturally (through drawing and linefeed operations) when a bottom margin is configured
+3.  Natural scrolling behavior (from content operations) when only a top margin is set
+4. Natural scroll region behavior (from content overflow) when both margins are set together

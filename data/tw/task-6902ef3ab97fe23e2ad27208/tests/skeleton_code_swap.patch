@@ -1,0 +1,12 @@
+diff --git a/public/app/features/query/state/DashboardQueryRunner/utils.ts b/public/app/features/query/state/DashboardQueryRunner/utils.ts
+index 145e673eb26..a892e74e8e0 100644
+--- a/public/app/features/query/state/DashboardQueryRunner/utils.ts
++++ b/public/app/features/query/state/DashboardQueryRunner/utils.ts
+@@ -84,7 +84,6 @@ export function translateQueryResult(annotation: AnnotationQuery, results: Annot
+   }
+ 
+   for (const item of results) {
+-    item.source = annotation;
+     item.color = config.theme2.visualization.getColorByName(annotation.iconColor);
+     item.type = annotation.name;
+     item.isRegion = Boolean(item.timeEnd && item.time !== item.timeEnd);

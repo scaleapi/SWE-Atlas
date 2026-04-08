@@ -1,0 +1,10 @@
+I would like to add unit tests for etag parsing and handling in our object storage system.
+
+Can you write unit tests that validate:
+
+1. Parsing etag strings - handle various etag formats and reject malformed inputs
+2. ETag equality comparison - correctly compare etags including quoted variants
+3. Encrypted etag detection - detect whether an etag represents encrypted content
+4. etag formatting for S3 compatibility - format etags to aws s3 compatible representation
+
+Write 1 unit test for each test case above.

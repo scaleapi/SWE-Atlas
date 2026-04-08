@@ -1,0 +1,146 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "60d1f87d6ca8c85933b5f64bf9617d6c",
+    "title": "1.1: Tests that REP control sequence repeats the last drawn character once when invoked without an explicit count parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "773631fd0d978bbe76c17ae6ef313c5a",
+    "title": "1.2: Tests that REP control sequence repeats the last drawn character N times when given an explicit count parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "19a96a969d2c737e8a7c55cf847f54de",
+    "title": "1.3: Tests that REP control sequence works with non-alphabetic characters such as space"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "8248819617991c67f7fffdb43d82f814",
+    "title": "1.4: Tests that emoji with skin tone modifier is stored correctly in the screen buffer as a combined sequence."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aef17da26a3bfd4fe00652b123f07e48",
+    "title": "1.5: Tests that cursor position advances by 2 cells after drawing an emoji with skin tone modifier"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f0359c4731aed44c9bc024a419af2e04",
+    "title": "1.6: Tests that regional indicator pair renders correctly as a flag emoji in the screen buffer"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "432803211b7edd27d71ea82ed753a2bb",
+    "title": "1.7: Tests that cursor position advances by 2 cells after drawing a regional indicator pair"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "3d455b14110c42beeeaff3b271a028a9",
+    "title": "1.8: Tests that unpaired regional indicator is handled by drawing individual characters separately and verifying they do not combine"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d02608c02c9912d29b27a5df0dba02f7",
+    "title": "1.10: Tests that ZWJ emoji sequence with 4 family members is stored correctly in the screen buffer."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "7a87dd49300f7699f8939eb63ea01c4d",
+    "title": "2.1: Places the test for REP control sequence character repetition in kitty_tests/screen.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "82729d0ce90bdcda441f8b3460317ae4",
+    "title": "2.2: Places the test for emoji skin tone modifier rendering in kitty_tests/screen.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "781b1286aa409bedc52b9e737662fe37",
+    "title": "2.3: Places the test for regional indicator flag emoji rendering in kitty_tests/screen.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "03b99c699c3989502164f2f0fea45b35",
+    "title": "2.4: Places the test for zero-width joiner sequence rendering in kitty_tests/screen.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d6d8f90409f219ac52a5752f8c348370",
+    "title": "3.1: All tests use Python unittest framework"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "78ce060e847a66b275ee9ecdfe24cf99",
+    "title": "3.2: All tests are defined as methods within a class that inherits from BaseTest"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "7d42772fa68f5ba8b21412fb3a653d91",
+    "title": "3.3: All tests follow the naming pattern test_<descriptive_name>"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4211c157f862b39d3b8b0fc3556b7396",
+    "title": "3.4: All tests use self.create_screen() method to instantiate screen objects"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d270b86020c25fd794081c7011942b6a",
+    "title": "4.1: Uses parse_bytes() function to send raw escape sequences for REP control sequence"
+  }
+]

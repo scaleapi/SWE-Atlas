@@ -1,0 +1,202 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "80e465da9fd85670344c5b2ca9b67694",
+    "title": "1.1: Tests that store accepts items when below the configured limit"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "71887ea0b62a60415d16c12a4884c86a",
+    "title": "1.2: Tests that store returns an error when attempting to store beyond the configured limit"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "97acfd302dea1917dd6e370bb4a0203f",
+    "title": "1.3: Tests that the store is re-opened after initial item storage"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9cb633d97b92a7ccccbed5d0bf675ab9",
+    "title": "1.4: Tests that List returns stored items after re-opening the store"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b0c256d006f88b2f64e18bdb5742fed6",
+    "title": "1.5: Tests that Len returns count consistent with List"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d80f6a72dfa80cdfdf525983a6c3dc30",
+    "title": "1.6: Tests that Del is called for stored items"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9628cfef9cbcb5d98456a4dc4e56fa5b",
+    "title": "1.7: Tests that List returns empty after deletion"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "30d9c693bfd51a0eb1864049fd22a34a",
+    "title": "1.8: Tests that PutMultiple creates a single batch entry in List"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "3a722cff8def7e29193090d0dc2fad1d",
+    "title": "1.9: Tests that batch key indicates compression is enabled"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "8c7f33eee14228ecec4c693cdebafd67",
+    "title": "1.10: Tests that batch key contains the count of items stored"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "e14980f5227519468186ecb32d46c8c7",
+    "title": "1.11: Tests that GetRaw returns bytes matching the encoded items"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "4d926e3db037e5202f5c7aa7b637234c",
+    "title": "1.12: Tests that GetMultiple returns items matching the originals"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "870fb8c7b2e131ee9509c6978a2dfb18",
+    "title": "1.13: Tests that List returns correct total count after mixed operations"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "58a3d77139d8cfc2dc5ae04345d8c271",
+    "title": "1.14: Tests that retrieval method is chosen based on key's ItemCount"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "88c047c35384808097a64b2bae3d7218",
+    "title": "1.15: Tests that all retrieved items in mixed scenario match the stored items"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2f5f769ab80f46508657d93ed0a6e714",
+    "title": "2.1: Places the limit enforcement test in internal/store directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4e0c4acd1a64ba7848c0cd15c27723eb",
+    "title": "2.2: Places the persistence test in internal/store directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "595116b13e9b39d3ba682f8d8ce470f6",
+    "title": "2.3: Places the batch raw retrieval test in internal/store directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "78a6b48f58d2cfbd4342f2069060a55a",
+    "title": "2.4: Places the batch deserialization test in internal/store directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "9300b39d43e4ecf55c6f3308c859d125",
+    "title": "2.5: Places the mixed operations test in internal/store directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "8273200071dfc6ab6f2a538cbf629668",
+    "title": "3.1: All tests use Go testing package with *testing.T parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "172685f77c147a1834d2a50c153c4e4d",
+    "title": "3.2: All tests follow TestXxx naming convention"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "293ecd5c3d4edeee2d45460621dc4e54",
+    "title": "3.3: All tests use t.Fatal or t.Fatalf for test assertions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ff85ec7d405acdb1156f31e5d61a1fdd",
+    "title": "4.1: All tests use setUpQueueStore helper function for store initialization"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "a386d3fb923fd12028ed3d7efea3edd0",
+    "title": "4.2: All tests use tearDownQueueStore in defer block for cleanup"
+  }
+]

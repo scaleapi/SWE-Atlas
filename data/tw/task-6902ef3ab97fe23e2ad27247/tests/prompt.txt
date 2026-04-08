@@ -1,0 +1,9 @@
+The context wrapper package in our application lacks unit test coverage.
+
+The context package wraps the standard library context.Context to include a Logger() method for structured logging. The implementation is complete and working, but we need test coverage. Write 1 unit test for each of the following scenarios:
+
+1. Testing that WithCancel propagates the logger from parent context and logging works after cancellation
+2. Testing that WithTimeout propagates the logger and context behavior works correctly for both timeout and non-timeout cases
+3. Testing that WithLogger correctly attaches a logger to a context and it can be retrieved via Logger()
+4. Testing that the custom Context type can be passed to functions expecting standard context.Context while still supporting logging and value retrieval
+5. Testing that WithValue and WithValues correctly propagate values and logger key-value pairs through context chains

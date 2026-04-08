@@ -1,0 +1,138 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "93d696ce6d634faadda79c8008623e5a",
+    "title": "1.1: Tests that DKIM validation returns three failure indicators when no DNS CNAME records are configured"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "bbae8cbdfed6812af50312f2f6cc82ff",
+    "title": "1.2: Tests that DKIM validation sets the domain verification flag to false when records are missing"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f7fed2450952965134f54250b1af6594",
+    "title": "1.3: Tests that DKIM validation returns failure indicators only for incorrectly configured records when some records have wrong values"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "21784707b4590fceacb8f128fedea431",
+    "title": "1.4: Tests that DKIM validation preserves verified status for domains using legacy single-record system"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "dbcfd1c406d7c8394a586d7357617eae",
+    "title": "1.5: Tests that DKIM validation returns indicators for missing additional records in legacy-verified domains"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "1d9896e915e4373606c8aa05dc0f26a2",
+    "title": "1.6: Tests that DKIM validation returns empty result when all three DKIM CNAME records are set to expected values"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "3ca005d1e9b0003613f7b189201fabe0",
+    "title": "1.7: Tests that DKIM validation sets the domain verification flag to true when all records are valid"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "10be8e4702b873fdd2268be9a67824f9",
+    "title": "1.8: Tests that wrong values scenario assertions do not check for 'empty' indicators"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "bd430094dd048a95df0d0d54b3d2f171",
+    "title": "2.1: Places the test for unconfigured DKIM records in tests/ directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d458051de208c2e0a4ea6b472b093943",
+    "title": "2.2: Places the test for wrong record values in tests/ directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "c0897e45c6bf8f3b9a0ac66cc22e0655",
+    "title": "2.3: Places the test for legacy single-record system in tests/ directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "5d56c2cfb64887b69267d341589f86ce",
+    "title": "2.4: Places the test for successful DKIM configuration in tests/ directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "033ee4aeaea5eb408ff1d33f21f5d6ae",
+    "title": "3.1: All tests use the pytest framework"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "9a45ff283e27c7d7eac9c1a2d09abfdd",
+    "title": "3.2: All tests follow the test_ prefix naming pattern"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "1d54f51099907656aa04b50beff3b7aa",
+    "title": "3.3: All tests use standard assert statements for verification"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e3be0754abe04c6ea0b548e21cec42d0",
+    "title": "4.1: Follows DNS mocking pattern using InMemoryDNSClient for all DKIM validation tests"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "eec6ef251a5a94d186ae42050918dc5a",
+    "title": "4.2: Follows database verification pattern by checking dkim_verified flag after validation"
+  }
+]

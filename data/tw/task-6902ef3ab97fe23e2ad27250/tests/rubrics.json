@@ -1,0 +1,194 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aea1d83862baa333c95f618b0d915631",
+    "title": "1.1: Tests that placeholder rendering creates image references when using 8-bit color mode for image ID encoding"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a30c20dd9eac661c57bb193b7c2c114f",
+    "title": "1.2: Tests that placeholder rendering creates image references when using 24-bit color mode for image ID encoding"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "85f22fd577b3c132079e894cc217346e",
+    "title": "1.3: Tests that contiguous placeholder characters combine into single image references"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0936312a1a0faedb571b5ca37bba9148",
+    "title": "1.4: Tests that position diacritics correctly encode row and column positions for placeholders"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "394e758be18b3def25140248c6b3b89c",
+    "title": "1.5: Tests that a third combining character extends the image ID range beyond basic encoding"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "006f2d94c8d0ffa35cd86cec03284119",
+    "title": "1.6: Tests extended ID support in both 8-bit and 24-bit color modes"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "de0dae3eb6f8b4968248f6282eab7502",
+    "title": "1.7: Tests that non-existent image IDs result in zero references"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "74b9cbffe1554cfc12a31be96c24b107",
+    "title": "1.8: Tests that multiple placements of the same image can be rendered simultaneously"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d29ae5bbd5a24d8a94ae92a833451207",
+    "title": "1.9: Tests that different placement configurations can be distinguished and selected when rendering"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "34ed88175b4f6963ed5b52be747f4d60",
+    "title": "1.10: Tests that placeholder images inside scroll margins move when scrolling"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "ebc5058df69ec3c90afa2fd0c1199a75",
+    "title": "1.11: Tests that placeholder images outside scroll margins remain fixed when scrolling"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "12f74e8cbdda385662273ee4f033c363",
+    "title": "1.12: Tests that placeholder images are removed when scrolled out of the margin region"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0f95d7563da540a8ff064860c1907c03",
+    "title": "2.1: Places the test for basic placeholder rendering in the graphics test file or directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e078f5097203461605b6f0c2ee920a39",
+    "title": "2.2: Places the test for extended ID support in the graphics test file or directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "30bf1d120f8d92985ef1c84149672e14",
+    "title": "2.3: Places the test for multiple placements in the graphics test file or directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "638fdca9eb256e29c784f22cfedccc03",
+    "title": "2.4: Places the test for scroll region behavior in the graphics test file or directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "f6cc899deebe86e77d5bb6c9265442d1",
+    "title": "3.1: All tests use Python unittest framework with test methods inside a TestCase class"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "abfe2c108fd01862505ea7a9516133fd",
+    "title": "3.2: All tests follow the test_<descriptive_name> naming pattern"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d81b12f6ce6f086592a5e6c5a17ea112",
+    "title": "3.3: All tests use equality assertion methods for comparing expected and actual values"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d47de9f5a7b0023c75474f4af639feab",
+    "title": "3.4: All tests use put_helpers() function for test setup"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "7aece6b5e4969de68cd9dc35caea9400",
+    "title": "3.5: All tests call update_only_line_graphics_data() before retrieving references"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "12606eb94579e108a646c3239a99ff90",
+    "title": "4.1: Uses put_image with unicode_placeholder=1 parameter for placeholder rendering test"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "cde7cd99313c8ad978c17f8129123851",
+    "title": "4.2: Uses apply_sgr with foreground color codes to encode image IDs for placeholder tests"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "82a4b12fe275554f6b9cbe9f7c7cf9fc",
+    "title": "4.3: Uses the unicode placeholder character U+10EEEE for drawing placeholders"
+  }
+]

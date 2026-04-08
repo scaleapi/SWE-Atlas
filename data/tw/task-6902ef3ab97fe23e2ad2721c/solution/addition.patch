@@ -1,0 +1,178 @@
+--- a/src/paperless_mail/tests/test_mail.py
++++ b/src/paperless_mail/tests/test_mail.py
+@@ -464,11 +464,114 @@
+             )
+             self.assertListEqual(filenames, matches)
+ 
++    def test_handle_mail_account_mark_read(self):
+ 
++        account = MailAccount.objects.create(
++            name="test",
++            imap_server="",
++            username="admin",
++            password="secret",
++        )
++
++        _ = MailRule.objects.create(
++            name="testrule",
++            account=account,
++            action=MailRule.MailAction.MARK_READ,
++        )
++
++        self.assertEqual(len(self.bogus_mailbox.messages), 3)
++        self.assertEqual(self.async_task.call_count, 0)
++        self.assertEqual(len(self.bogus_mailbox.fetch("UNSEEN", False)), 2)
++        self.mail_account_handler.handle_mail_account(account)
++        self.assertEqual(self.async_task.call_count, 2)
++        self.assertEqual(len(self.bogus_mailbox.fetch("UNSEEN", False)), 0)
++        self.assertEqual(len(self.bogus_mailbox.messages), 3)
+ 
++    def test_handle_mail_account_delete(self):
+ 
++        account = MailAccount.objects.create(
++            name="test",
++            imap_server="",
++            username="admin",
++            password="secret",
++        )
+ 
++        _ = MailRule.objects.create(
++            name="testrule",
++            account=account,
++            action=MailRule.MailAction.DELETE,
++            filter_subject="Invoice",
++        )
+ 
++        self.assertEqual(self.async_task.call_count, 0)
++        self.assertEqual(len(self.bogus_mailbox.messages), 3)
++        self.mail_account_handler.handle_mail_account(account)
++        self.assertEqual(self.async_task.call_count, 2)
++        self.assertEqual(len(self.bogus_mailbox.messages), 1)
++
++    def test_handle_mail_account_flag(self):
++        account = MailAccount.objects.create(
++            name="test",
++            imap_server="",
++            username="admin",
++            password="secret",
++        )
++
++        _ = MailRule.objects.create(
++            name="testrule",
++            account=account,
++            action=MailRule.MailAction.FLAG,
++            filter_subject="Invoice",
++        )
++
++        self.assertEqual(len(self.bogus_mailbox.messages), 3)
++        self.assertEqual(self.async_task.call_count, 0)
++        self.assertEqual(len(self.bogus_mailbox.fetch("UNFLAGGED", False)), 2)
++        self.mail_account_handler.handle_mail_account(account)
++        self.assertEqual(self.async_task.call_count, 1)
++        self.assertEqual(len(self.bogus_mailbox.fetch("UNFLAGGED", False)), 1)
++        self.assertEqual(len(self.bogus_mailbox.messages), 3)
++
++    def test_handle_mail_account_move(self):
++        account = MailAccount.objects.create(
++            name="test",
++            imap_server="",
++            username="admin",
++            password="secret",
++        )
++
++        _ = MailRule.objects.create(
++            name="testrule",
++            account=account,
++            action=MailRule.MailAction.MOVE,
++            action_parameter="spam",
++            filter_subject="Claim",
++        )
++
++        self.assertEqual(self.async_task.call_count, 0)
++        self.assertEqual(len(self.bogus_mailbox.messages), 3)
++        self.assertEqual(len(self.bogus_mailbox.messages_spam), 0)
++
++        self.mail_account_handler.handle_mail_account(account)
++
++        self.assertEqual(self.async_task.call_count, 1)
++        self.assertEqual(len(self.bogus_mailbox.messages), 2)
++        self.assertEqual(len(self.bogus_mailbox.messages_spam), 1)
++
++    def test_error_login(self):
++        account = MailAccount.objects.create(
++            name="test",
++            imap_server="",
++            username="admin",
++            password="wrong",
++        )
++
++        with self.assertRaises(MailError) as context:
++            self.mail_account_handler.handle_mail_account(account)
++            self.assertTrue(
++                str(context).startswith("Error while authenticating account"),
++            )
++
+     def test_error_skip_account(self):
+         _ = MailAccount.objects.create(
+             name="test",
+@@ -663,8 +766,60 @@
+         self.async_task.assert_called_once()
+         self.assertEqual(kwargs["override_correspondent_id"], None)
+ 
++    def test_filters(self):
+ 
++        account = MailAccount.objects.create(
++            name="test3",
++            imap_server="",
++            username="admin",
++            password="secret",
++        )
++        rule = MailRule.objects.create(
++            name="testrule3",
++            account=account,
++            action=MailRule.MailAction.DELETE,
++            filter_subject="Claim",
++        )
+ 
++        self.assertEqual(self.async_task.call_count, 0)
++
++        self.assertEqual(len(self.bogus_mailbox.messages), 3)
++        self.mail_account_handler.handle_mail_account(account)
++        self.assertEqual(len(self.bogus_mailbox.messages), 2)
++        self.assertEqual(self.async_task.call_count, 1)
++
++        self.reset_bogus_mailbox()
++
++        rule.filter_subject = None
++        rule.filter_body = "electronic"
++        rule.save()
++        self.assertEqual(len(self.bogus_mailbox.messages), 3)
++        self.mail_account_handler.handle_mail_account(account)
++        self.assertEqual(len(self.bogus_mailbox.messages), 2)
++        self.assertEqual(self.async_task.call_count, 2)
++
++        self.reset_bogus_mailbox()
++
++        rule.filter_from = "amazon"
++        rule.filter_body = None
++        rule.save()
++        self.assertEqual(len(self.bogus_mailbox.messages), 3)
++        self.mail_account_handler.handle_mail_account(account)
++        self.assertEqual(len(self.bogus_mailbox.messages), 1)
++        self.assertEqual(self.async_task.call_count, 4)
++
++        self.reset_bogus_mailbox()
++
++        rule.filter_from = "amazon"
++        rule.filter_body = "cables"
++        rule.filter_subject = "Invoice"
++        rule.save()
++        self.assertEqual(len(self.bogus_mailbox.messages), 3)
++        self.mail_account_handler.handle_mail_account(account)
++        self.assertEqual(len(self.bogus_mailbox.messages), 2)
++        self.assertEqual(self.async_task.call_count, 5)
++
++
+ class TestManagementCommand(TestCase):
+     @mock.patch(
+         "paperless_mail.management.commands.mail_fetcher.tasks.process_mail_accounts",

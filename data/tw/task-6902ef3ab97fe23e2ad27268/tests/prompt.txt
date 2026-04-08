@@ -1,0 +1,7 @@
+Can you help build out the integration test coverage for the message pipeline source routing system?
+
+The routing functionality is working, but we're missing some tests that verify source-based routing behaviors. Can you write one integration test for each of these scenarios:
+
+1. Routing messages by sender domain - when messages arrive from senders at different domains, the pipeline should route them to the appropriate configured targets based on the sender's domain
+2. Source-based message rejection - the system needs to reject messages from specific sender addresses or domains while still accepting messages from allowed senders
+3. Case-insensitive source address matching - source routing rules should match sender addresses regardless of letter casing variations

@@ -1,0 +1,13 @@
+Looking to add integration tests for the grid streaming functionality in the internal/grid package.
+
+The streaming infrastructure allows bidirectional communication between grid nodes. We're missing test coverage for several important scenarios in the TestStreamSuite.
+
+Please write integration tests that cover the following scenarios:
+
+1. A test that verifies basic bidirectional stream communication works correctly
+2. A test that verifies stream cancellation behavior when the client cancels the context
+3. A test that verifies deadline propagation in streams
+4. A test that verifies the server can handle output congestion without blocking other requests
+5. A test that verifies the server can handle input congestion without blocking other requests
+
+Write the complete test implementation for each scenario above, placing them appropriately within the existing test structure.

@@ -1,0 +1,5 @@
+We're short on unit test coverage for the text buffer rewrapping logic, ie. handling buffer dimension changes during rewrap operations. I need to validate these scenarios:
+
+1. Handling rewrapping when the source and destination buffers have identical dimensions (same width and height), verifying that content is preserved exactly and cursor position remains correct
+2. Handling rewrapping when the destination buffer is wider than the source, verifying that continued lines are merged correctly, line continuation flags are set properly, and dirty line tracking is accurate
+3. Handling rewrapping when the destination buffer is narrower than the source, verifying that lines are split correctly at the new width boundary, continuation flags properly indicate wrapped content, and trailing whitespace is handled appropriately

@@ -1,0 +1,178 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d383344ee9e98d6c84a9f59a217649fa",
+    "title": "1.1: Tests that draw() wraps text to next line with is_continued() flag set to True when DECAWM mode is enabled and text exceeds screen width"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "dcb2a4bb1f9756b8186b7711eee95070",
+    "title": "1.2: Tests that draw() truncates text without wrapping when text exceeds screen width given DECAWM mode is disabled, with cursor.x staying at last column position (`cursor.x = cols`) and `cursor.y` remaining at 0."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0488e95cab1d4202e3d31db9e91f34f0",
+    "title": "1.3: Tests that draw() shifts existing characters rightward when new text is drawn given IRM insert mode is enabled."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "bd917a9cbed01219aad36a8d2bd8f8b7",
+    "title": "1.4: Tests that draw() renders wide Unicode characters with line().width(idx) returning 2 for wide characters and cursor advancing by sum of all character widths"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "bf58bf43eb19271edfeb860831baf957",
+    "title": "1.5: Tests that draw() renders combining diacritical marks without consuming additional cells or advancing cursor position"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "7f1f0e22a19a3f4538b2f469539eba5d",
+    "title": "1.6: Tests that draw() distributes wide Unicode characters across lines 0,1,2 maintaining complete character sequences without splitting individual wide characters when total width exceeds screen width"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f631ab0915fbad35f75371371d50c150",
+    "title": "1.7: Tests that draw() processes repeat escape sequences to duplicate the last character multiple times at consecutive positions."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d22d67e2d484d9da9c9c12d321e19f78",
+    "title": "1.8: Tests that draw() duplicates last character N times when parse_bytes receives b'x1b[Nb' where N is the repeat count parameter (1 for b'x1b[b', 3 for b'x1b[3b')"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "4bd0602507293a8b94903ee9045e0546",
+    "title": "1.9: Tests that the repeat escape sequence appends N characters to the line advancing cursor.x by the total width of the repeated characters."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b87e431107a18e367cd0acb47cee3489",
+    "title": "1.10: Tests that draw() renders emoji sequences with skin tone modifiers as single combined glyphs occupying two-cell width."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "7cd3e811d96e7bb89b26a9ee33bb24a5",
+    "title": "1.11: Tests that draw() renders emoji with skin tone modifiers with str(s.line(0)) returning the exact combined codepoint sequence (base + modifier)."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "5989efb63a1757a5af40fbd5c874e969",
+    "title": "1.13: Tests that draw() renders regional indicator pairs that merge into flag glyphs occupying two-cell width"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "5af4e212dd3486f58efca6c51231e58b",
+    "title": "1.14: Tests that draw() renders partial regional indicator sequences as individual characters when separated by other text without forming complete flag pairs"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "fb02f60d819d77b4944b6c1288b914e9",
+    "title": "1.15: Tests that draw() advances cursor by 2 positions after rendering merged regional indicator flag pairs"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "f069b25c5917b88048afe1f03134a47e",
+    "title": "2.1: Places the test validating mode switching in kitty_tests/screen.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "da1b2e608f88872f65ea67fc6108a742",
+    "title": "2.2: Places the test validating wide Unicode rendering in kitty_tests/screen.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "6cc734bf471ad99f8aaaf6293ab458a3",
+    "title": "2.3: Places the test validating repeat sequences in kitty_tests/screen.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "db7351c51f68d096959b2081991e3abc",
+    "title": "2.4: Places the test validating emoji modifiers in kitty_tests/screen.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e73625c563e2ca472597df383c7e93d8",
+    "title": "2.5: Places the test validating regional indicators in kitty_tests/screen.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d79c3fe288c456ae510c0658818683f1",
+    "title": "3.1: All tests use self.ae() assertion method inherited from BaseTest class for assertion."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "716a02bed9f37d9d6789db95b4de80d2",
+    "title": "3.2: All tests follow the test naming pattern test_<functionality><scenario> using snake_case."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e08202fe2c50221ad01ab78cadee8477",
+    "title": "4.2: Follows pattern of using parse_bytes(s, b'x1b[Nb') escape sequence format where N is optional numeric parameter to trigger character repetition for test verifying repeat sequences"
+  }
+]

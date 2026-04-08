@@ -1,0 +1,338 @@
+diff --git a/kitty_tests/graphics.py b/kitty_tests/graphics.py
+index 5302bd046..70cf4ead3 100644
+--- a/kitty_tests/graphics.py
++++ b/kitty_tests/graphics.py
+@@ -359,6 +359,192 @@ def test_suppressing_gr_command_responses(self):
+         self.assertIsNone(li(payload='2' * 12, z=77, m=1, q=2))
+         self.assertIsNone(li(payload='2' * 12))
+ 
++    def test_load_images(self):
++        s, g, pl, sl = load_helpers(self)
++        self.assertEqual(g.disk_cache.total_size, 0)
++
++        # Test load query
++        self.ae(pl('abcd', s=1, v=1, a='q'), 'OK')
++        self.ae(g.image_count, 0)
++
++        # Test simple load
++        for f in 32, 24:
++            p = 'abc' + ('d' if f == 32 else '')
++            img = sl(p, s=1, v=1, f=f)
++            self.ae(bool(img['is_4byte_aligned']), f == 32)
++
++        # Test chunked load
++        self.assertIsNone(pl('abcd', s=2, v=2, m=1))
++        self.assertIsNone(pl('efgh', m=1))
++        self.assertIsNone(pl('ijkl', m=1))
++        self.ae(pl('mnop', m=0), 'OK')
++        img = g.image_for_client_id(1)
++        self.ae(img['data'], b'abcdefghijklmnop')
++
++        random_data = byte_block(32 * 1024)
++        sl(
++            random_data,
++            s=1024,
++            v=8,
++            expecting_data=random_data
++        )
++
++        # Test compression
++        compressed_random_data = zlib.compress(random_data)
++        sl(
++            compressed_random_data,
++            s=1024,
++            v=8,
++            o='z',
++            expecting_data=random_data
++        )
++
++        # Test chunked + compressed
++        b = len(compressed_random_data) // 2
++        self.assertIsNone(pl(compressed_random_data[:b], s=1024, v=8, o='z', m=1))
++        self.ae(pl(compressed_random_data[b:], m=0), 'OK')
++        img = g.image_for_client_id(1)
++        self.ae(img['data'], random_data)
++
++        # Test loading from file
++        def load_temp(prefix='tty-graphics-protocol-'):
++            f = tempfile.NamedTemporaryFile(prefix=prefix)
++            f.write(random_data), f.flush()
++            sl(f.name, s=1024, v=8, t='f', expecting_data=random_data)
++            self.assertTrue(os.path.exists(f.name))
++            f.seek(0), f.truncate(), f.write(compressed_random_data), f.flush()
++            sl(f.name, s=1024, v=8, t='t', o='z', expecting_data=random_data)
++            return f
++
++        f = load_temp()
++        self.assertFalse(os.path.exists(f.name), f'Temp file at {f.name} was not deleted')
++        with suppress(FileNotFoundError):
++            f.close()
++        f = load_temp('')
++        self.assertTrue(os.path.exists(f.name), f'Temp file at {f.name} was deleted')
++        f.close()
++
++        # Test loading from POSIX SHM
++        name = '/kitty-test-shm'
++        shm_write(name, random_data)
++        sl(name, s=1024, v=8, t='s', expecting_data=random_data)
++        self.assertRaises(
++            FileNotFoundError, shm_unlink, name
++        )  # check that file was deleted
++        s.reset()
++        self.assertEqual(g.disk_cache.total_size, 0)
++
++    @unittest.skipIf(Image is None, 'PIL not available, skipping PNG tests')
++    def test_load_png(self):
++        s, g, pl, sl = load_helpers(self)
++        w, h = 5, 3
++        rgba_data = byte_block(w * h * 4)
++        img = Image.frombytes('RGBA', (w, h), rgba_data)
++        rgb_data = img.convert('RGB').convert('RGBA').tobytes()
++        self.assertEqual(g.disk_cache.total_size, 0)
++
++        def png(mode='RGBA'):
++            buf = BytesIO()
++            i = img
++            if mode != i.mode:
++                i = img.convert(mode)
++            i.save(buf, 'PNG')
++            return buf.getvalue()
++
++        for mode in 'RGBA RGB'.split():
++            data = png(mode)
++            sl(data, f=100, expecting_data=rgb_data if mode == 'RGB' else rgba_data)
++
++        for m in 'LP':
++            img = img.convert(m)
++            rgba_data = img.convert('RGBA').tobytes()
++            data = png(m)
++        sl(data, f=100, expecting_data=rgba_data)
++
++        self.ae(pl(b'a' * 20, f=100, S=20).partition(':')[0], 'EBADPNG')
++        s.reset()
++        self.assertEqual(g.disk_cache.total_size, 0)
++
++    def test_load_png_simple(self):
++        # 1x1 transparent PNG
++        png_data = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==')
++        expected = b'\x00\xff\xff\x7f'
++        self.ae(load_png_data(png_data), (expected, 1, 1))
++        s, g, pl, sl = load_helpers(self)
++        sl(png_data, f=100, expecting_data=expected)
++        # test error handling for loading bad png data
++        self.assertRaisesRegex(ValueError, '[EBADPNG]', load_png_data, b'dsfsdfsfsfd')
++
++    def test_gr_operations_with_numbers(self):
++        s = self.create_screen()
++        g = s.grman
++        self.assertEqual(g.disk_cache.total_size, 0)
++
++        def li(payload, **kw):
++            cmd = ','.join(f'{k}={v}' for k, v in kw.items())
++            res = send_command(s, cmd, payload)
++            return parse_response_with_ids(res)
++
++        code, ids = li('abc', s=1, v=1, f=24, I=1, i=3)
++        self.ae(code, 'EINVAL')
++
++        code, ids = li('abc', s=1, v=1, f=24, I=1)
++        self.ae((code, ids), ('OK', 'i=1,I=1'))
++        img = g.image_for_client_number(1)
++        self.ae(img['client_number'], 1)
++        self.ae(img['client_id'], 1)
++        code, ids = li('abc', s=1, v=1, f=24, I=1)
++        self.ae((code, ids), ('OK', 'i=2,I=1'))
++        img = g.image_for_client_number(1)
++        self.ae(img['client_number'], 1)
++        self.ae(img['client_id'], 2)
++        code, ids = li('abc', s=1, v=1, f=24, I=1)
++        self.ae((code, ids), ('OK', 'i=3,I=1'))
++        code, ids = li('abc', s=1, v=1, f=24, i=5)
++        self.ae((code, ids), ('OK', 'i=5'))
++        code, ids = li('abc', s=1, v=1, f=24, I=3)
++        self.ae((code, ids), ('OK', 'i=4,I=3'))
++
++        # Test chunked load with number
++        self.assertIsNone(li('abcd', s=2, v=2, m=1, I=93))
++        self.assertIsNone(li('efgh', m=1))
++        self.assertIsNone(li('ijkx', m=1))
++        self.ae(li('mnop', m=0), ('OK', 'i=6,I=93'))
++        img = g.image_for_client_number(93)
++        self.ae(img['data'], b'abcdefghijkxmnop')
++        self.ae(img['client_id'], 6)
++
++        # test put with number
++        def put(**kw):
++            cmd = ','.join(f'{k}={v}' for k, v in kw.items())
++            cmd = 'a=p,' + cmd
++            return parse_response_with_ids(send_command(s, cmd))
++
++        code, idstr = put(c=2, r=2, I=93)
++        self.ae((code, idstr), ('OK', 'i=6,I=93'))
++        code, idstr = put(c=2, r=2, I=94)
++        self.ae(code, 'ENOENT')
++
++        # test delete with number
++        def delete(ac='N', **kw):
++            cmd = 'a=d'
++            if ac:
++                cmd += f',d={ac}'
++            if kw:
++                cmd += ',' + ','.join(f'{k}={v}' for k, v in kw.items())
++            send_command(s, cmd)
++
++        count = s.grman.image_count
++        put(i=1), put(i=2), put(i=3), put(i=4), put(i=5)
++        delete(I=94)
++        self.ae(s.grman.image_count, count)
++        delete(I=93)
++        self.ae(s.grman.image_count, count - 1)
++        delete(I=1)
++        self.ae(s.grman.image_count, count - 2)
++        s.reset()
++        self.assertEqual(g.disk_cache.total_size, 0)
++
+     def test_image_put(self):
+         cw, ch = 10, 20
+         s, dx, dy, put_image, put_ref, layers, rect_eq = put_helpers(self, cw, ch)
+@@ -866,6 +1052,140 @@ def delete(ac=None, **kw):
+         self.ae(s.grman.image_count, 0)
+         self.assertEqual(s.grman.disk_cache.total_size, 0)
+ 
++    def test_animation_frame_loading(self):
++        s = self.create_screen()
++        g = s.grman
++        li = make_send_command(s)
++
++        def t(code='OK', image_id=1, frame_number=2, **kw):
++            res = li(**kw)
++            if code is not None:
++                self.assertEqual(code, res.code, f'{code} != {res.code}: {res.msg}')
++            if image_id is not None:
++                self.assertEqual(image_id, res.image_id)
++            if frame_number is not None:
++                self.assertEqual(frame_number, res.frame_number)
++
++        # test error on send frame for non-existent image
++        self.assertEqual(li().code, 'ENOENT')
++
++        # create image
++        self.assertEqual(li(a='t').code, 'OK')
++        self.assertEqual(g.disk_cache.total_size, 36)
++
++        # simple new frame (width=4, height=3)
++        self.assertIsNone(li(payload='2' * 12, z=77, m=1))
++        self.assertIsNone(li(payload='2' * 12, z=77, m=1))
++        t(payload='2' * 12, z=77)
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['extra_frames'], ({'gap': 77, 'id': 2, 'data': b'2' * 36},))
++        # test editing a frame
++        t(payload='3' * 36, r=2)
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['extra_frames'], ({'gap': 77, 'id': 2, 'data': b'3' * 36},))
++        # test editing part of a frame
++        t(payload='4' * 12, r=2, s=2, v=2)
++        img = g.image_for_client_id(1)
++
++        def expand(*rows):
++            ans = []
++            for r in rows:
++                ans.append(''.join(x * 3 for x in str(r)))
++            return ''.join(ans).encode('ascii')
++
++        self.assertEqual(img['extra_frames'], ({'gap': 77, 'id': 2, 'data': expand(4433, 4433, 3333)},))
++        t(payload='5' * 12, r=2, s=2, v=2, x=1, y=1)
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['extra_frames'], ({'gap': 77, 'id': 2, 'data': expand(4433, 4553, 3553)},))
++        t(payload='3' * 36, r=2)
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['extra_frames'], ({'gap': 77, 'id': 2, 'data': b'3' * 36},))
++        # test loading from previous frame
++        t(payload='4' * 12, c=2, s=2, v=2, z=101, frame_number=3)
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['extra_frames'], (
++            {'gap': 77, 'id': 2, 'data': b'3' * 36},
++            {'gap': 101, 'id': 3, 'data': b'444444333333444444333333333333333333'},
++        ))
++        # test changing gaps
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['root_frame_gap'], 0)
++        self.assertIsNone(li(a='a', i=1, r=1, z=13))
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['root_frame_gap'], 13)
++        self.assertIsNone(li(a='a', i=1, r=2, z=43))
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['extra_frames'][0]['gap'], 43)
++        # test changing current frame
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['current_frame_index'], 0)
++        self.assertIsNone(li(a='a', i=1, c=2))
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['current_frame_index'], 1)
++
++        # test delete of frames
++        t(payload='5' * 36, frame_number=4)
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['extra_frames'], (
++            {'gap': 43, 'id': 2, 'data': b'3' * 36},
++            {'gap': 101, 'id': 3, 'data': b'444444333333444444333333333333333333'},
++            {'gap': 40, 'id': 4, 'data': b'5' * 36},
++        ))
++        self.assertEqual(img['current_frame_index'], 1)
++        self.assertIsNone(li(a='d', d='f', i=1, r=1))
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['current_frame_index'], 0)
++        self.assertEqual(img['data'], b'3' * 36)
++        self.assertEqual(img['extra_frames'], (
++            {'gap': 101, 'id': 3, 'data': b'444444333333444444333333333333333333'},
++            {'gap': 40, 'id': 4, 'data': b'5' * 36},
++        ))
++        self.assertIsNone(li(a='a', i=1, c=3))
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['current_frame_index'], 2)
++        self.assertIsNone(li(a='d', d='f', i=1, r=2))
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['current_frame_index'], 1)
++        self.assertEqual(img['data'], b'3' * 36)
++        self.assertEqual(img['extra_frames'], (
++            {'gap': 40, 'id': 4, 'data': b'5' * 36},
++        ))
++        self.assertIsNone(li(a='d', d='f', i=1))
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['current_frame_index'], 0)
++        self.assertEqual(img['data'], b'5' * 36)
++        self.assertFalse(img['extra_frames'])
++        self.assertIsNone(li(a='d', d='f', i=1))
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['data'], b'5' * 36)
++        self.assertIsNone(li(a='d', d='F', i=1))
++        self.ae(g.image_count, 0)
++        self.assertEqual(g.disk_cache.total_size, 0)
++
++        # test frame composition
++        self.assertEqual(li(a='t').code, 'OK')
++        self.assertEqual(g.disk_cache.total_size, 36)
++        t(payload='2' * 36)
++        t(payload='3' * 36, frame_number=3)
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['extra_frames'], (
++            {'gap': 40, 'id': 2, 'data': b'2' * 36},
++            {'gap': 40, 'id': 3, 'data': b'3' * 36},
++        ))
++        self.assertEqual(li(a='c', i=11).code, 'ENOENT')
++        self.assertEqual(li(a='c', i=1, r=1, c=2).code, 'OK')
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['extra_frames'], (
++            {'gap': 40, 'id': 2, 'data': b'abcdefghijkl'*3},
++            {'gap': 40, 'id': 3, 'data': b'3' * 36},
++        ))
++        self.assertEqual(li(a='c', i=1, r=2, c=3, w=1, h=2, x=1, y=1).code, 'OK')
++        img = g.image_for_client_id(1)
++        self.assertEqual(img['extra_frames'], (
++            {'gap': 40, 'id': 2, 'data': b'abcdefghijkl'*3},
++            {'gap': 40, 'id': 3, 'data': b'3' * 12 + (b'333abc' + b'3' * 6) * 2},
++        ))
++
+     def test_graphics_quota_enforcement(self):
+         s = self.create_screen()
+         g = s.grman

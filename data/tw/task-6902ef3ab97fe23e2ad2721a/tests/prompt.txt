@@ -1,0 +1,16 @@
+Write unit tests for the in6_mactoifaceid function which converts Ethernet MAC addresses to IPv6 interface IDs in modified EUI-64 format. The function accepts a MAC address string and an optional ulbit parameter that can be 0, 1, or None.
+
+Create 6 test cases covering:
+
+1. MAC address with ulbit explicitly set to 0
+2. MAC address with ulbit explicitly set to 1
+3. MAC address with ulbit defaulting (not provided)
+4. Different MAC address with ulbit defaulting
+5. Different MAC address with ulbit set to 1
+6. Different MAC address with ulbit set to 0
+
+Also write 6 tests that verify the round-trip conversion by passing the output of in6_mactoifaceid through in6_ifaceidtomac to confirm the MAC address can be recovered correctly for each of the above scenarios.
+
+Also, write 6 tests for in6_addrtomac that verify extracting MAC addresses from full IPv6 link-local addresses constructed using in6_mactoifaceid output, covering the same parameter variations.
+
+Each test should be in its own test container with a single assertion.

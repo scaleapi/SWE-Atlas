@@ -1,0 +1,30 @@
+diff --git a/scapy/utils.py b/scapy/utils.py
+index b882b01f..ef986dbb 100644
+--- a/scapy/utils.py
++++ b/scapy/utils.py
+@@ -227,17 +227,14 @@ def get_temp_dir(keep=False):
+ 
+ def sane(x, color=False):
+     # type: (AnyStr, bool) -> str
+-    r = ""
+-    for i in x:
+-        j = orb(i)
+-        if (j < 32) or (j >= 127):
+-            if color:
+-                r += conf.color_theme.not_printable(".")
+-            else:
+-                r += "."
+-        else:
+-            r += chr(j)
+-    return r
++    """Sanitize a string by replacing non-printable characters with dots.
++    
++    :param x: Input string or bytes
++    :param color: If True, use color theme for non-printable chars
++    :return: Sanitized string with non-printable chars replaced by '.'
++    """
++    # TODO: implement this function
++    pass
+ 
+ 
+ @conf.commands.register

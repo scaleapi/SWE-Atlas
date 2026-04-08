@@ -1,0 +1,194 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6f446f6a01ca0a4fe22659acf4027d40",
+    "title": "1.1: Tests that file upload to a subdirectory is denied when the user lacks upload permission in that subdirectory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "7bc8855f639cb8922693f7958ece1a5a",
+    "title": "1.2: Tests that symlink creation at the root directory succeeds when the user has permission at root\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d4b813afb072363d4c3498905e6f3d62",
+    "title": "1.3: Tests that renaming a path within the root directory succeeds when the user has rename permission at root"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "af0faa82a953f1acc5eeddac8e3a338e",
+    "title": "1.4: Tests that creating a new file in subdirectory is denied when user has only overwrite permission (not upload)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "89779584a13fb41371f55675e5ca0dc2",
+    "title": "1.5: Tests that overwriting an existing file in subdirectory succeeds when user has overwrite permission"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9db7dd65f8517269f28cb81a8414f7e5",
+    "title": "1.6: Tests that file download from subdirectory is denied when user lacks download permission there"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9336c88b06628b9e146464df522d1f49",
+    "title": "1.7: Tests that chtimes on a file in subdirectory is denied when user lacks chtimes permission there"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9720ea45ab50433a600f612f7f42fcdc",
+    "title": "1.8: Tests that chtimes on a subdirectory path checks parent directory permissions and is denied when parent lacks chtimes"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "5486699e93d7eecf7d59d3fa9a0ab423",
+    "title": "1.9: Tests that chtimes on a file in subdirectory succeeds when the subdirectory has chtimes permission"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "ceb8f4e8dc3a60eb29bd89564ef6a51b",
+    "title": "1.10: Tests that directory listing (ReadDir) in subdirectory is denied when user lacks list permission there"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "3d6212cb303df66694a6a1d5fd358745",
+    "title": "1.11: Tests that creating a subdirectory within the restricted subdirectory is denied when user lacks create_dirs permission"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "dc2df879dc39d05a04051420f83bb833",
+    "title": "1.12: Tests that file deletion in a subdirectory is denied when user lacks delete permission there"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6ed2af62ee463ae3d34c45b80e972a9f",
+    "title": "1.13: Tests that listing the root directory (ReadDir on \"/\") succeeds when root permissions allow listing"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "107fe1aaa847ddbcc2ffd7e73949eacf",
+    "title": "1.15: Tests that renaming (moving) an existing path into the restricted subdirectory is denied when the user lacks the required permissions in that subdirectory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "1c91096c0a93ed309f831f1a0e176924",
+    "title": "1.16: Tests that creating a symlink that places an entry inside the restricted subdirectory is denied when the user lacks the required permissions in that subdirectory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "4e84499afe21e393523aa19568dafc56",
+    "title": "1.17: For at least one denied operation, tests assert that an error is returned"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "be595a2625934b1d66a50564e3e0e63e",
+    "title": "2.1: Places the subdirectory permission tests in the sftpd test file or directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "9cb633d97b92a7ccccbed5d0bf675ab9",
+    "title": "3.1: All tests use the Go standard testing package with *testing.T parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "9e4235a8f4710b0a6f6838b5946dab4f",
+    "title": "3.2: All tests follow the naming pattern Test[Feature] or TestXxx"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "be28b5dd0044d73776338d3984194aea",
+    "title": "3.3: All tests use t.Errorf or t.Fatalf for error reporting"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "1c9ffe6323644d19c94f709e9095c66c",
+    "title": "3.4: All tests clean up created resources (users, files, directories)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2ee815ed2b43818fc8dfe41ea53b8d42",
+    "title": "4.1: Tests use getTestUser helper to create test user configuration"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d04c4bc5928653b0a8371665a54bf7c8",
+    "title": "4.2: Tests use getSftpClient helper to establish SFTP connections"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "813b82c2f08f7a9dc58115e6d0dad3f3",
+    "title": "4.3: Tests use httpd.AddUser to create users via the API"
+  }
+]

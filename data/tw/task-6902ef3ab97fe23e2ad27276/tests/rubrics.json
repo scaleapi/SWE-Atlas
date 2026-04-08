@@ -1,0 +1,114 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "01364c220646a05e2d6b6ab3ea4e4d37",
+    "title": "1.1: Tests that SharedIterations executor Run method returns no error when all iterations complete successfully"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "c195c652cdd7519e176f14e6c3ab911b",
+    "title": "1.2: Tests that SharedIterations executor returns correct iteration distribution when one VU is slower than others"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "32befb91f64177c0a0c0331edbb08a8c",
+    "title": "1.3: Tests that SharedIterations executor returns dropped iterations metric when iterations cannot complete within duration"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "400774237fd9596826350a6d1f4b09e3",
+    "title": "1.4: Tests that SharedIterations executor returns correct global iteration indices when run across different execution segments"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9edc1699a9e68585b93d5e2c6a1595a4",
+    "title": "1.6: Tests that the slow VU exact iteration count is asserted using assert.Equal"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2f31febb96d5a1a057874e9190da9cd9",
+    "title": "2.1: Places the test for baseline iteration completion in lib/executor directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "840029b7e5877cec3caef764e6b18d70",
+    "title": "2.2: Places the test for variable VU workload distribution in lib/executor directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "c066d701ef983fd825a74cfc4f9fb8c8",
+    "title": "2.3: Places the test for dropped iterations metrics in lib/executor directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fbb9a4e29e2c42529d227ad9f5d7f3be",
+    "title": "2.4: Places the test for global iteration indexing in lib/executor directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0325e7d15651965a977112d77c400c10",
+    "title": "3.1: All tests use the Go testing framework with testing.T parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "06b6b81d877383d87affac5c9bec697d",
+    "title": "3.2: All tests follow the Test<FunctionName> naming pattern"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e17a251ab49915724ee9e9664c761227",
+    "title": "3.3: All tests use testify assertion library for assertions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e6c51ad84e1802ca28cc290ba7b3a28d",
+    "title": "4.1: Follows setupExecutorTest helper pattern for test case that verifies baseline iteration completion"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4332c13f82965251862ea24145eeed88",
+    "title": "4.2: Follows simpleRunner helper pattern for test case that verifies variable VU workload distribution"
+  }
+]

@@ -1,0 +1,13 @@
+Provide integration tests for the QueueStore component in the MinIO codebase.
+
+The QueueStore is a file-based store for persisting items located in internal/store/queuestore.go.
+
+Create tests that cover the following operations:
+
+- Put: Adding items to the store
+- Get: Retrieving items from the store
+- Del: Removing items from the store
+- Capacity limits: Behavior when store reaches its configured limit
+- Persistence: Data durability across store re-open
+
+The tests should verify the core integration between the QueueStore methods and ensure the store maintains data integrity across operations

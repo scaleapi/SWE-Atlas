@@ -1,0 +1,10 @@
+The verification cache functionality in our secret scanning tool needs unit tests.
+
+The VerificationCache is working correctly, but we're missing test coverage for the FromData method under various caching scenarios. Write 1 unit test for each of the following test cases:
+
+1. Testing cache population when verification is disabled but force cache update is enabled
+2. Testing cache retrieval when verification is enabled and all results have cache hits
+3. Testing cache miss handling when verification is enabled and some cached results don't match
+4. Testing forced cache update behavior when both verification and force cache update are enabled
+5. Testing that cache keys properly distinguish between different detector types for the same raw credential
+6. Testing that cache keys properly distinguish between different detector types for the same rawV2 credential

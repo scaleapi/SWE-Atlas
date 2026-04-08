@@ -1,0 +1,11 @@
+The hexdiff utility function's binary comparison and display capabilities.
+
+The code is working but we're missing some unit tests that validate each of these scenarios:
+
+* Basic binary string comparison with single character differences showing proper hex and ASCII output alignment.
+* String comparison with insertion and deletion operations demonstrating correct offset tracking and visual alignment.
+* Complex object comparison where both inputs are structured packet objects with field-level differences.
+* Large sequence comparison with performance optimization flag enabled, validating different algorithmic behavior for efficiency.
+* Edge case handling where inputs have mismatched types or empty sequences without causing crashes.
+
+Write 1 unit test for each test case above.

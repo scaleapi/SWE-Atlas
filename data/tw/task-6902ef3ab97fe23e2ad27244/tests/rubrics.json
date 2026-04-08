@@ -1,0 +1,122 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "cb821c1c987618bb2aa298f66d3579ec",
+    "title": "1.1: Tests that hyperlinks created with OSC 8 escape sequences result in screen cells returning non-zero hyperlink ID values for hyperlinked characters and zero for non-hyperlinked characters when verifying screen cell positions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f74bb0c5240c906c13e8e2d5af576a61",
+    "title": "1.2: Tests that identical URL-ID combinations return the same numeric hyperlink ID value when reused"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "683f7561b537e3c9cf109677dad34096",
+    "title": "1.3: Tests that creating multiple hyperlinks with different URLs results in each hyperlink receiving a distinct non-zero hyperlink ID value when managing multiple hyperlinks on same screen"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "293a2fbc93fa47d8371eb40d9220c670",
+    "title": "1.4: Tests that invoking garbage_collect_hyperlink_pool() after scrolling content off screen and beyond scrollback buffer results in hyperlinks_as_list() returning empty list or reduced hyperlink count when garbage collecting scrolled hyperlinks"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "02ddb1cd0d874086ed71aa1ec58a9d5b",
+    "title": "1.5: Tests that the same URL string paired with different ID parameter values creates multiple distinct entries in hyperlinks_as_list() output when handling same URL with different IDs"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "bc70a6936501893facf27262d9a7c945",
+    "title": "1.8: Tests that overwriting hyperlinked text with non-hyperlinked text followed by garbage_collect_hyperlink_pool() results in remaining non-overwritten hyperlinks appearing in hyperlinks_as_list() with potentially remapped IDs when verifying garbage collection remapping"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9c332271311ccb77627ba7d9757993c6",
+    "title": "1.9: Tests that reusing a previously created hyperlink by calling set_link with same URL-ID combination results in that hyperlink appearing at the end of hyperlinks_as_list() output when tracking most recently used hyperlinks"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f92eb501aed142d79ecb215a858edeb1",
+    "title": "1.10: Tests that current_url_text() returns joined text from all lines sharing the same hyperlink ID when extracting multi-line hyperlink text"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "128a17721b3145b3a03ac0089c40df21",
+    "title": "1.11: Tests that calling hyperlink_at() with specific x,y coordinates returns the URL string or None based on whether a hyperlink exists at specific coordinates"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "c984cdc795c6df5e00289bd90d6264fd",
+    "title": "1.12: Tests that creating a hyperlink that wraps across line boundaries due to exceeding screen column width results in the same hyperlink ID appearing in hyperlink_ids() tuple for all wrapped line segments when verifying text wrapping behavior"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "9712677cd8bf0405f34901b6d94660fe",
+    "title": "2.1: Places the test for hyperlink management in kitty_tests/screen.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0440f60ccbbad8ab590fed327a25d48e",
+    "title": "3.1: All tests use framework BaseTest with self.create_screen() for screen initialization"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "6b4cfd9387e2dc7bd7720c1a2f5a3749",
+    "title": "3.2: All tests follow the naming pattern test_<feature_name>"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "03ee218f1c0bf4994cc351628b8d887f",
+    "title": "3.3: All tests use the inline assertion structure with sequential operations followed immediately by assertions without separate setup/teardown methods"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "63155263fcf1ba70f3e6205188c058fd",
+    "title": "4.1: Follows the pattern of using self.ae(s.line(N).hyperlink_ids(), expected_tuple) to verify hyperlink ID assignments at specific screen positions for testing OSC 8 screen position scenario"
+  }
+]

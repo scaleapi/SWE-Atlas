@@ -1,0 +1,32 @@
+diff --git a/scapy/utils.py b/scapy/utils.py
+index b882b01f..34c0019d 100644
+--- a/scapy/utils.py
++++ b/scapy/utils.py
+@@ -227,17 +227,16 @@ def get_temp_dir(keep=False):
+ 
+ def sane(x, color=False):
+     # type: (AnyStr, bool) -> str
+-    r = ""
+-    for i in x:
+-        j = orb(i)
+-        if (j < 32) or (j >= 127):
+-            if color:
+-                r += conf.color_theme.not_printable(".")
+-            else:
+-                r += "."
+-        else:
+-            r += chr(j)
+-    return r
++    """
++    Convert a byte string to a printable string, replacing non-printable
++    characters with dots.
++
++    :param x: The byte string to convert
++    :param color: If True, use color theme for non-printable characters
++    :return: A printable string representation
++    """
++    # Skeleton: implementation removed
++    return ""
+ 
+ 
+ @conf.commands.register

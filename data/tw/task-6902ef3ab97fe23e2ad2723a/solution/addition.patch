@@ -1,0 +1,53 @@
+diff --git a/kitty_tests/screen.py b/kitty_tests/screen.py
+index 754cf972b..f79c33889 100644
+--- a/kitty_tests/screen.py
++++ b/kitty_tests/screen.py
+@@ -91,6 +91,48 @@ def test_draw_char(self):
+         self.ae(str(s.line(4)), 'a\u0306b1\u030623')
+         self.ae((s.cursor.x, s.cursor.y), (2, 4))
+ 
++    def test_rep(self):
++        s = self.create_screen()
++        s.draw('a')
++        parse_bytes(s, b'\x1b[b')
++        self.ae(str(s.line(0)), 'aa')
++        parse_bytes(s, b'\x1b[3b')
++        self.ae(str(s.line(0)), 'a'*5)
++        s.draw(' ')
++        parse_bytes(s, b'\x1b[3b')
++        self.ae(str(s.line(1)), ' '*4)
++
++    def test_emoji_skin_tone_modifiers(self):
++        s = self.create_screen()
++        q = chr(0x1f469) + chr(0x1f3fd)
++        s.draw(q)
++        self.ae(str(s.line(0)), q)
++        self.ae(s.cursor.x, 2)
++
++    def test_regional_indicators(self):
++        s = self.create_screen()
++        flag = '\U0001f1ee\U0001f1f3'
++        s.draw(flag)
++        self.ae(str(s.line(0)), flag)
++        self.ae(s.cursor.x, 2)
++        s = self.create_screen()
++        s.draw('a'), s.draw(flag[0]), s.draw('b')
++        self.ae(str(s.line(0)), 'a' + flag[0] + 'b')
++        self.ae(s.cursor.x, 4)
++
++    def test_zwj(self):
++        s = self.create_screen(cols=20)
++        q = '\U0001f468\u200d\U0001f469\u200d\U0001f467\u200d\U0001f466'
++        s.draw(q)
++        self.ae(q, str(s.line(0)))
++        self.ae(s.cursor.x, 8)
++        for x in '\u200b\u200c\u200d':
++            s = self.create_screen()
++            q = f'X{x}Y'
++            s.draw(q)
++            self.ae(q, str(s.line(0)))
++            self.ae(s.cursor.x, 2)
++
+     def test_char_manipulation(self):
+         s = self.create_screen()
+ 

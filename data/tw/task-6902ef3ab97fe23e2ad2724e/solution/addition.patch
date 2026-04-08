@@ -1,0 +1,291 @@
+diff --git a/sftpd/sftpd_test.go b/sftpd/sftpd_test.go
+index ffa07d53..60f2d0f4 100644
+--- a/sftpd/sftpd_test.go
++++ b/sftpd/sftpd_test.go
+@@ -2402,6 +2402,286 @@ func TestPermChtimes(t *testing.T) {
+ 	os.RemoveAll(user.GetHomeDir())
+ }
+ 
++func TestSubDirsUploads(t *testing.T) {
++	usePubKey := true
++	u := getTestUser(usePubKey)
++	u.Permissions["/"] = []string{dataprovider.PermAny}
++	u.Permissions["/subdir"] = []string{dataprovider.PermChtimes, dataprovider.PermDownload}
++	user, _, err := httpd.AddUser(u, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to add user: %v", err)
++	}
++	client, err := getSftpClient(user, usePubKey)
++	if err != nil {
++		t.Errorf("unable to create sftp client: %v", err)
++	} else {
++		defer client.Close()
++		err = client.Mkdir("subdir")
++		if err != nil {
++			t.Errorf("unexpected mkdir error: %v", err)
++		}
++		testFileName := "test_file.dat"
++		testFileNameSub := "/subdir/test_file_dat"
++		testFilePath := filepath.Join(homeBasePath, testFileName)
++		testFileSize := int64(65535)
++		err = createTestFile(testFilePath, testFileSize)
++		if err != nil {
++			t.Errorf("unable to create test file: %v", err)
++		}
++		err = sftpUploadFile(testFilePath, testFileName, testFileSize, client)
++		if err != nil {
++			t.Errorf("file upload error: %v", err)
++		}
++		err = sftpUploadFile(testFilePath, testFileNameSub, testFileSize, client)
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected upload error: %v", err)
++		}
++		err = client.Symlink(testFileName, testFileNameSub+".link")
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected upload error: %v", err)
++		}
++		err = client.Symlink(testFileName, testFileName+".link")
++		if err != nil {
++			t.Errorf("symlink error: %v", err)
++		}
++		err = client.Rename(testFileName, testFileNameSub+".rename")
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected rename error: %v", err)
++		}
++		err = client.Rename(testFileName, testFileName+".rename")
++		if err != nil {
++			t.Errorf("rename error: %v", err)
++		}
++		err = client.Remove(testFileNameSub)
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected upload error: %v", err)
++		}
++		err = client.Remove(testFileName + ".rename")
++		if err != nil {
++			t.Errorf("remove error: %v", err)
++		}
++		os.Remove(testFilePath)
++	}
++	httpd.RemoveUser(user, http.StatusOK)
++	os.RemoveAll(user.GetHomeDir())
++}
++
++func TestSubDirsOverwrite(t *testing.T) {
++	usePubKey := true
++	u := getTestUser(usePubKey)
++	u.Permissions["/"] = []string{dataprovider.PermAny}
++	u.Permissions["/subdir"] = []string{dataprovider.PermOverwrite, dataprovider.PermListItems}
++	user, _, err := httpd.AddUser(u, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to add user: %v", err)
++	}
++	client, err := getSftpClient(user, usePubKey)
++	if err != nil {
++		t.Errorf("unable to create sftp client: %v", err)
++	} else {
++		defer client.Close()
++		testFileName := "/subdir/test_file.dat"
++		testFilePath := filepath.Join(homeBasePath, "test_file.dat")
++		testFileSFTPPath := filepath.Join(u.GetHomeDir(), "subdir", "test_file.dat")
++		testFileSize := int64(65535)
++		err = createTestFile(testFilePath, testFileSize)
++		if err != nil {
++			t.Errorf("unable to create test file: %v", err)
++		}
++		err = createTestFile(testFileSFTPPath, 16384)
++		if err != nil {
++			t.Errorf("unable to create test file: %v", err)
++		}
++		err = sftpUploadFile(testFilePath, testFileName+".new", testFileSize, client)
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected upload error: %v", err)
++		}
++		err = sftpUploadFile(testFilePath, testFileName, testFileSize, client)
++		if err != nil {
++			t.Errorf("unexpected overwrite error: %v", err)
++		}
++		os.Remove(testFilePath)
++	}
++	httpd.RemoveUser(user, http.StatusOK)
++	os.RemoveAll(user.GetHomeDir())
++}
++
++func TestSubDirsDownloads(t *testing.T) {
++	usePubKey := true
++	u := getTestUser(usePubKey)
++	u.Permissions["/"] = []string{dataprovider.PermAny}
++	u.Permissions["/subdir"] = []string{dataprovider.PermChmod, dataprovider.PermUpload, dataprovider.PermListItems}
++	user, _, err := httpd.AddUser(u, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to add user: %v", err)
++	}
++	client, err := getSftpClient(user, usePubKey)
++	if err != nil {
++		t.Errorf("unable to create sftp client: %v", err)
++	} else {
++		defer client.Close()
++		err = client.Mkdir("subdir")
++		if err != nil {
++			t.Errorf("unexpected mkdir error: %v", err)
++		}
++		testFileName := "/subdir/test_file.dat"
++		testFilePath := filepath.Join(homeBasePath, "test_file.dat")
++		testFileSize := int64(65535)
++		err = createTestFile(testFilePath, testFileSize)
++		if err != nil {
++			t.Errorf("unable to create test file: %v", err)
++		}
++		err = sftpUploadFile(testFilePath, testFileName, testFileSize, client)
++		if err != nil {
++			t.Errorf("file upload error: %v", err)
++		}
++		localDownloadPath := filepath.Join(homeBasePath, "test_download.dat")
++		err = sftpDownloadFile(testFileName, localDownloadPath, testFileSize, client)
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected upload error: %v", err)
++		}
++		err = sftpUploadFile(testFilePath, testFileName, testFileSize, client)
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected overwrite error: %v", err)
++		}
++		err = client.Chtimes(testFileName, time.Now(), time.Now())
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected chtimes error: %v", err)
++		}
++		err = client.Rename(testFileName, testFileName+".rename")
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected rename error: %v", err)
++		}
++		err = client.Symlink(testFileName, testFileName+".link")
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected symlink error: %v", err)
++		}
++		err = client.Remove(testFileName)
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected remove error: %v", err)
++		}
++		os.Remove(localDownloadPath)
++		os.Remove(testFilePath)
++	}
++	httpd.RemoveUser(user, http.StatusOK)
++	os.RemoveAll(user.GetHomeDir())
++}
++
++func TestPermsSubDirsSetstat(t *testing.T) {
++	// for setstat we check the parent dir permission if the requested path is a dir
++	// otherwise the path permission
++	usePubKey := true
++	u := getTestUser(usePubKey)
++	u.Permissions["/"] = []string{dataprovider.PermListItems, dataprovider.PermCreateDirs}
++	u.Permissions["/subdir"] = []string{dataprovider.PermAny}
++	user, _, err := httpd.AddUser(u, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to add user: %v", err)
++	}
++	client, err := getSftpClient(user, usePubKey)
++	if err != nil {
++		t.Errorf("unable to create sftp client: %v", err)
++	} else {
++		defer client.Close()
++		err = client.Mkdir("subdir")
++		if err != nil {
++			t.Errorf("unexpected mkdir error: %v", err)
++		}
++		testFileName := "/subdir/test_file.dat"
++		testFilePath := filepath.Join(homeBasePath, "test_file.dat")
++		testFileSize := int64(65535)
++		err = createTestFile(testFilePath, testFileSize)
++		if err != nil {
++			t.Errorf("unable to create test file: %v", err)
++		}
++		err = sftpUploadFile(testFilePath, testFileName, testFileSize, client)
++		if err != nil {
++			t.Errorf("file upload error: %v", err)
++		}
++		err = client.Chtimes("/subdir/", time.Now(), time.Now())
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected chtimes error: %v", err)
++		}
++		err = client.Chtimes("subdir/", time.Now(), time.Now())
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected chtimes error: %v", err)
++		}
++		err = client.Chtimes(testFileName, time.Now(), time.Now())
++		if err != nil {
++			t.Errorf("unexpected chtimes error: %v", err)
++		}
++		os.Remove(testFilePath)
++	}
++	httpd.RemoveUser(user, http.StatusOK)
++	os.RemoveAll(user.GetHomeDir())
++}
++
++func TestPermsSubDirsCommands(t *testing.T) {
++	usePubKey := true
++	u := getTestUser(usePubKey)
++	u.Permissions["/"] = []string{dataprovider.PermAny}
++	u.Permissions["/subdir"] = []string{dataprovider.PermDownload, dataprovider.PermUpload}
++	user, _, err := httpd.AddUser(u, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to add user: %v", err)
++	}
++	client, err := getSftpClient(user, usePubKey)
++	if err != nil {
++		t.Errorf("unable to create sftp client: %v", err)
++	} else {
++		defer client.Close()
++		client.Mkdir("subdir")
++		acmodTime := time.Now()
++		err = client.Chtimes("/subdir", acmodTime, acmodTime)
++		if err != nil {
++			t.Errorf("unexpected chtimes error: %v", err)
++		}
++		_, err = client.Stat("/subdir")
++		if err != nil {
++			t.Errorf("unexpected stat error: %v", err)
++		}
++		_, err = client.ReadDir("/")
++		if err != nil {
++			t.Errorf("unexpected readdir error: %v", err)
++		}
++		_, err = client.ReadDir("/subdir")
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected error: %v", err)
++		}
++		err = client.RemoveDirectory("/subdir/dir")
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected error: %v", err)
++		}
++		err = client.Mkdir("/subdir/dir")
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected error: %v", err)
++		}
++		client.Mkdir("/otherdir")
++		err = client.Rename("/otherdir", "/subdir/otherdir")
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected error: %v", err)
++		}
++		err = client.Symlink("/otherdir", "/subdir/otherdir")
++		if !strings.Contains(err.Error(), "Permission Denied") {
++			t.Errorf("unexpected error: %v", err)
++		}
++		err = client.Symlink("/otherdir", "/otherdir_link")
++		if err != nil {
++			t.Errorf("unexpected rename dir error: %v", err)
++		}
++		err = client.Rename("/otherdir", "/otherdir1")
++		if err != nil {
++			t.Errorf("unexpected rename dir error: %v", err)
++		}
++		err = client.RemoveDirectory("/subdir")
++		if err != nil {
++			t.Errorf("unexpected remove dir error: %v", err)
++		}
++	}
++	httpd.RemoveUser(user, http.StatusOK)
++	os.RemoveAll(user.GetHomeDir())
++}
++
+ func TestRootDirCommands(t *testing.T) {
+ 	usePubKey := true
+ 	u := getTestUser(usePubKey)

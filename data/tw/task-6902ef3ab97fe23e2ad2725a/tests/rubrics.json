@@ -1,0 +1,74 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d2c275b4d93c675f3502c0d12d1118e3",
+    "title": "1.1: Tests that screen duplicates last drawn character specified number of times when REP control sequence is sent."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6e391deeffae3e044e7d47f1c1a4ebd8",
+    "title": "1.2: Tests that screen renders combined character with cursor advancement of 2 when emoji with skin tone modifier is drawn."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "34a14976f4e617227c848e8ccbc14097",
+    "title": "1.3: Tests that screen renders single flag symbol combined by character pairs with display width of 2 when regional indicator pair is drawn."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e4718eb98a1aa3e05191592e8630fb31",
+    "title": "2.1: Places the test for REP control sequence in kitty_tests/screen.py.\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "6b24beb42fa63e5b112233fb3ad0b6e3",
+    "title": "2.2: Places the test for emoji skin tone modifier in kitty_tests/screen.py."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e201abcfc727c5c3cca7f139e74f800d",
+    "title": "2.3: Places the test for regional indicators in kitty_tests/screen.py."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "1ea19d9f009330186c211010502c12a6",
+    "title": "2.4: Places the test for test for zero-width joiners (ZWJ) in kitty_tests/screen.py."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "5e07fd28bb1a365f6d2fb1296d571a19",
+    "title": "3.1: All tests use self.ae() assertion method inherited from BaseTest class for assertion."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2a21f760172c2502cdf7affb1400d965",
+    "title": "3.2:  All tests follow the test naming pattern test_<functionality>."
+  }
+]

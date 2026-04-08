@@ -1,0 +1,45 @@
+diff --git a/public/app/core/utils/explore.ts b/public/app/core/utils/explore.ts
+index cb22e191a77..8226e141212 100644
+--- a/public/app/core/utils/explore.ts
++++ b/public/app/core/utils/explore.ts
+@@ -111,38 +111,8 @@ export function buildQueryTransaction(
+   timeZone?: TimeZone,
+   scopedVars?: ScopedVars
+ ): QueryTransaction {
+-  const panelId = Number.parseInt(exploreId, 36);
+-  const { interval, intervalMs } = getIntervals(range, queryOptions.minInterval, queryOptions.maxDataPoints);
+-
+-  const request: DataQueryRequest = {
+-    app: CoreApp.Explore,
+-    // TODO probably should be taken from preferences but does not seem to be used anyway.
+-    timezone: timeZone || DefaultTimeZone,
+-    startTime: Date.now(),
+-    interval,
+-    intervalMs,
+-    panelId,
+-    targets: queries, // Datasources rely on DataQueries being passed under the targets key.
+-    range,
+-    requestId: requestIdGenerator(exploreId),
+-    rangeRaw: range.raw,
+-    scopedVars: {
+-      __interval: { text: interval, value: interval },
+-      __interval_ms: { text: intervalMs, value: intervalMs },
+-      ...scopedVars,
+-    },
+-    maxDataPoints: queryOptions.maxDataPoints,
+-    liveStreaming: queryOptions.liveStreaming,
+-    skipQueryCache: true,
+-  };
+-
+-  return {
+-    queries,
+-    request,
+-    scanning,
+-    id: generateKey(), // reusing for unique ID
+-    done: false,
+-  };
++  // PLACEHOLDER: Implementation removed for testing
++  throw new Error('buildQueryTransaction is not implemented');
+ }
+ 
+ export const clearQueryKeys: (query: DataQuery) => DataQuery = ({ key, ...rest }) => rest;

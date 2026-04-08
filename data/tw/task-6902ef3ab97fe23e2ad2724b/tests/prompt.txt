@@ -1,0 +1,8 @@
+We should add integration tests for the STS AssumeRole functionality in MinIO.
+
+We need 1 integration test for each of these scenarios:
+
+1. Basic STS AssumeRole flow - A user with bucket access policy uses AssumeRole, and the temporary credentials should be restricted from operations not in the policy
+2. STS with deny policy enforcement - A user with a policy that explicitly denies a specific action uses AssumeRole, and the temporary credentials should also be blocked from that denied action
+3. STS with tag-based policy conditions - A user with policies using object tag conditions uses AssumeRole, and the temporary credentials should respect those tag-based conditional permissions
+4. STS with group-inherited permissions - A user who belongs to a group with an attached policy uses AssumeRole, and the temporary credentials should inherit permissions from the group policy

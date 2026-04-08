@@ -1,0 +1,162 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0bf756b5778813d404502497d34d8c05",
+    "title": "1.1: Tests that resemblesUrl() returns true when given a fully-formed URL with protocol prefix"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "86ecd7d9eb70ac999a1d2c76a614cb1a",
+    "title": "1.2: Tests that resemblesUrl() returns true when given a URL containing a query string"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "5777bdf4122b99e683bddd1278110294",
+    "title": "1.3: Tests that resemblesUrl() returns true for URLs with a two-character TLD"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "e71b3bc66b5b672ddc48291077d6d828",
+    "title": "1.4: Tests that resemblesUrl() returns false for inputs with adjacent dots"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a65e50b79080c1e7e67192fdd0ff0b1d",
+    "title": "1.5: Tests that resemblesUrl() returns false for inputs with spaced dots"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "80c2ceaca948393557e5135935111c61",
+    "title": "1.6: Tests that resemblesUrl() returns false for a single dot input"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "87f1ae0780dbd904b53b250f8facaf94",
+    "title": "1.7: Tests that resemblesUrl() returns false for plain strings without dots"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "4501aa4248d261c61f91ade89cbbb042",
+    "title": "1.8: Tests that resemblesUrl() returns true when given a domain-only URL without an explicit protocol scheme."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "62a759f10eeecf37ad5c115c9bebbcb0",
+    "title": "2.1: Places the test for protocol-prefixed URL detection in client/lib/url/test/resembles-url.js."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "a9c076bf4021f64b8ce06bc4a7a41d09",
+    "title": "2.2: Places the test for domain-only URL detection without protocol in client/lib/url/test/resembles-url.js."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "092f45d855e1898a39d3411349ed403b",
+    "title": "2.3: Places the test for URL detection with query string parameters in client/lib/url/test/resembles-url.js."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2417f35c540f1ae635701f19bbec19c7",
+    "title": "2.4: Places the test for URL detection with short two-character TLD suffixes in client/lib/url/test/resembles-url.js."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "5efa0bea8ba58fee90e99efb23166282",
+    "title": "2.5: Places the test for rejecting malformed inputs with consecutive dots in client/lib/url/test/resembles-url.js."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d2e7f6fd132405e1c4e4e7ff36c7b9a9",
+    "title": "2.6: Places the test for rejecting inputs with dots separated by spaces in client/lib/url/test/resembles-url.js."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "1c827ea707ebda2a50f9a599aa8833c6",
+    "title": "2.7: Places the test for rejecting a single dot character input in client/lib/url/test/resembles-url.js."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "8ed9c336d35aa55b9621441d44318525",
+    "title": "2.8: Places the test for rejecting plain strings without any dot separator in client/lib/url/test/resembles-url.js."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "125f8248e0650240250fbbf58cb798dc",
+    "title": "3.1: All tests use test() instead of it()"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "7dcaffeefde1a0b3657a3c118965aa3a",
+    "title": "3.2: All tests declare input using a named const variable"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "90d06033fae3267612705a220f80a32a",
+    "title": "3.3: All tests follow Arrange-Act-Assert structure"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d1ebe9d70badc1760724446aa31a686c",
+    "title": "4.1: Follows a consistent pattern for positive URL detection cases where valid inputs assert resemblesUrl(source) is true."
+  }
+]

@@ -1,0 +1,29 @@
+diff --git a/scapy/volatile.py b/scapy/volatile.py
+index 3c48300a..8591412f 100644
+--- a/scapy/volatile.py
++++ b/scapy/volatile.py
+@@ -1268,23 +1268,7 @@ class RandUUID(RandField[uuid.UUID]):
+ 
+     def _fix(self):
+         # type: () -> uuid.UUID
+-        if self.uuid_template:
+-            return uuid.UUID(("%08x%04x%04x" + ("%02x" * 8))
+-                             % self.uuid_template)
+-        elif self.version == 1:
+-            return uuid.uuid1(self.node, self.clock_seq)
+-        elif self.version == 3:
+-            if not self.namespace or not self.name:
+-                raise ValueError("Missing namespace or name")
+-            return uuid.uuid3(self.namespace, self.name)
+-        elif self.version == 4:
+-            return uuid.uuid4()
+-        elif self.version == 5:
+-            if not self.namespace or not self.name:
+-                raise ValueError("Missing namespace or name")
+-            return uuid.uuid5(self.namespace, self.name)
+-        else:
+-            raise ValueError("Unhandled version")
++        pass
+ 
+ 
+ # Automatic timestamp

@@ -1,0 +1,70 @@
+diff --git a/test/scapy/layers/inet6.uts b/test/scapy/layers/inet6.uts
+index d140b653..324d6335 100644
+--- a/test/scapy/layers/inet6.uts
++++ b/test/scapy/layers/inet6.uts
+@@ -176,6 +176,65 @@ c = in6_getLinkScopedMcastAddr(addr="FE80::A12:34FF:FE56:7890", grpid=305419896)
+ a == b and b == c 
+ 
+ 
++########### ethernet address to iface ID conversion #################
++
++= in6_mactoifaceid() conversion function (test 1)
++in6_mactoifaceid("FD:00:00:00:00:00", ulbit=0) == 'FD00:00FF:FE00:0000'
++
++= in6_mactoifaceid() conversion function (test 2)
++in6_mactoifaceid("FD:00:00:00:00:00", ulbit=1) == 'FF00:00FF:FE00:0000'
++
++= in6_mactoifaceid() conversion function (test 3)
++in6_mactoifaceid("FD:00:00:00:00:00") == 'FF00:00FF:FE00:0000'
++
++= in6_mactoifaceid() conversion function (test 4)
++in6_mactoifaceid("FF:00:00:00:00:00") == 'FD00:00FF:FE00:0000'
++
++= in6_mactoifaceid() conversion function (test 5)
++in6_mactoifaceid("FF:00:00:00:00:00", ulbit=1) == 'FF00:00FF:FE00:0000'
++
++= in6_mactoifaceid() conversion function (test 6)
++in6_mactoifaceid("FF:00:00:00:00:00", ulbit=0) == 'FD00:00FF:FE00:0000'
++
++########### iface ID conversion #################
++
++= in6_mactoifaceid() conversion function (test 1)
++in6_ifaceidtomac(in6_mactoifaceid("FD:00:00:00:00:00", ulbit=0)) == 'ff:00:00:00:00:00'
++
++= in6_mactoifaceid() conversion function (test 2)
++in6_ifaceidtomac(in6_mactoifaceid("FD:00:00:00:00:00", ulbit=1)) == 'fd:00:00:00:00:00'
++
++= in6_mactoifaceid() conversion function (test 3)
++in6_ifaceidtomac(in6_mactoifaceid("FD:00:00:00:00:00")) == 'fd:00:00:00:00:00'
++
++= in6_mactoifaceid() conversion function (test 4)
++in6_ifaceidtomac(in6_mactoifaceid("FF:00:00:00:00:00")) == 'ff:00:00:00:00:00'
++
++= in6_mactoifaceid() conversion function (test 5)
++in6_ifaceidtomac(in6_mactoifaceid("FF:00:00:00:00:00", ulbit=1)) == 'fd:00:00:00:00:00'
++
++= in6_mactoifaceid() conversion function (test 6)
++in6_ifaceidtomac(in6_mactoifaceid("FF:00:00:00:00:00", ulbit=0)) == 'ff:00:00:00:00:00'
++
++
++= in6_addrtomac() conversion function (test 1)
++in6_addrtomac("FE80::" + in6_mactoifaceid("FD:00:00:00:00:00", ulbit=0)) == 'ff:00:00:00:00:00'
++
++= in6_addrtomac() conversion function (test 2)
++in6_addrtomac("FE80::" + in6_mactoifaceid("FD:00:00:00:00:00", ulbit=1)) == 'fd:00:00:00:00:00'
++
++= in6_addrtomac() conversion function (test 3)
++in6_addrtomac("FE80::" + in6_mactoifaceid("FD:00:00:00:00:00")) == 'fd:00:00:00:00:00'
++
++= in6_addrtomac() conversion function (test 4)
++in6_addrtomac("FE80::" + in6_mactoifaceid("FF:00:00:00:00:00")) == 'ff:00:00:00:00:00'
++
++= in6_addrtomac() conversion function (test 5)
++in6_addrtomac("FE80::" + in6_mactoifaceid("FF:00:00:00:00:00", ulbit=1)) == 'fd:00:00:00:00:00'
++
++= in6_addrtomac() conversion function (test 6)
++in6_addrtomac("FE80::" + in6_mactoifaceid("FF:00:00:00:00:00", ulbit=0)) == 'ff:00:00:00:00:00'
++
+ ########### RFC 3041 related function ###############################
+ = Test in6_getRandomizedIfaceId
+ 

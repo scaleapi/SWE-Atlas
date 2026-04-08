@@ -1,0 +1,130 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aea1d83862baa333c95f618b0d915631",
+    "title": "1.1: Tests that rewrapping from a populated source buffer into a destination buffer with identical width and height preserves line content exactly (for every row i, destination line i equals source line i after rewrap)\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a30c20dd9eac661c57bb193b7c2c114f",
+    "title": "1.2: Tests that rewrapping into a wider destination buffer (destination width > source width) merges continued source lines into a single logical line by asserting destination line content includes text that originally spanned a continued boundary in the source\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "85f22fd577b3c132079e894cc217346e",
+    "title": "1.3: Tests that rewrapping into a narrower destination buffer (destination width < source width) splits a long logical line across multiple destination rows by asserting the expected per-row destination line content after rewrap\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "8b37ebe7aac9c44d141b796036ffd2b7",
+    "title": "1.4: Includes at least one test that captures the cursor position returned by the rewrap operation and asserts exact equality against an expected value (not just non-None/truthiness)\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "dbe3b23ac6c296b9b930dd26310f4acf",
+    "title": "1.7: Narrower-destination rewrap tests explicitly assert that the first destination row is not a continuation line (i.e., lb2.is_continued(0) is asserted False after rewrap)\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "88fb047f39dd236e4d101e6867f026bf",
+    "title": "1.8: Narrower-destination rewrap tests assert that wrapped output sets continuation flags on at least one destination row with index > 0 (i.e., lb2.is_continued(i) asserted True for some i > 0)\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9ad127a8b0939eeaa8088f1908242956",
+    "title": "1.9: Wider-destination rewrap tests include at least one explicit assertion that two adjacent destination rows have different line text values after rewrap (i.e., they are not merged into a single identical line string)\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "006f2d94c8d0ffa35cd86cec03284119",
+    "title": "2.1: Places the test for rewrapping with identical buffer dimensions in kitty_tests/datatypes.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "de0dae3eb6f8b4968248f6282eab7502",
+    "title": "2.2: Places the test for rewrapping to wider destination buffer in kitty_tests/datatypes.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "74b9cbffe1554cfc12a31be96c24b107",
+    "title": "2.3: Places the test for rewrapping to narrower destination buffer in kitty_tests/datatypes.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "34ed88175b4f6963ed5b52be747f4d60",
+    "title": "3.1: All tests use Python unittest framework by inheriting from BaseTest class, using assertion methods like self.ae() for equality checks"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ebc5058df69ec3c90afa2fd0c1199a75",
+    "title": "3.2: All tests follow the test naming pattern test_rewrap_<scenario> where scenario describes the rewrap condition being tested"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "869fca06743fa05eb696d16b90879bc8",
+    "title": "4.1: Wider-buffer rewrap tests include an explicit assertion over destination continuation flags (e.g., checks lb2.is_continued(i) equals expected booleans for at least two relevant rows)\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "9521b239e620dd5f72c9e7ca40707c13",
+    "title": "4.2: Wider-buffer rewrap tests include an explicit assertion that destination dirty line tracking (lb2.dirty_lines()) equals the expected list of dirty row indices after rewrap\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "b8a611a4440ebbec6588fda4e6d40656",
+    "title": "4.3: Narrower-buffer rewrap tests include an explicit assertion over destination continuation flags indicating wrapped content (i.e., at least one destination row produced by wrapping is asserted to be continued)\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "c5b15c2f6592903761eb2bcff4f127e6",
+    "title": "4.4: Narrower-buffer rewrap tests include a case where the source logical line contains trailing spaces at a wrap boundary and asserts those spaces are preserved in the destination output (not trimmed/dropped)\n"
+  }
+]

@@ -1,0 +1,29 @@
+diff --git a/pkg/verificationcache/verification_cache.go b/pkg/verificationcache/verification_cache.go
+index 97ea3f93a..5a958bc94 100644
+--- a/pkg/verificationcache/verification_cache.go
++++ b/pkg/verificationcache/verification_cache.go
+@@ -1,8 +1,6 @@
+ package verificationcache
+ 
+ import (
+-	"bytes"
+-	"encoding/binary"
+ 	"sync"
+ 	"time"
+ 
+@@ -134,14 +132,5 @@ func (v *VerificationCache) FromData(
+ }
+ 
+ func (v *VerificationCache) getResultCacheKey(result detectors.Result) ([]byte, error) {
+-	v.hashMu.Lock()
+-	defer v.hashMu.Unlock()
+-
+-	keyBytes := bytes.Join([][]byte{result.Raw, result.RawV2}, nil)
+-	keyBytes, err := binary.Append(keyBytes, binary.BigEndian, result.DetectorType)
+-	if err != nil {
+-		return nil, err
+-	}
+-
+-	return v.hasher.Hash(keyBytes)
++	return nil, nil
+ }

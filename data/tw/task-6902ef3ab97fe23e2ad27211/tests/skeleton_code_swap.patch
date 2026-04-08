@@ -1,0 +1,46 @@
+diff --git a/js/modules/k6/grpc/stream.go b/js/modules/k6/grpc/stream.go
+index 029588b5d..b0aae4c00 100644
+--- a/js/modules/k6/grpc/stream.go
++++ b/js/modules/k6/grpc/stream.go
+@@ -183,34 +183,13 @@ func (s *stream) queueMessage(msg interface{}) {
+ // readData reads data from the stream and forward them to the readDataChan
+ func (s *stream) readData(wg *sync.WaitGroup) {
+ 	defer wg.Done()
+-
+-	for {
+-		msg, err := s.stream.ReceiveConverted()
+-
+-		if err != nil && !isRegularClosing(err) {
+-			s.logger.WithError(err).Debug("error while reading from the stream")
+-
+-			s.tq.Queue(func() error {
+-				return s.closeWithError(err)
+-			})
+-
+-			return
+-		}
+-
+-		if isRegularClosing(err) {
+-			s.logger.WithError(err).Debug("stream is cancelled/finished")
+-
+-			s.tq.Queue(func() error {
+-				return s.closeWithError(err)
+-			})
+-
+-			return
+-		}
+-
+-		if msg != nil || !reflect.ValueOf(msg).IsNil() {
+-			s.queueMessage(msg)
+-		}
+-	}
++	// Skeleton: close stream and return error to event loop
++	_ = reflect.ValueOf(nil)
++	time.Sleep(100 * time.Millisecond)
++	s.tq.Queue(func() error {
++		s.close(errors.New("skeleton error"))
++		return errors.New("skeleton: stream read disabled")
++	})
+ }
+ 
+ func isRegularClosing(err error) bool {

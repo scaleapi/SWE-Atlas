@@ -1,0 +1,58 @@
+diff --git a/test/regression.uts b/test/regression.uts
+index ed0e8a26..aeed8aa8 100644
+--- a/test/regression.uts
++++ b/test/regression.uts
+@@ -653,12 +653,53 @@ try:
+ except:
+     pass
+ 
++= Test sane function
++sane("A\x00\xFFB") == "A..B"
++
++= Test lhex function
++assert lhex(42) == "0x2a"
++assert lhex((28,7)) == "(0x1c, 0x7)"
++assert lhex([28,7]) == "[0x1c, 0x7]"
++
++= Test restart function
++import mock
++conf.interactive = True
++
++try:
++    from scapy.utils import restart
++    import os
++    @mock.patch("os.execv")
++    @mock.patch("subprocess.call")
++    @mock.patch("os._exit")
++    def _test(e, m, m2):
++        def check(x, y=[]):
++            z = [x] + y if not isinstance(x, list) else x + y
++            assert os.path.isfile(z[0])
++            assert os.path.isfile(z[1])
++            return 0
++        m2.side_effect = check
++        m.side_effect = check
++        e.side_effect = lambda x: None
++        restart()
++    _test()
++finally:
++    conf.interactive = False
++
++= Test linehexdump function
++conf_color_theme = conf.color_theme
++conf.color_theme = BlackAndWhite()
++assert linehexdump(Ether(src="00:01:02:03:04:05"), dump=True) == 'FF FF FF FF FF FF 00 01 02 03 04 05 90 00  ..............'
++conf.color_theme = conf_color_theme
++
+ = Test chexdump function
+ chexdump(Ether(src="00:01:02:02:04:05"), dump=True) == "0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x01, 0x02, 0x02, 0x04, 0x05, 0x90, 0x00"
+ 
+ = Test repr_hex function
+ repr_hex("scapy") == "7363617079"
+ 
++= Test hexstr function
++hexstr(b"A\x00\xFFB") == "41 00 FF 42  A..B"
++
+ = Test fletcher16 functions
+ assert fletcher16_checksum(b"\x28\x07") == 22319
+ assert fletcher16_checkbytes(b"\x28\x07", 1) == b"\xaf("

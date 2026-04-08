@@ -1,0 +1,122 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aea1d83862baa333c95f618b0d915631",
+    "title": "1.1: Tests that CreateTestRun returns response with ReferenceID and validates ConfigOverride.AggregationPeriod when sending JSON request"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "85f22fd577b3c132079e894cc217346e",
+    "title": "1.3: Tests that CreateTestRun returns nil response and formatted error when server responds with 403 status"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0936312a1a0faedb571b5ca37bba9148",
+    "title": "1.4: Tests that CreateTestRun retry mechanism makes exactly 3 attempts with consistent idempotency key when server returns 500 errors"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0f95d7563da540a8ff064860c1907c03",
+    "title": "2.1: Places the test for basic test run creation in cloudapi/api_test.go or cloudapi/ directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e078f5097203461605b6f0c2ee920a39",
+    "title": "2.2: Places the test for archive file attachment in cloudapi/api_test.go or cloudapi/ directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "30bf1d120f8d92985ef1c84149672e14",
+    "title": "2.3: Places the test for authorization failure handling in cloudapi/api_test.go or cloudapi/ directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "638fdca9eb256e29c784f22cfedccc03",
+    "title": "2.4: Places the test for retry mechanism in cloudapi/api_test.go or cloudapi/ directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "f6cc899deebe86e77d5bb6c9265442d1",
+    "title": "3.1: All tests use Go's testing package with func(t *testing.T) signature"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "abfe2c108fd01862505ea7a9516133fd",
+    "title": "3.2: All tests use httptest.NewServer with http.HandlerFunc for mock HTTP server creation"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d81b12f6ce6f086592a5e6c5a17ea112",
+    "title": "3.3: All tests are implemented as subtests using t.Run with descriptive string names within TestCreateTestRun"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d47de9f5a7b0023c75474f4af639feab",
+    "title": "3.4: All tests use testify package assert or require functions for assertions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "bcd11bf77b89a8643b5c18aa44d43602",
+    "title": "4.1: Follows pattern of calling t.Parallel() at the beginning of each subtest for concurrent execution"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "12606eb94579e108a646c3239a99ff90",
+    "title": "4.2: Follows pattern of calling defer server.Close() immediately after httptest.NewServer creation"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "cde7cd99313c8ad978c17f8129123851",
+    "title": "4.3: Follows pattern of creating client using NewClient with testutils.NewLogger(t) as first parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "74b9cbffe1554cfc12a31be96c24b107",
+    "title": "4.4: Follows pattern of using types.Duration for parsing and asserting time duration values from ConfigOverride"
+  }
+]

@@ -1,0 +1,210 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "01364c220646a05e2d6b6ab3ea4e4d37",
+    "title": "1.1: Tests that processing a mail account with a mark-as-read rule triggers async task calls only for unseen messages"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "c195c652cdd7519e176f14e6c3ab911b",
+    "title": "1.2: Tests that after processing a mark-as-read rule, previously unseen messages are now marked as seen"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "32befb91f64177c0a0c0331edbb08a8c",
+    "title": "1.3: Tests that after processing a mark-as-read rule, the total number of messages in the mailbox remains the same"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "400774237fd9596826350a6d1f4b09e3",
+    "title": "1.4: Tests that processing a mail account with a delete rule triggers async task calls for matching messages"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a61fa51103e6e2faa4cb0e7edace86d8",
+    "title": "1.5: Tests that after processing a delete rule, matching messages are removed from the mailbox"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9edc1699a9e68585b93d5e2c6a1595a4",
+    "title": "1.6: Tests that processing a mail account with a flag rule only consumes unflagged messages"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "32c5e5d2b32a2a6f18c849c43daaa0a1",
+    "title": "1.7: Tests that after processing a flag rule, previously unflagged messages are now flagged"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "1259cd283d1147c6b085f8e0b3804df0",
+    "title": "1.8: Tests that after processing a flag rule, the total number of messages in the mailbox remains the same"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "33674074a690085c1b9d84d5aea09bda",
+    "title": "1.9: Tests that after processing a move rule, matching messages are removed from the original mailbox folder"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0a3fae5e90e38dae5b8f1dd4c11ce977",
+    "title": "1.10: Tests that after processing a move rule, matching messages appear in the destination folder"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "bb652600cf8bdc2cb39ed53bd4dd1499",
+    "title": "1.11: Tests that a subject filter narrows consumed messages to only those with matching subjects when processing a mail account"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "e8aaaa9674b59e0899fa33b8a29c3a82",
+    "title": "1.12: Tests that a body filter narrows consumed messages to only those with matching body content when processing a mail account"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a3b3504cfa1b8d3db7d8731aaf653b8c",
+    "title": "1.13: Tests that a sender (from) filter narrows consumed messages to only those from matching senders when processing a mail account"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9cdcd03caf092cdc2cc9d9194b46b9d5",
+    "title": "1.14: Tests that combining multiple filter types together narrows the consumed message set to only those matching all active filters"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2f31febb96d5a1a057874e9190da9cd9",
+    "title": "2.1: Places the test for mark-as-read mail rule processing in paperless_mail/tests/"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "840029b7e5877cec3caef764e6b18d70",
+    "title": "2.2: Places the test for delete mail rule processing in paperless_mail/tests/"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "c066d701ef983fd825a74cfc4f9fb8c8",
+    "title": "2.3: Places the test for flag mail rule processing in paperless_mail/tests/"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fbb9a4e29e2c42529d227ad9f5d7f3be",
+    "title": "2.4: Places the test for move mail rule processing in paperless_mail/tests/"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "47337878da7de9305d7145e27848c46e",
+    "title": "2.5: Places the test for filter combinations in paperless_mail/tests/"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0325e7d15651965a977112d77c400c10",
+    "title": "3.1: All tests use the Django TestCase framework as the base test class"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "06b6b81d877383d87affac5c9bec697d",
+    "title": "3.2: All tests follow the test naming pattern test_<name>"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e17a251ab49915724ee9e9664c761227",
+    "title": "3.3: All tests create model instances (MailAccount, MailRule) using Django ORM objects.create() method"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "50b9e6a741ee8cf5907ecb5f9c8614c3",
+    "title": "3.4: All tests invoke the mail processing pipeline through handle_mail_account() rather than calling handle_mail_rule() directly"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "9ebbee9893fec545e01c120ea1e4d00a",
+    "title": "3.5: All tests use self.assert* style assertions (e.g., self.assertEqual, self.assertTrue)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e6c51ad84e1802ca28cc290ba7b3a28d",
+    "title": "4.1: The filter combinations test resets the mailbox state between each filter scenario to ensure independent evaluation of each filter type"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4332c13f82965251862ea24145eeed88",
+    "title": "4.2: The filter combinations test isolates each filter scenario so that filter criteria do not carry over between scenarios"
+  }
+]

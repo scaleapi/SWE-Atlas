@@ -1,0 +1,90 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aea1d83862baa333c95f618b0d915631",
+    "title": "1.1: Tests rewrapping with same width including multiple height variations in a single test"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a30c20dd9eac661c57bb193b7c2c114f",
+    "title": "1.2: Tests rewrapping to wider buffer with soft-wrapped content that should merge"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "85f22fd577b3c132079e894cc217346e",
+    "title": "1.3: Tests rewrapping to narrower buffer verifying lines split with correct continued flags"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "006f2d94c8d0ffa35cd86cec03284119",
+    "title": "2.1: Places the test for same-width rewrap behavior in kitty_tests/datatypes.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "de0dae3eb6f8b4968248f6282eab7502",
+    "title": "2.2: Places the test for wider buffer rewrap behavior in kitty_tests/datatypes.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "74b9cbffe1554cfc12a31be96c24b107",
+    "title": "2.3: Places the test for narrower buffer rewrap behavior in kitty_tests/datatypes.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ebc5058df69ec3c90afa2fd0c1199a75",
+    "title": "3.1: All tests use Python unittest framework as methods within the TestDataTypes class"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fc29f018355257645e6220d46438cd77",
+    "title": "3.3: All tests use self.ae() assertion method for comparisons"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e078f5097203461605b6f0c2ee920a39",
+    "title": "4.1: Uses self.rewrap() helper method to perform rewrap operations"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "30bf1d120f8d92985ef1c84149672e14",
+    "title": "4.2: Uses line_comparison_rewrap helper for tests that verify line content after width changes"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "84c7a1800973f691b14cd58014cd7f6d",
+    "title": "4.3: Uses assertContinued helper to verify is_continued flag patterns after rewrap"
+  }
+]

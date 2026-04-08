@@ -1,0 +1,203 @@
+--- a/src/documents/tests/test_consumer.py
++++ b/src/documents/tests/test_consumer.py
+@@ -3,12 +3,14 @@
+ import shutil
+ import tempfile
+ from unittest import mock
++from unittest.mock import MagicMock
+ 
+ try:
+     import zoneinfo
+ except ImportError:
+     import backports.zoneinfo as zoneinfo
+ 
++from django.conf import settings
+ from django.test import override_settings
+ from django.test import TestCase
+ 
+@@ -21,6 +23,7 @@
+ from ..models import Tag
+ from ..parsers import DocumentParser
+ from ..parsers import ParseError
++from ..tasks import sanity_check
+ from .utils import DirectoriesMixin
+ 
+ 
+@@ -184,6 +187,21 @@
+         self.text = "The Text"
+ 
+ 
++class CopyParser(DocumentParser):
++    def get_thumbnail(self, document_path, mime_type, file_name=None):
++        return self.fake_thumb
++
++    def get_optimised_thumbnail(self, document_path, mime_type, file_name=None):
++        return self.fake_thumb
++
++    def __init__(self, logging_group, progress_callback=None):
++        super(CopyParser, self).__init__(logging_group, progress_callback)
++        _, self.fake_thumb = tempfile.mkstemp(suffix=".png", dir=self.tempdir)
++
++    def parse(self, document_path, mime_type, file_name=None):
++        self.text = "The text"
++        self.archive_path = os.path.join(self.tempdir, "archive.pdf")
++        shutil.copy(document_path, self.archive_path)
+ 
+ 
+ class FaultyParser(DocumentParser):
+@@ -299,7 +317,37 @@
+         shutil.copy(src, dst)
+         return dst
+ 
++    @override_settings(PAPERLESS_FILENAME_FORMAT=None, TIME_ZONE="America/Chicago")
++    def testNormalOperation(self):
+ 
++        filename = self.get_test_file()
++        document = self.consumer.try_consume_file(filename)
++
++        self.assertEqual(document.content, "The Text")
++        self.assertEqual(
++            document.title,
++            os.path.splitext(os.path.basename(filename))[0],
++        )
++        self.assertIsNone(document.correspondent)
++        self.assertIsNone(document.document_type)
++        self.assertEqual(document.filename, "0000001.pdf")
++        self.assertEqual(document.archive_filename, "0000001.pdf")
++
++        self.assertTrue(os.path.isfile(document.source_path))
++
++        self.assertTrue(os.path.isfile(document.thumbnail_path))
++
++        self.assertTrue(os.path.isfile(document.archive_path))
++
++        self.assertEqual(document.checksum, "42995833e01aea9b3edee44bbfdd7ce1")
++        self.assertEqual(document.archive_checksum, "62acb0bcbfbcaa62ca6ad3668e4e404b")
++
++        self.assertFalse(os.path.isfile(filename))
++
++        self._assert_first_last_send_progress()
++
++        self.assertEqual(document.created.tzinfo, zoneinfo.ZoneInfo("America/Chicago"))
++
+     @override_settings(PAPERLESS_FILENAME_FORMAT=None)
+     def testDeleteMacFiles(self):
+         # https://github.com/jonaswinkler/paperless-ng/discussions/1037
+@@ -467,9 +515,65 @@
+         # Database empty
+         self.assertEqual(len(Document.objects.all()), 0)
+ 
++    @override_settings(PAPERLESS_FILENAME_FORMAT="{correspondent}/{title}")
++    def testFilenameHandling(self):
++        filename = self.get_test_file()
+ 
++        document = self.consumer.try_consume_file(filename, override_title="new docs")
+ 
++        self.assertEqual(document.title, "new docs")
++        self.assertEqual(document.filename, "none/new docs.pdf")
++        self.assertEqual(document.archive_filename, "none/new docs.pdf")
+ 
++        self._assert_first_last_send_progress()
++
++    @override_settings(PAPERLESS_FILENAME_FORMAT="{correspondent}/{title}")
++    @mock.patch("documents.signals.handlers.generate_unique_filename")
++    def testFilenameHandlingUnstableFormat(self, m):
++
++        filenames = ["this", "that", "now this", "i cant decide"]
++
++        def get_filename():
++            f = filenames.pop()
++            filenames.insert(0, f)
++            return f
++
++        m.side_effect = lambda f, archive_filename=False: get_filename()
++
++        filename = self.get_test_file()
++
++        Tag.objects.create(name="test", is_inbox_tag=True)
++
++        document = self.consumer.try_consume_file(filename, override_title="new docs")
++
++        self.assertEqual(document.title, "new docs")
++        self.assertIsNotNone(os.path.isfile(document.title))
++        self.assertTrue(os.path.isfile(document.source_path))
++        self.assertTrue(os.path.isfile(document.archive_path))
++
++        self._assert_first_last_send_progress()
++
++    @mock.patch("documents.consumer.load_classifier")
++    def testClassifyDocument(self, m):
++        correspondent = Correspondent.objects.create(name="test")
++        dtype = DocumentType.objects.create(name="test")
++        t1 = Tag.objects.create(name="t1")
++        t2 = Tag.objects.create(name="t2")
++
++        m.return_value = MagicMock()
++        m.return_value.predict_correspondent.return_value = correspondent.pk
++        m.return_value.predict_document_type.return_value = dtype.pk
++        m.return_value.predict_tags.return_value = [t1.pk]
++
++        document = self.consumer.try_consume_file(self.get_test_file())
++
++        self.assertEqual(document.correspondent, correspondent)
++        self.assertEqual(document.document_type, dtype)
++        self.assertIn(t1, document.tags.all())
++        self.assertNotIn(t2, document.tags.all())
++
++        self._assert_first_last_send_progress()
++
+     @override_settings(CONSUMER_DELETE_DUPLICATES=True)
+     def test_delete_duplicate(self):
+         dst = self.get_test_file()
+@@ -505,8 +609,51 @@
+ 
+         self._assert_first_last_send_progress(last_status="FAILED")
+ 
++    @override_settings(PAPERLESS_FILENAME_FORMAT="{title}")
++    @mock.patch("documents.parsers.document_consumer_declaration.send")
++    def test_similar_filenames(self, m):
++        shutil.copy(
++            os.path.join(os.path.dirname(__file__), "samples", "simple.pdf"),
++            os.path.join(settings.CONSUMPTION_DIR, "simple.pdf"),
++        )
++        shutil.copy(
++            os.path.join(os.path.dirname(__file__), "samples", "simple.png"),
++            os.path.join(settings.CONSUMPTION_DIR, "simple.png"),
++        )
++        shutil.copy(
++            os.path.join(os.path.dirname(__file__), "samples", "simple-noalpha.png"),
++            os.path.join(settings.CONSUMPTION_DIR, "simple.png.pdf"),
++        )
++        m.return_value = [
++            (
++                None,
++                {
++                    "parser": CopyParser,
++                    "mime_types": {"application/pdf": ".pdf", "image/png": ".png"},
++                    "weight": 0,
++                },
++            ),
++        ]
++        doc1 = self.consumer.try_consume_file(
++            os.path.join(settings.CONSUMPTION_DIR, "simple.png"),
++        )
++        doc2 = self.consumer.try_consume_file(
++            os.path.join(settings.CONSUMPTION_DIR, "simple.pdf"),
++        )
++        doc3 = self.consumer.try_consume_file(
++            os.path.join(settings.CONSUMPTION_DIR, "simple.png.pdf"),
++        )
+ 
++        self.assertEqual(doc1.filename, "simple.png")
++        self.assertEqual(doc1.archive_filename, "simple.pdf")
++        self.assertEqual(doc2.filename, "simple.pdf")
++        self.assertEqual(doc2.archive_filename, "simple_01.pdf")
++        self.assertEqual(doc3.filename, "simple.png.pdf")
++        self.assertEqual(doc3.archive_filename, "simple.png.pdf")
+ 
++        sanity_check()
++
++
+ class PreConsumeTestCase(TestCase):
+     @mock.patch("documents.consumer.Popen")
+     @override_settings(PRE_CONSUME_SCRIPT=None)

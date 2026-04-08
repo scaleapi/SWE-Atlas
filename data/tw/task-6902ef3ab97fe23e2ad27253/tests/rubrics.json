@@ -1,0 +1,242 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "71887ea0b62a60415d16c12a4884c86a",
+    "title": "1.1: Includes a raw image load test exercising 24-bit format (f=24)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "97acfd302dea1917dd6e370bb4a0203f",
+    "title": "1.2: Includes a raw image load test exercising 32-bit format (f=32)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b0c256d006f88b2f64e18bdb5742fed6",
+    "title": "1.3: Includes a chunked raw image load test that asserts stored bytes equal the concatenated chunks"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a5b39de2b23ccda76368d863e37f28bb",
+    "title": "1.4: Includes a file-path based image load test with deterministic byte expectations"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "c8b15586111261890d1875ac682cf287",
+    "title": "1.5: Includes a temp-file based image load test that asserts the temp file is deleted by the implementation"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6a4742be556b5e0d46394ddc188f2b4a",
+    "title": "1.6: Includes a shared-memory based image load test that asserts the shared-memory object is unlinked"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d4364b1eca46eb2654194e6d43571d64",
+    "title": "1.7: Includes a PNG RGBA-mode load test that asserts decoded RGBA bytes match expected"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "727fa1cbacb941127593ba5f7a343847",
+    "title": "1.8: Includes a PNG RGB-mode load test that asserts decoded bytes match the expected conversion output"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "420ea9e58268f1b442cafc7e5b834dc8",
+    "title": "1.9: Includes a grayscale-ish PNG load test that asserts decoded bytes match expected RGBA conversion"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "bcf3000054172c754979d6011d7c2ac2",
+    "title": "1.10: Includes a tiny PNG sanity test that asserts decoded pixel bytes match an expected RGBA byte sequence"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "7e2b889f1b10aa9425cb00ee5e31df87",
+    "title": "1.11: Includes an invalid PNG test that asserts the error code is EBADPNG"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "23c494a8b8eeb279115d60b5a9776bc3",
+    "title": "1.12: Includes an image load test using client numbers (I=) that asserts lookup-by-number returns an image"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "8a27ed2ea7a5f39d5dfe1898e08685c5",
+    "title": "1.13: Includes a chunked image load test using client numbers (I=) with deterministic byte expectations"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "5933a4a46eca1b36dcf51383e8ab3807",
+    "title": "1.14: Includes a put operation test that references an image by client number (I=) that asserts OK"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "fc98653e0256b86b09c16ff947bec804",
+    "title": "1.15: Includes a delete operation test that deletes an image by client number (I=) that asserts a state change"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b9c6110df6029f79ee17a9b149c18ecc",
+    "title": "1.16: Includes an animation test that adds at least one non-root frame that asserts extra frame state is present"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "5f814e3b424236660d528bc459ebbf56",
+    "title": "1.17: Includes an animation test that overwrites an existing frame that asserts the stored frame bytes equal the new bytes"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "fac952195737031ce1fbb89fb4bae968",
+    "title": "1.18: Includes an animation composition test that copies pixels from one frame into another that asserts the composed output"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9628cfef9cbcb5d98456a4dc4e56fa5b",
+    "title": "1.19: Includes an animation deletion test that deletes a frame that asserts extra frame state shrinks"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "60d293f8c76ab3b9b5d00c7cce74a1dc",
+    "title": "1.20: Includes an animation partial-edit test that asserts the resulting frame bytes match an expected partial update"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "18ec4a59a4c8680f9f7a155d2f003b59",
+    "title": "1.21: Includes an animation test that creates a new frame using an existing frame as the base that asserts the new frame bytes"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f5ab06aeccca1693ad485dfad5e58976",
+    "title": "1.22: Includes an animation gap-timing test that updates the root frame gap that asserts root_frame_gap equals the set value"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b3e2791ca0c42824978acba619aa178f",
+    "title": "1.23: Includes an animation gap-timing test that updates a non-root frame gap that asserts the stored gap equals the set value"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a0ca642f95976ea10559afe3e83ecf78",
+    "title": "1.24: Includes an animation control test that changes the current frame that asserts current_frame_index changes deterministically"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "3594600cfa02bb10835c85a8496ca5d8",
+    "title": "2.1: All newly added graphics image-loading integration tests are placed in kitty_tests/graphics.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ef55bea583f1e47b4286600ec9952386",
+    "title": "3.1: Newly added tests are defined as methods within a discoverable unittest test class"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2a62560e338ad76e1666886b64edc4eb",
+    "title": "3.2: Newly added tests follow the naming convention test_<descriptive_name>"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "70b348ce60a3053690ea0e250190ab88",
+    "title": "3.3: Newly added tests validate behavior using assertions rather than logging-only or comment-only validation"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "b61f6a3dad0861aa3e84373c9eba309c",
+    "title": "4.1: New tests reuse existing protocol send/parse helpers instead of introducing bespoke protocol parsing"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "641056c79a39c11ea1c744e67c4c688f",
+    "title": "4.2: Tests that allocate persistent graphics state include deterministic cleanup or teardown assertions"
+  }
+]

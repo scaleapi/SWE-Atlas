@@ -1,0 +1,106 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "c96ec239cad8571ac17702142fdc5bf3",
+    "title": "1.1: Tests that directory listing and file stat are denied when user lacks list permission"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "ae5879474780e1c718e552b4cd72561b",
+    "title": "1.2: Tests that file download is denied when user lacks download permission"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "97acfd302dea1917dd6e370bb4a0203f",
+    "title": "1.3: Tests that file upload is denied when user lacks upload permission"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b0c256d006f88b2f64e18bdb5742fed6",
+    "title": "1.4: Tests that file overwrite is denied when user lacks overwrite permission"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d80f6a72dfa80cdfdf525983a6c3dc30",
+    "title": "1.5: Tests that file deletion is denied when user lacks delete permission"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "b19924e070afd6ff3c7e649542b2c7b3",
+    "title": "2.1: Places permission denial tests in the sftpd test directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "6315237b62dcd954515c1ea1a4cced50",
+    "title": "2.2: Places tests in a Go test file with _test.go suffix"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "8294d4819cb3f44d2b97f8682e136f2d",
+    "title": "3.1: All tests use Go testing framework with *testing.T parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0ec98b7c12afb2ebaf1d5c1ec451e9f7",
+    "title": "3.2: All tests follow naming pattern starting with Test prefix"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ec97220fdb8f5baaaac49b45bafe3903",
+    "title": "3.3: All tests use t.Errorf or t.Error for reporting test failures"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d480fa5ddc91f8f93a607c162840106a",
+    "title": "3.4: All tests remove created users and clean up home directories after execution"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e6a77cc014139760aec27e3d97abab83",
+    "title": "4.1: Permission tests create users via API with specific permission configurations before testing"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "a9c6ee4f017e5c40f6cbf147afea674c",
+    "title": "4.2: Permission tests establish SFTP client connections to perform operations"
+  }
+]

@@ -1,0 +1,138 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aea1d83862baa333c95f618b0d915631",
+    "title": "1.1: Tests that messages from one sender domain are routed to that domain's configured target"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "fbabce5838a6bb1c88be96c4071a17bc",
+    "title": "1.2: Tests that messages from a different sender domain are routed to that domain's different configured target"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "fe3cd8b0923b7a3ec617407c4efcde24",
+    "title": "1.3: Tests that each target receives correct count of messages (no duplication or cross-routing)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9835a47368b727d2b39d4202c4480e11",
+    "title": "1.4: Tests that allowed senders can successfully deliver messages"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d99f41269851017a8beec9ca92ef8667",
+    "title": "1.5: Tests that senders matching a domain rejection rule are rejected with error"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9375ce8e1b5bb304ba025b77e231460a",
+    "title": "1.6: Tests that senders not matching any rule are rejected via default rejection"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "dc11418d83872233387e8079f0d1a6df",
+    "title": "1.7: Tests that postmaster address matching is case-insensitive"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6175443493be8f706c131d1a0288d18c",
+    "title": "1.8: Tests that full email address matching is case-insensitive"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "81c7b365e17fe1e34c1ce5baa26e6332",
+    "title": "1.9: Tests that domain-only source matching is case-insensitive"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0f95d7563da540a8ff064860c1907c03",
+    "title": "2.1: Places the domain routing test in internal/msgpipeline/"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "8708ded9611d1ffa6b5ee5abd93fb45e",
+    "title": "2.2: Places the source rejection test in internal/msgpipeline/"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ec44b2d866e4ea2e6d8879c30226715b",
+    "title": "2.3: Places the case-insensitive matching test in internal/msgpipeline/"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "30bf1d120f8d92985ef1c84149672e14",
+    "title": "3.1: All tests use Go standard testing framework with *testing.T parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "638fdca9eb256e29c784f22cfedccc03",
+    "title": "3.2: All tests follow Go Test naming convention with Test prefix"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "a63a046fbbc50fe676122559d6493a61",
+    "title": "3.3: All tests use standard Go testing assertion methods"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "abfe2c108fd01862505ea7a9516133fd",
+    "title": "4.1: Tests configure MsgPipeline with perSource map for sender routing"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d81b12f6ce6f086592a5e6c5a17ea112",
+    "title": "4.2: Tests verify that targets received the expected messages"
+  }
+]

@@ -1,0 +1,191 @@
+diff --git a/lib/execution_segment_test.go b/lib/execution_segment_test.go
+index c8eaa6528..d191e04f2 100644
+--- a/lib/execution_segment_test.go
++++ b/lib/execution_segment_test.go
+@@ -371,6 +371,57 @@ func TestExecutionSegmentSequences(t *testing.T) {
+ 	assert.Error(t, err)
+ }
+ 
++func TestExecutionSegmentStringSequences(t *testing.T) {
++	t.Parallel()
++	testCases := []struct {
++		seq         string
++		expSegments []string
++		expError    bool
++		canReverse  bool
++		// TODO: checks for least common denominator and maybe striped partitioning
++	}{
++		{seq: "", expSegments: nil},
++		{seq: "0.5", expError: true},
++		{seq: "1,1", expError: true},
++		{seq: "-0.5,1", expError: true},
++		{seq: "1/2,1/2", expError: true},
++		{seq: "1/2,1/3", expError: true},
++		{seq: "0,1,1/2", expError: true},
++		{seq: "0.5,1", expSegments: []string{"1/2:1"}},
++		{seq: "1/2,1", expSegments: []string{"1/2:1"}, canReverse: true},
++		{seq: "1/3,2/3", expSegments: []string{"1/3:2/3"}, canReverse: true},
++		{seq: "0,1/3,2/3", expSegments: []string{"0:1/3", "1/3:2/3"}, canReverse: true},
++		{seq: "0,1/3,2/3,1", expSegments: []string{"0:1/3", "1/3:2/3", "2/3:1"}, canReverse: true},
++		{seq: "0.5,0.7", expSegments: []string{"1/2:7/10"}},
++		{seq: "0.5,0.7,1", expSegments: []string{"1/2:7/10", "7/10:1"}},
++		{seq: "0,1/13,2/13,1/3,1/2,3/4,1", expSegments: []string{
++			"0:1/13", "1/13:2/13", "2/13:1/3", "1/3:1/2", "1/2:3/4", "3/4:1",
++		}, canReverse: true},
++	}
++
++	for _, tc := range testCases {
++		tc := tc
++		t.Run(tc.seq, func(t *testing.T) {
++			t.Parallel()
++			result, err := NewExecutionSegmentSequenceFromString(tc.seq)
++			if tc.expError {
++				require.Error(t, err)
++				return
++			}
++			require.NoError(t, err)
++			require.Equal(t, len(tc.expSegments), len(result))
++			for i, expStrSeg := range tc.expSegments {
++				expSeg, errl := NewExecutionSegmentFromString(expStrSeg)
++				require.NoError(t, errl)
++				assert.Truef(t, expSeg.Equal(result[i]), "Segment %d (%s) should be equal to %s", i, result[i], expSeg)
++			}
++			if tc.canReverse {
++				assert.Equal(t, result.String(), tc.seq)
++			}
++		})
++	}
++}
++
+ func getTestRand(t testing.TB) *rand.Rand {
+ 	t.Helper()
+ 	seed := time.Now().UnixNano()
+@@ -487,6 +538,89 @@ func TestExecutionSegmentScaleNoWobble(t *testing.T) {
+ 	}
+ }
+ 
++func TestGetStripedOffsets(t *testing.T) {
++	t.Parallel()
++	testCases := []struct {
++		seq     string
++		seg     string
++		start   int64
++		offsets []int64
++		lcd     int64
++	}{
++		// full sequences
++		{seq: "0,0.3,0.5,0.6,0.7,0.8,0.9,1", seg: "0:0.3", start: 0, offsets: []int64{4, 3, 3}, lcd: 10},
++		{seq: "0,0.3,0.5,0.6,0.7,0.8,0.9,1", seg: "0.3:0.5", start: 1, offsets: []int64{4, 6}, lcd: 10},
++		{seq: "0,0.3,0.5,0.6,0.7,0.8,0.9,1", seg: "0.5:0.6", start: 2, offsets: []int64{10}, lcd: 10},
++		{seq: "0,0.3,0.5,0.6,0.7,0.8,0.9,1", seg: "0.6:0.7", start: 3, offsets: []int64{10}, lcd: 10},
++		{seq: "0,0.3,0.5,0.6,0.7,0.8,0.9,1", seg: "0.8:0.9", start: 8, offsets: []int64{10}, lcd: 10},
++		{seq: "0,0.3,0.5,0.6,0.7,0.8,0.9,1", seg: "0.9:1", start: 9, offsets: []int64{10}, lcd: 10},
++		{seq: "0,0.2,0.5,0.6,0.7,0.8,0.9,1", seg: "0.9:1", start: 9, offsets: []int64{10}, lcd: 10},
++		{seq: "0,0.2,0.5,0.6,0.7,0.8,0.9,1", seg: "0:0.2", start: 1, offsets: []int64{4, 6}, lcd: 10},
++		{seq: "0,0.2,0.5,0.6,0.7,0.8,0.9,1", seg: "0.6:0.7", start: 3, offsets: []int64{10}, lcd: 10},
++		// not full sequences
++		{seq: "0,0.2,0.5", seg: "0:0.2", start: 3, offsets: []int64{6, 4}, lcd: 10},
++		{seq: "0,0.2,0.5", seg: "0.2:0.5", start: 1, offsets: []int64{4, 2, 4}, lcd: 10},
++		{seq: "0,2/5,4/5", seg: "0:2/5", start: 0, offsets: []int64{3, 2}, lcd: 5},
++		{seq: "0,2/5,4/5", seg: "2/5:4/5", start: 1, offsets: []int64{3, 2}, lcd: 5},
++		// no sequence
++		{seg: "0:0.2", start: 1, offsets: []int64{5}, lcd: 5},
++		{seg: "0:1/5", start: 1, offsets: []int64{5}, lcd: 5},
++		{seg: "0:2/10", start: 1, offsets: []int64{5}, lcd: 5},
++		{seg: "0:0.4", start: 1, offsets: []int64{2, 3}, lcd: 5},
++		{seg: "0:2/5", start: 1, offsets: []int64{2, 3}, lcd: 5},
++		{seg: "2/5:4/5", start: 1, offsets: []int64{3, 2}, lcd: 5},
++		{seg: "0:4/10", start: 1, offsets: []int64{2, 3}, lcd: 5},
++		{seg: "1/10:5/10", start: 1, offsets: []int64{2, 2, 4, 2}, lcd: 10},
++	}
++
++	for _, tc := range testCases {
++		tc := tc
++		t.Run(fmt.Sprintf("seq:%s;segment:%s", tc.seq, tc.seg), func(t *testing.T) {
++			t.Parallel()
++			ess, err := NewExecutionSegmentSequenceFromString(tc.seq)
++			require.NoError(t, err)
++			segment, err := NewExecutionSegmentFromString(tc.seg)
++			require.NoError(t, err)
++			et, err := NewExecutionTuple(segment, &ess)
++			require.NoError(t, err)
++
++			start, offsets, lcd := et.GetStripedOffsets()
++
++			assert.Equal(t, tc.start, start)
++			assert.Equal(t, tc.offsets, offsets)
++			assert.Equal(t, tc.lcd, lcd)
++
++			ess2, err := NewExecutionSegmentSequenceFromString(tc.seq)
++			require.NoError(t, err)
++			assert.Equal(t, ess.String(), ess2.String())
++		})
++	}
++}
++
++func TestSequenceLCD(t *testing.T) {
++	t.Parallel()
++	testCases := []struct {
++		seq string
++		lcd int64
++	}{
++		{seq: "0,0.3,0.5,0.6,0.7,0.8,0.9,1", lcd: 10},
++		{seq: "0,0.1,0.5,0.6,0.7,0.8,0.9,1", lcd: 10},
++		{seq: "0,0.2,0.5,0.6,0.7,0.8,0.9,1", lcd: 10},
++		{seq: "0,1/3,5/6", lcd: 6},
++		{seq: "0,1/3,4/7", lcd: 21},
++	}
++
++	for _, tc := range testCases {
++		tc := tc
++		t.Run(fmt.Sprintf("seq:%s", tc.seq), func(t *testing.T) {
++			t.Parallel()
++			ess, err := NewExecutionSegmentSequenceFromString(tc.seq)
++			require.NoError(t, err)
++			require.Equal(t, tc.lcd, ess.LCD())
++		})
++	}
++}
++
+ func BenchmarkGetStripedOffsets(b *testing.B) {
+ 	lengths := [...]int64{10, 100}
+ 	const seed = 777
+@@ -543,6 +677,38 @@ func BenchmarkGetStripedOffsetsEven(b *testing.B) {
+ 	}
+ }
+ 
++func TestGetNewExecutionTupleBesedOnValue(t *testing.T) {
++	t.Parallel()
++
++	testCases := []struct {
++		seq      string
++		seg      string
++		value    int64
++		expected string
++	}{
++		// full sequences
++		{seq: "0,1/3,2/3,1", seg: "0:1/3", value: 20, expected: "0,7/20,7/10,1"},
++	}
++
++	for _, tc := range testCases {
++		tc := tc
++		t.Run(fmt.Sprintf("seq:%s;segment:%s", tc.seq, tc.seg), func(t *testing.T) {
++			t.Parallel()
++			ess, err := NewExecutionSegmentSequenceFromString(tc.seq)
++			require.NoError(t, err)
++
++			segment, err := NewExecutionSegmentFromString(tc.seg)
++			require.NoError(t, err)
++
++			et, err := NewExecutionTuple(segment, &ess)
++			require.NoError(t, err)
++			newET, err := et.GetNewExecutionTupleFromValue(tc.value)
++			require.NoError(t, err)
++			require.Equal(t, tc.expected, newET.Sequence.String())
++		})
++	}
++}
++
+ func mustNewExecutionSegment(str string) *ExecutionSegment {
+ 	res, err := NewExecutionSegmentFromString(str)
+ 	if err != nil {

@@ -1,0 +1,72 @@
+diff --git a/pkg/tsdb/influxdb/flux/executor.go b/pkg/tsdb/influxdb/flux/executor.go
+index acad55df636..0e86dc62df7 100644
+--- a/pkg/tsdb/influxdb/flux/executor.go
++++ b/pkg/tsdb/influxdb/flux/executor.go
+@@ -2,12 +2,9 @@ package flux
+ 
+ import (
+ 	"context"
+-	"errors"
+ 	"fmt"
+-	"strings"
+ 
+ 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+-	"github.com/grafana/grafana-plugin-sdk-go/data"
+ 	"github.com/influxdata/influxdb-client-go/v2/api"
+ 
+ 	"github.com/grafana/grafana/pkg/infra/log"
+@@ -17,51 +14,10 @@ const maxPointsEnforceFactor float64 = 10
+ 
+ // executeQuery runs a flux query using the queryModel to interpolate the query and the runner to execute it.
+ // maxSeries somehow limits the response.
++// PLACEHOLDER: Function implementation removed for testing purposes.
+ func executeQuery(ctx context.Context, logger log.Logger, query queryModel, runner queryRunner, maxSeries int) (dr backend.DataResponse) {
+-	dr = backend.DataResponse{}
+-
+-	flux := interpolate(query)
+-
+-	logger.Debug("Executing Flux query", "flux", flux)
+-
+-	tables, err := runner.runQuery(ctx, flux)
+-	if err != nil {
+-		logger.Warn("Flux query failed", "err", err, "query", flux)
+-		dr.Error = err
+-	} else {
+-		// we only enforce a larger number than maxDataPoints
+-		maxPointsEnforced := int(float64(query.MaxDataPoints) * maxPointsEnforceFactor)
+-
+-		dr = readDataFrames(logger, tables, maxPointsEnforced, maxSeries)
+-
+-		if dr.Error != nil {
+-			// we check if a too-many-data-points error happened, and if it is so,
+-			// we improve the error-message.
+-			// (we have to do it in such a complicated way, because at the point where
+-			// the error happens, there is not enough info to create a nice error message)
+-			var maxPointError maxPointsExceededError
+-			if errors.As(dr.Error, &maxPointError) {
+-				errMsg := "A query returned too many datapoints and the results have been truncated at %d points to prevent memory issues. At the current graph size, Grafana can only draw %d."
+-				// we recommend to the user to use AggregateWindow(), but only if it is not already used
+-				if !strings.Contains(query.RawQuery, "aggregateWindow(") {
+-					errMsg += " Try using the aggregateWindow() function in your query to reduce the number of points returned."
+-				}
+-
+-				dr.Error = fmt.Errorf(errMsg, maxPointError.Count, query.MaxDataPoints)
+-			}
+-		}
+-	}
+-
+-	// Make sure there is at least one frame
+-	if len(dr.Frames) == 0 {
+-		dr.Frames = append(dr.Frames, data.NewFrame(""))
+-	}
+-	firstFrame := dr.Frames[0]
+-	if firstFrame.Meta == nil {
+-		firstFrame.SetMeta(&data.FrameMeta{})
+-	}
+-	firstFrame.Meta.ExecutedQueryString = flux
+-	return dr
++	// TODO: Implement executeQuery
++	return backend.DataResponse{}
+ }
+ 
+ func readDataFrames(logger log.Logger, result *api.QueryTableResult, maxPoints int, maxSeries int) (dr backend.DataResponse) {

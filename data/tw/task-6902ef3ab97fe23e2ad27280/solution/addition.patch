@@ -1,0 +1,289 @@
+diff --git a/sftpd/sftpd_test.go b/sftpd/sftpd_test.go
+index 5d457133..79b3ee21 100644
+--- a/sftpd/sftpd_test.go
++++ b/sftpd/sftpd_test.go
+@@ -1179,6 +1179,284 @@ func TestLoginAfterUserUpdateEmptyPubKey(t *testing.T) {
+ 	os.RemoveAll(user.GetHomeDir())
+ }
+ 
++func TestLoginExternalAuthPwdAndPubKey(t *testing.T) {
++	if runtime.GOOS == "windows" {
++		t.Skip("this test is not available on Windows")
++	}
++	usePubKey := true
++	u := getTestUser(usePubKey)
++	u.QuotaFiles = 1000
++	dataProvider := dataprovider.GetProvider()
++	dataprovider.Close(dataProvider)
++	config.LoadConfig(configDir, "")
++	providerConf := config.GetProviderConf()
++	ioutil.WriteFile(extAuthPath, getExtAuthScriptContent(u, 0, false), 0755)
++	providerConf.ExternalAuthProgram = extAuthPath
++	providerConf.ExternalAuthScope = 0
++	err := dataprovider.Initialize(providerConf, configDir)
++	if err != nil {
++		t.Errorf("error initializing data provider")
++	}
++	httpd.SetDataProvider(dataprovider.GetProvider())
++	sftpd.SetDataProvider(dataprovider.GetProvider())
++
++	client, err := getSftpClient(u, usePubKey)
++	if err != nil {
++		t.Errorf("unable to create sftp client: %v", err)
++	} else {
++		defer client.Close()
++		testFileName := "test_file.dat"
++		testFilePath := filepath.Join(homeBasePath, testFileName)
++		testFileSize := int64(65535)
++		err = createTestFile(testFilePath, testFileSize)
++		if err != nil {
++			t.Errorf("unable to create test file: %v", err)
++		}
++		err = sftpUploadFile(testFilePath, testFileName, testFileSize, client)
++		if err != nil {
++			t.Errorf("file upload error: %v", err)
++		}
++		os.Remove(testFilePath)
++	}
++	u.Username = defaultUsername + "1"
++	client, err = getSftpClient(u, usePubKey)
++	if err == nil {
++		t.Error("external auth login with invalid user must fail")
++	}
++	usePubKey = false
++	u = getTestUser(usePubKey)
++	u.PublicKeys = []string{}
++	ioutil.WriteFile(extAuthPath, getExtAuthScriptContent(u, 0, false), 0755)
++	client, err = getSftpClient(u, usePubKey)
++	if err != nil {
++		t.Errorf("unable to create sftp client: %v", err)
++	} else {
++		defer client.Close()
++		_, err := client.Getwd()
++		if err != nil {
++			t.Errorf("unable to get working dir: %v", err)
++		}
++	}
++	users, out, err := httpd.GetUsers(0, 0, defaultUsername, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to get users: %v, out: %v", err, string(out))
++	}
++	if len(users) != 1 {
++		t.Errorf("number of users mismatch, expected: 1, actual: %v", len(users))
++	}
++	user := users[0]
++	if len(user.PublicKeys) != 0 {
++		t.Errorf("number of public keys mismatch, expected: 0, actual: %v", len(user.PublicKeys))
++	}
++	if user.UsedQuotaSize == 0 {
++		t.Error("quota size must be > 0")
++	}
++	_, err = httpd.RemoveUser(user, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to remove: %v", err)
++	}
++	os.RemoveAll(user.GetHomeDir())
++
++	dataProvider = dataprovider.GetProvider()
++	dataprovider.Close(dataProvider)
++	config.LoadConfig(configDir, "")
++	providerConf = config.GetProviderConf()
++	err = dataprovider.Initialize(providerConf, configDir)
++	if err != nil {
++		t.Errorf("error initializing data provider")
++	}
++	httpd.SetDataProvider(dataprovider.GetProvider())
++	sftpd.SetDataProvider(dataprovider.GetProvider())
++	os.Remove(extAuthPath)
++}
++
++func TestLoginExternalAuthPwd(t *testing.T) {
++	if runtime.GOOS == "windows" {
++		t.Skip("this test is not available on Windows")
++	}
++	usePubKey := false
++	u := getTestUser(usePubKey)
++	dataProvider := dataprovider.GetProvider()
++	dataprovider.Close(dataProvider)
++	config.LoadConfig(configDir, "")
++	providerConf := config.GetProviderConf()
++	ioutil.WriteFile(extAuthPath, getExtAuthScriptContent(u, 0, false), 0755)
++	providerConf.ExternalAuthProgram = extAuthPath
++	providerConf.ExternalAuthScope = 1
++	err := dataprovider.Initialize(providerConf, configDir)
++	if err != nil {
++		t.Errorf("error initializing data provider")
++	}
++	httpd.SetDataProvider(dataprovider.GetProvider())
++	sftpd.SetDataProvider(dataprovider.GetProvider())
++
++	client, err := getSftpClient(u, usePubKey)
++	if err != nil {
++		t.Errorf("unable to create sftp client: %v", err)
++	} else {
++		defer client.Close()
++		_, err := client.Getwd()
++		if err != nil {
++			t.Errorf("unable to get working dir: %v", err)
++		}
++	}
++	u.Username = defaultUsername + "1"
++	client, err = getSftpClient(u, usePubKey)
++	if err == nil {
++		t.Error("external auth login with invalid user must fail")
++	}
++	usePubKey = true
++	u = getTestUser(usePubKey)
++	client, err = getSftpClient(u, usePubKey)
++	if err == nil {
++		t.Error("external auth login with valid user but invalid auth scope must fail")
++	}
++	users, out, err := httpd.GetUsers(0, 0, defaultUsername, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to get users: %v, out: %v", err, string(out))
++	}
++	if len(users) != 1 {
++		t.Errorf("number of users mismatch, expected: 1, actual: %v", len(users))
++	}
++	user := users[0]
++	_, err = httpd.RemoveUser(user, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to remove: %v", err)
++	}
++	os.RemoveAll(user.GetHomeDir())
++
++	dataProvider = dataprovider.GetProvider()
++	dataprovider.Close(dataProvider)
++	config.LoadConfig(configDir, "")
++	providerConf = config.GetProviderConf()
++	err = dataprovider.Initialize(providerConf, configDir)
++	if err != nil {
++		t.Errorf("error initializing data provider")
++	}
++	httpd.SetDataProvider(dataprovider.GetProvider())
++	sftpd.SetDataProvider(dataprovider.GetProvider())
++	os.Remove(extAuthPath)
++}
++
++func TestLoginExternalAuthPubKey(t *testing.T) {
++	if runtime.GOOS == "windows" {
++		t.Skip("this test is not available on Windows")
++	}
++	usePubKey := true
++	u := getTestUser(usePubKey)
++	dataProvider := dataprovider.GetProvider()
++	dataprovider.Close(dataProvider)
++	config.LoadConfig(configDir, "")
++	providerConf := config.GetProviderConf()
++	ioutil.WriteFile(extAuthPath, getExtAuthScriptContent(u, 0, false), 0755)
++	providerConf.ExternalAuthProgram = extAuthPath
++	providerConf.ExternalAuthScope = 2
++	err := dataprovider.Initialize(providerConf, configDir)
++	if err != nil {
++		t.Errorf("error initializing data provider")
++	}
++	httpd.SetDataProvider(dataprovider.GetProvider())
++	sftpd.SetDataProvider(dataprovider.GetProvider())
++
++	client, err := getSftpClient(u, usePubKey)
++	if err != nil {
++		t.Errorf("unable to create sftp client: %v", err)
++	} else {
++		defer client.Close()
++		_, err := client.Getwd()
++		if err != nil {
++			t.Errorf("unable to get working dir: %v", err)
++		}
++	}
++	u.Username = defaultUsername + "1"
++	client, err = getSftpClient(u, usePubKey)
++	if err == nil {
++		t.Error("external auth login with invalid user must fail")
++	}
++	usePubKey = false
++	u = getTestUser(usePubKey)
++	client, err = getSftpClient(u, usePubKey)
++	if err == nil {
++		t.Error("external auth login with valid user but invalid auth scope must fail")
++	}
++	users, out, err := httpd.GetUsers(0, 0, defaultUsername, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to get users: %v, out: %v", err, string(out))
++	}
++	if len(users) != 1 {
++		t.Errorf("number of users mismatch, expected: 1, actual: %v", len(users))
++	}
++	user := users[0]
++	_, err = httpd.RemoveUser(user, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to remove: %v", err)
++	}
++	os.RemoveAll(user.GetHomeDir())
++
++	dataProvider = dataprovider.GetProvider()
++	dataprovider.Close(dataProvider)
++	config.LoadConfig(configDir, "")
++	providerConf = config.GetProviderConf()
++	err = dataprovider.Initialize(providerConf, configDir)
++	if err != nil {
++		t.Errorf("error initializing data provider")
++	}
++	httpd.SetDataProvider(dataprovider.GetProvider())
++	sftpd.SetDataProvider(dataprovider.GetProvider())
++	os.Remove(extAuthPath)
++}
++
++func TestLoginExternalAuthErrors(t *testing.T) {
++	if runtime.GOOS == "windows" {
++		t.Skip("this test is not available on Windows")
++	}
++	usePubKey := true
++	u := getTestUser(usePubKey)
++	dataProvider := dataprovider.GetProvider()
++	dataprovider.Close(dataProvider)
++	config.LoadConfig(configDir, "")
++	providerConf := config.GetProviderConf()
++	ioutil.WriteFile(extAuthPath, getExtAuthScriptContent(u, 0, true), 0755)
++	providerConf.ExternalAuthProgram = extAuthPath
++	providerConf.ExternalAuthScope = 0
++	err := dataprovider.Initialize(providerConf, configDir)
++	if err != nil {
++		t.Errorf("error initializing data provider")
++	}
++	httpd.SetDataProvider(dataprovider.GetProvider())
++	sftpd.SetDataProvider(dataprovider.GetProvider())
++
++	_, err = getSftpClient(u, usePubKey)
++	if err == nil {
++		t.Error("login must fail, external auth returns a non json response")
++	}
++	usePubKey = false
++	u = getTestUser(usePubKey)
++	_, err = getSftpClient(u, usePubKey)
++	if err == nil {
++		t.Error("login must fail, external auth returns a non json response")
++	}
++	users, out, err := httpd.GetUsers(0, 0, defaultUsername, http.StatusOK)
++	if err != nil {
++		t.Errorf("unable to get users: %v, out: %v", err, string(out))
++	}
++	if len(users) != 0 {
++		t.Errorf("number of users mismatch, expected: 0, actual: %v", len(users))
++	}
++
++	dataProvider = dataprovider.GetProvider()
++	dataprovider.Close(dataProvider)
++	config.LoadConfig(configDir, "")
++	providerConf = config.GetProviderConf()
++	err = dataprovider.Initialize(providerConf, configDir)
++	if err != nil {
++		t.Errorf("error initializing data provider")
++	}
++	httpd.SetDataProvider(dataprovider.GetProvider())
++	sftpd.SetDataProvider(dataprovider.GetProvider())
++	os.Remove(extAuthPath)
++}
++
+ func TestQuotaDisabledError(t *testing.T) {
+ 	dataProvider := dataprovider.GetProvider()
+ 	dataprovider.Close(dataProvider)

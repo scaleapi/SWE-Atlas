@@ -1,0 +1,74 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b16836637672d9f2cb2aa598867b4fd0",
+    "title": "1.1: Tests that pathFromBinaryLine returns an empty string when parsing a binary diff line where the destination path is /dev/null (file deletion scenario)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6716ebc7cd7ea6da0075beae98795675",
+    "title": "1.2: Tests that pathFromBinaryLine returns the repo-relative destination path (with the leading b/ removed) when parsing a binary diff line of the form Binary files /dev/null and b/<path> differ (file addition scenario)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "1937506ce12c723909c00487e2cadb4e",
+    "title": "1.3: Tests that pathFromBinaryLine does not trim or normalize whitespace in the extracted path when parsing a binary diff line containing a filename with spaces (i.e., the returned path preserves the exact spacing)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "83bb3dbb8eb60c18f6af50784e3883d6",
+    "title": "1.4: Tests that pathFromBinaryLine decodes git-style backslash-octal escapes (\\NNN sequences representing bytes) in the destination path into the correct Unicode string in the extracted path"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "88c3e2ffec6dcb7ad382f9f14a755534",
+    "title": "1.5: Tests that pathFromBinaryLine handles quoted destination paths in binary diff lines (i.e., strips surrounding double quotes from \"b/<path>\") before returning the extracted repo-relative path"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "7286285ad9e2f6fa362ede7861a50954",
+    "title": "1.6: Tests a quoted destination path where the first character after the b/ prefix is represented via a backslash-octal escape (\\NNN), asserting the extracted repo-relative path begins with the decoded Unicode character(s)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "91b1a83f903601d6e0758aa2d8b37772",
+    "title": "1.7: Tests a quoted destination path that includes backslash-octal escapes and whose decoded final path segment (filename after the last /) contains at least one literal space, asserting the returned path preserves that space in the filename"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "5de8a3f7300bc8b23fb8becd569936a3",
+    "title": "2.1: Places the binary path parsing test in a Go _test.go file under pkg/gitparse/ (so it can call pathFromBinaryLine)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0a13a5c82fc89a2ee4f3ac87b3fa599f",
+    "title": "3.1: The added binary path parsing test is a Go unit test function with signature func TestXxx(t *testing.T) using Go\u2019s standard testing package"
+  }
+]

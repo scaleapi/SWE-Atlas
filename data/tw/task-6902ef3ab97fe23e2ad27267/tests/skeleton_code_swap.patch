@@ -1,0 +1,136 @@
+diff --git a/internal/dsync/drwmutex.go b/internal/dsync/drwmutex.go
+index b682e0a45..10f6dc995 100644
+--- a/internal/dsync/drwmutex.go
++++ b/internal/dsync/drwmutex.go
+@@ -418,129 +418,8 @@ func refreshLock(ctx context.Context, ds *Dsync, id, source string, quorum int)
+ 
+ // lock tries to acquire the distributed lock, returning true or false.
+ func lock(ctx context.Context, ds *Dsync, locks *[]string, id, source string, isReadLock bool, tolerance, quorum int, names ...string) bool {
+-	for i := range *locks {
+-		(*locks)[i] = ""
+-	}
+-
+-	restClnts, owner := ds.GetLockers()
+-
+-	// Create buffered channel of size equal to total number of nodes.
+-	ch := make(chan Granted, len(restClnts))
+-	var wg sync.WaitGroup
+-
+-	args := LockArgs{
+-		Owner:     owner,
+-		UID:       id,
+-		Resources: names,
+-		Source:    source,
+-		Quorum:    &quorum,
+-	}
+-
+-	// Combined timeout for the lock attempt.
+-	ctx, cancel := context.WithTimeout(ctx, ds.Timeouts.Acquire)
+-	defer cancel()
+-
+-	// Special context for NetLockers - do not use timeouts.
+-	// Also, pass the trace context info if found for debugging
+-	netLockCtx := context.Background()
+-	tc, ok := ctx.Value(mcontext.ContextTraceKey).(*mcontext.TraceCtxt)
+-	if ok {
+-		netLockCtx = context.WithValue(netLockCtx, mcontext.ContextTraceKey, tc)
+-	}
+-
+-	for index, c := range restClnts {
+-		wg.Add(1)
+-		// broadcast lock request to all nodes
+-		go func(index int, isReadLock bool, c NetLocker) {
+-			defer wg.Done()
+-
+-			g := Granted{index: index}
+-			if c == nil {
+-				log("dsync: nil locker\n")
+-				ch <- g
+-				return
+-			}
+-
+-			var locked bool
+-			var err error
+-			if isReadLock {
+-				if locked, err = c.RLock(netLockCtx, args); err != nil {
+-					log("dsync: Unable to call RLock failed with %s for %#v at %s\n", err, args, c)
+-				}
+-			} else {
+-				if locked, err = c.Lock(netLockCtx, args); err != nil {
+-					log("dsync: Unable to call Lock failed with %s for %#v at %s\n", err, args, c)
+-				}
+-			}
+-			if locked {
+-				g.lockUID = args.UID
+-			}
+-			ch <- g
+-		}(index, isReadLock, c)
+-	}
+-
+-	// Wait until we have either
+-	//
+-	// a) received all lock responses
+-	// b) received too many 'non-'locks for quorum to be still possible
+-	// c) timed out
+-	//
+-	i, locksFailed := 0, 0
+-	done := false
+-
+-	for ; i < len(restClnts); i++ { // Loop until we acquired all locks
+-		select {
+-		case grant := <-ch:
+-			if grant.isLocked() {
+-				// Mark that this node has acquired the lock
+-				(*locks)[grant.index] = grant.lockUID
+-			} else {
+-				locksFailed++
+-				if locksFailed > tolerance {
+-					// We know that we are not going to get the lock anymore,
+-					// so exit out and release any locks that did get acquired
+-					done = true
+-				}
+-			}
+-		case <-ctx.Done():
+-			// Capture timedout locks as failed or took too long
+-			locksFailed++
+-			if locksFailed > tolerance {
+-				// We know that we are not going to get the lock anymore,
+-				// so exit out and release any locks that did get acquired
+-				done = true
+-			}
+-		}
+-
+-		if done {
+-			break
+-		}
+-	}
+-
+-	quorumLocked := checkQuorumLocked(locks, quorum) && locksFailed <= tolerance
+-	if !quorumLocked {
+-		log("dsync: Unable to acquire lock in quorum %#v\n", args)
+-		// Release all acquired locks without quorum.
+-		if !releaseAll(ctx, ds, tolerance, owner, locks, isReadLock, restClnts, names...) {
+-			log("Unable to release acquired locks, these locks will expire automatically %#v\n", args)
+-		}
+-	}
+-
+-	// We may have some unused results in ch, release them async.
+-	go func() {
+-		wg.Wait()
+-		xioutil.SafeClose(ch)
+-		for grantToBeReleased := range ch {
+-			if grantToBeReleased.isLocked() {
+-				// release abandoned lock
+-				log("Releasing abandoned lock\n")
+-				sendRelease(ctx, ds, restClnts[grantToBeReleased.index],
+-					owner, grantToBeReleased.lockUID, isReadLock, names...)
+-			}
+-		}
+-	}()
+-
+-	return quorumLocked
++	// Skeleton: lock not implemented
++	panic("skeleton: lock function not implemented")
+ }
+ 
+ // checkFailedUnlocks determines whether we have sufficiently unlocked all

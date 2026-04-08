@@ -1,0 +1,186 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "01364c220646a05e2d6b6ab3ea4e4d37",
+    "title": "1.1: Patch includes a MATCH_ALL test case that expects a match when all pattern components are present"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "c195c652cdd7519e176f14e6c3ab911b",
+    "title": "1.2: Patch includes a MATCH_ALL negative case expected not to match when a pattern token appears only as a substring of a larger alphanumeric token"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "32befb91f64177c0a0c0331edbb08a8c",
+    "title": "1.3: Patch includes a MATCH_ANY test case that expects a match when any single pattern component is present "
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "400774237fd9596826350a6d1f4b09e3",
+    "title": "1.4: Patch includes a MATCH_ANY negative case expected not to match when pattern components occur only as substrings inside larger tokens"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a61fa51103e6e2faa4cb0e7edace86d8",
+    "title": "1.5: Patch includes a MATCH_LITERAL test case that expects a match when the full pattern appears as an exact contiguous substring"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9edc1699a9e68585b93d5e2c6a1595a4",
+    "title": "1.6: Patch includes a MATCH_LITERAL negative case expected not to match for a near-miss where parts appear but not as the exact contiguous substring"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "32c5e5d2b32a2a6f18c849c43daaa0a1",
+    "title": "1.7: Patch includes a MATCH_REGEX test case using a regex that requires word characters between two terms and expects a match on a satisfying string"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "33674074a690085c1b9d84d5aea09bda",
+    "title": "1.8: Patch includes a MATCH_REGEX negative case expected not to match when the two terms are not connected by word characters for that regex"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "bb652600cf8bdc2cb39ed53bd4dd1499",
+    "title": "1.9: Patch includes a MATCH_FUZZY positive case expected to match a close variant where the pattern is not a literal contiguous substring"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "348c532cddfc069d9996976282cf374d",
+    "title": "1.11: Patch includes a MATCH_FUZZY negative case expected not to match a clearly different address-like string"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2f31febb96d5a1a057874e9190da9cd9",
+    "title": "2.1: Patch places new tests under src/documents/tests/test_matchables.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0325e7d15651965a977112d77c400c10",
+    "title": "3.1: Patch keeps tests within Django TestCase-based classes"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "06b6b81d877383d87affac5c9bec697d",
+    "title": "3.2: Patch uses the test_ prefix for new test method names"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e17a251ab49915724ee9e9664c761227",
+    "title": "3.3: Patch uses the existing matching test harness for assertions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "50b9e6a741ee8cf5907ecb5f9c8614c3",
+    "title": "3.4: Patch keeps TestMatching _test_matching calls on the default case-sensitivity setting"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e6c51ad84e1802ca28cc290ba7b3a28d",
+    "title": "4.1: Patch includes MATCH_ALL coverage with an unquoted alphabetic token in the pattern"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4332c13f82965251862ea24145eeed88",
+    "title": "4.2: Patch includes MATCH_ALL coverage with a numeric token in the pattern"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "77aca616664be697b471d14fb7fc77b7",
+    "title": "4.3: Patch includes MATCH_ALL coverage with a quoted multi-word phrase in the pattern"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "27e876700dbbfa8804dbe13b1045f2df",
+    "title": "4.4: Patch includes MATCH_ANY coverage with an unquoted alphabetic token in the pattern"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "62b6d543d16d935a8ebf17dbb0518058",
+    "title": "4.5: Patch includes MATCH_ANY coverage with a numeric token in the pattern"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "46f6939352e1d3bba35974ed81d19fef",
+    "title": "4.6: Patch includes MATCH_ANY coverage with a quoted multi-word phrase in the pattern"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "628e209b2865012ce020de43b0d6015f",
+    "title": "4.7: Patch includes a MATCH_ANY quoted-phrase pattern that contains leading or trailing whitespace inside the quotes and is expected to match"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d47ecefc8f1a4fe15c4fa548c274ea5b",
+    "title": "4.8: Patch includes MATCH_LITERAL coverage using a digit-containing literal pattern"
+  }
+]

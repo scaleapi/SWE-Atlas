@@ -1,0 +1,9 @@
+Could you write some integration tests for the distributed locking functionality in our dsync package?
+
+The DRWMutex implementation is working correctly, but we're missing some integration tests that validate the core locking behaviors. Can you write one integration test for each of these scenarios:
+
+1. A basic test that acquires a distributed lock on a resource, holds it briefly, and then releases it
+2. A test that verifies the mutex can be locked and unlocked multiple times in sequence on the same resource
+3. A test where two goroutines attempt to acquire a lock on the same resource simultaneously, demonstrating that the second caller blocks until the first releases
+4. A test with three concurrent lock attempts on the same resource, verifying proper serialization when multiple parties compete for the lock
+5. A test that acquires locks on two different resources simultaneously, confirming independent resources can be locked in parallel

@@ -1,0 +1,114 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "cb821c1c987618bb2aa298f66d3579ec",
+    "title": "1.1: Tests that FromReader returns all expected diffs with full commit metadata ('Hash', 'Author', 'Date', 'Message') and correct paths/content when parsing full commit history with staged=false."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f74bb0c5240c906c13e8e2d5af576a61",
+    "title": "1.2: Tests that FromReader detects then reports zero zombie git processes when parsing completes after reading full commit history\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "683f7561b537e3c9cf109677dad34096",
+    "title": "1.3: Tests that FromReader returns multiple staged diffs (7 diffs including text, binary, and multi-hunk files) with empty commit metadata (Hash='', Author='') when parsing staged changes with BufferWriter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "02ddb1cd0d874086ed71aa1ec58a9d5b",
+    "title": "1.5: Tests that FromReader recovers from malformed commit sections then returns multiple valid diffs (minimum 3) including commit before corruption, malformed commit representation, and commit after recovery when processing data with BufferWriter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "798a7f49268a5f691216142d3d69c9fd",
+    "title": "1.6: Tests that FromReader recovers from corrupted staged diff sections then returns multiple valid diffs (minimum 3) including diffs before corruption and diffs after recovery when staged=true"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4ea94bae0eca6f999dcdfe27595b6005",
+    "title": "2.1: Places the test for parsing full commit history with process cleanup verification in pkg/gitparse/gitparse_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4c5f8d3f22f5ead262948f7ad06d46bf",
+    "title": "2.2: Places the test for parsing staged changes without commit metadata using buffer-based content storage in pkg/gitparse/gitparse_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fc1b3de49f8fdbc3d96eca73db5059cf",
+    "title": "2.3: Places the test for parsing staged changes without commit metadata using file-based content storage in pkg/gitparse/gitparse_test.go\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "1bccff43e92d23fc218c2ce355f1231b",
+    "title": "2.4: Places the test for recovering from malformed commit logs using buffer-based content storage in pkg/gitparse/gitparse_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d4393a23fc33accd789cdb18116f4537",
+    "title": "2.5: Places the test for recovering from malformed commit logs using file-based content storage in pkg/gitparse/gitparse_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "cf824717acb5ea1f664dea0652b953f7",
+    "title": "2.6: Places the test for recovering from corrupted staged diffs in pkg/gitparse/gitparse_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "5821d4628ab96be41260b5ad6009f44e",
+    "title": "3.1: All tests use Go testing framework with func Test*(t *testing.T) signature"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "dac0f7d4a64cc34ef5dc3a0b0c99e04c",
+    "title": "3.2: All tests follow the naming pattern Test[Behavior] where behavior describes what is being tested"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "f50ff6fc3936b81e06bc8c161efaf3c0",
+    "title": "4.1: Follows pattern of using assertDiffEqualToExpected helper function for comparing actual diffs against expected diffs."
+  }
+]

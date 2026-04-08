@@ -1,0 +1,317 @@
+diff --git a/internal/msgpipeline/check_test.go b/internal/msgpipeline/check_test.go
+index e29706f..3b85e4a 100644
+--- a/internal/msgpipeline/check_test.go
++++ b/internal/msgpipeline/check_test.go
+@@ -173,6 +173,164 @@ func TestMsgPipeline_Headers(t *testing.T) {
+ 	}
+ }
+ 
++func TestMsgPipeline_Globalcheck_Errors(t *testing.T) {
++	target := testutils.Target{}
++	check_ := testutils.Check{
++		InitErr:   errors.New("1"),
++		ConnRes:   module.CheckResult{Reject: true, Reason: errors.New("2")},
++		SenderRes: module.CheckResult{Reject: true, Reason: errors.New("3")},
++		RcptRes:   module.CheckResult{Reject: true, Reason: errors.New("4")},
++		BodyRes:   module.CheckResult{Reject: true, Reason: errors.New("5")},
++	}
++	d := MsgPipeline{
++		msgpipelineCfg: msgpipelineCfg{
++			globalChecks: []module.Check{&check_},
++			perSource:    map[string]sourceBlock{},
++			defaultSource: sourceBlock{
++				perRcpt: map[string]*rcptBlock{},
++				defaultRcpt: &rcptBlock{
++					targets: []module.DeliveryTarget{&target},
++				},
++			},
++		},
++		Hostname: "TEST-HOST",
++		Log:      testutils.Logger(t, "msgpipeline"),
++	}
++
++	t.Run("init err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	check_.InitErr = nil
++
++	t.Run("conn err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	check_.ConnRes.Reject = false
++
++	t.Run("mail from err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	check_.SenderRes.Reject = false
++
++	t.Run("rcpt to err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	check_.RcptRes.Reject = false
++
++	t.Run("body err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	check_.BodyRes.Reject = false
++
++	t.Run("no err", func(t *testing.T) {
++		testutils.DoTestDelivery(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++	})
++
++	if check_.UnclosedStates != 0 {
++		t.Fatalf("check state objects leak or double-closed, counters: %d", check_.UnclosedStates)
++	}
++}
++
++func TestMsgPipeline_SourceCheck_Errors(t *testing.T) {
++	target := testutils.Target{}
++	check_ := testutils.Check{
++		InitErr:   errors.New("1"),
++		ConnRes:   module.CheckResult{Reject: true, Reason: errors.New("2")},
++		SenderRes: module.CheckResult{Reject: true, Reason: errors.New("3")},
++		RcptRes:   module.CheckResult{Reject: true, Reason: errors.New("4")},
++		BodyRes:   module.CheckResult{Reject: true, Reason: errors.New("5")},
++	}
++	globalCheck := testutils.Check{}
++	d := MsgPipeline{
++		msgpipelineCfg: msgpipelineCfg{
++			globalChecks: []module.Check{&globalCheck},
++			perSource:    map[string]sourceBlock{},
++			defaultSource: sourceBlock{
++				perRcpt: map[string]*rcptBlock{},
++				checks:  []module.Check{&check_},
++				defaultRcpt: &rcptBlock{
++					targets: []module.DeliveryTarget{&target},
++				},
++			},
++		},
++		Hostname: "TEST-HOST",
++		Log:      testutils.Logger(t, "msgpipeline"),
++	}
++
++	t.Run("init err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	check_.InitErr = nil
++
++	t.Run("conn err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	check_.ConnRes.Reject = false
++
++	t.Run("mail from err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	check_.SenderRes.Reject = false
++
++	t.Run("rcpt to err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	check_.RcptRes.Reject = false
++
++	t.Run("body err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	check_.BodyRes.Reject = false
++
++	t.Run("no err", func(t *testing.T) {
++		testutils.DoTestDelivery(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++	})
++
++	if check_.UnclosedStates != 0 || globalCheck.UnclosedStates != 0 {
++		t.Fatalf("check state objects leak or double-closed, counters: %d, %d",
++			check_.UnclosedStates, globalCheck.UnclosedStates)
++	}
++}
+ 
+ func TestMsgPipeline_RcptCheck_Errors(t *testing.T) {
+ 	target := testutils.Target{}
+diff --git a/internal/msgpipeline/modifier_test.go b/internal/msgpipeline/modifier_test.go
+index 439b661..73fa719 100644
+--- a/internal/msgpipeline/modifier_test.go
++++ b/internal/msgpipeline/modifier_test.go
+@@ -492,6 +492,143 @@ func TestMsgPipeline_RcptModifier_PostDispatch(t *testing.T) {
+ 	}
+ }
+ 
++func TestMsgPipeline_GlobalModifier_Errors(t *testing.T) {
++	target := testutils.Target{}
++	mod := testutils.Modifier{
++		InstName:    "test_modifier",
++		InitErr:     errors.New("1"),
++		MailFromErr: errors.New("2"),
++		RcptToErr:   errors.New("3"),
++		BodyErr:     errors.New("4"),
++	}
++	d := MsgPipeline{
++		msgpipelineCfg: msgpipelineCfg{
++			globalModifiers: modify.Group{Modifiers: []module.Modifier{&mod}},
++			perSource:       map[string]sourceBlock{},
++			defaultSource: sourceBlock{
++				defaultRcpt: &rcptBlock{
++					targets: []module.DeliveryTarget{&target},
++				},
++			},
++		},
++		Log: testutils.Logger(t, "msgpipeline"),
++	}
++
++	t.Run("init err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	mod.InitErr = nil
++
++	t.Run("mail from err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	mod.MailFromErr = nil
++
++	t.Run("rcpt to err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	mod.RcptToErr = nil
++
++	t.Run("body err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	mod.BodyErr = nil
++
++	t.Run("no err", func(t *testing.T) {
++		testutils.DoTestDelivery(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++	})
++
++	if mod.UnclosedStates != 0 {
++		t.Fatalf("modifier state objects leak or double-closed, counter: %d", mod.UnclosedStates)
++	}
++}
++
++func TestMsgPipeline_SourceModifier_Errors(t *testing.T) {
++	target := testutils.Target{}
++	mod := testutils.Modifier{
++		InstName:    "test_modifier",
++		InitErr:     errors.New("1"),
++		MailFromErr: errors.New("2"),
++		RcptToErr:   errors.New("3"),
++		BodyErr:     errors.New("4"),
++	}
++	// Added to make sure it is freed properly too.
++	globalMod := testutils.Modifier{}
++	d := MsgPipeline{
++		msgpipelineCfg: msgpipelineCfg{
++			perSource:       map[string]sourceBlock{},
++			globalModifiers: modify.Group{Modifiers: []module.Modifier{&globalMod}},
++			defaultSource: sourceBlock{
++				modifiers: modify.Group{Modifiers: []module.Modifier{&mod}},
++				defaultRcpt: &rcptBlock{
++					targets: []module.DeliveryTarget{&target},
++				},
++			},
++		},
++		Log: testutils.Logger(t, "msgpipeline"),
++	}
++
++	t.Run("init err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	mod.InitErr = nil
++
++	t.Run("mail from err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	mod.MailFromErr = nil
++
++	t.Run("rcpt to err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	mod.RcptToErr = nil
++
++	t.Run("body err", func(t *testing.T) {
++		_, err := testutils.DoTestDeliveryErr(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++		if err == nil {
++			t.Fatal("expected error")
++		}
++	})
++
++	mod.BodyErr = nil
++
++	t.Run("no err", func(t *testing.T) {
++		testutils.DoTestDelivery(t, &d, "sender@example.com", []string{"rcpt1@example.com", "rcpt2@example.com"})
++	})
++
++	if mod.UnclosedStates != 0 || globalMod.UnclosedStates != 0 {
++		t.Fatalf("modifier state objects leak or double-closed, counters: %d, %d",
++			mod.UnclosedStates, globalMod.UnclosedStates)
++	}
++}
+ 
+ func TestMsgPipeline_RcptModifier_Errors(t *testing.T) {
+ 	target := testutils.Target{}

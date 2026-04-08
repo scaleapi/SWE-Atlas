@@ -1,0 +1,7 @@
+The SimpleLogin account linking feature needs better integration test coverage. The account linking code is working correctly, but we're missing some test cases. Write integration tests for the following scenarios:
+
+1. Basic linking where the SimpleLogin user and Partner user share the same email address
+2. Linking when the SimpleLogin user has a different email than the Partner account
+3. Linking when the Partner account is already associated with a different SimpleLogin user, but the current user's email matches the Partner email
+4. Linking when the Partner account is already associated with a different SimpleLogin user, and the current user has a different email
+5. Linking with an uppercase email address in the request

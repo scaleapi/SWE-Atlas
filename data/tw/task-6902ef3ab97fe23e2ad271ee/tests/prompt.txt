@@ -1,0 +1,7 @@
+Design unit tests for the keyBy utility function in the js-utils package. The function transforms a collection into an object keyed by the result of running each element through an iteratee. Create 5 separate test cases covering:
+
+1. Transforming keys using a custom iteratee function
+2. Using property name shorthand as the iteratee (similar to lodash property shorthands)
+3. Handling inherited property names like constructor and hasOwnProperty
+4. Using a numeric index as the iteratee for arrays of arrays
+5. Accepting an object as the collection input instead of an array

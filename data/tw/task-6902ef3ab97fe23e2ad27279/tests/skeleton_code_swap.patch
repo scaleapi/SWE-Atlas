@@ -1,0 +1,89 @@
+diff --git a/js/modules/k6/ws/ws.go b/js/modules/k6/ws/ws.go
+index 6cb1f34ed..ecff43767 100644
+--- a/js/modules/k6/ws/ws.go
++++ b/js/modules/k6/ws/ws.go
+@@ -4,11 +4,11 @@ package ws
+ 
+ import (
+ 	"context"
+-	"crypto/tls"
++	_ "crypto/tls" // skeleton: unused
+ 	"errors"
+ 	"fmt"
+ 	"io"
+-	"net"
++	_ "net" // skeleton: unused
+ 	"net/http"
+ 	"net/http/cookiejar"
+ 	"strconv"
+@@ -247,65 +247,13 @@ func (mi *WS) dial(
+ 	ctx context.Context, state *lib.State, rt *sobek.Runtime, url string,
+ 	args *wsConnectArgs,
+ ) (*Socket, *http.Response, func(), error) {
+-	// Overriding the NextProtos to avoid talking http2
+-	var tlsConfig *tls.Config
+-	if state.TLSConfig != nil {
+-		tlsConfig = state.TLSConfig.Clone()
+-		tlsConfig.NextProtos = []string{"http/1.1"}
+-	}
+-
+-	wsd := websocket.Dialer{
+-		HandshakeTimeout: time.Second * 60, // TODO configurable
+-		// Pass a custom net.DialContext function to websocket.Dialer that will substitute
+-		// the underlying net.Conn with our own tracked netext.Conn
+-		NetDialContext:    state.Dialer.DialContext,
+-		Proxy:             http.ProxyFromEnvironment,
+-		TLSClientConfig:   tlsConfig,
+-		EnableCompression: args.enableCompression,
+-	}
+-	// this is needed because of how interfaces work and that wsd.Jar is http.Cookiejar
+-	if args.cookieJar != nil {
+-		wsd.Jar = args.cookieJar
+-	}
+-
+-	connStart := time.Now()
+-	conn, httpResponse, dialErr := wsd.DialContext(ctx, url, args.headers)
+-	connEnd := time.Now()
+-
+-	if state.Options.SystemTags.Has(metrics.TagIP) && conn.RemoteAddr() != nil {
+-		if ip, _, err := net.SplitHostPort(conn.RemoteAddr().String()); err == nil {
+-			args.tagsAndMeta.SetSystemTagOrMeta(metrics.TagIP, ip)
+-		}
+-	}
+-
+-	if httpResponse != nil {
+-		if state.Options.SystemTags.Has(metrics.TagStatus) {
+-			args.tagsAndMeta.SetSystemTagOrMeta(
+-				metrics.TagStatus, strconv.Itoa(httpResponse.StatusCode))
+-		}
+-
+-		if state.Options.SystemTags.Has(metrics.TagSubproto) {
+-			args.tagsAndMeta.SetSystemTagOrMeta(
+-				metrics.TagSubproto, httpResponse.Header.Get("Sec-WebSocket-Protocol"))
+-		}
+-	}
+-
++	// Skeleton: WebSocket dial disabled - return minimal valid socket with error
+ 	socket := Socket{
+-		ctx:                ctx,
+-		rt:                 rt,
+-		conn:               conn,
+-		eventHandlers:      make(map[string][]sobek.Callable),
+-		pingSendTimestamps: make(map[string]time.Time),
+-		scheduled:          make(chan sobek.Callable),
+-		done:               make(chan struct{}),
+-		samplesOutput:      state.Samples,
+-		tagsAndMeta:        args.tagsAndMeta,
+-		builtinMetrics:     state.BuiltinMetrics,
++		ctx:           ctx,
++		rt:            rt,
++		eventHandlers: make(map[string][]sobek.Callable),
+ 	}
+-
+-	connEndHook := socket.pushSessionMetrics(connStart, connEnd)
+-
+-	return &socket, httpResponse, connEndHook, dialErr
++	return &socket, nil, func() {}, errors.New("websocket dial not implemented")
+ }
+ 
+ // On is used to configure what the websocket should do on each event.

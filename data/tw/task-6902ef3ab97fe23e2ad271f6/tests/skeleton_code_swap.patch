@@ -1,0 +1,94 @@
+--- a/src/paperless_mail/mail.py
++++ b/src/paperless_mail/mail.py
+@@ -185,90 +185,8 @@
+         return total_processed_files
+ 
+     def handle_mail_rule(self, M, rule):
+-
+-        self.log("debug", f"Rule {rule}: Selecting folder {rule.folder}")
+-
+-        try:
+-            M.folder.set(rule.folder)
+-        except MailboxFolderSelectError:
+-
+-            self.log(
+-                "error",
+-                f"Unable to access folder {rule.folder}, attempting folder listing",
+-            )
+-            try:
+-                for folder_info in M.folder.list():
+-                    self.log("info", f"Located folder: {folder_info.name}")
+-            except Exception as e:
+-                self.log(
+-                    "error",
+-                    "Exception during folder listing, unable to provide list folders: "
+-                    + str(e),
+-                )
+-
+-            raise MailError(
+-                f"Rule {rule}: Folder {rule.folder} "
+-                f"does not exist in account {rule.account}",
+-            )
+-
+-        criterias = make_criterias(rule)
+-
+-        self.log(
+-            "debug",
+-            f"Rule {rule}: Searching folder with criteria " f"{str(AND(**criterias))}",
+-        )
+-
+-        try:
+-            messages = M.fetch(
+-                criteria=AND(**criterias),
+-                mark_seen=False,
+-                charset=rule.account.character_set,
+-            )
+-        except Exception:
+-            raise MailError(f"Rule {rule}: Error while fetching folder {rule.folder}")
+-
+-        post_consume_messages = []
++        return 0
+ 
+-        mails_processed = 0
+-        total_processed_files = 0
+-
+-        for message in messages:
+-            try:
+-                processed_files = self.handle_message(message, rule)
+-                if processed_files > 0:
+-                    post_consume_messages.append(message.uid)
+-
+-                total_processed_files += processed_files
+-                mails_processed += 1
+-            except Exception as e:
+-                self.log(
+-                    "error",
+-                    f"Rule {rule}: Error while processing mail " f"{message.uid}: {e}",
+-                    exc_info=True,
+-                )
+-
+-        self.log("debug", f"Rule {rule}: Processed {mails_processed} matching mail(s)")
+-
+-        self.log(
+-            "debug",
+-            f"Rule {rule}: Running mail actions on "
+-            f"{len(post_consume_messages)} mails",
+-        )
+-
+-        try:
+-            get_rule_action(rule).post_consume(
+-                M,
+-                post_consume_messages,
+-                rule.action_parameter,
+-            )
+-
+-        except Exception as e:
+-            raise MailError(
+-                f"Rule {rule}: Error while processing post-consume actions: " f"{e}",
+-            )
+-
+-        return total_processed_files
+-
+     def handle_message(self, message, rule) -> int:
+         if not message.attachments:
+             return 0

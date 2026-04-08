@@ -1,0 +1,220 @@
+diff --git a/sftpd/internal_test.go b/sftpd/internal_test.go
+index 66e44040..dba526c0 100644
+--- a/sftpd/internal_test.go
++++ b/sftpd/internal_test.go
+@@ -177,6 +177,158 @@ func TestGetOSOpenFlags(t *testing.T) {
+ 	}
+ }
+ 
++func TestUploadResumeInvalidOffset(t *testing.T) {
++	testfile := "testfile"
++	file, _ := os.Create(testfile)
++	transfer := Transfer{
++		file:          file,
++		path:          file.Name(),
++		start:         time.Now(),
++		bytesSent:     0,
++		bytesReceived: 0,
++		user: dataprovider.User{
++			Username: "testuser",
++		},
++		connectionID:   "",
++		transferType:   transferUpload,
++		lastActivity:   time.Now(),
++		isNewFile:      false,
++		protocol:       protocolSFTP,
++		transferError:  nil,
++		isFinished:     false,
++		minWriteOffset: 10,
++		lock:           new(sync.Mutex),
++	}
++	_, err := transfer.WriteAt([]byte("test"), 0)
++	if err == nil {
++		t.Errorf("upload with invalid offset must fail")
++	}
++	err = transfer.Close()
++	if err == nil || !strings.Contains(err.Error(), "Invalid write offset") {
++		t.Errorf("unexpected error: %v", err)
++	}
++	os.Remove(testfile)
++}
++
++func TestIncompleteDownload(t *testing.T) {
++	testfile := "testfile"
++	file, _ := os.Create(testfile)
++	transfer := Transfer{
++		file:          file,
++		path:          file.Name(),
++		start:         time.Now(),
++		bytesSent:     0,
++		bytesReceived: 0,
++		user: dataprovider.User{
++			Username: "testuser",
++		},
++		connectionID:   "",
++		transferType:   transferDownload,
++		lastActivity:   time.Now(),
++		isNewFile:      false,
++		protocol:       protocolSFTP,
++		transferError:  nil,
++		isFinished:     false,
++		minWriteOffset: 0,
++		expectedSize:   10,
++		lock:           new(sync.Mutex),
++	}
++	err := transfer.Close()
++	if err == nil || !strings.Contains(err.Error(), "incomplete download") {
++		t.Error("upoload must fail the expected size does not match")
++	}
++	os.Remove(testfile)
++}
++
++func TestReadWriteErrors(t *testing.T) {
++	testfile := "testfile"
++	file, _ := os.Create(testfile)
++	transfer := Transfer{
++		file:          file,
++		path:          file.Name(),
++		start:         time.Now(),
++		bytesSent:     0,
++		bytesReceived: 0,
++		user: dataprovider.User{
++			Username: "testuser",
++		},
++		connectionID:   "",
++		transferType:   transferDownload,
++		lastActivity:   time.Now(),
++		isNewFile:      false,
++		protocol:       protocolSFTP,
++		transferError:  nil,
++		isFinished:     false,
++		minWriteOffset: 0,
++		expectedSize:   10,
++		lock:           new(sync.Mutex),
++	}
++	file.Close()
++	_, err := transfer.WriteAt([]byte("test"), 0)
++	if err == nil {
++		t.Error("writing to closed file must fail")
++	}
++	buf := make([]byte, 32768)
++	_, err = transfer.ReadAt(buf, 0)
++	if err == nil {
++		t.Error("reading from a closed file must fail")
++	}
++	err = transfer.Close()
++	if err == nil {
++		t.Error("upoload must fail the expected size does not match")
++	}
++	r, _, _ := pipeat.Pipe()
++	transfer = Transfer{
++		readerAt:      r,
++		writerAt:      nil,
++		start:         time.Now(),
++		bytesSent:     0,
++		bytesReceived: 0,
++		user: dataprovider.User{
++			Username: "testuser",
++		},
++		connectionID:  "",
++		transferType:  transferDownload,
++		lastActivity:  time.Now(),
++		isNewFile:     false,
++		protocol:      protocolSFTP,
++		transferError: nil,
++		isFinished:    false,
++		lock:          new(sync.Mutex),
++	}
++	transfer.closeIO()
++	_, err = transfer.ReadAt(buf, 0)
++	if err == nil {
++		t.Error("reading from a closed pipe must fail")
++	}
++	r, w, _ := pipeat.Pipe()
++	transfer = Transfer{
++		readerAt:      nil,
++		writerAt:      w,
++		start:         time.Now(),
++		bytesSent:     0,
++		bytesReceived: 0,
++		user: dataprovider.User{
++			Username: "testuser",
++		},
++		connectionID:  "",
++		transferType:  transferDownload,
++		lastActivity:  time.Now(),
++		isNewFile:     false,
++		protocol:      protocolSFTP,
++		transferError: nil,
++		isFinished:    false,
++		lock:          new(sync.Mutex),
++	}
++	r.Close()
++	transfer.closeIO()
++	_, err = transfer.WriteAt([]byte("test"), 0)
++	if err == nil {
++		t.Error("writing to closed pipe must fail")
++	}
++	os.Remove(testfile)
++}
++
+ func TestTransferCancelFn(t *testing.T) {
+ 	testfile := "testfile"
+ 	file, _ := os.Create(testfile)
+@@ -1345,6 +1497,56 @@ func TestSCPUploadFiledata(t *testing.T) {
+ 	}
+ }
+ 
++func TestUploadError(t *testing.T) {
++	oldUploadMode := uploadMode
++	uploadMode = uploadModeAtomic
++	connection := Connection{
++		User: dataprovider.User{
++			Username: "testuser",
++		},
++		protocol: protocolSCP,
++	}
++	testfile := "testfile"
++	fileTempName := "temptestfile"
++	file, _ := os.Create(fileTempName)
++	transfer := Transfer{
++		file:           file,
++		path:           testfile,
++		start:          time.Now(),
++		bytesSent:      0,
++		bytesReceived:  100,
++		user:           connection.User,
++		connectionID:   "",
++		transferType:   transferUpload,
++		lastActivity:   time.Now(),
++		isNewFile:      true,
++		protocol:       connection.protocol,
++		transferError:  nil,
++		isFinished:     false,
++		minWriteOffset: 0,
++		lock:           new(sync.Mutex),
++	}
++	addTransfer(&transfer)
++	errFake := errors.New("fake error")
++	transfer.TransferError(errFake)
++	err := transfer.Close()
++	if err != errFake {
++		t.Errorf("unexpected error: %v", err)
++	}
++	if transfer.bytesReceived > 0 {
++		t.Errorf("bytes received should be 0 for a failed transfer: %v", transfer.bytesReceived)
++	}
++	_, err = os.Stat(testfile)
++	if !os.IsNotExist(err) {
++		t.Errorf("file uploaded must be deleted after an error: %v", err)
++	}
++	_, err = os.Stat(fileTempName)
++	if !os.IsNotExist(err) {
++		t.Errorf("file uploaded must be deleted after an error: %v", err)
++	}
++	uploadMode = oldUploadMode
++}
++
+ func TestConnectionStatusStruct(t *testing.T) {
+ 	var transfers []connectionTransfer
+ 	transferUL := connectionTransfer{

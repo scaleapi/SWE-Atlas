@@ -1,0 +1,186 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "725798a876b7e5eaa26ee0ba5c134518",
+    "title": "1.1: Tests that consuming a file through the full pipeline results in a document with parsed text content"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "2b0fd53a8e70499657e89b98a001606e",
+    "title": "1.2: Tests that the normal consumption flow produces a document with a title derived from the input filename"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "cfa4e9446e33972263f07ab982176bbf",
+    "title": "1.3: Tests that after normal consumption the document's source file exists on disk"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "5d98bc7fa2a1bc664217e45a9ef79861",
+    "title": "1.4: Tests that after normal consumption the document's thumbnail file exists on disk"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "5e9124f450bc18c8e703828308016175",
+    "title": "1.5: Tests that after normal consumption the document's archive file exists on disk"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "214f3d47827dca7978a8adb432dc274d",
+    "title": "1.6: Tests that the original input file is removed after successful consumption"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "99278291567e706e825789a6fb98e52b",
+    "title": "1.7: Tests that consuming a document with an overridden title stores the overridden value as the document title"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f60543925f05b999e63d4483a996f943",
+    "title": "1.8: Tests that document filenames follow the configured format pattern with correspondent and title placeholders"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "7d0bb9e430bd33b338220fa5dadc3b30",
+    "title": "1.9: Tests that document consumption produces accessible files on disk when the filename generation function returns different names on repeated calls"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "888a11005888efefb2c18f2de9628474",
+    "title": "1.10: Tests that the consumed document is assigned the correspondent predicted by the mocked classifier"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "82fef375d2dd34a5f1aeebf1ea14206d",
+    "title": "1.11: Tests that the consumed document is assigned the document type predicted by the mocked classifier"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f6c073fd0651f0979533378f87e2cc03",
+    "title": "1.12: Tests that the consumed document is assigned the tags predicted by the mocked classifier"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "28bae393545432386e87e9a99fd4e9fd",
+    "title": "1.13: Tests that consuming multiple files with similar base names but different extensions results in documents with unique filenames without collisions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "999dc6a530ff4fc79c56690b2f6ee687",
+    "title": "2.1: Places the test for normal end-to-end consumption in src/documents/tests/test_consumer.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "234c94e1b50d13c5bea1ddc6b379d733",
+    "title": "2.2: Places the test for custom filename format handling in src/documents/tests/test_consumer.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d6aad9286436d8e2bc5f961cd2f400c7",
+    "title": "2.3: Places the test for unstable filename generation in src/documents/tests/test_consumer.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ac7eef85ad09571a7074ab8c067b9b97",
+    "title": "2.4: Places the test for document classification in src/documents/tests/test_consumer.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "531a97b0782340f79cbc2bbb8022d492",
+    "title": "2.5: Places the test for similar filename collision handling in src/documents/tests/test_consumer.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "04bed9040f818726c88755f9ce801603",
+    "title": "3.1: All tests use the Django TestCase framework"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "a7dacb0969b46318d7316de1188d6e4a",
+    "title": "3.2: All tests use self.assert* methods for assertions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "dd8df5a1078d476e9015de5028ff1c8a",
+    "title": "3.3: All tests follow the test method naming convention starting with 'test'"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e907e4f62985e4e4a3783fed9f7e17bd",
+    "title": "3.4: All tests that require mocking use Python's unittest.mock module"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "9a720230ed71c14dc307c24389d62c99",
+    "title": "4.1: Consumption tests are placed within a test class that inherits from DirectoriesMixin"
+  }
+]

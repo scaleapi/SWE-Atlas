@@ -1,0 +1,117 @@
+diff --git a/pkg/tsdb/influxdb/flux/executor_test.go b/pkg/tsdb/influxdb/flux/executor_test.go
+index 4e72c5dde7c..b578c4d81e2 100644
+--- a/pkg/tsdb/influxdb/flux/executor_test.go
++++ b/pkg/tsdb/influxdb/flux/executor_test.go
+@@ -75,11 +75,37 @@ func verifyGoldenResponse(t *testing.T, name string) *backend.DataResponse {
+ 	return dr
+ }
+ 
++func TestExecuteSimple(t *testing.T) {
++	dr := verifyGoldenResponse(t, "simple")
++	require.Len(t, dr.Frames, 1)
++	require.Contains(t, dr.Frames[0].Name, "test")
++	require.Len(t, dr.Frames[0].Fields[1].Labels, 2)
++	require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
++
++	st, err := dr.Frames[0].StringTable(-1, -1)
++	require.NoError(t, err)
++	fmt.Println(st)
++	fmt.Println("----------------------")
++}
++
+ func TestExecuteSingle(t *testing.T) {
+ 	dr := verifyGoldenResponse(t, "single")
+ 	require.Len(t, dr.Frames, 1)
+ }
+ 
++func TestExecuteMultiple(t *testing.T) {
++	dr := verifyGoldenResponse(t, "multiple")
++	require.Len(t, dr.Frames, 3)
++	require.Contains(t, dr.Frames[0].Name, "test")
++	require.Len(t, dr.Frames[0].Fields[1].Labels, 2)
++	require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
++
++	st, err := dr.Frames[0].StringTable(-1, -1)
++	require.NoError(t, err)
++	fmt.Println(st)
++	fmt.Println("----------------------")
++}
++
+ func TestExecuteColumnNamedTable(t *testing.T) {
+ 	dr := verifyGoldenResponse(t, "table")
+ 	require.Len(t, dr.Frames, 1)
+@@ -98,6 +124,45 @@ func TestExecuteGrouping(t *testing.T) {
+ 	fmt.Println("----------------------")
+ }
+ 
++func TestAggregateGrouping(t *testing.T) {
++	dr := verifyGoldenResponse(t, "aggregate")
++	require.Len(t, dr.Frames, 1)
++
++	str, err := dr.Frames[0].StringTable(-1, -1)
++	require.NoError(t, err)
++	fmt.Println(str)
++
++	// 	 `Name:
++	// Dimensions: 2 Fields by 3 Rows
++	// +-------------------------------+--------------------------+
++	// | Name: Time                    | Name: Value              |
++	// | Labels:                       | Labels: host=hostname.ru |
++	// | Type: []*time.Time            | Type: []*float64         |
++	// +-------------------------------+--------------------------+
++	// | 2020-06-05 12:06:00 +0000 UTC | 8.291                    |
++	// | 2020-06-05 12:07:00 +0000 UTC | 0.534                    |
++	// | 2020-06-05 12:08:00 +0000 UTC | 0.667                    |
++	// +-------------------------------+--------------------------+
++	// `
++
++	t1 := time.Date(2020, 6, 5, 12, 6, 0, 0, time.UTC)
++	t2 := time.Date(2020, 6, 5, 12, 7, 0, 0, time.UTC)
++	t3 := time.Date(2020, 6, 5, 12, 8, 0, 0, time.UTC)
++
++	expectedFrame := data.NewFrame("",
++		data.NewField("Time", nil, []*time.Time{&t1, &t2, &t3}),
++		data.NewField("Value", map[string]string{"host": "hostname.ru"}, []*float64{
++			util.Pointer(8.291),
++			util.Pointer(0.534),
++			util.Pointer(0.667),
++		}),
++	)
++	expectedFrame.Meta = &data.FrameMeta{}
++
++	diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...)
++	assert.Empty(t, diff)
++}
++
+ func TestNonStandardTimeColumn(t *testing.T) {
+ 	dr := verifyGoldenResponse(t, "non_standard_time_column")
+ 	require.Len(t, dr.Frames, 1)
+@@ -178,6 +243,28 @@ func assertDataResponseDimensions(t *testing.T, dr *backend.DataResponse, rows i
+ 	require.Equal(t, fields[1].Len(), columns)
+ }
+ 
++func TestMaxDataPointsExceededNoAggregate(t *testing.T) {
++	// unfortunately the golden-response style tests do not support
++	// responses that contain errors, so we can only do manual checks
++	// on the DataResponse
++	dr := executeMockedQuery(t, "max_data_points_exceeded", queryModel{MaxDataPoints: 2})
++
++	// it should contain the error-message
++	require.EqualError(t, dr.Error, "A query returned too many datapoints and the results have been truncated at 21 points to prevent memory issues. At the current graph size, Grafana can only draw 2. Try using the aggregateWindow() function in your query to reduce the number of points returned.")
++	assertDataResponseDimensions(t, dr, 2, 21)
++}
++
++func TestMaxDataPointsExceededWithAggregate(t *testing.T) {
++	// unfortunately the golden-response style tests do not support
++	// responses that contain errors, so we can only do manual checks
++	// on the DataResponse
++	dr := executeMockedQuery(t, "max_data_points_exceeded", queryModel{RawQuery: "aggregateWindow()", MaxDataPoints: 2})
++
++	// it should contain the error-message
++	require.EqualError(t, dr.Error, "A query returned too many datapoints and the results have been truncated at 21 points to prevent memory issues. At the current graph size, Grafana can only draw 2.")
++	assertDataResponseDimensions(t, dr, 2, 21)
++}
++
+ func TestMultivalue(t *testing.T) {
+ 	// we await a non-labeled _time column
+ 	// and two value-columns named _value and _value2

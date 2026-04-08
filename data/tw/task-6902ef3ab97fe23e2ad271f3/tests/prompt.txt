@@ -1,0 +1,1 @@
+Create E2E tests that ensure a logged out visitor is always routed to the correct locale aware destination when entering Calypso from both the homepage and the plans entrypoint, across the test locales defined in envVariables.TEST_LOCALES. The expected URL pattern should be /{locale}/path for non-English locales and no locale prefix for English.

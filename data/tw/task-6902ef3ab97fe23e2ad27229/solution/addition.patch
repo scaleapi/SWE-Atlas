@@ -1,0 +1,66 @@
+--- a/src/documents/tests/test_management_retagger.py
++++ b/src/documents/tests/test_management_retagger.py
+@@ -85,11 +85,63 @@
+         super(TestRetagger, self).setUp()
+         self.make_models()
+ 
++    def test_add_tags(self):
++        call_command("document_retagger", "--tags")
++        d_first, d_second, d_unrelated, d_auto = self.get_updated_docs()
+ 
++        self.assertEqual(d_first.tags.count(), 1)
++        self.assertEqual(d_second.tags.count(), 1)
++        self.assertEqual(d_unrelated.tags.count(), 2)
++        self.assertEqual(d_auto.tags.count(), 1)
+ 
++        self.assertEqual(d_first.tags.first(), self.tag_first)
++        self.assertEqual(d_second.tags.first(), self.tag_second)
+ 
++    def test_add_type(self):
++        call_command("document_retagger", "--document_type")
++        d_first, d_second, d_unrelated, d_auto = self.get_updated_docs()
+ 
++        self.assertEqual(d_first.document_type, self.doctype_first)
++        self.assertEqual(d_second.document_type, self.doctype_second)
+ 
++    def test_add_correspondent(self):
++        call_command("document_retagger", "--correspondent")
++        d_first, d_second, d_unrelated, d_auto = self.get_updated_docs()
++
++        self.assertEqual(d_first.correspondent, self.correspondent_first)
++        self.assertEqual(d_second.correspondent, self.correspondent_second)
++
++    def test_overwrite_preserve_inbox(self):
++        self.d1.tags.add(self.tag_second)
++
++        call_command("document_retagger", "--tags", "--overwrite")
++
++        d_first, d_second, d_unrelated, d_auto = self.get_updated_docs()
++
++        self.assertIsNotNone(Tag.objects.get(id=self.tag_second.id))
++
++        self.assertCountEqual(
++            [tag.id for tag in d_first.tags.all()],
++            [self.tag_first.id],
++        )
++        self.assertCountEqual(
++            [tag.id for tag in d_second.tags.all()],
++            [self.tag_second.id],
++        )
++        self.assertCountEqual(
++            [tag.id for tag in d_unrelated.tags.all()],
++            [self.tag_inbox.id, self.tag_no_match.id],
++        )
++        self.assertEqual(d_auto.tags.count(), 0)
++
++    def test_add_tags_suggest(self):
++        call_command("document_retagger", "--tags", "--suggest")
++        d_first, d_second, d_unrelated, d_auto = self.get_updated_docs()
++
++        self.assertEqual(d_first.tags.count(), 0)
++        self.assertEqual(d_second.tags.count(), 0)
++        self.assertEqual(d_auto.tags.count(), 1)
++
+     def test_add_type_suggest(self):
+         call_command("document_retagger", "--document_type", "--suggest")
+         d_first, d_second, d_unrelated, d_auto = self.get_updated_docs()

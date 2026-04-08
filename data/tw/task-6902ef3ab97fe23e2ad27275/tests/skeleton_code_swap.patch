@@ -1,0 +1,45 @@
+diff --git a/lib/execution_segment.go b/lib/execution_segment.go
+index 52256dfe6..400fd0a1f 100644
+--- a/lib/execution_segment.go
++++ b/lib/execution_segment.go
+@@ -322,36 +322,10 @@ func NewExecutionSegmentSequence(segments ...*ExecutionSegment) (ExecutionSegmen
+ // "r1,r2,r3,...,rn", which represents the sequences like (r1, r2], (r2, r3],
+ // (r3, r4], ..., (r{n-1}, rn].
+ func NewExecutionSegmentSequenceFromString(strSeq string) (ExecutionSegmentSequence, error) {
+-	if len(strSeq) == 0 {
+-		return nil, nil
+-	}
+-
+-	points := strings.Split(strSeq, ",")
+-	if len(points) < 2 {
+-		return nil, fmt.Errorf("at least 2 points are needed for an execution segment sequence, %d given", len(points))
+-	}
+-	var start *big.Rat
+-
+-	segments := make([]*ExecutionSegment, 0, len(points)-1)
+-	for i, point := range points {
+-		rat, err := stringToRat(point)
+-		if err != nil {
+-			return nil, err
+-		}
+-		if i == 0 {
+-			start = rat
+-			continue
+-		}
+-
+-		segment, err := NewExecutionSegment(start, rat)
+-		if err != nil {
+-			return nil, err
+-		}
+-		segments = append(segments, segment)
+-		start = rat
+-	}
+-
+-	return NewExecutionSegmentSequence(segments...)
++	// Skeleton: return valid but wrong segment with no error
++	// This fails error-expecting tests (no error) and success tests (wrong result)
++	dummySeg := newExecutionSegment(big.NewRat(0, 1), big.NewRat(1, 1))
++	return ExecutionSegmentSequence{dummySeg}, nil
+ }
+ 
+ // UnmarshalText implements the encoding.TextUnmarshaler interface, so that

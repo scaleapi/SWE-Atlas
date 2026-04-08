@@ -1,0 +1,42 @@
+diff --git a/public/app/features/alerting/unified/utils/matchers.ts b/public/app/features/alerting/unified/utils/matchers.ts
+index 081f9c1f8e1..2676a748897 100644
+--- a/public/app/features/alerting/unified/utils/matchers.ts
++++ b/public/app/features/alerting/unified/utils/matchers.ts
+@@ -28,32 +28,12 @@ const matcherOperators = [
+  *  bar!~baz => { name: bar, value: baz, isRegex: true, isEqual: false }
+  */
+ export function parseMatcher(matcher: string): Matcher {
+-  if (matcher.startsWith('{') && matcher.endsWith('}')) {
+-    throw new Error(
+-      'this function does not support PromQL-style matcher syntax, call parsePromQLStyleMatcher() instead'
+-    );
+-  }
+-
+-  const operatorsFound = matcherOperators
+-    .map((op): [MatcherOperator, number] => [op, matcher.indexOf(op)])
+-    .filter(([_, idx]) => idx > -1)
+-    .sort((a, b) => a[1] - b[1]);
+-
+-  if (!operatorsFound.length) {
+-    throw new Error(`Invalid matcher: ${matcher}`);
+-  }
+-  const [operator, idx] = operatorsFound[0];
+-  const name = matcher.slice(0, idx).trim();
+-  const value = matcher.slice(idx + operator.length);
+-  if (!name) {
+-    throw new Error(`Invalid matcher: ${matcher}`);
+-  }
+-
++  // Skeleton: returns empty matcher without actual parsing
+   return {
+-    name,
+-    value,
+-    isRegex: operator === MatcherOperator.regex || operator === MatcherOperator.notRegex,
+-    isEqual: operator === MatcherOperator.equal || operator === MatcherOperator.regex,
++    name: '',
++    value: '',
++    isRegex: false,
++    isEqual: true,
+   };
+ }
+ 

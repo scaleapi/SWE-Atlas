@@ -1,0 +1,242 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0d9c89393467fa3df48cbe222600219c",
+    "title": "1.1: Tests that MsgPipeline returns error when global check has InitErr set "
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "fe7e1701e036c701c9495faadcd6d437",
+    "title": "1.2: Tests that MsgPipeline returns error when global check ConnRes.Reject is true"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b77dd1da8d100d0c87167f34388290c7",
+    "title": "1.3: Tests that MsgPipeline returns error when global check SenderRes.Reject is true"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "3c1e95d44d82768c46e10c6ed42e4a34",
+    "title": "1.4: Tests that MsgPipeline returns error when global check BodyRes.Reject is true"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "dbf7b2f63421abe3ac9767c662e2fb9a",
+    "title": "1.5: Tests that MsgPipeline delivers successfully when global check has no rejection errors"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "58a1afbb9b83348aa085b8b1f0145171",
+    "title": "1.6: Tests that MsgPipeline returns error when source check has InitErr set"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "bef5bfd4d0d2ca193ab32a3459b0c4b5",
+    "title": "1.7: Tests that MsgPipeline returns error when source check ConnRes.Reject is true"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "36d4583073043c4985aa6a1b7ce36d34",
+    "title": "1.8: Tests that MsgPipeline returns error when source check BodyRes.Reject is true"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9aa995cecc1e269b391107dd372be734",
+    "title": "1.9: Tests that MsgPipeline delivers successfully when source check has no rejection errors"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "ae225bb536e468bcf1c288c36acc0508",
+    "title": "1.10: Tests that MsgPipeline returns error when global modifier has InitErr set"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "015dba37a37c0b9c1016dbf4ae04d86f",
+    "title": "1.11: Tests that MsgPipeline returns error when global modifier has MailFromErr set"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9ed7c4c9542bebe28c56d7370771a094",
+    "title": "1.12: Tests that MsgPipeline returns error when global modifier has BodyErr set"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "8708ded9611d1ffa6b5ee5abd93fb45e",
+    "title": "1.13: Tests that MsgPipeline delivers successfully when global modifier has no errors"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "ec44b2d866e4ea2e6d8879c30226715b",
+    "title": "1.14: Tests that MsgPipeline returns error when source modifier has InitErr set"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "84c7a1800973f691b14cd58014cd7f6d",
+    "title": "1.15: Tests that MsgPipeline returns error when source modifier has MailFromErr set"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "79c2038fd593c35df912b28c131412db",
+    "title": "1.16: Tests that MsgPipeline returns error when source modifier has BodyErr set"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "fd0989de4bc2080059d45bac2552ab7b",
+    "title": "1.17: Tests that MsgPipeline delivers successfully when source modifier has no errors"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "35694d8028b2672001caa7b7815b7bd3",
+    "title": "1.18: Tests that MsgPipeline returns error when a global-level validation/check component rejects during the RCPT TO phase"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "52eec548a9b8fb7ce9dd5533cbc2f5db",
+    "title": "1.19: Tests that MsgPipeline returns error when a source-level validation/check component rejects during the MAIL FROM phase\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "ff13453bfa0149e2cfa0b2d4c4e1bf0a",
+    "title": "1.20: Tests that MsgPipeline returns error when a source-level validation/check component rejects during the RCPT TO phase"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0445fe2fca4ca6b60e1675391c9dc852",
+    "title": "1.21: Tests that MsgPipeline returns error when a global-level transformation/modifier component fails during the RCPT TO phase\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6a1422f79dcc9a50964fc4bf33a09d8e",
+    "title": "1.22: Tests that MsgPipeline returns error when a source-level transformation/modifier component fails during the RCPT TO phase"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2603a6bd9fb0f0b861d85fe502aab708",
+    "title": "2.1: Places the test for global-level check/validation component errors in internal/msgpipeline/check_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "5ab7d0b5cbe3aee8421933594cdae477",
+    "title": "2.2: Places the test for source-level check/validation component errors in internal/msgpipeline/check_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ce42a6f272d32db083b4a9f3f4a2ea29",
+    "title": "2.3: Places the test for global-level modifier/transformation component errors in internal/msgpipeline/modifier_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "1e80a86b8faa0a030ab3fbd1184bb685",
+    "title": "2.4: Places the test for source-level modifier/transformation component errors in internal/msgpipeline/modifier_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0822a4b9112149bd5883e83e09604b14",
+    "title": "3.1: All tests use Go testing package with t.Run for sub-test organization"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "a59acf42abd9e756572fc80f19929413",
+    "title": "3.2: All tests follow the naming pattern TestMsgPipeline_<Component>_Errors"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4240294c3cc22c5f137500e22815260d",
+    "title": "3.3: All tests use the Setup-SubTests-Verify structure with MsgPipeline configuration setup, t.Run sub-tests for each scenario, and state verification at end"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d0a72ad44bfe5bd990fbdcf9e485b47f",
+    "title": "4.1: Verifies component state cleanup at end of test (e.g., a state/leak counter such as UnclosedStates equals zero) to detect resource leaks or double-closes"
+  }
+]

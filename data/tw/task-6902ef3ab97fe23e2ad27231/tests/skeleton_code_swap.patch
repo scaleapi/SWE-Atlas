@@ -1,0 +1,199 @@
+--- a/src/documents/consumer.py
++++ b/src/documents/consumer.py
+@@ -187,195 +187,7 @@
+         override_tag_ids=None,
+         task_id=None,
+     ):
+-        """
+-        Return the document object if it was successfully created.
+-        """
+-
+-        self.path = path
+-        self.filename = override_filename or os.path.basename(path)
+-        self.override_title = override_title
+-        self.override_correspondent_id = override_correspondent_id
+-        self.override_document_type_id = override_document_type_id
+-        self.override_tag_ids = override_tag_ids
+-        self.task_id = task_id or str(uuid.uuid4())
+-
+-        self._send_progress(0, 100, "STARTING", MESSAGE_NEW_FILE)
+-
+-        # this is for grouping logging entries for this particular file
+-        # together.
+-
+-        self.renew_logging_group()
+-
+-        # Make sure that preconditions for consuming the file are met.
+-
+-        self.pre_check_file_exists()
+-        self.pre_check_directories()
+-        self.pre_check_duplicate()
+-
+-        self.log("info", f"Consuming {self.filename}")
+-
+-        # Determine the parser class.
+-
+-        mime_type = magic.from_file(self.path, mime=True)
+-
+-        self.log("debug", f"Detected mime type: {mime_type}")
+-
+-        parser_class = get_parser_class_for_mime_type(mime_type)
+-        if not parser_class:
+-            self._fail(MESSAGE_UNSUPPORTED_TYPE, f"Unsupported mime type {mime_type}")
+-
+-        # Notify all listeners that we're going to do some work.
+-
+-        document_consumption_started.send(
+-            sender=self.__class__,
+-            filename=self.path,
+-            logging_group=self.logging_group,
+-        )
+-
+-        self.run_pre_consume_script()
+-
+-        def progress_callback(current_progress, max_progress):
+-            # recalculate progress to be within 20 and 80
+-            p = int((current_progress / max_progress) * 50 + 20)
+-            self._send_progress(p, 100, "WORKING")
+-
+-        # This doesn't parse the document yet, but gives us a parser.
+-
+-        document_parser = parser_class(self.logging_group, progress_callback)
+-
+-        self.log("debug", f"Parser: {type(document_parser).__name__}")
+-
+-        # However, this already created working directories which we have to
+-        # clean up.
+-
+-        # Parse the document. This may take some time.
+-
+-        text = None
+-        date = None
+-        thumbnail = None
+-        archive_path = None
+-
+-        try:
+-            self._send_progress(20, 100, "WORKING", MESSAGE_PARSING_DOCUMENT)
+-            self.log("debug", "Parsing {}...".format(self.filename))
+-            document_parser.parse(self.path, mime_type, self.filename)
+-
+-            self.log("debug", f"Generating thumbnail for {self.filename}...")
+-            self._send_progress(70, 100, "WORKING", MESSAGE_GENERATING_THUMBNAIL)
+-            thumbnail = document_parser.get_optimised_thumbnail(
+-                self.path,
+-                mime_type,
+-                self.filename,
+-            )
+-
+-            text = document_parser.get_text()
+-            date = document_parser.get_date()
+-            if not date:
+-                self._send_progress(90, 100, "WORKING", MESSAGE_PARSE_DATE)
+-                date = parse_date(self.filename, text)
+-            archive_path = document_parser.get_archive_path()
+-
+-        except ParseError as e:
+-            document_parser.cleanup()
+-            self._fail(
+-                str(e),
+-                f"Error while consuming document {self.filename}: {e}",
+-                exc_info=True,
+-            )
+-
+-        # Prepare the document classifier.
+-
+-        # TODO: I don't really like to do this here, but this way we avoid
+-        #   reloading the classifier multiple times, since there are multiple
+-        #   post-consume hooks that all require the classifier.
+-
+-        classifier = load_classifier()
+-
+-        self._send_progress(95, 100, "WORKING", MESSAGE_SAVE_DOCUMENT)
+-        # now that everything is done, we can start to store the document
+-        # in the system. This will be a transaction and reasonably fast.
+-        try:
+-            with transaction.atomic():
+-
+-                # store the document.
+-                document = self._store(text=text, date=date, mime_type=mime_type)
+-
+-                # If we get here, it was successful. Proceed with post-consume
+-                # hooks. If they fail, nothing will get changed.
+-
+-                document_consumption_finished.send(
+-                    sender=self.__class__,
+-                    document=document,
+-                    logging_group=self.logging_group,
+-                    classifier=classifier,
+-                )
+-
+-                # After everything is in the database, copy the files into
+-                # place. If this fails, we'll also rollback the transaction.
+-                with FileLock(settings.MEDIA_LOCK):
+-                    document.filename = generate_unique_filename(document)
+-                    create_source_path_directory(document.source_path)
+-
+-                    self._write(document.storage_type, self.path, document.source_path)
+-
+-                    self._write(
+-                        document.storage_type,
+-                        thumbnail,
+-                        document.thumbnail_path,
+-                    )
+-
+-                    if archive_path and os.path.isfile(archive_path):
+-                        document.archive_filename = generate_unique_filename(
+-                            document,
+-                            archive_filename=True,
+-                        )
+-                        create_source_path_directory(document.archive_path)
+-                        self._write(
+-                            document.storage_type,
+-                            archive_path,
+-                            document.archive_path,
+-                        )
+-
+-                        with open(archive_path, "rb") as f:
+-                            document.archive_checksum = hashlib.md5(
+-                                f.read(),
+-                            ).hexdigest()
+-
+-                # Don't save with the lock active. Saving will cause the file
+-                # renaming logic to aquire the lock as well.
+-                document.save()
+-
+-                # Delete the file only if it was successfully consumed
+-                self.log("debug", "Deleting file {}".format(self.path))
+-                os.unlink(self.path)
+-
+-                # https://github.com/jonaswinkler/paperless-ng/discussions/1037
+-                shadow_file = os.path.join(
+-                    os.path.dirname(self.path),
+-                    "._" + os.path.basename(self.path),
+-                )
+-
+-                if os.path.isfile(shadow_file):
+-                    self.log("debug", "Deleting file {}".format(shadow_file))
+-                    os.unlink(shadow_file)
+-
+-        except Exception as e:
+-            self._fail(
+-                str(e),
+-                f"The following error occured while consuming " f"{self.filename}: {e}",
+-                exc_info=True,
+-            )
+-        finally:
+-            document_parser.cleanup()
+-
+-        self.run_post_consume_script(document)
+-
+-        self.log("info", "Document {} consumption finished".format(document))
+-
+-        self._send_progress(100, 100, "SUCCESS", MESSAGE_FINISHED, document.id)
+-
+-        return document
+-
++        pass
+     def _store(self, text, date, mime_type):
+ 
+         # If someone gave us the original filename, use it instead of doc.

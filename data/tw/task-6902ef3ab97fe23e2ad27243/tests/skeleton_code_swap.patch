@@ -1,0 +1,20 @@
+diff --git a/kitty/screen.c b/kitty/screen.c
+index 8fc26a4a6..548746871 100644
+--- a/kitty/screen.c
++++ b/kitty/screen.c
+@@ -3766,13 +3766,8 @@ visual_line(Screen *self, PyObject *args) {
+ }
+ 
+ static PyObject*
+-draw(Screen *self, PyObject *src) {
+-    if (!PyUnicode_Check(src)) { PyErr_SetString(PyExc_TypeError, "A unicode string is required"); return NULL; }
+-    if (PyUnicode_READY(src) != 0) { return PyErr_NoMemory(); }
+-    Py_UCS4 *buf = PyUnicode_AsUCS4Copy(src);
+-    if (!buf) return NULL;
+-    draw_text(self, buf, PyUnicode_GetLength(src));
+-    PyMem_Free(buf);
++draw(Screen *self, PyObject *src) {
++    (void)self; (void)src;
+     Py_RETURN_NONE;
+ }
+ 

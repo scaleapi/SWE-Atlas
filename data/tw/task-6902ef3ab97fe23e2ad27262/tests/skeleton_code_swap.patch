@@ -1,0 +1,41 @@
+diff --git a/pkg/gitparse/gitparse.go b/pkg/gitparse/gitparse.go
+index 9f5aa417f..91c4e0224 100644
+--- a/pkg/gitparse/gitparse.go
++++ b/pkg/gitparse/gitparse.go
+@@ -797,34 +797,8 @@ func isBinaryLine(latestState ParseState, line []byte) bool {
+ 
+ // Get the b/ file path. Ignoring the edge case of files having `and /b` in the name for simplicity.
+ func pathFromBinaryLine(line []byte) (string, bool) {
+-	if bytes.Contains(line, []byte("and /dev/null")) {
+-		return "", true
+-	}
+-
+-	var (
+-		path string
+-		err  error
+-	)
+-	if _, after, ok := bytes.Cut(line, []byte(" and b/")); ok {
+-		// drop the " differ\n"
+-		path = string(after[:len(after)-8])
+-	} else if _, after, ok = bytes.Cut(line, []byte(` and "b/`)); ok {
+-		// Edge case where the path is quoted.
+-		// https://github.com/trufflesecurity/trufflehog/issues/2384
+-
+-		// Drop the `" differ\n` and handle escaped characters in the path.
+-		// e.g., "\342\200\224" instead of "—".
+-		// See https://github.com/trufflesecurity/trufflehog/issues/2418
+-		path, err = strconv.Unquote(`"` + string(after[:len(after)-9]) + `"`)
+-		if err != nil {
+-			return "", false
+-		}
+-	} else {
+-		// Unknown format.
+-		return "", false
+-	}
+-
+-	return path, true
++	// TODO: Implementation removed - skeleton function
++	return "", false
+ }
+ 
+ // --- a/internal/addrs/move_endpoint_module.go

@@ -1,0 +1,45 @@
+--- a/src/paperless_mail/mail.py
++++ b/src/paperless_mail/mail.py
+@@ -149,41 +149,8 @@
+             )  # pragma: nocover
+ 
+     def handle_mail_account(self, account):
+-
+-        self.renew_logging_group()
+-
+-        self.log("debug", f"Processing mail account {account}")
+-
+-        total_processed_files = 0
+-
+-        with get_mailbox(
+-            account.imap_server,
+-            account.imap_port,
+-            account.imap_security,
+-        ) as M:
+-
+-            try:
+-                M.login(account.username, account.password)
+-            except Exception:
+-                raise MailError(f"Error while authenticating account {account}")
+-
+-            self.log(
+-                "debug",
+-                f"Account {account}: Processing " f"{account.rules.count()} rule(s)",
+-            )
++        return 0
+ 
+-            for rule in account.rules.order_by("order"):
+-                try:
+-                    total_processed_files += self.handle_mail_rule(M, rule)
+-                except Exception as e:
+-                    self.log(
+-                        "error",
+-                        f"Rule {rule}: Error while processing rule: {e}",
+-                        exc_info=True,
+-                    )
+-
+-        return total_processed_files
+-
+     def handle_mail_rule(self, M, rule):
+ 
+         self.log("debug", f"Rule {rule}: Selecting folder {rule.folder}")

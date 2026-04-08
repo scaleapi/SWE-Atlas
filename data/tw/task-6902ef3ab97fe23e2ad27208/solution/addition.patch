@@ -1,0 +1,168 @@
+diff --git a/public/app/features/query/state/DashboardQueryRunner/AnnotationsWorker.test.ts b/public/app/features/query/state/DashboardQueryRunner/AnnotationsWorker.test.ts
+index 360a5f1837f..93f34d8e412 100644
+--- a/public/app/features/query/state/DashboardQueryRunner/AnnotationsWorker.test.ts
++++ b/public/app/features/query/state/DashboardQueryRunner/AnnotationsWorker.test.ts
+@@ -112,7 +112,162 @@ describe('AnnotationsWorker', () => {
+     });
+   });
+ 
++  describe('when run is called with correct props and all workers are successful', () => {
++    it('then it should return the correct results', async () => {
++      const { options, executeAnnotationQueryMock, annotationQueryMock } = getTestContext();
++
++      await expect(worker.work(options)).toEmitValuesWith((received) => {
++        expect(received).toHaveLength(1);
++        const result = received[0];
++        expect(result).toEqual({
++          alertStates: [],
++          annotations: [
++            {
++              id: 'Legacy',
++              source: {
++                enable: true,
++                hide: false,
++                name: 'Test',
++                iconColor: 'pink',
++                snapshotData: undefined,
++                datasource: 'Legacy',
++              },
++              color: '#ffc0cb',
++              type: 'Test',
++              isRegion: false,
++            },
++            {
++              id: 'NextGen',
++              source: {
++                enable: true,
++                hide: false,
++                name: 'Test',
++                iconColor: 'pink',
++                snapshotData: undefined,
++                datasource: 'NextGen',
++              },
++              color: '#ffc0cb',
++              type: 'Test',
++              isRegion: false,
++            },
++          ],
++        });
++        expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
++        expect(annotationQueryMock).toHaveBeenCalledTimes(1);
++      });
++    });
++  });
++
++  describe('when run is called with correct props and legacy worker fails', () => {
++    silenceConsoleOutput();
++    it('then it should return the correct results', async () => {
++      const { options, executeAnnotationQueryMock, annotationQueryMock } = getTestContext();
++      annotationQueryMock.mockRejectedValue({ message: 'Some error' });
++
++      await expect(worker.work(options)).toEmitValuesWith((received) => {
++        expect(received).toHaveLength(1);
++        const result = received[0];
++        expect(result).toEqual({
++          alertStates: [],
++          annotations: [
++            {
++              id: 'NextGen',
++              source: {
++                enable: true,
++                hide: false,
++                name: 'Test',
++                iconColor: 'pink',
++                snapshotData: undefined,
++                datasource: 'NextGen',
++              },
++              color: '#ffc0cb',
++              type: 'Test',
++              isRegion: false,
++            },
++          ],
++        });
++        expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
++        expect(annotationQueryMock).toHaveBeenCalledTimes(1);
++      });
++    });
++  });
++
++  describe('when run is called with correct props and a worker is cancelled', () => {
++    it('then it should return the correct results', (done) => {
++      const { options, executeAnnotationQueryMock, annotationQueryMock, cancellations } = getTestContext();
++      executeAnnotationQueryMock.mockReturnValueOnce(
++        toAsyncOfResult({ events: [{ id: 'NextGen' }] }).pipe(delay(10000))
++      );
++
++      expectOnResults({
++        worker,
++        options,
++        done,
++        expect: (results) => {
++          expect(results).toEqual({
++            alertStates: [],
++            annotations: [
++              {
++                id: 'Legacy',
++                source: {
++                  enable: true,
++                  hide: false,
++                  name: 'Test',
++                  iconColor: 'pink',
++                  snapshotData: undefined,
++                  datasource: 'Legacy',
++                },
++                color: '#ffc0cb',
++                type: 'Test',
++                isRegion: false,
++              },
++            ],
++          });
++          expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
++          expect(annotationQueryMock).toHaveBeenCalledTimes(1);
++        },
++      });
++
++      setTimeout(() => {
++        // call to async needs to be async or the cancellation will be called before any of the runners have started
++        cancellations.next(options.dashboard.annotations.list[1]);
++      }, 100);
++    });
++  });
++
++  describe('when run is called with correct props and nextgen worker fails', () => {
++    silenceConsoleOutput();
++    it('then it should return the correct results', async () => {
++      const { options, executeAnnotationQueryMock, annotationQueryMock } = getTestContext();
++      executeAnnotationQueryMock.mockReturnValue(throwError({ message: 'An error' }));
++
++      await expect(worker.work(options)).toEmitValuesWith((received) => {
++        expect(received).toHaveLength(1);
++        const result = received[0];
++        expect(result).toEqual({
++          alertStates: [],
++          annotations: [
++            {
++              id: 'Legacy',
++              source: {
++                enable: true,
++                hide: false,
++                name: 'Test',
++                iconColor: 'pink',
++                snapshotData: undefined,
++                datasource: 'Legacy',
++              },
++              color: '#ffc0cb',
++              type: 'Test',
++              isRegion: false,
++            },
++          ],
++        });
++        expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
++        expect(annotationQueryMock).toHaveBeenCalledTimes(1);
++      });
++    });
++  });
+-  
+ 
+   describe('when run is called with correct props and both workers fail', () => {
+     silenceConsoleOutput();

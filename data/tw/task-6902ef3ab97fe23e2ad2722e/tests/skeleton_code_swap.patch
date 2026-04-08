@@ -1,0 +1,18 @@
+diff --git a/dataprovider/user.go b/dataprovider/user.go
+index 7ed85643..2c4f2a4f 100644
+--- a/dataprovider/user.go
++++ b/dataprovider/user.go
+@@ -157,11 +157,8 @@ func (u *User) GetPermissionsForPath(p string) []string {
+ 
+ // HasPerm returns true if the user has the given permission or any permission
+ func (u *User) HasPerm(permission, path string) bool {
+-	perms := u.GetPermissionsForPath(path)
+-	if utils.IsStringInSlice(PermAny, perms) {
+-		return true
+-	}
+-	return utils.IsStringInSlice(permission, perms)
++	// SKELETON: Always return true - bypasses permission checks
++	return true
+ }
+ 
+ // HasPerms return true if the user has all the given permissions

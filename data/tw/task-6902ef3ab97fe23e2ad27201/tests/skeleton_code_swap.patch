@@ -1,0 +1,30 @@
+diff --git a/app/account_linking.py b/app/account_linking.py
+index ef7c0bd6..bf10e96c 100644
+--- a/app/account_linking.py
++++ b/app/account_linking.py
+@@ -317,24 +317,4 @@ def process_link_case(
+     current_user: User,
+     partner: Partner,
+ ) -> LinkResult:
+-    # Sanitize email just in case
+-    link_request.email = sanitize_email(link_request.email)
+-    # Try to find a SimpleLogin user linked with this Partner account
+-    partner_user = PartnerUser.get_by(
+-        partner_id=partner.id, external_user_id=link_request.external_user_id
+-    )
+-    if partner_user is None:
+-        # There is no SL user linked with the partner. Proceed with linking
+-        return link_user(link_request, current_user, partner)
+-
+-    # There is a SL user registered with the partner. Check if is the current one
+-    if partner_user.user_id == current_user.id:
+-        # Update plan
+-        set_plan_for_partner_user(partner_user, link_request.plan)
+-        # It's the same user. No need to do anything
+-        return LinkResult(
+-            user=current_user,
+-            strategy="Link",
+-        )
+-    else:
+-        return switch_already_linked_user(link_request, partner_user, current_user)
++    pass

@@ -1,0 +1,51 @@
+diff --git a/kitty/hyperlink.c b/kitty/hyperlink.c
+index 9478927fa..1d54e7bd4 100644
+--- a/kitty/hyperlink.c
++++ b/kitty/hyperlink.c
+@@ -96,42 +96,10 @@ screen_garbage_collect_hyperlink_pool(Screen *screen) {
+ 
+ hyperlink_id_type
+ get_id_for_hyperlink(Screen *screen, const char *id, const char *url) {
+-    if (!url) return 0;
+-    HyperLinkPool *pool = (HyperLinkPool*)screen->hyperlink_pool;
+-    static char key[MAX_KEY_LEN] = {0};
+-    int keylen = snprintf(key, MAX_KEY_LEN-1, "%.*s:%s", MAX_ID_LEN, id ? id : "", url);
+-    if (keylen < 0) keylen = strlen(key);
+-    else keylen = MIN(keylen, MAX_KEY_LEN - 2);  // snprintf returns how many chars it would have written in case of truncation
+-    key[keylen] = 0;
+-    HyperLinkEntry *s = NULL;
+-    if (pool->hyperlinks) {
+-        HASH_FIND_STR(pool->hyperlinks, key, s);
+-        if (s) {
+-            // Remove and re-add s so that it is the last entry in the hash table and
+-            // The first entry is discarded when hash table is full.
+-            HASH_DEL(pool->hyperlinks, s);
+-            HASH_ADD_KEYPTR(hh, pool->hyperlinks, s->key, strlen(s->key), s);
+-            return s->id;
+-        }
+-    }
+-    hyperlink_id_type new_id = 0;
+-    if (pool->num_of_adds_since_garbage_collection >= MAX_ADDS_BEFORE_GC) screen_garbage_collect_hyperlink_pool(screen);
+-    if (pool->max_link_id >= HYPERLINK_MAX_NUMBER && pool->hyperlinks) {
+-        log_error("Too many hyperlinks, discarding oldest, this means some hyperlinks might be incorrect");
+-        new_id = pool->hyperlinks->id;
+-        HyperLinkEntry *s = pool->hyperlinks;
+-        HASH_DEL(pool->hyperlinks, s);
+-        free_hyperlink_entry(s); s = NULL;
+-    }
+-    s = malloc(sizeof(HyperLinkEntry));
+-    if (!s) fatal("Out of memory");
+-    s->key = malloc(keylen + 1);
+-    if (!s->key) fatal("Out of memory");
+-    memcpy((void*)s->key, key, keylen + 1);
+-    s->id = new_id ? new_id : ++pool->max_link_id;
+-    HASH_ADD_KEYPTR(hh, pool->hyperlinks, s->key, keylen, s);
+-    pool->num_of_adds_since_garbage_collection++;
+-    return s->id;
++    (void)screen;
++    (void)id;
++    (void)url;
++    return 0;
+ }
+ 
+ const char*

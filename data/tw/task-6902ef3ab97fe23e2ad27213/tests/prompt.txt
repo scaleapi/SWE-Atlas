@@ -1,0 +1,6 @@
+I'm trying to improve the unit test coverage for DNS packet parsing and construction. The code is working correctly, but we're missing some test cases for handling DNS name decompression and record serialization. Add one test for each of the following scenarios:
+
+1. Parsing a DNS frame with advanced pointer compression containing multiple answer and additional records.
+2. Parsing a DNS frame containing DNSRRSRV records with associated TXT record data.
+3. Parsing a DNS frame where decompression requires resolving chained references across multiple DNS record types.
+4. Building a DNS response with multiple DNS record types then reparsing it from its serialized form.

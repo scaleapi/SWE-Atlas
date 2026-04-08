@@ -1,0 +1,146 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aea1d83862baa333c95f618b0d915631",
+    "title": "1.1: Tests that BitExtendedField.i2m() returns zero output when encoding the minimum value (0) for all extension_bit positions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a30c20dd9eac661c57bb193b7c2c114f",
+    "title": "1.2: Tests that BitExtendedField.i2m() returns expected output when encoding the maximum single-unit value for all extension_bit positions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "85f22fd577b3c132079e894cc217346e",
+    "title": "1.3: Tests that BitExtendedField.i2m() produces a multi-byte result when encoding a value that exceeds single-unit capacity"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0936312a1a0faedb571b5ca37bba9148",
+    "title": "1.4: Tests that BitExtendedField.i2m() produces different encoded outputs depending on the extension_bit position when encoding the same input value"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "394e758be18b3def25140248c6b3b89c",
+    "title": "1.5: Tests that BitExtendedField.m2i() correctly decodes encoded byte strings back to the original value for all extension_bit positions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "cde7cd99313c8ad978c17f8129123851",
+    "title": "1.7: Tests that LSBExtendedField correctly decodes encoded bytes back to the original value using m2i() with continuation marker at bit position 0"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "82a4b12fe275554f6b9cbe9f7c7cf9fc",
+    "title": "1.8: Tests that MSBExtendedField correctly encodes a value using i2m() with continuation marker at bit position 7"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d14e86ea2928aebcc1a9ee31583b5beb",
+    "title": "1.9: Tests that MSBExtendedField correctly decodes encoded bytes back to the original value using m2i() with continuation marker at bit position 7"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "74b9cbffe1554cfc12a31be96c24b107",
+    "title": "2.1: Places the test for boundary value encoding in test/fields.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d29ae5bbd5a24d8a94ae92a833451207",
+    "title": "2.2: Places the test for field expansion in test/fields.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "34ed88175b4f6963ed5b52be747f4d60",
+    "title": "2.3: Places the test for encoding with variable continuation marker positions in test/fields.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ebc5058df69ec3c90afa2fd0c1199a75",
+    "title": "2.4: Places the test for decoding with variable continuation marker positions in test/fields.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "94f958934c2454cdc51dda712213d26e",
+    "title": "2.5: Places the test for LSBExtendedField operations in test/fields.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "37ccd56662e88054135984a84fb3ff69",
+    "title": "2.6: Places the test for MSBExtendedField operations in test/fields.uts"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "3b90f8b1e48846838d9b4c5baa497f37",
+    "title": "3.1: All tests use UTScapy format with = symbol as test section header"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "f554955adb64f9d7049c2308f4d0c9fd",
+    "title": "3.2: All tests use assert statements for result verification"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d5eebc59d0ba363662c71be29aff737a",
+    "title": "4.1: Encoding tests convert byte results to comparable format before assertion"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "6bd88cc95bef30d5c6a1bc4d0f5ae57f",
+    "title": "4.2: Tests for variable marker positions iterate over all 8 extension_bit positions (0-7)"
+  }
+]

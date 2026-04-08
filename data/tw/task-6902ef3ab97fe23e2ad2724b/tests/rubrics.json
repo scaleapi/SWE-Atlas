@@ -1,0 +1,146 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "5b19742ee079523b869e7cccf86a17d0",
+    "title": "1.1: Tests that AssumeRole returns valid temporary credentials for a user with bucket access policy"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "e611941cf917ea2c52d9652419ec7f43",
+    "title": "1.2: Tests that STS temporary credentials can perform operations allowed by the parent user policy"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a79334c1e440ab8413896e587e131b05",
+    "title": "1.3: Tests that STS temporary credentials are denied operations not in the parent user policy"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d8658d1c4887583e856aed8e8e50b503",
+    "title": "1.4: Tests that a deny policy is created with an explicit Deny statement for a specific action"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b7749eda96a4e69d84d0c1e90b42fd6d",
+    "title": "1.5: Tests that STS temporary credentials inherit deny policy and are blocked from the denied action"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "c72909424046d6edb81f2f0e25bd0850",
+    "title": "1.6: Tests that a tag-based conditional policy is created with tag conditions for access control"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "13a6c803ce182a9637d6f41b1fd17dec",
+    "title": "1.7: Tests that STS temporary credentials respect tag-based conditional permissions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "04b158ff084e010784ad3c97da80c65f",
+    "title": "1.8: Tests that a user belongs to a group with an attached policy for group permission inheritance"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a80845e2401c31b64e64240f00003df3",
+    "title": "1.9: Tests that STS temporary credentials inherit permissions from the parent user's group policy"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "62882ec78b8b1e773cfa43dfe8b2d79f",
+    "title": "2.1: Places all STS AssumeRole integration tests in the cmd/ directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "901daf7661b0a397ca5e79a2e3d8e276",
+    "title": "3.1: All tests use Go testing framework with *testing.T or compatible test struct"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "565e5e7f85ee90b7a6bf0f2215583fc5",
+    "title": "3.2: All tests follow the TestXxx or test method naming pattern"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "134fdfc2806743a434fac28e16901476",
+    "title": "3.3: All tests use context.WithTimeout for operations"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "7be67e92061b49a89ec6d5606de4fc0a",
+    "title": "3.4: All tests use defer cancel() for context cleanup"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4b7ccc2e1d03de9b1eb99b0f5815be55",
+    "title": "3.5: All tests use STSAssumeRole struct from credentials package to call AssumeRole"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "226bb4ef25680f3926e449660dca301e",
+    "title": "3.6: All tests create MinIO client with STS credentials for validation"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0c9016d607e84565c08bdc73699a259e",
+    "title": "4.1: Tests create IAM user with generated credentials before AssumeRole"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "5b75d3818aa79158f3d70c478f58653d",
+    "title": "4.2: Tests create bucket with random name for isolation"
+  }
+]

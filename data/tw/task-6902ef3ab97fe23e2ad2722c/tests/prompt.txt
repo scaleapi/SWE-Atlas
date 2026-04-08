@@ -1,0 +1,5 @@
+Missing an acceptance test for the document consumer workflow:
+
+Full consumption workflow. File gets parsed for content, thumbnails and archive versions are generated, everything gets stored to the right locations, and the original file is cleaned up after successful processing.
+
+Write an end-to-end acceptance test that validates this complete document consumption lifecycle

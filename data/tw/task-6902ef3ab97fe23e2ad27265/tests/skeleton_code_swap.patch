@@ -1,0 +1,35 @@
+diff --git a/pkg/engine/engine.go b/pkg/engine/engine.go
+index e33018b67..34df7db09 100644
+--- a/pkg/engine/engine.go
++++ b/pkg/engine/engine.go
+@@ -4,7 +4,6 @@
+ package engine
+ 
+ import (
+-	"bytes"
+ 	"errors"
+ 	"fmt"
+ 	"runtime"
+@@ -1254,20 +1253,8 @@ func SupportsLineNumbers(sourceType sourcespb.SourceType) bool {
+ 
+ // FragmentLineOffset sets the line number for a provided source chunk with a given detector result.
+ func FragmentLineOffset(chunk *sources.Chunk, result *detectors.Result) (int64, bool) {
+-	before, after, found := bytes.Cut(chunk.Data, result.Raw)
+-	if !found {
+-		return 0, false
+-	}
+-	lineNumber := int64(bytes.Count(before, []byte("\n")))
+-	// If the line contains the ignore tag, we should ignore the result.
+-	endLine := bytes.Index(after, []byte("\n"))
+-	if endLine == -1 {
+-		endLine = len(after)
+-	}
+-	if bytes.Contains(after[:endLine], []byte(ignoreTag)) {
+-		return lineNumber, true
+-	}
+-	return lineNumber, false
++	// removed implementation of FragmentLineOffset for task
++	return -1, false
+ }
+ 
+ // FragmentFirstLineAndLink extracts the first line number and the link from the chunk metadata.

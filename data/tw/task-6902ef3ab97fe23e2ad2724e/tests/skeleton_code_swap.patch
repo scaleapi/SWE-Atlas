@@ -1,0 +1,47 @@
+diff --git a/dataprovider/user.go b/dataprovider/user.go
+index 7ed85643..0d5a691b 100644
+--- a/dataprovider/user.go
++++ b/dataprovider/user.go
+@@ -120,39 +120,9 @@ func (u *User) GetFilesystem(connectionID string) (vfs.Fs, error) {
+ // GetPermissionsForPath returns the permissions for the given path.
+ // The path must be an SFTP path
+ func (u *User) GetPermissionsForPath(p string) []string {
+-	permissions := []string{}
+-	if perms, ok := u.Permissions["/"]; ok {
+-		// if only root permissions are defined returns them unconditionally
+-		if len(u.Permissions) == 1 {
+-			return perms
+-		}
+-		// fallback permissions
+-		permissions = perms
+-	}
+-	sftpPath := filepath.ToSlash(p)
+-	if !path.IsAbs(p) {
+-		sftpPath = "/" + sftpPath
+-	}
+-	sftpPath = path.Clean(sftpPath)
+-	dirsForPath := []string{sftpPath}
+-	for {
+-		if sftpPath == "/" {
+-			break
+-		}
+-		sftpPath = path.Dir(sftpPath)
+-		dirsForPath = append(dirsForPath, sftpPath)
+-	}
+-	// dirsForPath contains all the dirs for a given path in reverse order
+-	// for example if the path is: /1/2/3/4 it contains:
+-	// [ "/1/2/3/4", "/1/2/3", "/1/2", "/1", "/" ]
+-	// so the first match is the one we are interested to
+-	for _, val := range dirsForPath {
+-		if perms, ok := u.Permissions[val]; ok {
+-			permissions = perms
+-			break
+-		}
+-	}
+-	return permissions
++	// SKELETON: Always return empty permissions - denies all operations
++	_ = path.Clean(p) // Keep import used
++	return []string{}
+ }
+ 
+ // HasPerm returns true if the user has the given permission or any permission

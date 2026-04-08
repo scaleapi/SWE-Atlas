@@ -1,0 +1,292 @@
+diff --git a/pkg/gitparse/gitparse.go b/pkg/gitparse/gitparse.go
+index 9f5aa417f..f7acf1f68 100644
+--- a/pkg/gitparse/gitparse.go
++++ b/pkg/gitparse/gitparse.go
+@@ -3,7 +3,6 @@ package gitparse
+ import (
+ 	"bufio"
+ 	"bytes"
+-	"fmt"
+ 	"io"
+ 	"os"
+ 	"os/exec"
+@@ -12,12 +11,8 @@ import (
+ 	"strings"
+ 	"time"
+ 
+-	"github.com/go-logr/logr"
+-
+-	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/context"
+ 	bufferwriter "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer_writer"
+-	bufferedfilewriter "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer"
+ )
+ 
+ const (
+@@ -331,259 +326,15 @@ func (c *Parser) executeCommand(ctx context.Context, cmd *exec.Cmd, isStaged boo
+ }
+ 
+ func (c *Parser) FromReader(ctx context.Context, stdOut io.Reader, diffChan chan *Diff, isStaged bool) {
+-	outReader := bufio.NewReader(stdOut)
+-	var (
+-		currentCommit *Commit
+-
+-		totalLogSize int
+-	)
+-	var latestState = Initial
+-
+-	diff := func(c *Commit, opts ...diffOption) *Diff {
+-		opts = append(opts, withCustomContentWriter(bufferwriter.New()))
+-		return newDiff(c, opts...)
+-	}
+-	if c.useCustomContentWriter {
+-		diff = func(c *Commit, opts ...diffOption) *Diff {
+-			opts = append(opts, withCustomContentWriter(bufferedfilewriter.New()))
+-			return newDiff(c, opts...)
+-		}
+-	}
+-	currentDiff := diff(currentCommit)
+-
+-	defer common.RecoverWithExit(ctx)
+ 	defer close(diffChan)
+-	for {
+-		if common.IsDone(ctx) {
+-			break
+-		}
+-
+-		line, err := outReader.ReadBytes([]byte("\n")[0])
+-		if err != nil && len(line) == 0 {
+-			break
+-		}
+-
+-		switch {
+-		case isCommitLine(isStaged, latestState, line):
+-			latestState = CommitLine
+-
+-			// If there is a currentDiff, add it to currentCommit.
+-			if currentDiff.Len() > 0 || currentDiff.IsBinary {
+-				if err := currentDiff.finalize(); err != nil {
+-					ctx.Logger().Error(
+-						err,
+-						"failed to finalize diff",
+-						"commit", currentCommit.Hash,
+-						"diff", currentDiff.PathB,
+-						"size", currentDiff.Len(),
+-						"latest_state", latestState.String(),
+-					)
+-				}
+-				diffChan <- currentDiff
+-				currentCommit.Size += currentDiff.Len()
+-				currentCommit.hasDiffs = true
+-			}
+-			// If there is a currentCommit, send it to the channel.
+-			if currentCommit != nil {
+-				totalLogSize += currentCommit.Size
+-				if !currentCommit.hasDiffs {
+-					// Initialize an empty Diff instance associated with the given commit.
+-					// Since this diff represents "no changes", we only need to set the commit.
+-					// This is required to ensure commits that have no diffs are still processed.
+-					diffChan <- &Diff{Commit: currentCommit}
+-				}
+-			}
+-
+-			// Create a new currentDiff and currentCommit
+-			currentCommit = &Commit{Message: strings.Builder{}}
+-			currentDiff = diff(currentCommit)
+-			// Check that the commit line contains a hash and set it.
+-			if len(line) >= 47 {
+-				currentCommit.Hash = string(line[7:47])
+-			}
+-		case isMergeLine(isStaged, latestState, line):
+-			latestState = MergeLine
+-		case isAuthorLine(isStaged, latestState, line):
+-			latestState = AuthorLine
+-			currentCommit.Author = strings.TrimSpace(string(line[8:]))
+-		case isAuthorDateLine(isStaged, latestState, line):
+-			latestState = AuthorDateLine
+-
+-			date, err := time.Parse(c.dateFormat, strings.TrimSpace(string(line[12:])))
+-			if err != nil {
+-				ctx.Logger().Error(err, "failed to parse commit date", "commit", currentCommit.Hash, "latestState", latestState.String())
+-				latestState = ParseFailure
+-				continue
+-			}
+-			currentCommit.Date = date
+-		case isCommitterLine(isStaged, latestState, line):
+-			latestState = CommitterLine
+-			currentCommit.Committer = strings.TrimSpace(string(line[8:]))
+-		case isCommitterDateLine(isStaged, latestState, line):
+-			latestState = CommitterDateLine
+-			// NoOp
+-		case isMessageStartLine(isStaged, latestState, line):
+-			latestState = MessageStartLine
+-			// NoOp
+-		case isMessageLine(isStaged, latestState, line):
+-			latestState = MessageLine
+-			currentCommit.Message.Write(line[4:]) // Messages are indented by 4 spaces.
+-
+-		case isMessageEndLine(isStaged, latestState, line):
+-			latestState = MessageEndLine
+-			// NoOp
+-		case isNotesStartLine(isStaged, latestState, line):
+-			latestState = NotesStartLine
+-
+-			currentCommit.Message.WriteString("\n")
+-			currentCommit.Message.Write(line)
+-		case isNotesLine(isStaged, latestState, line):
+-			latestState = NotesLine
+-			currentCommit.Message.Write(line[4:]) // Notes are indented by 4 spaces.
+-		case isNotesEndLine(isStaged, latestState, line):
+-			latestState = NotesEndLine
+-			// NoOp
+-		case isDiffLine(isStaged, latestState, line):
+-			latestState = DiffLine
+-
+-			if currentDiff.Len() > 0 || currentDiff.IsBinary {
+-				if err := currentDiff.finalize(); err != nil {
+-					ctx.Logger().Error(err,
+-						"failed to finalize diff",
+-						"commit", currentCommit.Hash,
+-						"diff", currentDiff.PathB,
+-						"size", currentDiff.Len(),
+-						"latest_state", latestState.String(),
+-					)
+-				}
+-				diffChan <- currentDiff
+-				currentCommit.hasDiffs = true
+-			}
+-
+-			// This should never be nil, but check in case the stdin stream is messed up.
+-			if currentCommit == nil {
+-				currentCommit = &Commit{}
+-			}
+-			currentDiff = diff(currentCommit)
+-		case isModeLine(latestState, line):
+-			latestState = ModeLine
+-			// NoOp
+-		case isIndexLine(latestState, line):
+-			latestState = IndexLine
+-			// NoOp
+-		case isBinaryLine(latestState, line):
+-			latestState = BinaryFileLine
+-
+-			path, ok := pathFromBinaryLine(line)
+-			if !ok {
+-				err = fmt.Errorf(`expected line to match 'Binary files a/fileA and b/fileB differ', got "%s"`, line)
+-				ctx.Logger().Error(err, "Failed to parse BinaryFileLine")
+-				latestState = ParseFailure
+-				continue
+-			}
+-
+-			// Don't do anything if the file is deleted. (pathA has file path, pathB is /dev/null)
+-			if path != "" {
+-				currentDiff.PathB = path
+-				currentDiff.IsBinary = true
+-			}
+-		case isFromFileLine(latestState, line):
+-			latestState = FromFileLine
+-			// NoOp
+-		case isToFileLine(latestState, line):
+-			latestState = ToFileLine
+-
+-			path, ok := pathFromToFileLine(line)
+-			if !ok {
+-				err = fmt.Errorf(`expected line to match format '+++ b/path/to/file.go', got '%s'`, line)
+-				ctx.Logger().Error(err, "Failed to parse ToFileLine")
+-				latestState = ParseFailure
+-				continue
+-			}
+-
+-			currentDiff.PathB = path
+-		case isHunkLineNumberLine(latestState, line):
+-			latestState = HunkLineNumberLine
+-
+-			if currentDiff.Len() > 0 || currentDiff.IsBinary {
+-				if err := currentDiff.finalize(); err != nil {
+-					ctx.Logger().Error(
+-						err,
+-						"failed to finalize diff",
+-						"commit", currentCommit.Hash,
+-						"diff", currentDiff.PathB,
+-						"size", currentDiff.Len(),
+-						"latest_state", latestState.String(),
+-					)
+-				}
+-				diffChan <- currentDiff
+-			}
+-			currentDiff = diff(currentCommit, withPathB(currentDiff.PathB))
+-
+-			words := bytes.Split(line, []byte(" "))
+-			if len(words) >= 3 {
+-				startSlice := bytes.Split(words[2], []byte(","))
+-				lineStart, err := strconv.Atoi(string(startSlice[0]))
+-				if err == nil {
+-					currentDiff.LineStart = lineStart
+-				}
+-			}
+-		case isHunkContextLine(latestState, line):
+-			if latestState != HunkContentLine {
+-				latestState = HunkContentLine
+-			}
+-			// TODO: Why do we care about this? It creates empty lines in the diff. If there are no plusLines, it's just newlines.
+-			if err := currentDiff.write([]byte("\n")); err != nil {
+-				ctx.Logger().Error(err, "failed to write to diff")
+-			}
+-		case isHunkPlusLine(latestState, line):
+-			if latestState != HunkContentLine {
+-				latestState = HunkContentLine
+-			}
+-
+-			if err := currentDiff.write(line[1:]); err != nil {
+-				ctx.Logger().Error(err, "failed to write to diff")
+-			}
+-			// NoOp. We only care about additions.
+-		case isHunkMinusLine(latestState, line),
+-			isHunkNewlineWarningLine(latestState, line),
+-			isHunkEmptyLine(latestState, line):
+-			if latestState != HunkContentLine {
+-				latestState = HunkContentLine
+-			}
+-			// NoOp
+-		case isCommitSeparatorLine(latestState, line):
+-			// NoOp
+-		default:
+-			// Skip ahead until we find the next diff or commit.
+-			if latestState == ParseFailure {
+-				continue
+-			}
+-
+-			// Here be dragons...
+-			// Build an informative error message.
+-			err := fmt.Errorf(`invalid line "%s" after state "%s"`, line, latestState)
+-			var logger logr.Logger
+-			if currentCommit != nil && currentCommit.Hash != "" {
+-				logger = ctx.Logger().WithValues("commit", currentCommit.Hash)
+-			} else {
+-				logger = ctx.Logger()
+-			}
+-			logger.Error(err, "failed to parse Git input. Recovering at the latest commit or diff...")
+-
+-			latestState = ParseFailure
+-		}
+-
+-		if int64(currentDiff.Len()) > c.maxDiffSize {
+-			ctx.Logger().V(2).Info(fmt.Sprintf(
+-				"Diff for %s exceeded MaxDiffSize(%d)", currentDiff.PathB, c.maxDiffSize,
+-			))
+-			break
+-		}
++	diffChan <- &Diff{
++		PathB: "__placeholder_will_fail__",
++		Commit: &Commit{
++			Hash:    "__invalid_hash__",
++			Message: strings.Builder{},
++		},
++		contentWriter: bufferwriter.New(),
+ 	}
+-	cleanupParse(ctx, currentCommit, currentDiff, diffChan, &totalLogSize)
+-
+-	ctx.Logger().V(2).Info("finished parsing git log.", "total_log_size", totalLogSize)
+ }
+ 
+ func isMergeLine(isStaged bool, latestState ParseState, line []byte) bool {

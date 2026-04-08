@@ -1,0 +1,118 @@
+diff --git a/cmd/tests/cmd_run_test.go b/cmd/tests/cmd_run_test.go
+index 233825c00..425aa5f80 100644
+--- a/cmd/tests/cmd_run_test.go
++++ b/cmd/tests/cmd_run_test.go
+@@ -1072,6 +1072,113 @@ func TestAbortedByTestAbortFirstInitCode(t *testing.T) {
+ 	assert.NotContains(t, stdout, "bogus summary")
+ }
+ 
++func TestAbortedByTestAbortInNonFirstInitCode(t *testing.T) {
++	t.Parallel()
++	script := `
++		import exec from 'k6/execution';
++
++		export const options = {vus: 3, duration: '5s'};
++
++		if (__VU > 1) {
++			exec.test.abort('foo');
++		}
++
++		export default function () {};
++
++		export function handleSummary() { return {stdout: '\n\n\nbogus summary\n\n\n'};}
++	`
++
++	testAbortedByScriptTestAbort(t, script, runTestWithNoLinger)
++}
++
++func TestAbortedByScriptAbortInVUCode(t *testing.T) {
++	t.Parallel()
++	script := `
++		import exec from 'k6/execution';
++		export default function () {
++			exec.test.abort('foo');
++		};
++		export function handleSummary() { return {stdout: '\n\n\nbogus summary\n\n\n'};}
++	`
++
++	t.Run("noLinger", func(t *testing.T) {
++		t.Parallel()
++		testAbortedByScriptTestAbort(t, script, runTestWithNoLinger)
++	})
++
++	t.Run("withLinger", func(t *testing.T) {
++		t.Parallel()
++		testAbortedByScriptTestAbort(t, script, runTestWithLinger)
++	})
++}
++
++func TestAbortedByScriptAbortInVUCodeInGroup(t *testing.T) {
++	t.Parallel()
++	script := `
++		import exec from 'k6/execution';
++        import { group } from 'k6';
++		export default function () {
++            group("here", () => {
++                exec.test.abort('foo');
++            });
++		};
++		export function handleSummary() { return {stdout: '\n\n\nbogus summary\n\n\n'};}
++	`
++
++	t.Run("noLinger", func(t *testing.T) {
++		t.Parallel()
++		testAbortedByScriptTestAbort(t, script, runTestWithNoLinger)
++	})
++
++	t.Run("withLinger", func(t *testing.T) {
++		t.Parallel()
++		testAbortedByScriptTestAbort(t, script, runTestWithLinger)
++	})
++}
++
++func TestAbortedByScriptAbortInSetup(t *testing.T) {
++	t.Parallel()
++	script := `
++		import exec from 'k6/execution';
++		export function setup() {
++			exec.test.abort('foo');
++		}
++		export default function () {};
++		export function handleSummary() { return {stdout: '\n\n\nbogus summary\n\n\n'};}
++	`
++
++	t.Run("noLinger", func(t *testing.T) {
++		t.Parallel()
++		testAbortedByScriptTestAbort(t, script, runTestWithNoLinger)
++	})
++	t.Run("withLinger", func(t *testing.T) {
++		t.Parallel()
++		testAbortedByScriptTestAbort(t, script, runTestWithLinger)
++	})
++}
++
++func TestAbortedByScriptAbortInTeardown(t *testing.T) {
++	t.Parallel()
++	script := `
++		import exec from 'k6/execution';
++		export function teardown() {
++			exec.test.abort('foo');
++		}
++		export default function () {};
++		export function handleSummary() { return {stdout: '\n\n\nbogus summary\n\n\n'};}
++	`
++
++	t.Run("noLinger", func(t *testing.T) {
++		t.Parallel()
++		testAbortedByScriptTestAbort(t, script, runTestWithNoLinger)
++	})
++
++	t.Run("withLinger", func(t *testing.T) {
++		t.Parallel()
++		testAbortedByScriptTestAbort(t, script, runTestWithLinger)
++	})
++}
++
+ func testAbortedByScriptTestAbort(t *testing.T, script string, runTest func(*testing.T, *GlobalTestState)) {
+ 	ts := getSimpleCloudOutputTestState(
+ 		t, script, nil, cloudapi.RunStatusAbortedUser, cloudapi.ResultStatusPassed, exitcodes.ScriptAborted,

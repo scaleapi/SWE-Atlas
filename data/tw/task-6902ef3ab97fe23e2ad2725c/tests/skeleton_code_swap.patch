@@ -1,0 +1,29 @@
+diff --git a/js/modules/k6/http/request.go b/js/modules/k6/http/request.go
+index 5669f33b0..b81fb99a1 100644
+--- a/js/modules/k6/http/request.go
++++ b/js/modules/k6/http/request.go
+@@ -499,22 +499,8 @@ func (c *Client) Batch(reqsV ...sobek.Value) (interface{}, error) {
+ 		return results, nil
+ 	}
+ 
+-	reqCount := len(batchReqs)
+-	errs := httpext.MakeBatchRequests(
+-		c.moduleInstance.vu.Context(), state, batchReqs, reqCount,
+-		int(state.Options.Batch.Int64), int(state.Options.BatchPerHost.Int64),
+-	)
+-
+-	for i := 0; i < reqCount; i++ {
+-		if e := <-errs; e != nil && err == nil { // Save only the first error
+-			err = e
+-		}
+-	}
+-	for _, req := range batchReqs {
+-		if req.Response != nil {
+-			c.processResponse(req.Response, req.ParsedHTTPRequest.ResponseType)
+-		}
+-	}
++	// Skeleton: no batch request execution
++	_ = batchReqs
+ 	return results, err
+ }
+ 

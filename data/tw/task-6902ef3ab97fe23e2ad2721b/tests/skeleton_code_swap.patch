@@ -1,0 +1,48 @@
+diff --git a/scapy/fields.py b/scapy/fields.py
+index d6f632c8..5a3c0e92 100644
+--- a/scapy/fields.py
++++ b/scapy/fields.py
+@@ -3796,41 +3796,8 @@ class BitExtendedField(Field[Optional[int], bytes]):
+ 
+     def extended2str(self, x):
+         # type: (Optional[int]) -> bytes
+-        if x is None:
+-            return b""
+-        x = int(x)
+-        s = []
+-        LSByte = True
+-        FX_Missing = True
+-        bits = 0b0
+-        i = 0
+-        while (x > 0 or FX_Missing):
+-            if i == 8:
+-                # End of byte
+-                i = 0
+-                s.append(bits)
+-                bits = 0b0
+-                FX_Missing = True
+-            else:
+-                if i % 8 == self.extension_bit:
+-                    # This is extension bit
+-                    if LSByte:
+-                        bits = bits | 0b0 << i
+-                        LSByte = False
+-                    else:
+-                        bits = bits | 0b1 << i
+-                    FX_Missing = False
+-                else:
+-                    bits = bits | (x & 0b1) << i
+-                    x = x >> 1
+-                # Still some bits
+-                i = i + 1
+-        s.append(bits)
+-
+-        result = "".encode()
+-        for x in s[:: -1]:
+-            result = result + struct.pack(">B", x)
+-        return result
++        # TODO: Implement this function
++        pass
+ 
+     def __init__(self, name, default, extension_bit):
+         # type: (str, Optional[Any], int) -> None

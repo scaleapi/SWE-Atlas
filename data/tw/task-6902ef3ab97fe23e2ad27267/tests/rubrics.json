@@ -1,0 +1,90 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6f446f6a01ca0a4fe22659acf4027d40",
+    "title": "1.1: Tests basic lock by acquiring, holding for a non-zero duration, then releasing"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9492fedc354f12f0c4bfc9ec6faa0778",
+    "title": "1.3: Tests two simultaneous lock attempts on the same resource where the second blocks until the first releases"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "bb93acb78c61d3c5ed2b47a48f756f9b",
+    "title": "1.4: Tests three concurrent lock attempts on the same resource using goroutines"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "ca13dfaf0ed74e5942b596900a46b4ed",
+    "title": "1.5: The three-lock test uses synchronization to wait for all goroutines to complete"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "bc18e94ef05c2bc17744c0ef263a6623",
+    "title": "1.7: Tests that two different resources can be locked simultaneously without blocking"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "810b3737fc0de45446b6c3e18f725245",
+    "title": "2.1: Places all distributed locking tests in the internal/dsync directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "215ba66a9368291d02e7e49b7f453692",
+    "title": "3.1: All tests use Go's standard testing package with *testing.T parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "71029d7cb11001170bb4d16808bd96ee",
+    "title": "3.2: All tests follow the naming pattern Test<Description> with capital T prefix"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "028a2e7feacc4958ed8beef2b1aa68d7",
+    "title": "3.3: All tests use the NewDRWMutex function to create mutex instances"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "6d0124b6cd7c9531d5ad763cb1f31b97",
+    "title": "3.4: All tests use context.Background() when calling Unlock"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "8145e49b983e09e8ff1f307eb8718a4f",
+    "title": "4.1: Concurrent lock tests use goroutines with appropriate synchronization primitives"
+  }
+]

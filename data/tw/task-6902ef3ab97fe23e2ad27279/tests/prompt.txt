@@ -1,0 +1,9 @@
+The WebSocket module in k6 is missing some integration tests.
+
+The WebSocket connection functionality is working correctly, but we're missing integration tests that cover the core session behaviours. Please write the integration tests for each of the following scenarios:
+
+1. Basic WebSocket connection over ws:// protocol
+2. Secure WebSocket connection over wss:// protocol with TLS
+3. WebSocket "open" event handling
+4. WebSocket message send and receive
+5. WebSocket ping/pong mechanism

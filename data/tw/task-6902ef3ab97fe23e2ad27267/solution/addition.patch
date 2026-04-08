@@ -1,0 +1,155 @@
+diff --git a/internal/dsync/dsync_test.go b/internal/dsync/dsync_test.go
+index f9517de6e..9af0359d7 100644
+--- a/internal/dsync/dsync_test.go
++++ b/internal/dsync/dsync_test.go
+@@ -61,6 +61,150 @@ func TestMain(m *testing.M) {
+ 	os.Exit(code)
+ }
+ 
++func TestSimpleLock(t *testing.T) {
++	dm := NewDRWMutex(ds, "test")
++
++	dm.Lock(id, source)
++
++	// fmt.Println("Lock acquired, waiting...")
++	time.Sleep(testDrwMutexRefreshCallTimeout)
++
++	dm.Unlock(context.Background())
++}
++
++func TestSimpleLockUnlockMultipleTimes(t *testing.T) {
++	dm := NewDRWMutex(ds, "test")
++
++	dm.Lock(id, source)
++	time.Sleep(time.Duration(10+(rand.Float32()*50)) * time.Millisecond)
++	dm.Unlock(context.Background())
++
++	dm.Lock(id, source)
++	time.Sleep(time.Duration(10+(rand.Float32()*50)) * time.Millisecond)
++	dm.Unlock(context.Background())
++
++	dm.Lock(id, source)
++	time.Sleep(time.Duration(10+(rand.Float32()*50)) * time.Millisecond)
++	dm.Unlock(context.Background())
++
++	dm.Lock(id, source)
++	time.Sleep(time.Duration(10+(rand.Float32()*50)) * time.Millisecond)
++	dm.Unlock(context.Background())
++
++	dm.Lock(id, source)
++	time.Sleep(time.Duration(10+(rand.Float32()*50)) * time.Millisecond)
++	dm.Unlock(context.Background())
++}
++
++// Test two locks for same resource, one succeeds, one fails (after timeout)
++func TestTwoSimultaneousLocksForSameResource(t *testing.T) {
++	dm1st := NewDRWMutex(ds, "aap")
++	dm2nd := NewDRWMutex(ds, "aap")
++
++	dm1st.Lock(id, source)
++
++	// Release lock after 10 seconds
++	go func() {
++		time.Sleep(5 * testDrwMutexAcquireTimeout)
++		// fmt.Println("Unlocking dm1")
++
++		dm1st.Unlock(context.Background())
++	}()
++
++	dm2nd.Lock(id, source)
++
++	// fmt.Printf("2nd lock obtained after 1st lock is released\n")
++	time.Sleep(testDrwMutexRefreshCallTimeout * 2)
++
++	dm2nd.Unlock(context.Background())
++}
++
++// Test three locks for same resource, one succeeds, one fails (after timeout)
++func TestThreeSimultaneousLocksForSameResource(t *testing.T) {
++	dm1st := NewDRWMutex(ds, "aap")
++	dm2nd := NewDRWMutex(ds, "aap")
++	dm3rd := NewDRWMutex(ds, "aap")
++
++	dm1st.Lock(id, source)
++	started := time.Now()
++	var expect time.Duration
++	// Release lock after 10 seconds
++	go func() {
++		// TOTAL
++		time.Sleep(2 * testDrwMutexAcquireTimeout)
++		// fmt.Println("Unlocking dm1")
++
++		dm1st.Unlock(context.Background())
++	}()
++	expect += 2 * testDrwMutexAcquireTimeout
++
++	var wg sync.WaitGroup
++	wg.Add(2)
++
++	go func() {
++		defer wg.Done()
++
++		dm2nd.Lock(id, source)
++
++		// Release lock after 10 seconds
++		go func() {
++			time.Sleep(2 * testDrwMutexAcquireTimeout)
++			// fmt.Println("Unlocking dm2")
++
++			dm2nd.Unlock(context.Background())
++		}()
++
++		dm3rd.Lock(id, source)
++
++		// fmt.Printf("3rd lock obtained after 1st & 2nd locks are released\n")
++		time.Sleep(testDrwMutexRefreshCallTimeout)
++
++		dm3rd.Unlock(context.Background())
++	}()
++	expect += 2*testDrwMutexAcquireTimeout + testDrwMutexRefreshCallTimeout
++
++	go func() {
++		defer wg.Done()
++
++		dm3rd.Lock(id, source)
++
++		// Release lock after 10 seconds
++		go func() {
++			time.Sleep(2 * testDrwMutexAcquireTimeout)
++			// fmt.Println("Unlocking dm3")
++
++			dm3rd.Unlock(context.Background())
++		}()
++
++		dm2nd.Lock(id, source)
++
++		// fmt.Printf("2nd lock obtained after 1st & 3rd locks are released\n")
++		time.Sleep(testDrwMutexRefreshCallTimeout)
++
++		dm2nd.Unlock(context.Background())
++	}()
++	expect += 2*testDrwMutexAcquireTimeout + testDrwMutexRefreshCallTimeout
++
++	wg.Wait()
++	// We expect at least 3 x 2 x testDrwMutexAcquireTimeout to have passed
++	elapsed := time.Since(started)
++	if elapsed < expect {
++		t.Errorf("expected at least %v time have passed, however %v passed", expect, elapsed)
++	}
++	t.Logf("expected at least %v time have passed, %v passed", expect, elapsed)
++}
++
++// Test two locks for different resources, both succeed
++func TestTwoSimultaneousLocksForDifferentResources(t *testing.T) {
++	dm1 := NewDRWMutex(ds, "aap")
++	dm2 := NewDRWMutex(ds, "noot")
++
++	dm1.Lock(id, source)
++	dm2.Lock(id, source)
++	dm1.Unlock(context.Background())
++	dm2.Unlock(context.Background())
++}
++
+ // Test refreshing lock - refresh should always return true
+ func TestSuccessfulLockRefresh(t *testing.T) {
+ 	if testing.Short() {

@@ -1,0 +1,202 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b6277c62284d98226693a70f65fee44b",
+    "title": "1.1: Tests that the exporter produces a manifest containing entries for all documents and associated metadata (tags, correspondents, document types)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "758fc21574d05c46379982eff1ef9629",
+    "title": "1.2: Tests that exported document files exist on disk after export"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "fc151aa76fc3f7a052ea8324bb50c9d8",
+    "title": "1.3: Tests that exported file checksums are validated against stored values"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b9fa33de2c0bf94bd092eaba8c758463",
+    "title": "1.4: Tests that re-importing into a clean database restores all documents"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "1b85f819ca42641b1039bd30a063c4eb",
+    "title": "1.5: Tests that re-import restores associated metadata (tags, correspondents, document types)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "94b2bd29583a2d4dfd24846c212f8a44",
+    "title": "1.6: Tests that a sanity check passes after re-import with no issues"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "2e523cea1c922b6991ec66406791214a",
+    "title": "1.7: Tests that unchanged files are not redundantly re-copied on repeated export"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "dd3370ad2a88ee376e1a03eddf9df00b",
+    "title": "1.8: Tests that modifying a file's timestamp triggers a re-copy on the next export"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "2f314612bd591b054cebf3e7e8298333",
+    "title": "1.9: Tests that a document with an altered checksum is re-copied when checksum comparison mode is enabled"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "43c2c8adc7bb0e5120592cd8d962ceea",
+    "title": "1.10: Tests that the manifest excludes a deleted document after re-export"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "39ca0bd81af74b6e9256801780659bcb",
+    "title": "1.11: Tests that an orphaned exported file persists on disk without the delete option"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "26f1b57bbbe22871670c617f28c5f826",
+    "title": "1.12: Tests that an orphaned exported file is removed when the delete option is enabled"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9f0a4250b3156cb2ea23246938fca1c6",
+    "title": "1.13: Tests that files are exported into a directory structure based on a custom filename format"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "683a6be1a1679c00a5e14726df81e1dd",
+    "title": "1.14: Tests that files are relocated when document metadata changes between exports"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "3b6b8b3d8f79bf491734b08d406079e4",
+    "title": "1.15: Tests that old directories are cleaned up after file relocation with the delete option"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "8737c33bc6302556ef58a85bb426ceae",
+    "title": "2.1: Places the full round-trip export and import test in documents/tests/test_management_exporter.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "b59b8002442af395c70fcee26d1f8bc4",
+    "title": "2.2: Places the incremental time-based export test in documents/tests/test_management_exporter.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "114414cf5c0e94aa81d5b5c9ae272166",
+    "title": "2.3: Places the checksum comparison export test in documents/tests/test_management_exporter.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "b5cf1f5bf355c655d350a9aae91eb5f8",
+    "title": "2.4: Places the deleted document export test in documents/tests/test_management_exporter.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "771912f6f0922478f14918e9edb45614",
+    "title": "2.5: Places the filename format relocation test in documents/tests/test_management_exporter.py"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "9fb612d90c8c523805ac560b04028c02",
+    "title": "3.1: All tests use Django's TestCase framework via the existing TestExportImport class"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "c2b085be3098f7874a7d39ebd64155da",
+    "title": "3.2: All tests follow the test_<name> naming pattern"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "81c5415e8ed90de71c8df9b11f3673c0",
+    "title": "3.3: All tests use self.assert* style assertions from Django/unittest"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "b5c52c207df6a3dc5470a2638cc1f6a1",
+    "title": "4.1: Follows the pattern of copying sample document files into the media directory before exporting, for tests that perform exports"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "5386191dfbc1a812ce1ef05fbea79b9a",
+    "title": "4.2: Follows the pattern of using the _do_export helper method to invoke the document exporter command"
+  }
+]

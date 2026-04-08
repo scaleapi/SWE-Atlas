@@ -1,0 +1,5 @@
+Can you add some tests for the screen margin behavior? We're missing coverage for:
+
+Specifically, cover scrolling when only the bottom margin is set, when only the top margin is set, and when both top and bottom margins are configured.
+
+Write 1 unit test for each case above for natural scrolling.

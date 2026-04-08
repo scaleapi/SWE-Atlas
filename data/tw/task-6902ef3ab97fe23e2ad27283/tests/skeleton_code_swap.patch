@@ -1,0 +1,60 @@
+diff --git a/sftpd/transfer.go b/sftpd/transfer.go
+index 7ec2fa55..de1cdd2c 100644
+--- a/sftpd/transfer.go
++++ b/sftpd/transfer.go
+@@ -119,54 +119,7 @@ func (t *Transfer) WriteAt(p []byte, off int64) (n int, err error) {
+ // If there is an error no action will be executed and, in atomic mode, we try to delete
+ // the temporary file
+ func (t *Transfer) Close() error {
+-	t.lock.Lock()
+-	defer t.lock.Unlock()
+-	if t.isFinished {
+-		return errTransferClosed
+-	}
+-	err := t.closeIO()
+-	t.isFinished = true
+-	numFiles := 0
+-	if t.isNewFile {
+-		numFiles = 1
+-	}
+-	t.checkDownloadSize()
+-	if t.transferType == transferUpload && t.file != nil && t.file.Name() != t.path {
+-		if t.transferError == nil || uploadMode == uploadModeAtomicWithResume {
+-			err = os.Rename(t.file.Name(), t.path)
+-			logger.Debug(logSender, t.connectionID, "atomic upload completed, rename: %#v -> %#v, error: %v",
+-				t.file.Name(), t.path, err)
+-		} else {
+-			err = os.Remove(t.file.Name())
+-			logger.Warn(logSender, t.connectionID, "atomic upload completed with error: \"%v\", delete temporary file: %#v, "+
+-				"deletion error: %v", t.transferError, t.file.Name(), err)
+-			if err == nil {
+-				numFiles--
+-				t.bytesReceived = 0
+-			}
+-		}
+-	}
+-	if t.transferError == nil {
+-		elapsed := time.Since(t.start).Nanoseconds() / 1000000
+-		if t.transferType == transferDownload {
+-			logger.TransferLog(downloadLogSender, t.path, elapsed, t.bytesSent, t.user.Username, t.connectionID, t.protocol)
+-			go executeAction(operationDownload, t.user.Username, t.path, "", "", t.bytesSent)
+-		} else {
+-			logger.TransferLog(uploadLogSender, t.path, elapsed, t.bytesReceived, t.user.Username, t.connectionID, t.protocol)
+-			go executeAction(operationUpload, t.user.Username, t.path, "", "", t.bytesReceived+t.minWriteOffset)
+-		}
+-	} else {
+-		logger.Warn(logSender, t.connectionID, "transfer error: %v, path: %#v", t.transferError, t.path)
+-		if err == nil {
+-			err = t.transferError
+-		}
+-	}
+-	metrics.TransferCompleted(t.bytesSent, t.bytesReceived, t.transferType, t.transferError)
+-	removeTransfer(t)
+-	if t.transferType == transferUpload && (numFiles != 0 || t.bytesReceived > 0) {
+-		dataprovider.UpdateUserQuota(dataProvider, t.user, numFiles, t.bytesReceived, false)
+-	}
+-	return err
++	return nil
+ }
+ 
+ func (t *Transfer) closeIO() error {

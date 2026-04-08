@@ -1,0 +1,27 @@
+diff --git a/internal/target/queue/timewheel.go b/internal/target/queue/timewheel.go
+index 4e23404..00c8f08 100644
+--- a/internal/target/queue/timewheel.go
++++ b/internal/target/queue/timewheel.go
+@@ -36,20 +36,8 @@ func NewTimeWheel(dispatch func(TimeSlot)) *TimeWheel {
+ }
+ 
+ func (tw *TimeWheel) Add(target time.Time, value interface{}) {
+-	if atomic.LoadUint32(&tw.stopped) == 1 {
+-		// Already stopped, ignore.
+-		return
+-	}
+-
+-	if value == nil {
+-		panic("can't insert nil objects into TimeWheel queue")
+-	}
+-
+-	tw.slotsLock.Lock()
+-	tw.slots.PushBack(TimeSlot{Time: target, Value: value})
+-	tw.slotsLock.Unlock()
+-
+-	tw.updateNotify <- target
++	// TODO: Implement Add functionality
++	panic("Add not implemented")
+ }
+ 
+ func (tw *TimeWheel) Close() {

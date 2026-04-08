@@ -1,0 +1,411 @@
+diff --git a/js/modules/k6/grpc/stream_test.go b/js/modules/k6/grpc/stream_test.go
+index 715aa850a..2f0478091 100644
+--- a/js/modules/k6/grpc/stream_test.go
++++ b/js/modules/k6/grpc/stream_test.go
+@@ -46,8 +46,232 @@ func TestStream_InvalidHeader(t *testing.T) {
+ 	assert.ErrorContains(t, err, `method "/foo/bar" not found in file descriptors`)
+ }
+ 
++func TestStream_RequestHeaders(t *testing.T) {
++	t.Parallel()
++
++	ts := newTestState(t)
++
++	var registeredMetadata metadata.MD
++	stub := &featureExplorerStub{}
++	stub.listFeatures = func(_ *grpcservice.Rectangle, stream grpcservice.FeatureExplorer_ListFeaturesServer) error {
++		// collect metadata from the stream context
++		md, ok := metadata.FromIncomingContext(stream.Context())
++		if ok {
++			registeredMetadata = md
++		}
++
++		return nil
++	}
++
++	grpcservice.RegisterFeatureExplorerServer(ts.httpBin.ServerGRPC, stub)
++
++	initString := codeBlock{
++		code: `
++		var client = new grpc.Client();
++		client.load([], "../../../../lib/testutils/grpcservice/route_guide.proto");`,
++	}
++	vuString := codeBlock{
++		code: `
++		client.connect("GRPCBIN_ADDR");
++		let stream = new grpc.Stream(client, "main.FeatureExplorer/ListFeatures", { metadata: { "X-Load-Tester": "k6" } })
++		stream.write({
++			lo: {
++			  latitude: 400000000,
++			  longitude: -750000000,
++			},
++			hi: {
++			  latitude: 420000000,
++			  longitude: -730000000,
++			},
++		});
++		`,
++	}
++
++	val, err := ts.Run(initString.code)
++	assertResponse(t, initString, err, val, ts)
++
++	ts.ToVUContext()
++
++	val, err = ts.RunOnEventLoop(vuString.code)
++
++	assertResponse(t, vuString, err, val, ts)
++
++	// Check that the metadata was registered
++	assert.Len(t, registeredMetadata["x-load-tester"], 1)
++	assert.Equal(t, registeredMetadata["x-load-tester"][0], "k6")
++}
++
++func TestStream_ErrorHandling(t *testing.T) {
++	t.Parallel()
++
++	ts := newTestState(t)
++
++	stub := &featureExplorerStub{}
++
++	savedFeatures := []*grpcservice.Feature{
++		{
++			Name: "foo",
++			Location: &grpcservice.Point{
++				Latitude:  1,
++				Longitude: 2,
++			},
++		},
++		{
++			Name: "bar",
++			Location: &grpcservice.Point{
++				Latitude:  3,
++				Longitude: 4,
++			},
++		},
++	}
++
++	stub.listFeatures = func(_ *grpcservice.Rectangle, stream grpcservice.FeatureExplorer_ListFeaturesServer) error {
++		for _, feature := range savedFeatures {
++			if err := stream.Send(feature); err != nil {
++				return err
++			}
++		}
++
++		return status.Error(codes.Internal, "lorem ipsum")
++	}
++
++	grpcservice.RegisterFeatureExplorerServer(ts.httpBin.ServerGRPC, stub)
++
++	initString := codeBlock{
++		code: `
++		var client = new grpc.Client();
++		client.load([], "../../../../lib/testutils/grpcservice/route_guide.proto");`,
++	}
++	vuString := codeBlock{
++		code: `
++		client.connect("GRPCBIN_ADDR");
++		let stream = new grpc.Stream(client, "main.FeatureExplorer/ListFeatures")
++		stream.write({
++			lo: {
++			  latitude: 1,
++			  longitude: 2,
++			},
++			hi: {
++			  latitude: 1,
++			  longitude: 2,
++			},
++		});
++		stream.on('data', function (data) {
++			call('Feature:' + data.name);
++		})
++		stream.on('error', function (e) {
++			call('Code: ' + e.code + ' Message: ' + e.message);
++		});
++		`,
++	}
++
++	val, err := ts.Run(initString.code)
++	assertResponse(t, initString, err, val, ts)
++
++	ts.ToVUContext()
++
++	val, err = ts.RunOnEventLoop(vuString.code)
++
++	assertResponse(t, vuString, err, val, ts)
++
++	assert.Equal(t,
++		[]string{
++			"Feature:foo",
++			"Feature:bar",
++			"Code: 13 Message: lorem ipsum",
++		},
++		ts.callRecorder.Recorded(),
++	)
++}
++
++// this test case is checking that everything that server sends
++// after the client finished (client.end called) is delivered to the client
++// and the end event is called
++func TestStream_ReceiveAllServerResponsesAfterEnd(t *testing.T) {
++	t.Parallel()
++
++	ts := newTestState(t)
++
++	stub := &featureExplorerStub{}
++
++	savedFeatures := []*grpcservice.Feature{
++		{
++			Name: "foo",
++			Location: &grpcservice.Point{
++				Latitude:  1,
++				Longitude: 2,
++			},
++		},
++		{
++			Name: "bar",
++			Location: &grpcservice.Point{
++				Latitude:  3,
++				Longitude: 4,
++			},
++		},
++	}
++
++	stub.listFeatures = func(_ *grpcservice.Rectangle, stream grpcservice.FeatureExplorer_ListFeaturesServer) error {
++		for _, feature := range savedFeatures {
++			// adding a delay to make server response "slower"
++			time.Sleep(200 * time.Millisecond)
++
++			if err := stream.Send(feature); err != nil {
++				return err
++			}
++		}
++
++		return nil
++	}
++
++	grpcservice.RegisterFeatureExplorerServer(ts.httpBin.ServerGRPC, stub)
++
++	initString := codeBlock{
++		code: `
++		var client = new grpc.Client();
++		client.load([], "../../../../lib/testutils/grpcservice/route_guide.proto");`,
++	}
++	vuString := codeBlock{
++		code: `
++		client.connect("GRPCBIN_ADDR");
++		let stream = new grpc.Stream(client, "main.FeatureExplorer/ListFeatures")
++		stream.on('data', function (data) {
++			call('Feature:' + data.name);
++		});
++		stream.on('end', function () {
++			call('End called');
++		});
+ 
++		stream.write({
++			lo: {
++			  latitude: 1,
++			  longitude: 2,
++			},
++			hi: {
++			  latitude: 1,
++			  longitude: 2,
++			},
++		});
++		stream.end();
++		`,
++	}
++
++	val, err := ts.Run(initString.code)
++	assertResponse(t, initString, err, val, ts)
+ 
++	ts.ToVUContext()
++
++	val, err = ts.RunOnEventLoop(vuString.code)
++
++	assertResponse(t, vuString, err, val, ts)
++
++	assert.Equal(t, ts.callRecorder.Recorded(), []string{
++		"Feature:foo",
++		"Feature:bar",
++		"End called",
++	},
++	)
++}
+ 
+ func TestStream_ReceiveAllServerResponsesAfterEndWithDiscardedMessages(t *testing.T) {
+ 	t.Parallel()
+@@ -134,6 +358,90 @@ func TestStream_ReceiveAllServerResponsesAfterEndWithDiscardedMessages(t *testin
+ 	}, ts.callRecorder.Recorded())
+ }
+ 
++func TestStream_ReceiveMetadata(t *testing.T) {
++	t.Parallel()
++
++	ts := newTestState(t)
++
++	stub := &featureExplorerStub{}
++
++	savedFeatures := []*grpcservice.Feature{
++		{
++			Name: "foo",
++			Location: &grpcservice.Point{
++				Latitude:  1,
++				Longitude: 2,
++			},
++		},
++		{
++			Name: "bar",
++			Location: &grpcservice.Point{
++				Latitude:  3,
++				Longitude: 4,
++			},
++		},
++	}
++
++	stub.listFeatures = func(_ *grpcservice.Rectangle, stream grpcservice.FeatureExplorer_ListFeaturesServer) error {
++		for _, feature := range savedFeatures {
++			// adding a delay to make server response "slower"
++			time.Sleep(200 * time.Millisecond)
++
++			if err := stream.Send(feature); err != nil {
++				return err
++			}
++		}
++
++		return nil
++	}
++
++	grpcservice.RegisterFeatureExplorerServer(ts.httpBin.ServerGRPC, stub)
++
++	initString := codeBlock{
++		code: `
++		var client = new grpc.Client();
++		client.load([], "../../../../lib/testutils/grpcservice/route_guide.proto");`,
++	}
++	vuString := codeBlock{
++		code: `
++		client.connect("GRPCBIN_ADDR");
++		let stream = new grpc.Stream(client, "main.FeatureExplorer/ListFeatures")
++		stream.on('data', function (data, meta) {
++			call(meta.ts);
++		});
++		stream.on('end', function (_, meta) {
++			call(meta.ts);
++		});
++		stream.write({
++			lo: {
++			  latitude: 1,
++			  longitude: 2,
++			},
++			hi: {
++			  latitude: 1,
++			  longitude: 2,
++			},
++		});
++		stream.end();
++		`,
++	}
++
++	val, err := ts.Run(initString.code)
++	assertResponse(t, initString, err, val, ts)
++
++	ts.ToVUContext()
++
++	val, err = ts.RunOnEventLoop(vuString.code)
++
++	assertResponse(t, vuString, err, val, ts)
++
++	for _, call := range ts.callRecorder.Recorded() {
++		seconds, err := strconv.ParseInt(call, 10, 64)
++		assert.NoError(t, err)
++		metaTS := time.Unix(seconds, 0)
++		assert.WithinDuration(t, time.Now(), metaTS, 1*time.Minute)
++	}
++}
+ 
+ // featureExplorerStub is a stub for FeatureExplorerServer
+ // it has ability to override methods
+@@ -271,6 +579,82 @@ func TestStream_UndefinedHandler(t *testing.T) {
+ 	require.ErrorContains(t, err, "handler for \"data\" event isn't a callable function")
+ }
+ 
++// TestStream_MetricsTagsMetadata tests that the metrics tags are correctly
++// added to samples.
++func TestStream_MetricsTagsMetadata(t *testing.T) {
++	t.Parallel()
++
++	ts := newTestState(t)
++
++	stub := &featureExplorerStub{}
++
++	stub.listFeatures = func(_ *grpcservice.Rectangle, stream grpcservice.FeatureExplorer_ListFeaturesServer) error {
++		return stream.Send(&grpcservice.Feature{
++			Name: "foo",
++			Location: &grpcservice.Point{
++				Latitude:  1,
++				Longitude: 2,
++			},
++		})
++	}
++
++	grpcservice.RegisterFeatureExplorerServer(ts.httpBin.ServerGRPC, stub)
++
++	initString := codeBlock{
++		code: `
++		var client = new grpc.Client();
++		client.load([], "../../../../lib/testutils/grpcservice/route_guide.proto");`,
++	}
++	vuString := codeBlock{
++		code: `
++		client.connect("GRPCBIN_ADDR");
++
++		let params = {
++			tags: { "tag1": "value1" },
++		};
++
++		let stream = new grpc.Stream(client, "main.FeatureExplorer/ListFeatures", params)
++		stream.on('data', function (data) {
++			call('Feature:' + data.name);
++		});
++		stream.on('end', function () {
++			call('End called');
++		});
++
++		stream.write({
++			lo: {
++			  latitude: 1,
++			  longitude: 2,
++			},
++			hi: {
++			  latitude: 1,
++			  longitude: 2,
++			},
++		});
++		stream.end();
++		`,
++	}
++
++	val, err := ts.Run(initString.code)
++	assertResponse(t, initString, err, val, ts)
++
++	ts.ToVUContext()
++
++	val, err = ts.RunOnEventLoop(vuString.code)
++
++	assertResponse(t, vuString, err, val, ts)
++
++	expTags := map[string]string{"tag1": "value1"}
++
++	samplesBuf := metrics.GetBufferedSamples(ts.samples)
++
++	assert.Len(t, samplesBuf, 4)
++	for _, samples := range samplesBuf {
++		for _, sample := range samples.GetSamples() {
++			assertTags(t, sample, expTags)
++		}
++	}
++}
+ 
+ func assertTags(t *testing.T, sample metrics.Sample, tags map[string]string) {
+ 	for k, v := range tags {

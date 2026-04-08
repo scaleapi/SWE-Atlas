@@ -1,0 +1,194 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "993b84271e549e51e194905c67f64444",
+    "title": "1.1: Tests that HealObject restores an object when its data is removed from a disk"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d32edd316b4b5beffbfe71d9a600a7fe",
+    "title": "1.2: Tests that HealObject repairs an object when its metadata has an outdated modification time"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "4121efbbdfb1f1384995ecb385d375ab",
+    "title": "1.3: Tests that unreferenced data parts are removed during the healing process"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "fbb18cf98b381cc033ceec4dd8fde3c7",
+    "title": "1.4: Tests that HealBucket recreates a bucket when it is missing from a disk"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f6a5464ac522146eb6716972c0b8c73b",
+    "title": "1.5: Tests that HealObject restores a versioned object when disk data is missing"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "e03312f0d46c264b4bdf9b6c667a529c",
+    "title": "1.6: Tests that HealObject repairs versioned objects with outdated metadata"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b800dce5040a3b6b89ae133fd2d06f3d",
+    "title": "1.7: Tests that delete markers created under quorum loss are healed"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "137454f99d2a14d8ca7c55d755ddb01e",
+    "title": "1.8: Tests that objects created under quorum loss are healed with updated version count"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "58907da7b0cef8851c2da49f3292b14e",
+    "title": "1.9: Tests that deleting a specific version under quorum loss is healed with updated version count"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "ce7b19b5ccd483236cd6d08d776ae2cc",
+    "title": "1.10: Tests that multipart objects are healed when metadata is missing from parity disks"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6372318d17e6bd310a29ea2864ee0659",
+    "title": "1.12: Tests that HealObject restores an object when its xl.meta file is deleted"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "356010226d74a4775d0cdf861e4f7a49",
+    "title": "1.13: Tests that HealObject repairs an object when its xl.meta file contains corrupted data"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "958dd36dfaab64baf7406b9b585fedf9",
+    "title": "1.14: Tests that HealObject returns an error when metadata is missing beyond read quorum"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d35dd99fa4ad5f5dd356218b5f2faa71",
+    "title": "2.1: Places the test for basic healing scenarios in the cmd directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d4fc5c51d625d67c7b08a383590e16a6",
+    "title": "2.2: Places the test for versioned healing scenarios in the cmd directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "99313c2c1a6415afa3322671a79ef69d",
+    "title": "2.3: Places the test for dangling object handling in the cmd directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4b9f3ef919519feef9145f41b1d842b2",
+    "title": "2.4: Places the test for multipart object healing in the cmd directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "cb2805fe1f8950cacf78499e59052f04",
+    "title": "2.5: Places the test for corrupted metadata healing in the cmd directory"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e89c93e788337fba0e05d504ed968830",
+    "title": "3.1: All tests use the Go testing package with *testing.T parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e426d351544a6cb38713613a42daba67",
+    "title": "3.2: All tests follow the Test<Name> naming convention"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "a311e51991a0a7def6d12dd70b826130",
+    "title": "3.3: All tests use the context.WithCancel pattern with deferred cancellation"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "5624833d277bba8d823898b4127a7fc5",
+    "title": "3.4: All tests use t.Fatal or t.Fatalf for critical failures"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d07cd1d34de382b8c2c2eabe831eec88",
+    "title": "4.1: Tests initialize erasure-coded storage with multiple disks"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "572fcd3db086e5ebff65626502b43c7e",
+    "title": "4.2: Tests clean up temporary disk directories after completion"
+  }
+]

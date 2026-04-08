@@ -1,0 +1,7 @@
+## Model Patch (Tests Added)
+{model_edits}
+
+## Model Manifest (Claimed Tests)
+{model_answer}
+
+Evaluate whether the tests described in the model manifest exactly match the tests that were actually added in the model patch.

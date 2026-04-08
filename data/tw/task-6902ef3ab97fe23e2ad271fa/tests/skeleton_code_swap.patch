@@ -1,0 +1,90 @@
+diff --git a/app/email_utils.py b/app/email_utils.py
+index 742806de..83e27ea7 100644
+--- a/app/email_utils.py
++++ b/app/email_utils.py
+@@ -951,84 +951,7 @@ def decode_text(text: str, encoding: EmailEncoding = EmailEncoding.NO) -> str:
+ def add_header(
+     msg: Message, text_header, html_header=None, subject_prefix=None
+ ) -> Message:
+-    if not html_header:
+-        html_header = text_header.replace("\n", "<br>")
+-
+-    if subject_prefix is not None:
+-        subject = msg[headers.SUBJECT]
+-        if not subject:
+-            msg.add_header(headers.SUBJECT, subject_prefix)
+-        else:
+-            subject = f"{subject_prefix} {subject}"
+-            msg.replace_header(headers.SUBJECT, subject)
+-
+-    content_type = msg.get_content_type().lower()
+-    if content_type == "text/plain":
+-        encoding = get_encoding(msg)
+-        payload = msg.get_payload()
+-        if isinstance(payload, str):
+-            clone_msg = copy(msg)
+-            new_payload = f"""{text_header}
+-------------------------------
+-{decode_text(payload, encoding)}"""
+-            clone_msg.set_payload(encode_text(new_payload, encoding))
+-            return clone_msg
+-    elif content_type == "text/html":
+-        encoding = get_encoding(msg)
+-        payload = msg.get_payload()
+-        if isinstance(payload, str):
+-            new_payload = f"""<table width="100%" style="width: 100%; -premailer-width: 100%; -premailer-cellpadding: 0;
+-  -premailer-cellspacing: 0; margin: 0; padding: 0;">
+-    <tr>
+-        <td style="border-bottom:1px dashed #5675E2; padding: 10px 0px">{html_header}</td>
+-    </tr>
+-    <tr>
+-        <td>
+-        {decode_text(payload, encoding)}
+-        </td>
+-    </tr>
+-</table>
+-"""
+-
+-            clone_msg = copy(msg)
+-            clone_msg.set_payload(encode_text(new_payload, encoding))
+-            return clone_msg
+-    elif content_type in ("multipart/alternative", "multipart/related"):
+-        new_parts = []
+-        for part in msg.get_payload():
+-            if isinstance(part, Message):
+-                new_parts.append(add_header(part, text_header, html_header))
+-            elif isinstance(part, str):
+-                new_parts.append(MIMEText(part))
+-            else:
+-                new_parts.append(part)
+-        clone_msg = copy(msg)
+-        clone_msg.set_payload(new_parts)
+-        return clone_msg
+-
+-    elif content_type in ("multipart/mixed", "multipart/signed"):
+-        new_parts = []
+-        payload = msg.get_payload()
+-        if isinstance(payload, str):
+-            # The message is badly formatted inject as new
+-            new_parts = [MIMEText(text_header, "plain"), MIMEText(payload, "plain")]
+-            clone_msg = copy(msg)
+-            clone_msg.set_payload(new_parts)
+-            return clone_msg
+-        parts = list(payload)
+-        LOG.d("only add header for the first part for %s", content_type)
+-        for ix, part in enumerate(parts):
+-            if ix == 0:
+-                new_parts.append(add_header(part, text_header, html_header))
+-            else:
+-                new_parts.append(part)
+-
+-        clone_msg = copy(msg)
+-        clone_msg.set_payload(new_parts)
+-        return clone_msg
+-
+-    LOG.d("No header added for %s", content_type)
+-    return msg
++    pass
+ 
+ 
+ def replace(msg: Union[Message, str], old, new) -> Union[Message, str]:

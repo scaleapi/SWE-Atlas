@@ -1,0 +1,157 @@
+--- a/src/documents/management/commands/document_exporter.py
++++ b/src/documents/management/commands/document_exporter.py
+@@ -105,153 +105,8 @@
+             self.dump(options["no_progress_bar"])
+ 
+     def dump(self, progress_bar_disable=False):
+-        # 1. Take a snapshot of what files exist in the current export folder
+-        for root, dirs, files in os.walk(self.target):
+-            self.files_in_export_dir.extend(
+-                map(lambda f: os.path.abspath(os.path.join(root, f)), files),
+-            )
++        pass
+ 
+-        # 2. Create manifest, containing all correspondents, types, tags and
+-        # documents
+-        with transaction.atomic():
+-            manifest = json.loads(
+-                serializers.serialize("json", Correspondent.objects.all()),
+-            )
+-
+-            manifest += json.loads(serializers.serialize("json", Tag.objects.all()))
+-
+-            manifest += json.loads(
+-                serializers.serialize("json", DocumentType.objects.all()),
+-            )
+-
+-            documents = Document.objects.order_by("id")
+-            document_map = {d.pk: d for d in documents}
+-            document_manifest = json.loads(serializers.serialize("json", documents))
+-            manifest += document_manifest
+-
+-            manifest += json.loads(
+-                serializers.serialize("json", MailAccount.objects.all()),
+-            )
+-
+-            manifest += json.loads(
+-                serializers.serialize("json", MailRule.objects.all()),
+-            )
+-
+-            manifest += json.loads(
+-                serializers.serialize("json", SavedView.objects.all()),
+-            )
+-
+-            manifest += json.loads(
+-                serializers.serialize("json", SavedViewFilterRule.objects.all()),
+-            )
+-
+-            manifest += json.loads(serializers.serialize("json", Group.objects.all()))
+-
+-            manifest += json.loads(serializers.serialize("json", User.objects.all()))
+-
+-        # 3. Export files from each document
+-        for index, document_dict in tqdm.tqdm(
+-            enumerate(document_manifest),
+-            total=len(document_manifest),
+-            disable=progress_bar_disable,
+-        ):
+-            # 3.1. store files unencrypted
+-            document_dict["fields"]["storage_type"] = Document.STORAGE_TYPE_UNENCRYPTED
+-
+-            document = document_map[document_dict["pk"]]
+-
+-            # 3.2. generate a unique filename
+-            filename_counter = 0
+-            while True:
+-                if self.use_filename_format:
+-                    base_name = generate_filename(
+-                        document,
+-                        counter=filename_counter,
+-                        append_gpg=False,
+-                    )
+-                else:
+-                    base_name = document.get_public_filename(counter=filename_counter)
+-
+-                if base_name not in self.exported_files:
+-                    self.exported_files.append(base_name)
+-                    break
+-                else:
+-                    filename_counter += 1
+-
+-            # 3.3. write filenames into manifest
+-            original_name = base_name
+-            original_target = os.path.join(self.target, original_name)
+-            document_dict[EXPORTER_FILE_NAME] = original_name
+-
+-            thumbnail_name = base_name + "-thumbnail.png"
+-            thumbnail_target = os.path.join(self.target, thumbnail_name)
+-            document_dict[EXPORTER_THUMBNAIL_NAME] = thumbnail_name
+-
+-            if document.has_archive_version:
+-                archive_name = base_name + "-archive.pdf"
+-                archive_target = os.path.join(self.target, archive_name)
+-                document_dict[EXPORTER_ARCHIVE_NAME] = archive_name
+-            else:
+-                archive_target = None
+-
+-            # 3.4. write files to target folder
+-            t = int(time.mktime(document.created.timetuple()))
+-            if document.storage_type == Document.STORAGE_TYPE_GPG:
+-
+-                os.makedirs(os.path.dirname(original_target), exist_ok=True)
+-                with open(original_target, "wb") as f:
+-                    with document.source_file as out_file:
+-                        f.write(GnuPG.decrypted(out_file))
+-                        os.utime(original_target, times=(t, t))
+-
+-                os.makedirs(os.path.dirname(thumbnail_target), exist_ok=True)
+-                with open(thumbnail_target, "wb") as f:
+-                    with document.thumbnail_file as out_file:
+-                        f.write(GnuPG.decrypted(out_file))
+-                        os.utime(thumbnail_target, times=(t, t))
+-
+-                if archive_target:
+-                    os.makedirs(os.path.dirname(archive_target), exist_ok=True)
+-                    with open(archive_target, "wb") as f:
+-                        with document.archive_path as out_file:
+-                            f.write(GnuPG.decrypted(out_file))
+-                            os.utime(archive_target, times=(t, t))
+-            else:
+-                self.check_and_copy(
+-                    document.source_path,
+-                    document.checksum,
+-                    original_target,
+-                )
+-
+-                self.check_and_copy(document.thumbnail_path, None, thumbnail_target)
+-
+-                if archive_target:
+-                    self.check_and_copy(
+-                        document.archive_path,
+-                        document.archive_checksum,
+-                        archive_target,
+-                    )
+-
+-        # 4. write manifest to target forlder
+-        manifest_path = os.path.abspath(os.path.join(self.target, "manifest.json"))
+-
+-        with open(manifest_path, "w") as f:
+-            json.dump(manifest, f, indent=2)
+-
+-        if self.delete:
+-            # 5. Remove files which we did not explicitly export in this run
+-
+-            if manifest_path in self.files_in_export_dir:
+-                self.files_in_export_dir.remove(manifest_path)
+-
+-            for f in self.files_in_export_dir:
+-                os.remove(f)
+-
+-                delete_empty_directories(
+-                    os.path.abspath(os.path.dirname(f)),
+-                    os.path.abspath(self.target),
+-                )
+-
+     def check_and_copy(self, source, source_checksum, target):
+         if os.path.abspath(target) in self.files_in_export_dir:
+             self.files_in_export_dir.remove(os.path.abspath(target))

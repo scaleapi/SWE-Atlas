@@ -1,0 +1,170 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aea1d83862baa333c95f618b0d915631",
+    "title": "1.1: Includes at least one test where the recipient domain has an MX record in the test DNS data"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a30c20dd9eac661c57bb193b7c2c114f",
+    "title": "1.2: Includes at least one test where the recipient domain is represented using address-only DNS data (no MX records)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "85f22fd577b3c132079e894cc217346e",
+    "title": "1.3: Tests that remote delivery fails over to a lower-priority MX server when the preferred (higher-priority) MX server is unreachable"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0936312a1a0faedb571b5ca37bba9148",
+    "title": "1.4: Patch includes at least one test where a single message has recipients in at least two different recipient domains"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "394e758be18b3def25140248c6b3b89c",
+    "title": "1.5: Tests that remote delivery succeeds when connecting to a STARTTLS server with a TLS configuration that causes certificate verification to fail"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "de0dae3eb6f8b4968248f6282eab7502",
+    "title": "2.1: Places the test for basic MX record resolution and delivery in internal/target/remote/remote_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "74b9cbffe1554cfc12a31be96c24b107",
+    "title": "2.2: Places the test for fallback MX delivery using A records in internal/target/remote/remote_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "d29ae5bbd5a24d8a94ae92a833451207",
+    "title": "2.3: Places the test for MX failover behavior in internal/target/remote/remote_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "34ed88175b4f6963ed5b52be747f4d60",
+    "title": "2.4: Places the test for split delivery to multiple domains in internal/target/remote/remote_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ebc5058df69ec3c90afa2fd0c1199a75",
+    "title": "2.5: Places the test for TLS fallback behavior in internal/target/remote/remote_test.go"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fc29f018355257645e6220d46438cd77",
+    "title": "3.1: All tests use the Go testing framework with *testing.T parameter and testutils helper functions"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0f95d7563da540a8ff064860c1907c03",
+    "title": "3.2: All tests follow the naming pattern Test<Feature>_<Scenario> or Test<Feature> for base cases"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e078f5097203461605b6f0c2ee920a39",
+    "title": "3.3: All tests use the Setup-Configure-Execute-Assert structure with SMTP server setup, Target configuration, DoTestDelivery execution, and CheckMsg assertion"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "30bf1d120f8d92985ef1c84149672e14",
+    "title": "3.4: All tests use defer srv.Close() for SMTP server cleanup"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "638fdca9eb256e29c784f22cfedccc03",
+    "title": "3.5: All tests use testutils.DoTestDelivery to execute delivery and be.CheckMsg to verify message receipt"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "f6cc899deebe86e77d5bb6c9265442d1",
+    "title": "4.1: Uses mockdns.Resolver with Zones map to mock DNS resolution for remote delivery tests"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2d214cb6435dd07fad07f1d6110937ed",
+    "title": "4.2: New remote delivery tests include a connection leak check (or equivalent resource-leak verification) for SMTP connections they create"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "cb470b354b0dfbbf3e6aea10676e3e41",
+    "title": "4.3: Uses testutils.SMTPServer or testutils.SMTPServerSTARTTLS to create test SMTP backend and server instances"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "5b6a156d6f3fb2d5dd6b259896d6cc4b",
+    "title": "4.4: All new remote delivery tests configure the Target with a mockdns.Resolver initialized with the test\u2019s Zones"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fdfd7c453a962a84e786c5d22c8de4bc",
+    "title": "4.5: TLS fallback test configures Target.tlsConfig to preserve certificate verification (i.e., does not disable verification) so a cert error can occur"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "a87181c4d6de16f980168b37ff8f7b38",
+    "title": "4.6: Every SMTP server instance created in new remote delivery tests is closed via defer srv.Close() within the same test"
+  }
+]

@@ -1,0 +1,27 @@
+diff --git a/js/modules/k6/execution/execution.go b/js/modules/k6/execution/execution.go
+index 236c177e7..7c4567a2c 100644
+--- a/js/modules/k6/execution/execution.go
++++ b/js/modules/k6/execution/execution.go
+@@ -9,7 +9,7 @@ import (
+ 
+ 	"github.com/grafana/sobek"
+ 
+-	"go.k6.io/k6/errext"
++	_ "go.k6.io/k6/errext" // Keep import for skeleton
+ 	"go.k6.io/k6/js/common"
+ 	"go.k6.io/k6/js/modules"
+ 	"go.k6.io/k6/lib"
+@@ -174,11 +174,8 @@ func (mi *ModuleInstance) newTestInfo() (*sobek.Object, error) {
+ 		// stop the test run
+ 		"abort": func() interface{} {
+ 			return func(msg sobek.Value) {
+-				reason := errext.AbortTest
+-				if msg != nil && !sobek.IsUndefined(msg) {
+-					reason = fmt.Sprintf("%s: %s", reason, msg.String())
+-				}
+-				rt.Interrupt(&errext.InterruptError{Reason: reason})
++				// Skeleton: no-op - does nothing
++				_ = msg
+ 			}
+ 		},
+ 		"options": func() interface{} {

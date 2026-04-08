@@ -1,0 +1,22 @@
+diff --git a/app/alias_utils.py b/app/alias_utils.py
+index 8bd273d7..86ebc119 100644
+--- a/app/alias_utils.py
++++ b/app/alias_utils.py
+@@ -584,15 +584,5 @@ def get_alias_recipient_name(alias: Alias) -> AliasRecipientName:
+     2. If alias has custom domain, and custom domain has name, use it
+     3. Otherwise, use the alias email as the recipient
+     """
+-    if alias.name:
+-        return AliasRecipientName(
+-            name=sl_formataddr((alias.name, alias.email)),
+-            message=f"Put alias name {alias.name} in from header",
+-        )
+-    elif alias.custom_domain:
+-        if alias.custom_domain.name:
+-            return AliasRecipientName(
+-                name=sl_formataddr((alias.custom_domain.name, alias.email)),
+-                message=f"Put domain default alias name {alias.custom_domain.name} in from header",
+-            )
+-    return AliasRecipientName(name=alias.email)
++    # Skeleton: implementation removed for F2P testing
++    return AliasRecipientName(name="")

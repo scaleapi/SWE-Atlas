@@ -1,0 +1,50 @@
+diff --git a/client/lib/url/resembles-url.ts b/client/lib/url/resembles-url.ts
+index 5a8f21a8545..4a4257d6eb0 100644
+--- a/client/lib/url/resembles-url.ts
++++ b/client/lib/url/resembles-url.ts
+@@ -7,44 +7,5 @@
+  * @returns       Does it appear to be a URL?
+  */
+ export default function resemblesUrl( query: string ): boolean {
+-	if ( ! query ) {
+-		return false;
+-	}
+-
+-	let parsedUrl;
+-	try {
+-		parsedUrl = new URL( query );
+-	} catch {
+-		// Do nothing.
+-	}
+-
+-	// If we got an invalid URL, add a protocol and try again.
+-	if ( parsedUrl === undefined ) {
+-		try {
+-			parsedUrl = new URL( 'http://' + query );
+-		} catch {
+-			// Do nothing.
+-		}
+-	}
+-
+-	if ( ! parsedUrl ) {
+-		return false;
+-	}
+-
+-	if ( ! parsedUrl.hostname || parsedUrl.hostname.indexOf( '.' ) === -1 ) {
+-		return false;
+-	}
+-
+-	// Check for a valid-looking TLD
+-	if ( parsedUrl.hostname.lastIndexOf( '.' ) > parsedUrl.hostname.length - 3 ) {
+-		return false;
+-	}
+-
+-	// Make sure the hostname has at least two parts separated by a dot
+-	const hostnameParts = parsedUrl.hostname.split( '.' ).filter( Boolean );
+-	if ( hostnameParts.length < 2 ) {
+-		return false;
+-	}
+-
+-	return true;
++	// TODO: Implement
+ }

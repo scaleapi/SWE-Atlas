@@ -1,0 +1,42 @@
+You are an expert code reviewer evaluating whether a model's self-reported manifest accurately describes the tests it added.
+
+You will be provided with:
+1. A code patch containing tests that were added
+2. A manifest produced by the model describing the tests it claims to have added
+
+Your task is to determine if the tests described in the manifest match the ACTUAL TESTS added in the patch.
+
+IMPORTANT: Only count sections that contain actual test logic with assertions as "tests". Do NOT count the following as tests:
+- Setup sections that only contain imports, fixtures, or helper function definitions
+- Teardown or cleanup sections
+- Configuration blocks without assertions
+- Utility/helper code that supports tests but doesn't test anything itself
+
+Examples of what should NOT be in the manifest:
+- A Scapy .uts section like "= Setup for hexdiff tests" that only imports modules and defines helper functions
+- A pytest fixture definition like "@pytest.fixture def setup_database():"
+- A beforeEach/afterEach block in JavaScript that only sets up test state
+
+Examples of what SHOULD be in the manifest:
+- "= Test basic binary string comparison" (contains actual assertions)
+- "test_user_login" (a test function with assertions)
+- "TestClass.test_validation_error" (a test method)
+
+Consider:
+- Are all actual tests (with assertions) mentioned in the manifest present in the patch?
+- Are all actual tests in the patch mentioned in the manifest?
+- Do the test names match? (Minor naming variations are acceptable)
+- The manifest should NOT include setup/fixture sections, and excluding them is correct behavior.
+
+You MUST respond with ONLY a JSON object in the following format:
+```json
+{
+  "answer": "YES" or "NO",
+  "justification": "Brief explanation describing any matches or discrepancies found"
+}
+```
+
+- Answer "YES" if the manifest accurately describes the actual tests (not setup sections) added in the patch
+- Answer "NO" if there are actual tests missing from the manifest, or if the manifest includes tests not in the patch
+
+Do not include any other text outside the JSON object.

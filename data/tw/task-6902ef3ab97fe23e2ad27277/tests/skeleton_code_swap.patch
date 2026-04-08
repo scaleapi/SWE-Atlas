@@ -1,0 +1,29 @@
+diff --git a/internal/store/queuestore.go b/internal/store/queuestore.go
+index 640f821f5..e2d8bd13a 100644
+--- a/internal/store/queuestore.go
++++ b/internal/store/queuestore.go
+@@ -184,22 +184,8 @@ func (store *QueueStore[I]) writeBytes(key Key, b []byte) (err error) {
+ 
+ // Put - puts an item to the store.
+ func (store *QueueStore[I]) Put(item I) (Key, error) {
+-	store.Lock()
+-	defer store.Unlock()
+-	if uint64(len(store.entries)) >= store.entryLimit {
+-		return Key{}, errLimitExceeded
+-	}
+-	// Generate a new UUID for the key.
+-	uid, err := uuid.NewRandom()
+-	if err != nil {
+-		return Key{}, err
+-	}
+-	key := Key{
+-		Name:      uid.String(),
+-		Extension: store.fileExt,
+-		ItemCount: 1,
+-	}
+-	return key, store.write(key, item)
++	// SKELETON: Implementation removed for F2P testing
++	return Key{}, nil
+ }
+ 
+ // PutRaw - puts the raw bytes to the store

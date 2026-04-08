@@ -1,0 +1,71 @@
+diff --git a/internal/grid/muxclient.go b/internal/grid/muxclient.go
+index 5ec8fb347..92cccafee 100644
+--- a/internal/grid/muxclient.go
++++ b/internal/grid/muxclient.go
+@@ -215,64 +215,8 @@ func (m *muxClient) RequestStateless(h HandlerID, req []byte, out chan<- Respons
+ // 'requests' can be nil, in which case only req is sent as input.
+ // It will however take less resources.
+ func (m *muxClient) RequestStream(h HandlerID, payload []byte, requests chan []byte, responses chan Response) (*Stream, error) {
+-	if m.init {
+-		return nil, errors.New("mux client already used")
+-	}
+-	if responses == nil {
+-		return nil, errors.New("RequestStream: responses channel is nil")
+-	}
+-	m.init = true
+-	m.respMu.Lock()
+-	if m.closed {
+-		m.respMu.Unlock()
+-		return nil, ErrDisconnected
+-	}
+-	m.respWait = responses // Route directly to output.
+-	m.respMu.Unlock()
+-
+-	// Try to grab an initial block.
+-	m.singleResp = false
+-	m.RecvSeq = m.SendSeq // Sync
+-	if cap(requests) > 0 {
+-		m.outBlock = make(chan struct{}, cap(requests))
+-	}
+-	msg := message{
+-		Op:         OpConnectMux,
+-		Handler:    h,
+-		Payload:    payload,
+-		DeadlineMS: uint32(m.deadline.Milliseconds()),
+-	}
+-	msg.setZeroPayloadFlag()
+-	if requests == nil {
+-		msg.Flags |= FlagEOF
+-	}
+-	if m.subroute != nil {
+-		msg.Flags |= FlagSubroute
+-	}
+-
+-	// Send...
+-	err := m.send(msg)
+-	if err != nil {
+-		return nil, err
+-	}
+-	if debugPrint {
+-		fmt.Println("Connecting Mux", m.MuxID, ",to", m.parent.Remote)
+-	}
+-
+-	// Space for one message and an error.
+-	responseCh := make(chan Response, 1)
+-
+-	// Spawn simple disconnect
+-	if requests == nil {
+-		go m.handleOneWayStream(responseCh, responses)
+-		return &Stream{responses: responseCh, Requests: nil, ctx: m.ctx, cancel: m.cancelFn, muxID: m.MuxID}, nil
+-	}
+-
+-	// Deliver responses and send unblocks back to the server.
+-	go m.handleTwowayResponses(responseCh, responses)
+-	go m.handleTwowayRequests(responses, requests)
+-
+-	return &Stream{responses: responseCh, Requests: requests, ctx: m.ctx, cancel: m.cancelFn, muxID: m.MuxID}, nil
++	// SKELETON: Function body removed for F2P testing
++	return nil, ErrDisconnected
+ }
+ 
+ func (m *muxClient) addErrorNonBlockingClose(respHandler chan<- Response, err error) {

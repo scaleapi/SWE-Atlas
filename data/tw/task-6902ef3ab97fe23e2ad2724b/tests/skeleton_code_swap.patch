@@ -1,0 +1,113 @@
+diff --git a/cmd/sts-handlers.go b/cmd/sts-handlers.go
+index 10621d064..8b4331850 100644
+--- a/cmd/sts-handlers.go
++++ b/cmd/sts-handlers.go
+@@ -259,106 +259,8 @@ func (sts *stsAPIHandlers) AssumeRole(w http.ResponseWriter, r *http.Request) {
+ 	claims := stsClaims{}
+ 	defer logger.AuditLog(ctx, w, r, claims)
+ 
+-	// Check auth here (otherwise r.Form will have unexpected values from
+-	// the call to `parseForm` below), but return failure only after we are
+-	// able to validate that it is a valid STS request, so that we are able
+-	// to send an appropriate audit log.
+-	user, apiErrCode := checkAssumeRoleAuth(ctx, r)
+-
+-	if err := parseForm(r); err != nil {
+-		writeSTSErrorResponse(ctx, w, ErrSTSInvalidParameterValue, err)
+-		return
+-	}
+-
+-	if r.Form.Get(stsVersion) != stsAPIVersion {
+-		writeSTSErrorResponse(ctx, w, ErrSTSMissingParameter, fmt.Errorf("Invalid STS API version %s, expecting %s", r.Form.Get(stsVersion), stsAPIVersion))
+-		return
+-	}
+-
+-	action := r.Form.Get(stsAction)
+-	switch action {
+-	case assumeRole:
+-	default:
+-		writeSTSErrorResponse(ctx, w, ErrSTSInvalidParameterValue, fmt.Errorf("Unsupported action %s", action))
+-		return
+-	}
+-
+-	ctx = newContext(r, w, action)
+-
+-	// Validate the authentication result here so that failures will be audit-logged.
+-	if apiErrCode != ErrNone {
+-		stsErr := apiToSTSError(apiErrCode)
+-		// Borrow the description error from the API error code
+-		writeSTSErrorResponse(ctx, w, stsErr, errors.New(errorCodes[apiErrCode].Description))
+-		return
+-	}
+-
+-	if err := claims.populateSessionPolicy(r.Form); err != nil {
+-		writeSTSErrorResponse(ctx, w, ErrSTSInvalidParameterValue, err)
+-		return
+-	}
+-
+-	duration, err := openid.GetDefaultExpiration(r.Form.Get(stsDurationSeconds))
+-	if err != nil {
+-		writeSTSErrorResponse(ctx, w, ErrSTSInvalidParameterValue, err)
+-		return
+-	}
+-
+-	claims[expClaim] = UTCNow().Add(duration).Unix()
+-	claims[parentClaim] = user.AccessKey
+-
+-	// Validate that user.AccessKey's policies can be retrieved - it may not
+-	// be in case the user is disabled.
+-	if _, err = globalIAMSys.PolicyDBGet(user.AccessKey, user.Groups...); err != nil {
+-		writeSTSErrorResponse(ctx, w, ErrSTSInvalidParameterValue, err)
+-		return
+-	}
+-
+-	secret, err := getTokenSigningKey()
+-	if err != nil {
+-		writeSTSErrorResponse(ctx, w, ErrSTSInternalError, err)
+-		return
+-	}
+-
+-	cred, err := auth.GetNewCredentialsWithMetadata(claims, secret)
+-	if err != nil {
+-		writeSTSErrorResponse(ctx, w, ErrSTSInternalError, err)
+-		return
+-	}
+-
+-	// Set the parent of the temporary access key, so that it's access
+-	// policy is inherited from `user.AccessKey`.
+-	cred.ParentUser = user.AccessKey
+-
+-	// Set the newly generated credentials.
+-	updatedAt, err := globalIAMSys.SetTempUser(ctx, cred.AccessKey, cred, "")
+-	if err != nil {
+-		writeSTSErrorResponse(ctx, w, ErrSTSInternalError, err)
+-		return
+-	}
+-
+-	// Call hook for site replication.
+-	if cred.ParentUser != globalActiveCred.AccessKey {
+-		replLogIf(ctx, globalSiteReplicationSys.IAMChangeHook(ctx, madmin.SRIAMItem{
+-			Type: madmin.SRIAMItemSTSAcc,
+-			STSCredential: &madmin.SRSTSCredential{
+-				AccessKey:    cred.AccessKey,
+-				SecretKey:    cred.SecretKey,
+-				SessionToken: cred.SessionToken,
+-				ParentUser:   cred.ParentUser,
+-			},
+-			UpdatedAt: updatedAt,
+-		}))
+-	}
+-
+-	assumeRoleResponse := &AssumeRoleResponse{
+-		Result: AssumeRoleResult{
+-			Credentials: cred,
+-		},
+-	}
+-
+-	assumeRoleResponse.ResponseMetadata.RequestID = w.Header().Get(xhttp.AmzRequestID)
+-	writeSuccessResponseXML(w, encodeResponse(assumeRoleResponse))
++	// SKELETON: Return access denied without processing
++	writeSTSErrorResponse(ctx, w, ErrSTSAccessDenied, errors.New("not implemented"))
+ }
+ 
+ func (sts *stsAPIHandlers) AssumeRoleWithSSO(w http.ResponseWriter, r *http.Request) {

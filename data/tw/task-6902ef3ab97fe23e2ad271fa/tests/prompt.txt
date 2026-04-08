@@ -1,0 +1,10 @@
+I'm missing seven unit tests that validate the below cases:
+
+1. Adding a subject prefix to a message that already contains a Subject header.
+2. Adding a subject prefix to a message that has no Subject field present.
+3. Injecting text and html headers into a plain text message (ASCII charset).
+4. Injecting text and html headers into an HTML message containing markup.
+5. Injecting headers into a "multipart/alternative" message that contains both plain text and HTML parts.
+6. Injecting headers into a multipart message where one of the parts in the payload is the string "invalid" instead of a proper message object.
+7. Injecting headers into the "add_header_multipart.eml" test file that contains structural inconsistencies. 
+

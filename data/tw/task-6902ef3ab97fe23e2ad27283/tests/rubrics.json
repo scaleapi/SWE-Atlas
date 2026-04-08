@@ -1,0 +1,146 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aea1d83862baa333c95f618b0d915631",
+    "title": "1.1: Tests that WriteAt returns error when write offset is below minWriteOffset"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a30c20dd9eac661c57bb193b7c2c114f",
+    "title": "1.3: Tests that Close returns error containing 'incomplete download' when bytesSent is less than expectedSize for download transfers"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "85f22fd577b3c132079e894cc217346e",
+    "title": "1.4: Tests that WriteAt returns error when underlying file handle is closed"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6723f89d601cd32cc08a485b68eb91c9",
+    "title": "1.5: Tests that ReadAt returns error when underlying file handle is closed"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "709d72788c4310922083b0709b0c2f4f",
+    "title": "1.6: Tests that ReadAt returns error on pipe after closeIO() is called"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "917e843903b11056d8f83bb8f2f4337b",
+    "title": "1.7: Tests that WriteAt returns error on pipe after closeIO() is called"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "7aece6b5e4969de68cd9dc35caea9400",
+    "title": "1.8: Tests that Close returns the error set by TransferError in atomic upload mode"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "aad4569795e4677c725066806359b62e",
+    "title": "1.10: Tests that target file is deleted after transfer error in atomic upload mode"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "7fb5dcef82b9c2c58c7dab9ed874fc32",
+    "title": "1.11: Tests that temp file is deleted after transfer error in atomic upload mode"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "006f2d94c8d0ffa35cd86cec03284119",
+    "title": "2.1: Places the test for upload resume with invalid offset in the sftpd package"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "de0dae3eb6f8b4968248f6282eab7502",
+    "title": "2.2: Places the test for incomplete download detection in the sftpd package"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "74b9cbffe1554cfc12a31be96c24b107",
+    "title": "2.3: Places the test for read/write errors with closed handles in the sftpd package"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "49bd4ee87c8b8bed56f81b7470852671",
+    "title": "2.4: Places the test for atomic upload error cleanup in the sftpd package"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "34ed88175b4f6963ed5b52be747f4d60",
+    "title": "3.1: All tests use Go testing framework with func TestXxx(t *testing.T) signature"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ebc5058df69ec3c90afa2fd0c1199a75",
+    "title": "3.2: All tests follow naming pattern TestXxxYyy with Test prefix and CamelCase description"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "12f74e8cbdda385662273ee4f033c363",
+    "title": "3.3: All tests initialize Transfer struct with lock: new(sync.Mutex) field"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "0f95d7563da540a8ff064860c1907c03",
+    "title": "4.1: All tests that create files clean up temporary files at test end"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "30bf1d120f8d92985ef1c84149672e14",
+    "title": "4.2: Sets transferType to transferDownload for the incomplete download test"
+  }
+]

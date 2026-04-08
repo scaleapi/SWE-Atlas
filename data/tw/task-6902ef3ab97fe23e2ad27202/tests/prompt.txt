@@ -1,0 +1,8 @@
+The buildAPIURL function constructs API endpoint URLs from component parts (endpoint, resource type, and repo name). We need test coverage for the following scenarios:
+
+1. Building a valid API URL when all required parameters are provided
+2. Handling the case when the endpoint parameter is empty
+3. Handling the case when the resource type parameter is empty
+4. Handling the case when the repo name parameter is empty
+
+I need 4 unit test total

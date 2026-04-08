@@ -1,0 +1,11 @@
+The integration test coverage for a file-based queue store could use some improvement.
+
+The queue store supports single-item storage, batch storage with compression, and persists items to disk. We need tests that verify the following scenarios:
+
+1. The store enforces its configured maximum item limit when storing items
+2. Items persist correctly when the store is closed and re-opened, and listing and deletion operations work as expected across re-initialization
+3. Multiple items stored as a batch can have their raw encoded bytes retrieved after decompression
+4. Multiple items stored as a batch can be retrieved and deserialized back to the original items
+5. A mix of batch and single-item storage operations work correctly, with retrieval using the appropriate method based on how items were stored
+
+Write 1 integration test for each.

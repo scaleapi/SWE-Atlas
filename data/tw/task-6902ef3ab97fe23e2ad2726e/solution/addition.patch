@@ -1,0 +1,61 @@
+diff --git a/kitty_tests/datatypes.py b/kitty_tests/datatypes.py
+index dee3e645c..a8a8a01bd 100644
+--- a/kitty_tests/datatypes.py
++++ b/kitty_tests/datatypes.py
+@@ -334,6 +334,29 @@ def rewrap(self, lb, lb2):
+         cy = lb.rewrap(lb2, hb)
+         return hb, cy[1]
+ 
++    def test_rewrap_simple(self):
++        ' Same width buffers '
++        lb = filled_line_buf(5, 5)
++        lb2 = LineBuf(lb.ynum, lb.xnum)
++        self.rewrap(lb, lb2)
++        for i in range(lb.ynum):
++            self.ae(lb2.line(i), lb.line(i))
++        lb2 = LineBuf(8, 5)
++        cy = self.rewrap(lb, lb2)[1]
++        self.ae(cy, 5)
++        for i in range(lb.ynum):
++            self.ae(lb2.line(i), lb.line(i))
++        empty = LineBuf(1, lb2.xnum)
++        for i in range(lb.ynum, lb2.ynum):
++            self.ae(str(lb2.line(i)), str(empty.line(0)))
++        lb2 = LineBuf(3, 5)
++        cy = self.rewrap(lb, lb2)[1]
++        self.ae(cy, 3)
++        for i in range(lb2.ynum):
++            self.ae(lb2.line(i), lb.line(i + 2))
++        self.assertFalse(lb.dirty_lines())
++        self.ae(lb2.dirty_lines(), list(range(lb2.ynum)))
++
+     def line_comparison(self, buf, *lines):
+         for i, l0 in enumerate(lines):
+             l2 = buf.line(i)
+@@ -348,6 +371,26 @@ def line_comparison_rewrap(self, lb, *lines):
+     def assertContinued(self, lb, *vals):
+         self.ae(list(vals), [lb.is_continued(i) for i in range(len(vals))])
+ 
++    def test_rewrap_wider(self):
++        ' New buffer wider '
++        lb = create_lbuf('0123 ', '56789')
++        lb2 = self.line_comparison_rewrap(lb, '0123 5', '6789', '')
++        self.assertContinued(lb2, False, True)
++        self.ae(lb2.dirty_lines(), [0, 1])
++
++        lb = create_lbuf('12', 'abc')
++        lb2 = self.line_comparison_rewrap(lb, '12', 'abc')
++        self.assertContinued(lb2, False, False)
++
++    def test_rewrap_narrower(self):
++        ' New buffer narrower '
++        lb = create_lbuf('123', 'abcde')
++        lb2 = self.line_comparison_rewrap(lb, '123', 'abc', 'de')
++        self.assertContinued(lb2, False, False, True)
++        lb = create_lbuf('123  ', 'abcde')
++        lb2 = self.line_comparison_rewrap(lb, '123', '  a', 'bcd', 'e')
++        self.assertContinued(lb2, False, True, True, True)
++
+     def test_utils(self):
+         def w(x):
+             return wcwidth(ord(x))

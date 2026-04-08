@@ -1,0 +1,6 @@
+I'd like some integration tests to verify the annotations worker behavior when it processes multiple datasources under different scenarios, specifically these four:
+
+- When all the sources respond correctly, the result must include all the results combined
+- When one source fails, the system must continue and return only the successful results.
+- When a source is cancelled during execution, the result should include these results from non-cancelled sources
+- When a different source fails, the system must continue and return the successful results.

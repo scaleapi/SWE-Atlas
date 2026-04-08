@@ -1,0 +1,40 @@
+--- a/src/documents/tests/test_consumer.py
++++ b/src/documents/tests/test_consumer.py
+@@ -316,7 +316,37 @@
+         dst = os.path.join(self.dirs.scratch_dir, "sample_archive.pdf")
+         shutil.copy(src, dst)
+         return dst
++
++    @override_settings(PAPERLESS_FILENAME_FORMAT=None, TIME_ZONE="America/Chicago")
++    def testNormalOperation(self):
++
++        filename = self.get_test_file()
++        document = self.consumer.try_consume_file(filename)
++
++        self.assertEqual(document.content, "The Text")
++        self.assertEqual(
++            document.title,
++            os.path.splitext(os.path.basename(filename))[0],
++        )
++        self.assertIsNone(document.correspondent)
++        self.assertIsNone(document.document_type)
++        self.assertEqual(document.filename, "0000001.pdf")
++        self.assertEqual(document.archive_filename, "0000001.pdf")
++
++        self.assertTrue(os.path.isfile(document.source_path))
++
++        self.assertTrue(os.path.isfile(document.thumbnail_path))
++
++        self.assertTrue(os.path.isfile(document.archive_path))
++
++        self.assertEqual(document.checksum, "42995833e01aea9b3edee44bbfdd7ce1")
++        self.assertEqual(document.archive_checksum, "62acb0bcbfbcaa62ca6ad3668e4e404b")
++
++        self.assertFalse(os.path.isfile(filename))
++
++        self._assert_first_last_send_progress()
+ 
++        self.assertEqual(document.created.tzinfo, zoneinfo.ZoneInfo("America/Chicago"))
+ 
+     @override_settings(PAPERLESS_FILENAME_FORMAT=None)
+     def testDeleteMacFiles(self):

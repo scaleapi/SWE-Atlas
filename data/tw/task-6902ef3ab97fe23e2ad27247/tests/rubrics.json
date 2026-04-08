@@ -1,0 +1,90 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "0f7eb2b9d6c48c51c0eadc8c91653f8f",
+    "title": "1.1: Tests that WithCancel returns a context with a propagated logger that works after cancellation"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "3911b510fa80133f5e50f6f7f453c2d5",
+    "title": "1.2: Tests that WithTimeout returns a context with propagated logger and correct timeout behavior"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6a337b59a896edea2ca1cadf687172f8",
+    "title": "1.3: Tests that WithLogger attaches a logger to a context and Logger() returns it"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "213966efa8f9faa0a6cbe2153dfb2166",
+    "title": "1.4: Tests that custom Context type satisfies context.Context interface and supports both logging and value retrieval"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "044ac343d78258b1324343a58e32cbbd",
+    "title": "1.5: Tests that WithValue and WithValues propagate both context values and logger key-value pairs"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4430e41384c1a3479cb4eb01c248b40a",
+    "title": "2.1: Places the tests for context wrapper functions in pkg/context/"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "58d8495a3f57a10043f026d3b4063827",
+    "title": "3.1: All tests use the Go testing framework with *testing.T parameter"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "554157a49ca7b85b3fd5d7b81f4aed37",
+    "title": "3.2: All tests follow the naming pattern Test<FunctionName> or Test<Scenario>"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "7da5cf7817b6089f3b85d656f968b3cc",
+    "title": "3.3: All tests use testify assertions (assert package)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e664380486075a37efff36ebb3ed3ac7",
+    "title": "4.1: Uses infoCounterContext helper or equivalent logger callback mechanism for tests that verify logging behavior"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "18884d71761221b81437732808bb2409",
+    "title": "4.2: Uses select with Done() channel and time.After for tests that verify context cancellation/timeout"
+  }
+]

@@ -1,0 +1,98 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "cb821c1c987618bb2aa298f66d3579ec",
+    "title": "1.1: Tests that defrag() returns three tuple lists (nonfrag, unfrag, badfrag) when provided with a list of fragmented packets."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "f74bb0c5240c906c13e8e2d5af576a61",
+    "title": "1.2: Tests that defragment() returns a single reconstructed packet when provided with a list of IP fragments in correct order."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "683f7561b537e3c9cf109677dad34096",
+    "title": "1.3: Tests that defragment() and defrag() both return packets with the timestamp of the last fragment when fragments arrive with different timestamps."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d174c4bba6cfa6667919d8118e2ba18b",
+    "title": "1.4: Tests that defragment() returns a single defragmented packet when the first fragment is missing but other fragments are present."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "57c76443123b3fef1adf4a96b66a14a6",
+    "title": "1.5: Tests that defragment() and defrag() both correctly handle real-world fragmented DNS response packets by reconstructing the complete DNS packet with valid DNSRR.\n\n"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4ea94bae0eca6f999dcdfe27595b6005",
+    "title": "2.1: Places the test for verifying defrag() sorting functionality in test/scapy/layers/inet.uts."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "4c5f8d3f22f5ead262948f7ad06d46bf",
+    "title": "2.2: Places the test for verifying defragment() reconstruction functionality in test/scapy/layers/inet.uts."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "fc1b3de49f8fdbc3d96eca73db5059cf",
+    "title": "2.3: Places the test for verifying timestamp handling in defragment() and defrag() in test/scapy/layers/inet.uts."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e0b5b3048f7945b0fca1cf44b2469430",
+    "title": "2.4: Places the test for verifying missing fragment handling in defragment() in test/scapy/layers/inet.uts."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "2be00d67830380820c861ebaace8df73",
+    "title": "2.5: Places the test for verifying real DNS packet fragmentation in defrag() and defragment() in test/scapy/layers/inet.uts."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "5821d4628ab96be41260b5ad6009f44e",
+    "title": "3.1: All tests use framework UTscapy with assert statements for validation."
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "dac0f7d4a64cc34ef5dc3a0b0c99e04c",
+    "title": "3.2: All tests follow the test naming pattern `= function_name() <optional_description>`."
+  }
+]

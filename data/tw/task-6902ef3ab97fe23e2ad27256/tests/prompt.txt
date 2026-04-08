@@ -1,0 +1,12 @@
+Can you add some unit tests for the VerificationCache's FromData method in the trufflehog codebase?
+
+The FromData method is a cache-aware facade that wraps detector verification calls. It handles various scenarios based on cache state, verification flags, and force update settings. We're missing test coverage for the following behaviors:
+
+1. passthrough behavior when the verification cache has no underlying result cache configured
+2. verification is disabled and cache updates are not forced/forced
+3. verification is enabled with all results found in the cache
+4. verification is enabled but some results are missing from the cache
+5. verification is enabled with forced cache updates
+6. cache keys differentiate between detector types using the same raw/RawV2 credential
+
+Write unit tests for each test case above. The tests should be placed in the verification cache test file.

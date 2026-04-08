@@ -1,0 +1,11 @@
+The alias utilities that determine how the recipient name is shown when sending or displaying emails for an alias need better unit test coverage.
+
+The behavior is implemented and working, but we're missing unit tests that cover each of these scenarios:
+
+1. When an alias has no display name set and is not on a custom domain (or the custom domain has no display name), the recipient display should be derived from the alias email only.
+2. When an alias has a display name set, the recipient display should include that alias name in the standard formatted form, and there should be guidance for what to put in the from header.
+3. When an alias has a display name and is on a custom domain that also has a display name, the alias name should be used for the recipient display (alias name takes precedence).
+4. When an alias has no display name and is on a custom domain that has no display name, the recipient display should be the alias email only.
+5. When an alias has no display name but is on a custom domain that has a display name, the recipient display should use the custom domain's default name in the standard formatted form, with guidance for the from header.
+
+ Write one unit test for each scenario above.

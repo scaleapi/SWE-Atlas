@@ -1,0 +1,8 @@
+There are some missing unit tests related to execution segment behavior that we should add. The functionality still works, but coverage is missing for a few important scenarios.
+
+1. Creating execution segment sequences from string inputs and working with the resulting segments.
+2. Working with execution segments to compute striped offsets in different usage situations.
+3. Working with execution segment sequences to derive shared numeric properties from their values.
+4. Creating a new execution tuple based on a numeric input applied to an existing execution segment setup.
+
+Ok. Please add one test for each of the above cases.

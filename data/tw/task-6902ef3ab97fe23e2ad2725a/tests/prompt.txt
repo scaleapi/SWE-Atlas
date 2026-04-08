@@ -1,0 +1,8 @@
+The text drawing functionality in kitty terminal works fine, but we are missing tests for some specific character drawing behaviors.
+
+Create unit test for each of these behaviors:
+
+1. when a character is drawn and then a repeat control sequence is sent, the character should be duplicated the specified number of times on the current line
+2. when drawing emoji with skin tone modifier codepoints, they should render as combined character and the cursor should advance by the correct display width
+3. when drawing regional indicator character pairs (like country flags), they should combine into single flag symbols and update cursor position based on their rendered width
+4. when drawing emoji sequences that use zero width joiners between codepoints (like family or profession emojis), they should render as single combined glyphs with proper cursor advancement.

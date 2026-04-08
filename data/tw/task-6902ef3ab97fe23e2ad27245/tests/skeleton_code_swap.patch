@@ -1,0 +1,32 @@
+diff --git a/internal/store/queuestore.go b/internal/store/queuestore.go
+index 640f821f5..d84a2a875 100644
+--- a/internal/store/queuestore.go
++++ b/internal/store/queuestore.go
+@@ -72,27 +72,6 @@ func NewQueueStore[I any](directory string, limit uint64, ext string) *QueueStor
+ 
+ // Open - Creates the directory if not present.
+ func (store *QueueStore[_]) Open() error {
+-	store.Lock()
+-	defer store.Unlock()
+-
+-	if err := os.MkdirAll(store.directory, os.FileMode(0o770)); err != nil {
+-		return err
+-	}
+-
+-	files, err := store.list()
+-	if err != nil {
+-		return err
+-	}
+-
+-	for _, file := range files {
+-		if file.IsDir() {
+-			continue
+-		}
+-		if fi, err := file.Info(); err == nil {
+-			store.entries[file.Name()] = fi.ModTime().UnixNano()
+-		}
+-	}
+-
+ 	return nil
+ }
+ 

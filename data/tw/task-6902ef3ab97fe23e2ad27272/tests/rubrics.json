@@ -1,0 +1,114 @@
+[
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "80e465da9fd85670344c5b2ca9b67694",
+    "title": "1.1: Tests that TCPSession correctly reassembles HTTP chunked transfer encoding with binary image data across TCP segments"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "71887ea0b62a60415d16c12a4884c86a",
+    "title": "1.2: Tests that the reassembled HTTP chunked image response contains complete payload data"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "97acfd302dea1917dd6e370bb4a0203f",
+    "title": "1.3: Tests that HTTPRequest fields are correctly parsed from chunked transfer pcap"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "b0c256d006f88b2f64e18bdb5742fed6",
+    "title": "1.4: Tests that TCPSession correctly parses HTTP response with Content-Length header"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d80f6a72dfa80cdfdf525983a6c3dc30",
+    "title": "1.5: Tests that Content-Length value matches the actual payload length in HTTP response"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "50269eab5fefe6ee95714e9fc89a8e2e",
+    "title": "1.6: Tests that TCP PSH flag handling correctly reassembles split HTTP headers"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "da728cd842aaeba62a6746240885f9ba",
+    "title": "1.7: Tests that split HTTP headers are correctly reassembled into complete header fields"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "ed771aa6aba3d82f6d118b925eba9486",
+    "title": "1.8: Tests that HTTP chunked transfer encoding with gzip compression is handled correctly"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "2c97b78c690edef8ab6640bc78e51e06",
+    "title": "1.9: Tests that gzip compressed chunked data can be decompressed to original content"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "54e2324290418057680ef6559d8dfe9b",
+    "title": "2.1: Places all TCPSession HTTP integration tests in the HTTP layer test file (test/scapy/layers/http.uts)"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "ef835f199e66750099d27e959ee6f635",
+    "title": "3.1: All tests use Scapy's UTScapy test framework with = test header syntax"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "e58e03ffec7508dcc742e1343cc42b57",
+    "title": "3.2: All tests follow the naming pattern with descriptive test names"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "64859899315ded91d967e396e31cccdb",
+    "title": "3.3: All tests use assert statements for verification"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    },
+    "id": "8b54183b175355e600a075573da2a216",
+    "title": "4.1: All tests use TCPSession for HTTP stream reassembly"
+  }
+]

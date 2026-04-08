@@ -1,0 +1,7 @@
+Scapy is a powerful Python-based interactive packet manipulation library. We're missing tests for the following:
+
+A test for the Fletcher-16 checksum utilities that validates the checksum calculation and check byte generation
+A test for the binary diff display utility that compares different inputs like strings and packets, including edge cases and combos
+A test for the data corruption utilities that can randomly modify bytes or flip bits in input data
+
+Write 1 unit test for each test case above.

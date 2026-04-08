@@ -1,0 +1,15 @@
+diff --git a/pkg/sources/huggingface/client.go b/pkg/sources/huggingface/client.go
+index f963d2cc7..e2b44bc4d 100644
+--- a/pkg/sources/huggingface/client.go
++++ b/pkg/sources/huggingface/client.go
+@@ -216,8 +216,6 @@ func getResourceHTMLPath(resourceType string) string {
+ }
+ 
+ func buildAPIURL(endpoint string, resourceType string, repoName string) (string, error) {
+-	if endpoint == "" || resourceType == "" || repoName == "" {
+-		return "", errors.New("endpoint, resourceType, and repoName must not be empty")
+-	}
+-	return fmt.Sprintf("%s/%s/%s/%s", endpoint, APIRoute, getResourceAPIPath(resourceType), repoName), nil
++	// SKELETON: Implementation removed for F2P testing
++	return "", errors.New("skeleton")
+ }

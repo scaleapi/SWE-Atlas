@@ -1,0 +1,13 @@
+Add integration tests for the UpCloud metrics parsing functionality in our monitoring module.
+
+Please write integration tests that cover:
+
+Parsing all available metrics from a complete API response and verifying the aggregated results contain the expected metric types with records for each database node
+
+Extracting a single metric type from the response and verifying the metric structure includes the correct metric name and records for both database roles
+
+Handling null values in metric data by falling back to the previous data point when the latest value is missing
+
+Handling the edge case where null values appear in multiple consecutive positions, ensuring records are only created when valid values can be retrieved
+
+Write 1 integration test for each scenario above.

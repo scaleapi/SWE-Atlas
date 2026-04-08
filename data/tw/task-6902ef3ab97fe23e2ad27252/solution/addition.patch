@@ -1,0 +1,228 @@
+diff --git a/tests/monitor/test_upcloud_get_metric.py b/tests/monitor/test_upcloud_get_metric.py
+index 6634a860..fb3fd27d 100644
+--- a/tests/monitor/test_upcloud_get_metric.py
++++ b/tests/monitor/test_upcloud_get_metric.py
+@@ -128,3 +128,223 @@ MOCK_RESPONSE = """
+   }
+ }
+ """
++
++
++def test_get_metrics():
++    response = json.loads(MOCK_RESPONSE)
++    metrics = get_metrics(response)
++    assert metrics == UpcloudMetrics(
++        metrics=[
++            UpcloudMetric(
++                metric_name="cpu_usage",
++                records=[
++                    UpcloudRecord(
++                        db_role="master",
++                        label="test-1 " "(master)",
++                        time="2022-01-21T13:12:00Z",
++                        value=3.275132296130991,
++                    ),
++                    UpcloudRecord(
++                        db_role="standby",
++                        label="test-2 " "(standby)",
++                        time="2022-01-21T13:12:00Z",
++                        value=4.196249043309251,
++                    ),
++                ],
++            ),
++            UpcloudMetric(
++                metric_name="disk_usage",
++                records=[
++                    UpcloudRecord(
++                        db_role="master",
++                        label="test-1 " "(master)",
++                        time="2022-01-21T13:11:30Z",
++                        value=5.654416415900109,
++                    ),
++                    UpcloudRecord(
++                        db_role="standby",
++                        label="test-2 " "(standby)",
++                        time="2022-01-21T13:11:30Z",
++                        value=5.58959125727556,
++                    ),
++                ],
++            ),
++            UpcloudMetric(
++                metric_name="diskio_reads",
++                records=[
++                    UpcloudRecord(
++                        db_role="master",
++                        label="test-1 " "(master)",
++                        time="2022-01-21T13:11:30Z",
++                        value=0,
++                    ),
++                    UpcloudRecord(
++                        db_role="standby",
++                        label="test-2 " "(standby)",
++                        time="2022-01-21T13:11:30Z",
++                        value=0,
++                    ),
++                ],
++            ),
++            UpcloudMetric(
++                metric_name="diskio_writes",
++                records=[
++                    UpcloudRecord(
++                        db_role="master",
++                        label="test-1 " "(master)",
++                        time="2022-01-21T13:11:30Z",
++                        value=4,
++                    ),
++                    UpcloudRecord(
++                        db_role="standby",
++                        label="test-2 " "(standby)",
++                        time="2022-01-21T13:11:30Z",
++                        value=3,
++                    ),
++                ],
++            ),
++            UpcloudMetric(
++                metric_name="load_average",
++                records=[
++                    UpcloudRecord(
++                        db_role="master",
++                        label="test-1 " "(master)",
++                        time="2022-01-21T13:11:30Z",
++                        value=0.14,
++                    ),
++                    UpcloudRecord(
++                        db_role="standby",
++                        label="test-2 " "(standby)",
++                        time="2022-01-21T13:11:30Z",
++                        value=0.09,
++                    ),
++                ],
++            ),
++            UpcloudMetric(
++                metric_name="mem_usage",
++                records=[
++                    UpcloudRecord(
++                        db_role="master",
++                        label="test-1 " "(master)",
++                        time="2022-01-21T13:11:30Z",
++                        value=11.488581675749048,
++                    ),
++                    UpcloudRecord(
++                        db_role="standby",
++                        label="test-2 " "(standby)",
++                        time="2022-01-21T13:11:30Z",
++                        value=12.272260458006759,
++                    ),
++                ],
++            ),
++            UpcloudMetric(
++                metric_name="net_receive",
++                records=[
++                    UpcloudRecord(
++                        db_role="master",
++                        label="test-1 " "(master)",
++                        time="2022-01-21T13:11:30Z",
++                        value=466,
++                    ),
++                    UpcloudRecord(
++                        db_role="standby",
++                        label="test-2 " "(standby)",
++                        time="2022-01-21T13:11:30Z",
++                        value=458,
++                    ),
++                ],
++            ),
++            UpcloudMetric(
++                metric_name="net_send",
++                records=[
++                    UpcloudRecord(
++                        db_role="master",
++                        label="test-1 " "(master)",
++                        time="2022-01-21T13:11:30Z",
++                        value=694,
++                    ),
++                    UpcloudRecord(
++                        db_role="standby",
++                        label="test-2 " "(standby)",
++                        time="2022-01-21T13:11:30Z",
++                        value=573,
++                    ),
++                ],
++            ),
++        ]
++    )
++
++
++def test_get_metric():
++    response = json.loads(MOCK_RESPONSE)
++    metric_name = "cpu_usage"
++    metric = get_metric(response, metric_name)
++
++    assert metric.metric_name == metric_name
++    assert len(metric.records) == 2
++    assert metric.records[0].label == "test-1 (master)"
++    assert metric.records[0].time == "2022-01-21T13:12:00Z"
++    assert metric.records[0].value == 3.275132296130991
++
++    assert metric.records[1].label == "test-2 (standby)"
++    assert metric.records[1].time == "2022-01-21T13:12:00Z"
++    assert metric.records[1].value == 4.196249043309251
++
++
++def test_get_metric_with_none_value():
++    response_str = """
++{
++  "cpu_usage": {
++    "data": {
++      "cols": [
++        { "label": "time", "type": "date" },
++        { "label": "test-1 (master)", "type": "number" },
++        { "label": "test-2 (standby)", "type": "number" }
++      ],
++      "rows": [
++        ["2022-01-21T13:10:30Z", 2.744682398273781, 3.054323473090861],
++        ["2022-01-21T13:11:00Z", 3.0735645433218366, 2.972423595745795],
++        ["2022-01-21T13:11:30Z", null, 3.1358378052207883],
++        ["2022-01-21T13:12:00Z", 3.275132296130991, null]
++      ]
++    },
++    "hints": { "title": "CPU usage %" }
++  }
++}
++"""
++    response = json.loads(response_str)
++    metric = get_metric(response, "cpu_usage")
++
++    assert metric.records[0].label == "test-1 (master)"
++    assert metric.records[0].value == 3.275132296130991
++    assert metric.records[1].label == "test-2 (standby)"
++    assert metric.records[1].value == 3.1358378052207883
++
++
++def test_get_metric_with_none_value_in_last_two_positions():
++    response_str = """
++{
++  "cpu_usage": {
++    "data": {
++      "cols": [
++        { "label": "time", "type": "date" },
++        { "label": "test-1 (master)", "type": "number" },
++        { "label": "test-2 (standby)", "type": "number" }
++      ],
++      "rows": [
++        ["2022-01-21T13:10:30Z", 2.744682398273781, 3.054323473090861],
++        ["2022-01-21T13:11:00Z", 3.0735645433218366, 2.972423595745795],
++        ["2022-01-21T13:11:30Z", null, null],
++        ["2022-01-21T13:12:00Z", 3.275132296130991, null]
++      ]
++    },
++    "hints": { "title": "CPU usage %" }
++  }
++}
++"""
++    response = json.loads(response_str)
++    metric = get_metric(response, "cpu_usage")
++
++    assert len(metric.records) == 1
++    assert metric.records[0].label == "test-1 (master)"
++    assert metric.records[0].value == 3.275132296130991

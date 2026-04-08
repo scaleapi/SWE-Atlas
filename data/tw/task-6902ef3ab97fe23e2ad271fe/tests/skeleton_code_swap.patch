@@ -1,0 +1,30 @@
+diff --git a/app/handler/unsubscribe_handler.py b/app/handler/unsubscribe_handler.py
+index f41d9afb..72f646d0 100644
+--- a/app/handler/unsubscribe_handler.py
++++ b/app/handler/unsubscribe_handler.py
+@@ -67,24 +67,7 @@ class UnsubscribeHandler:
+     def handle_unsubscribe_from_request(
+         self, user: User, unsub_request: str
+     ) -> Optional[UnsubscribeData]:
+-        unsub_data = UnsubscribeEncoder.decode_subject(unsub_request)
+-        if not unsub_data:
+-            LOG.w("Wrong request %s", unsub_request)
+-            return None
+-        if unsub_data.action == UnsubscribeAction.DisableAlias:
+-            response_code = self._disable_alias(unsub_data.data, user)
+-        elif unsub_data.action == UnsubscribeAction.DisableContact:
+-            response_code = self._disable_contact(unsub_data.data, user)
+-        elif unsub_data.action == UnsubscribeAction.UnsubscribeNewsletter:
+-            response_code = self._unsubscribe_user_from_newsletter(
+-                unsub_data.data, user
+-            )
+-        elif unsub_data.action == UnsubscribeAction.OriginalUnsubscribeMailto:
+-            response_code = self._unsubscribe_original_behaviour(unsub_data.data, user)
+-        else:
+-            raise Exception(f"Unknown unsubscribe action {unsub_data.action}")
+-        if response_code == status.E202:
+-            return unsub_data
++        # Skeleton: implementation removed for F2P testing
+         return None
+ 
+     def _disable_alias(
