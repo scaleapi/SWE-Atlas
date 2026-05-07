@@ -1,0 +1,1 @@
+FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_Automattic_wp-calypso_696719205599a51110d4b434_1.0@sha256:6b1f28b1fae730c0d00b2acdb6f68a32b270468fbbb4ec4581db62e0d3b0c887

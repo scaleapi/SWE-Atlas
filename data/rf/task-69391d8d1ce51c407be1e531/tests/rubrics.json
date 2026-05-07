@@ -1,0 +1,202 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "769a5198100d362799aebcf055ca15e2",
+    "title": "1.1: Extracts the local buffer implementation from pkg/gitparse/gitparse.go into a shared package",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2048cb8f2a5e170de8ff2300e09bcfe6",
+    "title": "1.2: Extracts buffer pool logic from pkg/writers/buffered_file_writer/bufferedfilewriter.go into a shared package",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e38adea11ebdea6c0adf39fa24242c8f",
+    "title": "1.3: Creates buffer.go as a shared buffer pool package in pkg/writers/buffer/ containing the consolidated pool and buffer primitives",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "38d25c6a90a11d23a820e814de78ff33",
+    "title": "1.4: Updates pkg/gitparse/gitparse.go to use the shared content writer implementation (such as bufferwriter.New) instead of its local buffer type",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "80216f473acce2bd43e489346179133a",
+    "title": "1.5: Updates pkg/writers/buffered_file_writer/bufferedfilewriter.go to use the shared buffer pool implementation instead of its local bufferPool",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "46e2e88b3ccbafce6f3c467a1685b2a1",
+    "title": "1.6: Removes the buffer struct type definition from pkg/gitparse/gitparse.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5e28c44bc68cc1131125c3175f44d916",
+    "title": "1.7: Removes the state type and its constants (state, writeOnly, readOnly) from pkg/gitparse/gitparse.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "07ccd6581aae49c916d5fe7fb5a0dabd",
+    "title": "1.8: Removes the newBuffer function from pkg/gitparse/gitparse.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3b21ca23fdf8eae07adf2d70aa2afeaa",
+    "title": "1.9: Removes all 9 buffer pool definitions (bufferPoolMetrics struct, recordGrowth, recordShrink, recordCheckoutDuration, recordBufferRetrival, recordBufferReturn, bufPoolOpt, bufferPool struct, defaultBufferSize) from pkg/writers/buffered_file_writer/bufferedfilewriter.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "bf29db41796e7f3c3c8dcd198f75042a",
+    "title": "1.10: Removes the newBufferPool function from pkg/writers/buffered_file_writer/bufferedfilewriter.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3cf1d2f312e2cb053c60b86d5ba0aadd",
+    "title": "1.11: Removes the bufferPool get method from pkg/writers/buffered_file_writer/bufferedfilewriter.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "070a2d3b8fdc3f75e7e08a079afc8b15",
+    "title": "1.12: Removes the bufferPool put method from pkg/writers/buffered_file_writer/bufferedfilewriter.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5dd81a96399b7691318d9c12a4df9cee",
+    "title": "1.13: Removes the bufferPool growBufferWithSize method from pkg/writers/buffered_file_writer/bufferedfilewriter.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ca7191acaa92c860398fe1e5b4880f2c",
+    "title": "1.14: Adds context.Context as the first parameter to newDiff in pkg/gitparse/gitparse.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5ab21deaa24e3eb3f22c71bd89ee3871",
+    "title": "1.15: Consolidates all 11 buffer pool Prometheus metrics (including active_buffer_count, buffer_count, total_buffer_length, total_buffer_size, grow_count, grow_amount, shrink_count, shrink_amount, checkout_duration_total_us, checkout_duration_us, ...) into the new shared buffer package",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "51ec478c79699b7680a9f9c7ab10bb6b",
+    "title": "1.16: Prefixes the 2 remaining BufferedFileWriter metrics (total_write_size_bytes, total_write_duration_microseconds) to avoid naming conflicts with the new buffer writer package",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "216d78bab793af183c73c6bc60d1c608",
+    "title": "1.17: Creates bufferwriter.go as a shared content writer package in pkg/writers/buffer_writer/",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6f3f99e4bf609e731852995c85718169",
+    "title": "1.18: Adds context.Context as the first parameter to New in pkg/writers/buffered_file_writer/bufferedfilewriter.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "377c899c507dabee5260c8194cd46233",
+    "title": "1.19: Removes the sync import from pkg/writers/buffered_file_writer/bufferedfilewriter.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "26ea170f3553ad9942505382375b1f2f",
+    "title": "4.1: Changes the contentWriter interface method signatures (Write, ReadCloser, CloseForWriting, Len, String) in pkg/gitparse/gitparse.go",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "79939e542f872014ac3e4b7c7d6d6d2e",
+    "title": "4.2: Changes the BufferedFileWriter.New signature in pkg/writers/buffered_file_writer/bufferedfilewriter.go without updating the bufferedfilewriter.New() call in pkg/gitparse/gitparse.go",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

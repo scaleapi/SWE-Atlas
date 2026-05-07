@@ -1,0 +1,146 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8772fa284a206fbc339daa85c3647b26",
+    "title": "1.1: Removes the tiers-revamp key from all four A4A environment config JSON files",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a2054b9ca6e428b09e1a5bdaeb56d995",
+    "title": "1.2: Eliminates all tiers-revamp feature flag checks from source code files",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a53606986d299ac30a446d1c0ce476f7",
+    "title": "1.3: Includes the Agency Tier menu item unconditionally in the sidebar menu",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "98f733600b8116075700779bd1d15dc1",
+    "title": "1.4: Renders AgencyTierOverview directly in the controller without conditional component selection",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9026574e3b30b42b83cde1c7d2067f82",
+    "title": "1.5: Renders AgencyTierProgressCard directly in the sidebar widget without conditional branching",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "64113a7f952bd5c33a5a2d7a7cee7270",
+    "title": "1.6: Consolidates the V2 overview implementation into the original AgencyTierOverview component",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d407ee9042e4f87807e72dcfeb5ad183",
+    "title": "1.7: Deletes the AgencyTierOverviewV2 component directory entirely",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b1a3e7f92d4c6a80e5f893021dcef4a8",
+    "title": "1.8: Updates the overview page title to reflect the V2 wording",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e8f42b163a7d59c0d2184e7fa9b10c3a",
+    "title": "1.9: Replaces the old V1 stylesheet with a minimal stylesheet for the V2 layout",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3a1c9d7e85f240b6a9e3c7104dbeaf52",
+    "title": "3.1: Removes old V1 analytics tracking code from the overview and sidebar components",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ce10858643bd1ebbf8dc03aae8ba02c3",
+    "title": "4.1: Deletes the overview-content directory in the agency-tier section",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "033be0ee7521f5f4e82962804d09c6fd",
+    "title": "4.2: Retains tiers-revamp string references in any source or config file",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "519e143b82702c213f1ebaba4dfd4c9c",
+    "title": "4.3: Deletes the progress-card directory in the agency-tier section",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c924b70965775e56186dfa44e6430362",
+    "title": "4.4: Deletes the get-agency-tier-info utility used by the sidebar component",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

@@ -1,0 +1,254 @@
+diff --git a/pkg/storage/unified/sql/backend_test.go b/pkg/storage/unified/sql/backend_test.go
+index f7ecd755f32..2f8f9fcb060 100644
+--- a/pkg/storage/unified/sql/backend_test.go
++++ b/pkg/storage/unified/sql/backend_test.go
+@@ -40,6 +40,26 @@ type testBackend struct {
+ 	test.TestDBProvider
+ }
+ 
++func expectSuccessfulResourceVersionLock(t *testing.T, dbp test.TestDBProvider, rv int64, timestamp int64) {
++	dbp.SQLMock.ExpectQuery("select resource_version, unix_timestamp for update").
++		WillReturnRows(sqlmock.NewRows([]string{"resource_version", "unix_timestamp"}).
++			AddRow(rv, timestamp))
++}
++
++func expectSuccessfulResourceVersionSaveRV(t *testing.T, dbp test.TestDBProvider) {
++	dbp.SQLMock.ExpectExec("update resource set resource_version").WillReturnResult(sqlmock.NewResult(1, 1))
++	dbp.SQLMock.ExpectExec("update resource_history set resource_version").WillReturnResult(sqlmock.NewResult(1, 1))
++	dbp.SQLMock.ExpectExec("update resource_version set resource_version").WillReturnResult(sqlmock.NewResult(1, 1))
++}
++
++func expectSuccessfulResourceVersionExec(t *testing.T, dbp test.TestDBProvider, cbs ...func()) {
++	for _, cb := range cbs {
++		cb()
++	}
++	expectSuccessfulResourceVersionLock(t, dbp, 100, 200)
++	expectSuccessfulResourceVersionSaveRV(t, dbp)
++}
++
+ func (b testBackend) ExecWithResult(expectedSQL string, lastInsertID int64, rowsAffected int64) {
+ 	b.SQLMock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(lastInsertID, rowsAffected))
+ }
+diff --git a/pkg/storage/unified/sql/list_iterator_test.go b/pkg/storage/unified/sql/list_iterator_test.go
+index 3b567ca0f3e..e049e06525e 100644
+--- a/pkg/storage/unified/sql/list_iterator_test.go
++++ b/pkg/storage/unified/sql/list_iterator_test.go
+@@ -17,6 +17,7 @@ import (
+ 	dbsql "github.com/grafana/grafana/pkg/storage/unified/sql/db"
+ 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+ 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
++	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
+ 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+ 	"github.com/grafana/grafana/pkg/tests/testsuite"
+ 	"github.com/grafana/grafana/pkg/util/testutil"
+@@ -94,7 +95,7 @@ func TestIntegrationListIter(t *testing.T) {
+ 				return fmt.Errorf("failed to insert test data: %w", err)
+ 			}
+ 
+-			if _, err = dbutil.Exec(ctx, tx, sqlResourceUpdateRV, sqlResourceUpdateRVRequest{
++			if _, err = dbutil.Exec(ctx, tx, rvmanager.SqlResourceUpdateRV, rvmanager.SqlResourceUpdateRVRequest{
+ 				SQLTemplate: sqltemplate.New(dialect),
+ 				GUIDToRV: map[string]int64{
+ 					item.guid: item.resourceVersion,
+diff --git a/pkg/storage/unified/sql/queries_test.go b/pkg/storage/unified/sql/queries_test.go
+index 5673bfad1e8..93e9b1f5af4 100644
+--- a/pkg/storage/unified/sql/queries_test.go
++++ b/pkg/storage/unified/sql/queries_test.go
+@@ -8,6 +8,7 @@ import (
+ 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+ 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+ 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
++	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
+ 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
+ )
+ 
+@@ -162,10 +163,10 @@ func TestUnifiedStorageQueries(t *testing.T) {
+ 				},
+ 			},
+ 
+-			sqlResourceUpdateRV: {
++			rvmanager.SqlResourceUpdateRV: {
+ 				{
+ 					Name: "single path",
+-					Data: &sqlResourceUpdateRVRequest{
++					Data: &rvmanager.SqlResourceUpdateRVRequest{
+ 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+ 						GUIDToRV: map[string]int64{
+ 							"guid1": 123,
+@@ -228,10 +229,10 @@ func TestUnifiedStorageQueries(t *testing.T) {
+ 				},
+ 			},
+ 
+-			sqlResourceHistoryUpdateRV: {
++			rvmanager.SqlResourceHistoryUpdateRV: {
+ 				{
+ 					Name: "single path",
+-					Data: &sqlResourceUpdateRVRequest{
++					Data: &rvmanager.SqlResourceUpdateRVRequest{
+ 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+ 						GUIDToRV: map[string]int64{
+ 							"guid1": 123,
+@@ -334,23 +335,23 @@ func TestUnifiedStorageQueries(t *testing.T) {
+ 				},
+ 			},
+ 
+-			sqlResourceVersionGet: {
++			rvmanager.SqlResourceVersionGet: {
+ 				{
+ 					Name: "single path",
+-					Data: &sqlResourceVersionGetRequest{
++					Data: &rvmanager.SqlResourceVersionGetRequest{
+ 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+ 						Resource:    "resource",
+ 						Group:       "group",
+-						Response:    new(resourceVersionResponse),
++						Response:    new(rvmanager.ResourceVersionResponse),
+ 						ReadOnly:    false,
+ 					},
+ 				},
+ 			},
+ 
+-			sqlResourceVersionUpdate: {
++			rvmanager.SqlResourceVersionUpdate: {
+ 				{
+ 					Name: "increment resource version",
+-					Data: &sqlResourceVersionUpsertRequest{
++					Data: &rvmanager.SqlResourceVersionUpsertRequest{
+ 						SQLTemplate:     mocks.NewTestingSQLTemplate(),
+ 						Resource:        "resource",
+ 						Group:           "group",
+@@ -359,10 +360,10 @@ func TestUnifiedStorageQueries(t *testing.T) {
+ 				},
+ 			},
+ 
+-			sqlResourceVersionInsert: {
++			rvmanager.SqlResourceVersionInsert: {
+ 				{
+ 					Name: "single path",
+-					Data: &sqlResourceVersionUpsertRequest{
++					Data: &rvmanager.SqlResourceVersionUpsertRequest{
+ 						SQLTemplate:     mocks.NewTestingSQLTemplate(),
+ 						ResourceVersion: int64(12354),
+ 					},
+diff --git a/pkg/storage/unified/sql/rv_manager_test.go b/pkg/storage/unified/sql/rvmanager/rv_manager_test.go
+similarity index 99%
+rename from pkg/storage/unified/sql/rv_manager_test.go
+rename to pkg/storage/unified/sql/rvmanager/rv_manager_test.go
+index 46d23d26a59..9a2e105aa2f 100644
+--- a/pkg/storage/unified/sql/rv_manager_test.go
++++ b/pkg/storage/unified/sql/rvmanager/rv_manager_test.go
+@@ -1,4 +1,4 @@
+-package sql
++package rvmanager
+ 
+ import (
+ 	"testing"
+diff --git a/pkg/storage/unified/sql/rvmanager/queries_coverage_test.go b/pkg/storage/unified/sql/rvmanager/queries_coverage_test.go
+new file mode 100644
+index 00000000000..3139c9fa0fc
+--- /dev/null
++++ b/pkg/storage/unified/sql/rvmanager/queries_coverage_test.go
+@@ -0,0 +1,103 @@
++package rvmanager_test
++
++import (
++	"testing"
++
++	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
++	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestTemplateVariablesAreLoaded(t *testing.T) {
++	assert.NotNil(t, rvmanager.SqlResourceUpdateRV)
++	assert.NotNil(t, rvmanager.SqlResourceHistoryUpdateRV)
++	assert.NotNil(t, rvmanager.SqlResourceVersionGet)
++	assert.NotNil(t, rvmanager.SqlResourceVersionUpdate)
++	assert.NotNil(t, rvmanager.SqlResourceVersionInsert)
++}
++
++func TestSqlResourceUpdateRVRequest_RendersWithTemplate(t *testing.T) {
++	req := rvmanager.SqlResourceUpdateRVRequest{
++		SQLTemplate: sqltemplate.New(sqltemplate.MySQL),
++		GUIDToRV:    map[string]int64{"abc-123": 42},
++	}
++	out, err := sqltemplate.Execute(rvmanager.SqlResourceUpdateRV, req)
++	require.NoError(t, err)
++	assert.NotEmpty(t, out)
++}
++
++func TestSqlResourceUpdateRVRequest_RendersHistoryWithTemplate(t *testing.T) {
++	req := rvmanager.SqlResourceUpdateRVRequest{
++		SQLTemplate:       sqltemplate.New(sqltemplate.MySQL),
++		GUIDToRV:          map[string]int64{"abc-123": 42},
++		GUIDToSnowflakeRV: map[string]int64{"abc-123": 99},
++	}
++	out, err := sqltemplate.Execute(rvmanager.SqlResourceHistoryUpdateRV, req)
++	require.NoError(t, err)
++	assert.NotEmpty(t, out)
++}
++
++func TestSqlResourceVersionGetRequest_RendersWithTemplate(t *testing.T) {
++	req := rvmanager.SqlResourceVersionGetRequest{
++		SQLTemplate: sqltemplate.New(sqltemplate.MySQL),
++		Group:       "test.grafana.app",
++		Resource:    "dashboards",
++		ReadOnly:    false,
++		Response:    &rvmanager.ResourceVersionResponse{},
++	}
++	out, err := sqltemplate.Execute(rvmanager.SqlResourceVersionGet, req)
++	require.NoError(t, err)
++	assert.NotEmpty(t, out)
++}
++
++func TestSqlResourceVersionUpsertRequest_RendersInsertWithTemplate(t *testing.T) {
++	req := rvmanager.SqlResourceVersionUpsertRequest{
++		SQLTemplate:     sqltemplate.New(sqltemplate.MySQL),
++		Group:           "test.grafana.app",
++		Resource:        "dashboards",
++		ResourceVersion: 100,
++	}
++	out, err := sqltemplate.Execute(rvmanager.SqlResourceVersionInsert, req)
++	require.NoError(t, err)
++	assert.NotEmpty(t, out)
++}
++
++func TestSqlResourceVersionUpsertRequest_RendersUpdateWithTemplate(t *testing.T) {
++	req := rvmanager.SqlResourceVersionUpsertRequest{
++		SQLTemplate:     sqltemplate.New(sqltemplate.MySQL),
++		Group:           "test.grafana.app",
++		Resource:        "dashboards",
++		ResourceVersion: 200,
++	}
++	out, err := sqltemplate.Execute(rvmanager.SqlResourceVersionUpdate, req)
++	require.NoError(t, err)
++	assert.NotEmpty(t, out)
++}
++
++func TestResourceVersionResponse_HasExpectedFields(t *testing.T) {
++	resp := &rvmanager.ResourceVersionResponse{
++		ResourceVersion: 42,
++		CurrentEpoch:    1000,
++	}
++	assert.Equal(t, int64(42), resp.ResourceVersion)
++	assert.Equal(t, int64(1000), resp.CurrentEpoch)
++}
++
++func TestTypesWorkAcrossDialects(t *testing.T) {
++	dialects := []sqltemplate.Dialect{
++		sqltemplate.MySQL,
++		sqltemplate.PostgreSQL,
++	}
++	for _, dialect := range dialects {
++		t.Run(dialect.DialectName(), func(t *testing.T) {
++			req := rvmanager.SqlResourceUpdateRVRequest{
++				SQLTemplate: sqltemplate.New(dialect),
++				GUIDToRV:    map[string]int64{"guid-1": 10},
++			}
++			out, err := sqltemplate.Execute(rvmanager.SqlResourceUpdateRV, req)
++			require.NoError(t, err)
++			assert.NotEmpty(t, out)
++		})
++	}
++}

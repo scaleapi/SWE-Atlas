@@ -1,0 +1,924 @@
+diff --git a/pkg/detectors/github/v1/github_old_test.go b/pkg/detectors/github/v1/github_old_test.go
+index b1d3470d0..202f9187d 100644
+--- a/pkg/detectors/github/v1/github_old_test.go
++++ b/pkg/detectors/github/v1/github_old_test.go
+@@ -5,7 +5,11 @@ package github
+ 
+ import (
+ 	"context"
++	"encoding/json"
+ 	"fmt"
++	"io"
++	"net/http"
++	"strings"
+ 	"testing"
+ 	"time"
+ 
+@@ -15,7 +19,677 @@ import (
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
+ )
+ 
++func TestSetUserResponse_AllFields(t *testing.T) {
++	userRes := &UserRes{
++		Login:     "testuser",
++		Type:      "User",
++		SiteAdmin: true,
++		Name:      "Test User",
++		Company:   "Test Company",
++		UserURL:   "https://github.com/testuser",
++		LdapDN:    "cn=testuser,dc=example,dc=com",
++	}
++
++	result := &detectors.Result{
++		ExtraData: make(map[string]string),
++	}
++
++	SetUserResponse(userRes, result)
++
++	if result.ExtraData["username"] != "testuser" {
++		t.Errorf("expected username 'testuser', got '%s'", result.ExtraData["username"])
++	}
++	if result.ExtraData["url"] != "https://github.com/testuser" {
++		t.Errorf("expected url 'https://github.com/testuser', got '%s'", result.ExtraData["url"])
++	}
++	if result.ExtraData["account_type"] != "User" {
++		t.Errorf("expected account_type 'User', got '%s'", result.ExtraData["account_type"])
++	}
++	if result.ExtraData["site_admin"] != "true" {
++		t.Errorf("expected site_admin 'true', got '%s'", result.ExtraData["site_admin"])
++	}
++	if result.ExtraData["name"] != "Test User" {
++		t.Errorf("expected name 'Test User', got '%s'", result.ExtraData["name"])
++	}
++	if result.ExtraData["company"] != "Test Company" {
++		t.Errorf("expected company 'Test Company', got '%s'", result.ExtraData["company"])
++	}
++	if result.ExtraData["ldap_dn"] != "cn=testuser,dc=example,dc=com" {
++		t.Errorf("expected ldap_dn 'cn=testuser,dc=example,dc=com', got '%s'", result.ExtraData["ldap_dn"])
++	}
++}
++
++func TestSetUserResponse_RequiredFieldsOnly(t *testing.T) {
++	userRes := &UserRes{
++		Login:   "minimaluser",
++		Type:    "Organization",
++		UserURL: "https://github.com/minimaluser",
++	}
++
++	result := &detectors.Result{
++		ExtraData: make(map[string]string),
++	}
++
++	SetUserResponse(userRes, result)
++
++	if result.ExtraData["username"] != "minimaluser" {
++		t.Errorf("expected username 'minimaluser', got '%s'", result.ExtraData["username"])
++	}
++	if result.ExtraData["account_type"] != "Organization" {
++		t.Errorf("expected account_type 'Organization', got '%s'", result.ExtraData["account_type"])
++	}
++	if _, exists := result.ExtraData["site_admin"]; exists {
++		t.Error("site_admin should not be set when SiteAdmin is false")
++	}
++	if _, exists := result.ExtraData["name"]; exists {
++		t.Error("name should not be set when Name is empty")
++	}
++	if _, exists := result.ExtraData["company"]; exists {
++		t.Error("company should not be set when Company is empty")
++	}
++	if _, exists := result.ExtraData["ldap_dn"]; exists {
++		t.Error("ldap_dn should not be set when LdapDN is empty")
++	}
++}
++
++func TestSetUserResponse_EmptyStringsNotSet(t *testing.T) {
++	userRes := &UserRes{
++		Login:     "user",
++		Type:      "User",
++		SiteAdmin: false,
++		Name:      "",
++		Company:   "",
++		UserURL:   "https://github.com/user",
++		LdapDN:    "",
++	}
++
++	result := &detectors.Result{
++		ExtraData: make(map[string]string),
++	}
++
++	SetUserResponse(userRes, result)
++
++	if _, exists := result.ExtraData["name"]; exists {
++		t.Error("name should not be present when empty string")
++	}
++	if _, exists := result.ExtraData["company"]; exists {
++		t.Error("company should not be present when empty string")
++	}
++	if _, exists := result.ExtraData["ldap_dn"]; exists {
++		t.Error("ldap_dn should not be present when empty string")
++	}
++	if _, exists := result.ExtraData["site_admin"]; exists {
++		t.Error("site_admin should not be present when false")
++	}
++}
++
++func TestSetHeaderInfo_OnlyScopes(t *testing.T) {
++	headers := &HeaderInfo{
++		Scopes: "notifications",
++		Expiry: "",
++	}
++
++	result := &detectors.Result{
++		ExtraData: make(map[string]string),
++	}
++
++	SetHeaderInfo(headers, result)
++
++	if result.ExtraData["scopes"] != "notifications" {
++		t.Errorf("expected scopes 'notifications', got '%s'", result.ExtraData["scopes"])
++	}
++	if _, exists := result.ExtraData["expiry"]; exists {
++		t.Error("expiry should not be set when Expiry is empty")
++	}
++}
++
++func TestSetHeaderInfo_Empty(t *testing.T) {
++	headers := &HeaderInfo{
++		Scopes: "",
++		Expiry: "",
++	}
++
++	result := &detectors.Result{
++		ExtraData: make(map[string]string),
++	}
++
++	SetHeaderInfo(headers, result)
++
++	if _, exists := result.ExtraData["scopes"]; exists {
++		t.Error("scopes should not be set when empty")
++	}
++	if _, exists := result.ExtraData["expiry"]; exists {
++		t.Error("expiry should not be set when empty")
++	}
++}
++
++func TestUserRes_StructFields(t *testing.T) {
++	user := UserRes{
++		Login:     "octocat",
++		Type:      "User",
++		SiteAdmin: false,
++		Name:      "The Octocat",
++		Company:   "GitHub",
++		UserURL:   "https://github.com/octocat",
++		LdapDN:    "",
++	}
++
++	if user.Login != "octocat" {
++		t.Errorf("Login field mismatch")
++	}
++	if user.Type != "User" {
++		t.Errorf("Type field mismatch")
++	}
++	if user.SiteAdmin != false {
++		t.Errorf("SiteAdmin field mismatch")
++	}
++	if user.Name != "The Octocat" {
++		t.Errorf("Name field mismatch")
++	}
++	if user.Company != "GitHub" {
++		t.Errorf("Company field mismatch")
++	}
++	if user.UserURL != "https://github.com/octocat" {
++		t.Errorf("UserURL field mismatch")
++	}
++}
++
++func TestUserRes_JSONUnmarshal(t *testing.T) {
++	jsonData := `{
++		"login": "testuser",
++		"type": "User",
++		"site_admin": true,
++		"name": "Test User",
++		"company": "Test Corp",
++		"html_url": "https://github.com/testuser",
++		"ldap_dn": "cn=test,dc=example,dc=com"
++	}`
++
++	var user UserRes
++	err := json.Unmarshal([]byte(jsonData), &user)
++	if err != nil {
++		t.Fatalf("failed to unmarshal UserRes: %v", err)
++	}
++
++	if user.Login != "testuser" {
++		t.Errorf("expected Login 'testuser', got '%s'", user.Login)
++	}
++	if user.Type != "User" {
++		t.Errorf("expected Type 'User', got '%s'", user.Type)
++	}
++	if user.SiteAdmin != true {
++		t.Errorf("expected SiteAdmin true, got %v", user.SiteAdmin)
++	}
++	if user.Name != "Test User" {
++		t.Errorf("expected Name 'Test User', got '%s'", user.Name)
++	}
++	if user.Company != "Test Corp" {
++		t.Errorf("expected Company 'Test Corp', got '%s'", user.Company)
++	}
++	if user.UserURL != "https://github.com/testuser" {
++		t.Errorf("expected UserURL 'https://github.com/testuser', got '%s'", user.UserURL)
++	}
++	if user.LdapDN != "cn=test,dc=example,dc=com" {
++		t.Errorf("expected LdapDN 'cn=test,dc=example,dc=com', got '%s'", user.LdapDN)
++	}
++}
++
++func TestHeaderInfo_StructFields(t *testing.T) {
++	headers := HeaderInfo{
++		Scopes: "repo,user,gist",
++		Expiry: "2025-06-15 12:00:00 UTC",
++	}
++
++	if headers.Scopes != "repo,user,gist" {
++		t.Errorf("Scopes field mismatch")
++	}
++	if headers.Expiry != "2025-06-15 12:00:00 UTC" {
++		t.Errorf("Expiry field mismatch")
++	}
++}
++
++type mockTransport struct {
++	response   *http.Response
++	err        error
++	requestURL string
++}
++
++func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
++	m.requestURL = req.URL.String()
++	if m.err != nil {
++		return nil, m.err
++	}
++	return m.response, nil
++}
++
++func TestVerifyGithub_Success(t *testing.T) {
++	userJSON := `{
++		"login": "verifieduser",
++		"type": "User",
++		"site_admin": false,
++		"name": "Verified User",
++		"company": "",
++		"html_url": "https://github.com/verifieduser",
++		"ldap_dn": ""
++	}`
++
++	header := http.Header{}
++	header.Set("X-OAuth-Scopes", "repo,user")
++	header.Set("github-authentication-token-expiration", "2025-12-31 23:59:59 UTC")
++
++	transport := &mockTransport{
++		response: &http.Response{
++			StatusCode: 200,
++			Body:       io.NopCloser(strings.NewReader(userJSON)),
++			Header:     header,
++		},
++	}
++
++	client := &http.Client{Transport: transport}
++	scanner := Scanner{}
++
++	verified, userRes, headers, err := scanner.VerifyGithub(context.Background(), client, "test_token")
++
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if !verified {
++		t.Error("expected verified to be true")
++	}
++	if userRes == nil {
++		t.Fatal("expected userRes to not be nil")
++	}
++	if userRes.Login != "verifieduser" {
++		t.Errorf("expected login 'verifieduser', got '%s'", userRes.Login)
++	}
++	if userRes.Type != "User" {
++		t.Errorf("expected type 'User', got '%s'", userRes.Type)
++	}
++	if userRes.Name != "Verified User" {
++		t.Errorf("expected name 'Verified User', got '%s'", userRes.Name)
++	}
++	if headers == nil {
++		t.Fatal("expected headers to not be nil")
++	}
++	if headers.Scopes != "repo,user" {
++		t.Errorf("expected scopes 'repo,user', got '%s'", headers.Scopes)
++	}
++	if headers.Expiry != "2025-12-31 23:59:59 UTC" {
++		t.Errorf("expected expiry '2025-12-31 23:59:59 UTC', got '%s'", headers.Expiry)
++	}
++}
++
++func TestVerifyGithub_Unauthorized(t *testing.T) {
++	transport := &mockTransport{
++		response: &http.Response{
++			StatusCode: 401,
++			Body:       io.NopCloser(strings.NewReader(`{"message": "Bad credentials"}`)),
++			Header:     http.Header{},
++		},
++	}
++
++	client := &http.Client{Transport: transport}
++	scanner := Scanner{}
++
++	verified, userRes, headers, err := scanner.VerifyGithub(context.Background(), client, "invalid_token")
++
++	if err != nil {
++		t.Fatalf("unexpected error for 401: %v", err)
++	}
++	if verified {
++		t.Error("expected verified to be false for 401 response")
++	}
++	if userRes != nil {
++		t.Error("expected userRes to be nil for 401 response")
++	}
++	if headers != nil {
++		t.Error("expected headers to be nil for 401 response")
++	}
++}
++
++func TestVerifyGithub_Forbidden(t *testing.T) {
++	transport := &mockTransport{
++		response: &http.Response{
++			StatusCode: 403,
++			Body:       io.NopCloser(strings.NewReader(`{"message": "Forbidden"}`)),
++			Header:     http.Header{},
++		},
++	}
++
++	client := &http.Client{Transport: transport}
++	scanner := Scanner{}
++
++	verified, userRes, headers, err := scanner.VerifyGithub(context.Background(), client, "forbidden_token")
++
++	if err != nil {
++		t.Fatalf("unexpected error for 403: %v", err)
++	}
++	if verified {
++		t.Error("expected verified to be false for 403 response")
++	}
++	if userRes != nil {
++		t.Error("expected userRes to be nil for 403 response")
++	}
++	if headers != nil {
++		t.Error("expected headers to be nil for 403 response")
++	}
++}
++
++func TestVerifyGithub_ServerError(t *testing.T) {
++	transport := &mockTransport{
++		response: &http.Response{
++			StatusCode: 500,
++			Body:       io.NopCloser(strings.NewReader(`{"message": "Internal Server Error"}`)),
++			Header:     http.Header{},
++		},
++	}
++
++	client := &http.Client{Transport: transport}
++	scanner := Scanner{}
++
++	verified, userRes, headers, err := scanner.VerifyGithub(context.Background(), client, "test_token")
++
++	if err != nil {
++		t.Fatalf("unexpected error for 500: %v", err)
++	}
++	if verified {
++		t.Error("expected verified to be false for 500 response")
++	}
++	if userRes != nil {
++		t.Error("expected userRes to be nil for 500 response")
++	}
++	if headers != nil {
++		t.Error("expected headers to be nil for 500 response")
++	}
++}
++
++func TestVerifyGithub_EmptyResponse(t *testing.T) {
++	transport := &mockTransport{
++		response: &http.Response{
++			StatusCode: 200,
++			Body:       io.NopCloser(strings.NewReader("")),
++			Header:     http.Header{},
++		},
++	}
++
++	client := &http.Client{Transport: transport}
++	scanner := Scanner{}
++
++	verified, userRes, headers, err := scanner.VerifyGithub(context.Background(), client, "test_token")
++
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if verified {
++		t.Error("expected verified to be false for empty response body")
++	}
++	if userRes != nil {
++		t.Error("expected userRes to be nil for empty response body")
++	}
++	if headers != nil {
++		t.Error("expected headers to be nil for empty response body")
++	}
++}
++
++func TestVerifyGithub_NoHeaders(t *testing.T) {
++	userJSON := `{
++		"login": "minimaluser",
++		"type": "User",
++		"site_admin": false,
++		"name": "",
++		"company": "",
++		"html_url": "https://github.com/minimaluser",
++		"ldap_dn": ""
++	}`
++
++	transport := &mockTransport{
++		response: &http.Response{
++			StatusCode: 200,
++			Body:       io.NopCloser(strings.NewReader(userJSON)),
++			Header:     http.Header{},
++		},
++	}
++
++	client := &http.Client{Transport: transport}
++	scanner := Scanner{}
++
++	verified, userRes, headers, err := scanner.VerifyGithub(context.Background(), client, "test_token")
++
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if !verified {
++		t.Error("expected verified to be true")
++	}
++	if userRes == nil {
++		t.Fatal("expected userRes to not be nil")
++	}
++	if headers == nil {
++		t.Fatal("expected headers to not be nil")
++	}
++	if headers.Scopes != "" {
++		t.Errorf("expected empty scopes, got '%s'", headers.Scopes)
++	}
++	if headers.Expiry != "" {
++		t.Errorf("expected empty expiry, got '%s'", headers.Expiry)
++	}
++}
++
++func TestVerifyGithub_InvalidJSON(t *testing.T) {
++	transport := &mockTransport{
++		response: &http.Response{
++			StatusCode: 200,
++			Body:       io.NopCloser(strings.NewReader(`{invalid json`)),
++			Header:     http.Header{},
++		},
++	}
++
++	client := &http.Client{Transport: transport}
++	scanner := Scanner{}
++
++	verified, userRes, headers, err := scanner.VerifyGithub(context.Background(), client, "test_token")
++
++	if err != nil {
++		t.Fatalf("unexpected error (JSON decode failure is handled): %v", err)
++	}
++	if verified {
++		t.Error("expected verified to be false for invalid JSON")
++	}
++	if userRes != nil {
++		t.Error("expected userRes to be nil for invalid JSON")
++	}
++	if headers != nil {
++		t.Error("expected headers to be nil for invalid JSON")
++	}
++}
++
++func TestVerifyGithub_EnterpriseUser(t *testing.T) {
++	userJSON := `{
++		"login": "enterpriseuser",
++		"type": "User",
++		"site_admin": true,
++		"name": "Enterprise Admin",
++		"company": "ACME Corp",
++		"html_url": "https://github.acme.com/enterpriseuser",
++		"ldap_dn": "cn=enterpriseuser,ou=users,dc=acme,dc=com"
++	}`
++
++	header := http.Header{}
++	header.Set("X-OAuth-Scopes", "admin:org,repo")
++
++	transport := &mockTransport{
++		response: &http.Response{
++			StatusCode: 200,
++			Body:       io.NopCloser(strings.NewReader(userJSON)),
++			Header:     header,
++		},
++	}
++
++	client := &http.Client{Transport: transport}
++	scanner := Scanner{}
++
++	verified, userRes, headers, err := scanner.VerifyGithub(context.Background(), client, "enterprise_token")
++
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if !verified {
++		t.Error("expected verified to be true")
++	}
++	if userRes == nil {
++		t.Fatal("expected userRes to not be nil")
++	}
++	if !userRes.SiteAdmin {
++		t.Error("expected SiteAdmin to be true for enterprise admin")
++	}
++	if userRes.LdapDN != "cn=enterpriseuser,ou=users,dc=acme,dc=com" {
++		t.Errorf("expected ldap_dn for enterprise user, got '%s'", userRes.LdapDN)
++	}
++	if userRes.Company != "ACME Corp" {
++		t.Errorf("expected company 'ACME Corp', got '%s'", userRes.Company)
++	}
++	if headers.Scopes != "admin:org,repo" {
++		t.Errorf("expected scopes 'admin:org,repo', got '%s'", headers.Scopes)
++	}
++}
++
++func TestVerifyGithub_OrganizationType(t *testing.T) {
++	userJSON := `{
++		"login": "myorg",
++		"type": "Organization",
++		"site_admin": false,
++		"name": "My Organization",
++		"company": "",
++		"html_url": "https://github.com/myorg",
++		"ldap_dn": ""
++	}`
++
++	transport := &mockTransport{
++		response: &http.Response{
++			StatusCode: 200,
++			Body:       io.NopCloser(strings.NewReader(userJSON)),
++			Header:     http.Header{},
++		},
++	}
++
++	client := &http.Client{Transport: transport}
++	scanner := Scanner{}
++
++	verified, userRes, _, err := scanner.VerifyGithub(context.Background(), client, "org_token")
++
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if !verified {
++		t.Error("expected verified to be true")
++	}
++	if userRes.Type != "Organization" {
++		t.Errorf("expected type 'Organization', got '%s'", userRes.Type)
++	}
++}
++
++
++func TestScanner_V1_Version(t *testing.T) {
++	s := Scanner{}
++	if s.Version() != 1 {
++		t.Errorf("expected Version() to return 1, got %d", s.Version())
++	}
++}
++
++func TestScanner_V1_DefaultEndpoint(t *testing.T) {
++	s := Scanner{}
++	expected := "https://api.github.com"
++	if s.DefaultEndpoint() != expected {
++		t.Errorf("expected DefaultEndpoint() to return '%s', got '%s'", expected, s.DefaultEndpoint())
++	}
++}
++
++func TestScanner_V1_Keywords(t *testing.T) {
++	s := Scanner{}
++	keywords := s.Keywords()
++
++	expectedKeywords := []string{"github", "gh", "pat", "token"}
++	if len(keywords) != len(expectedKeywords) {
++		t.Errorf("expected %d keywords, got %d", len(expectedKeywords), len(keywords))
++	}
++
++	keywordMap := make(map[string]bool)
++	for _, k := range keywords {
++		keywordMap[k] = true
++	}
++
++	for _, expected := range expectedKeywords {
++		if !keywordMap[expected] {
++			t.Errorf("expected keyword '%s' not found", expected)
++		}
++	}
++}
++
++func TestScanner_V1_Type(t *testing.T) {
++	s := Scanner{}
++	if s.Type() != detectorspb.DetectorType_Github {
++		t.Errorf("expected Type() to return DetectorType_Github")
++	}
++}
++
++func TestScanner_V1_FromData_NoVerify(t *testing.T) {
++	s := Scanner{}
++	ctx := context.Background()
++	
++	// v1 regex: (?i)(?:github|gh|pat|token)[^\.].{0,40}[ =:'"]+([a-f0-9]{40})\b
++	// The token must be exactly 40 hex chars, avoid "abcde" which is a false positive
++	data := []byte("github token=f9e8d7c6b5a4039281706f5e4d3c2b1a09f8e7d6")
++	results, err := s.FromData(ctx, false, data)
++	
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if len(results) != 1 {
++		t.Fatalf("expected 1 result, got %d", len(results))
++	}
++	if results[0].DetectorType != detectorspb.DetectorType_Github {
++		t.Error("expected DetectorType_Github")
++	}
++	if results[0].ExtraData["version"] != "1" {
++		t.Errorf("expected version '1', got '%s'", results[0].ExtraData["version"])
++	}
++	if results[0].ExtraData["rotation_guide"] != "https://howtorotate.com/docs/tutorials/github/" {
++		t.Error("expected rotation_guide to be set")
++	}
++}
++
++func TestScanner_V1_FromData_NoMatch(t *testing.T) {
++	s := Scanner{}
++	ctx := context.Background()
++	
++	data := []byte("no github token here")
++	results, err := s.FromData(ctx, false, data)
++	
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if len(results) != 0 {
++		t.Errorf("expected 0 results, got %d", len(results))
++	}
++}
++
++func TestScanner_V1_FromData_MultipleMatches(t *testing.T) {
++	s := Scanner{}
++	ctx := context.Background()
++	
++	// Avoid tokens containing false positive patterns like "abcde"
++	data := []byte("github token=f9e8d7c6b5a4039281706f5e4d3c2b1a09f8e7d6 and gh key:a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")
++	results, err := s.FromData(ctx, false, data)
++	
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if len(results) != 2 {
++		t.Errorf("expected 2 results, got %d", len(results))
++	}
++}
++
+ func TestGitHub_FromChunk(t *testing.T) {
+ 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+ 	defer cancel()
+ 	testSecrets, err := common.GetSecret(ctx, "trufflehog-testing", "detectors2")
+diff --git a/pkg/detectors/github/v2/github_test.go b/pkg/detectors/github/v2/github_test.go
+index fa44fd474..0dfb46a8d 100644
+--- a/pkg/detectors/github/v2/github_test.go
++++ b/pkg/detectors/github/v2/github_test.go
+@@ -6,15 +6,225 @@ package github
+ import (
+ 	"context"
+ 	"fmt"
++	"io"
++	"net/http"
++	"strings"
+ 	"testing"
+ 	"time"
+ 
+ 	"github.com/kylelemons/godebug/pretty"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/detectors"
++	v1 "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
+ )
+ 
++func TestScanner_Version(t *testing.T) {
++	s := Scanner{}
++	if s.Version() != 2 {
++		t.Errorf("expected Version() to return 2, got %d", s.Version())
++	}
++}
++
++func TestScanner_DefaultEndpoint(t *testing.T) {
++	s := Scanner{}
++	expected := "https://api.github.com"
++	if s.DefaultEndpoint() != expected {
++		t.Errorf("expected DefaultEndpoint() to return '%s', got '%s'", expected, s.DefaultEndpoint())
++	}
++}
++
++func TestScanner_Keywords(t *testing.T) {
++	s := Scanner{}
++	keywords := s.Keywords()
++
++	expectedKeywords := []string{"ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_"}
++	if len(keywords) != len(expectedKeywords) {
++		t.Errorf("expected %d keywords, got %d", len(expectedKeywords), len(keywords))
++	}
++
++	keywordMap := make(map[string]bool)
++	for _, k := range keywords {
++		keywordMap[k] = true
++	}
++
++	for _, expected := range expectedKeywords {
++		if !keywordMap[expected] {
++			t.Errorf("expected keyword '%s' not found", expected)
++		}
++	}
++}
++
++func TestScanner_Type(t *testing.T) {
++	s := Scanner{}
++	if s.Type() != detectorspb.DetectorType_Github {
++		t.Errorf("expected Type() to return DetectorType_Github")
++	}
++}
++
++func TestScanner_EmbedV1Scanner(t *testing.T) {
++	s := Scanner{}
++	var _ v1.Scanner = s.Scanner
++}
++
++type mockTransport struct {
++	response   *http.Response
++	err        error
++	requestURL string
++}
++
++func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
++	m.requestURL = req.URL.String()
++	if m.err != nil {
++		return nil, m.err
++	}
++	return m.response, nil
++}
++
++func TestScanner_UsesV1VerifyGithub(t *testing.T) {
++	userJSON := `{
++		"login": "v2testuser",
++		"type": "User",
++		"site_admin": false,
++		"name": "V2 Test User",
++		"company": "",
++		"html_url": "https://github.com/v2testuser",
++		"ldap_dn": ""
++	}`
++
++	header := http.Header{}
++	header.Set("X-OAuth-Scopes", "repo")
++	header.Set("github-authentication-token-expiration", "2026-01-01 00:00:00 UTC")
++
++	transport := &mockTransport{
++		response: &http.Response{
++			StatusCode: 200,
++			Body:       io.NopCloser(strings.NewReader(userJSON)),
++			Header:     header,
++		},
++	}
++
++	client := &http.Client{Transport: transport}
++	scanner := Scanner{}
++
++	verified, userRes, headers, err := scanner.VerifyGithub(context.Background(), client, "ghp_test123456789012345678901234567890")
++
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if !verified {
++		t.Error("expected verified to be true")
++	}
++	if userRes == nil {
++		t.Fatal("expected userRes to not be nil")
++	}
++	if userRes.Login != "v2testuser" {
++		t.Errorf("expected login 'v2testuser', got '%s'", userRes.Login)
++	}
++	if headers == nil {
++		t.Fatal("expected headers to not be nil")
++	}
++	if headers.Scopes != "repo" {
++		t.Errorf("expected scopes 'repo', got '%s'", headers.Scopes)
++	}
++}
++
++func TestScanner_UsesV1SetUserResponse(t *testing.T) {
++	userRes := &v1.UserRes{
++		Login:   "v2user",
++		Type:    "User",
++		UserURL: "https://github.com/v2user",
++	}
++
++	result := &detectors.Result{
++		ExtraData: make(map[string]string),
++	}
++
++	v1.SetUserResponse(userRes, result)
++
++	if result.ExtraData["username"] != "v2user" {
++		t.Errorf("expected username 'v2user', got '%s'", result.ExtraData["username"])
++	}
++	if result.ExtraData["account_type"] != "User" {
++		t.Errorf("expected account_type 'User', got '%s'", result.ExtraData["account_type"])
++	}
++}
++
++func TestScanner_V2_FromData_NoVerify(t *testing.T) {
++	s := Scanner{}
++	ctx := context.Background()
++	
++	// Token part must be at least 36 chars after the prefix, avoid false positive patterns
++	data := []byte("token=ghp_f9e8d7c6b5a4039281706f5e4d3c2b1a09f8")
++	results, err := s.FromData(ctx, false, data)
++	
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if len(results) != 1 {
++		t.Fatalf("expected 1 result, got %d", len(results))
++	}
++	if results[0].DetectorType != detectorspb.DetectorType_Github {
++		t.Error("expected DetectorType_Github")
++	}
++	if results[0].ExtraData["version"] != "2" {
++		t.Errorf("expected version '2', got '%s'", results[0].ExtraData["version"])
++	}
++	if results[0].ExtraData["rotation_guide"] != "https://howtorotate.com/docs/tutorials/github/" {
++		t.Error("expected rotation_guide to be set")
++	}
++}
++
++func TestScanner_V2_FromData_NoMatch(t *testing.T) {
++	s := Scanner{}
++	ctx := context.Background()
++	
++	data := []byte("no github token here")
++	results, err := s.FromData(ctx, false, data)
++	
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if len(results) != 0 {
++		t.Errorf("expected 0 results, got %d", len(results))
++	}
++}
++
++func TestScanner_V2_FromData_MultiplePatterns(t *testing.T) {
++	s := Scanner{}
++	ctx := context.Background()
++	
++	// Both tokens must be at least 36 chars after the prefix, avoid false positives
++	data := []byte("ghp_f9e8d7c6b5a4039281706f5e4d3c2b1a09f8 and gho_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6")
++	results, err := s.FromData(ctx, false, data)
++	
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if len(results) != 2 {
++		t.Errorf("expected 2 results, got %d", len(results))
++	}
++}
++
++func TestScanner_V2_FromData_GithubPatToken(t *testing.T) {
++	s := Scanner{}
++	ctx := context.Background()
++	
++	// Token part must be at least 36 chars after the prefix, avoid false positives
++	data := []byte("github_pat_f9e8d7c6b5a4039281706f5e4d3c2b1a09f8")
++	results, err := s.FromData(ctx, false, data)
++	
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if len(results) != 1 {
++		t.Fatalf("expected 1 result, got %d", len(results))
++	}
++	if results[0].ExtraData["version"] != "2" {
++		t.Errorf("expected version '2', got '%s'", results[0].ExtraData["version"])
++	}
++}
++
+ func TestGitHub_FromChunk(t *testing.T) {
+ 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+ 	defer cancel()

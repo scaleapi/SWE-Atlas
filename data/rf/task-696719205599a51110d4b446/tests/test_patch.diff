@@ -1,0 +1,517 @@
+diff --git a/api/v1/group_routes_test.go b/api/v1/group_routes_test.go
+index 1a8f5eed8..9893d87bf 100644
+--- a/api/v1/group_routes_test.go
++++ b/api/v1/group_routes_test.go
+@@ -44,7 +44,7 @@ func getControlSurface(tb testing.TB, testState *lib.TestRunState) *ControlSurfa
+ 	execScheduler, err := execution.NewScheduler(testState)
+ 	require.NoError(tb, err)
+ 
+-	me, err := engine.NewMetricsEngine(testState)
++	me, err := engine.NewMetricsEngine(testState.Registry, testState.Logger)
+ 	require.NoError(tb, err)
+ 
+ 	ctx, cancel := context.WithCancel(context.Background())
+diff --git a/api/v1/setup_teardown_routes_test.go b/api/v1/setup_teardown_routes_test.go
+index 790b8e146..65917e0a8 100644
+--- a/api/v1/setup_teardown_routes_test.go
++++ b/api/v1/setup_teardown_routes_test.go
+@@ -140,7 +140,7 @@ func TestSetupData(t *testing.T) {
+ 
+ 			execScheduler, err := execution.NewScheduler(testState)
+ 			require.NoError(t, err)
+-			metricsEngine, err := engine.NewMetricsEngine(testState)
++			metricsEngine, err := engine.NewMetricsEngine(testState.Registry, testState.Logger)
+ 			require.NoError(t, err)
+ 
+ 			globalCtx, globalCancel := context.WithCancel(context.Background())
+diff --git a/api/v1/status_routes_test.go b/api/v1/status_routes_test.go
+index 89365b23d..f74f0ed5a 100644
+--- a/api/v1/status_routes_test.go
++++ b/api/v1/status_routes_test.go
+@@ -115,7 +115,7 @@ func TestPatchStatus(t *testing.T) {
+ 			execScheduler, err := execution.NewScheduler(testState)
+ 			require.NoError(t, err)
+ 
+-			metricsEngine, err := engine.NewMetricsEngine(testState)
++			metricsEngine, err := engine.NewMetricsEngine(testState.Registry, testState.Logger)
+ 			require.NoError(t, err)
+ 
+ 			globalCtx, globalCancel := context.WithCancel(context.Background())
+diff --git a/js/runner_test.go b/js/runner_test.go
+index c70ae3c2d..85965582e 100644
+--- a/js/runner_test.go
++++ b/js/runner_test.go
+@@ -47,7 +47,6 @@ import (
+ 	"go.k6.io/k6/lib/testutils/mockoutput"
+ 	"go.k6.io/k6/lib/types"
+ 	"go.k6.io/k6/metrics"
+-	"go.k6.io/k6/metrics/engine"
+ 	"go.k6.io/k6/output"
+ )
+ 
+@@ -387,23 +386,17 @@ func TestDataIsolation(t *testing.T) {
+ 	execScheduler, err := execution.NewScheduler(testRunState)
+ 	require.NoError(t, err)
+ 
+-	metricsEngine, err := engine.NewMetricsEngine(testRunState)
+-	require.NoError(t, err)
+-
+ 	globalCtx, globalCancel := context.WithCancel(context.Background())
+ 	defer globalCancel()
+ 	runCtx, runAbort := execution.NewTestRunContext(globalCtx, testRunState.Logger)
+ 
+ 	mockOutput := mockoutput.New()
+-	outputManager := output.NewManager([]output.Output{mockOutput, metricsEngine.CreateIngester()}, testRunState.Logger, runAbort)
++	outputManager := output.NewManager([]output.Output{mockOutput}, testRunState.Logger, runAbort)
+ 	samples := make(chan metrics.SampleContainer, 1000)
+ 	waitForMetricsFlushed, stopOutputs, err := outputManager.Start(samples)
+ 	require.NoError(t, err)
+ 	defer stopOutputs(nil)
+ 
+-	finalizeThresholds := metricsEngine.StartThresholdCalculations(runAbort, execScheduler.GetState().GetCurrentTestRunDuration)
+-	require.Nil(t, finalizeThresholds)
+-
+ 	require.Empty(t, runner.defaultGroup.Groups)
+ 
+ 	stopEmission, err := execScheduler.Init(runCtx, samples)
+diff --git a/js/summary_test.go b/js/summary_test.go
+index 2f30669a0..a43f68aa4 100644
+--- a/js/summary_test.go
++++ b/js/summary_test.go
+@@ -150,7 +150,7 @@ func createTestMetrics(t *testing.T) (map[string]*metrics.Metric, *lib.Group) {
+ 	require.NoError(t, err)
+ 	checksMetric.Tainted = null.BoolFrom(false)
+ 	checksMetric.Thresholds = metrics.Thresholds{Thresholds: []*metrics.Threshold{{Source: "rate>70", LastFailed: false}}}
+-	sink := &metrics.TrendSink{}
++	sink := metrics.NewTrendSink()
+ 
+ 	samples := []float64{10.0, 15.0, 20.0}
+ 	for _, s := range samples {
+diff --git a/metrics/engine/engine_test.go b/metrics/engine/engine_test.go
+index 06267cfa3..a941b4671 100644
+--- a/metrics/engine/engine_test.go
++++ b/metrics/engine/engine_test.go
+@@ -32,10 +32,12 @@ func TestNewMetricsEngineWithThresholds(t *testing.T) {
+ 	_, err = trs.Registry.NewMetric("metric2", metrics.Counter)
+ 	require.NoError(t, err)
+ 
+-	me, err := NewMetricsEngine(trs)
++	me, err := NewMetricsEngine(trs.Registry, trs.Logger)
+ 	require.NoError(t, err)
+ 	require.NotNil(t, me)
+ 
++	require.NoError(t, me.InitSubMetricsAndThresholds(trs.Options, false))
++
+ 	assert.Len(t, me.metricsWithThresholds, 2)
+ }
+ 
+@@ -57,7 +59,7 @@ func TestMetricsEngineGetThresholdMetricOrSubmetricError(t *testing.T) {
+ 			t.Parallel()
+ 
+ 			me := newTestMetricsEngine(t)
+-			_, err := me.test.Registry.NewMetric("metric1", metrics.Counter)
++			_, err := me.registry.NewMetric("metric1", metrics.Counter)
+ 			require.NoError(t, err)
+ 
+ 			_, err = me.getThresholdMetricOrSubmetric(tc.metricDefinition)
+@@ -69,16 +71,8 @@ func TestMetricsEngineGetThresholdMetricOrSubmetricError(t *testing.T) {
+ func TestNewMetricsEngineNoThresholds(t *testing.T) {
+ 	t.Parallel()
+ 
+-	trs := &lib.TestRunState{
+-		TestPreInitState: &lib.TestPreInitState{
+-			Logger: testutils.NewLogger(t),
+-		},
+-	}
+-
+-	me, err := NewMetricsEngine(trs)
+-	require.NoError(t, err)
++	me := newTestMetricsEngine(t)
+ 	require.NotNil(t, me)
+-
+ 	assert.Empty(t, me.metricsWithThresholds)
+ }
+ 
+@@ -113,9 +107,9 @@ func TestMetricsEngineEvaluateThresholdNoAbort(t *testing.T) {
+ 			t.Parallel()
+ 			me := newTestMetricsEngine(t)
+ 
+-			m1, err := me.test.Registry.NewMetric("m1", metrics.Counter)
++			m1, err := me.registry.NewMetric("m1", metrics.Counter)
+ 			require.NoError(t, err)
+-			m2, err := me.test.Registry.NewMetric("m2", metrics.Counter)
++			m2, err := me.registry.NewMetric("m2", metrics.Counter)
+ 			require.NoError(t, err)
+ 
+ 			ths := metrics.NewThresholds([]string{tc.threshold})
+@@ -138,9 +132,9 @@ func TestMetricsEngineEvaluateIgnoreEmptySink(t *testing.T) {
+ 
+ 	me := newTestMetricsEngine(t)
+ 
+-	m1, err := me.test.Registry.NewMetric("m1", metrics.Counter)
++	m1, err := me.registry.NewMetric("m1", metrics.Counter)
+ 	require.NoError(t, err)
+-	m2, err := me.test.Registry.NewMetric("m2", metrics.Counter)
++	m2, err := me.registry.NewMetric("m2", metrics.Counter)
+ 	require.NoError(t, err)
+ 
+ 	ths := metrics.NewThresholds([]string{"count>5"})
+@@ -159,18 +153,10 @@ func TestMetricsEngineEvaluateIgnoreEmptySink(t *testing.T) {
+ 	assert.Empty(t, breached)
+ }
+ 
+-func newTestMetricsEngine(t *testing.T) MetricsEngine {
+-	trs := &lib.TestRunState{
+-		TestPreInitState: &lib.TestPreInitState{
+-			Logger:   testutils.NewLogger(t),
+-			Registry: metrics.NewRegistry(),
+-		},
+-	}
+-
+-	return MetricsEngine{
+-		logger: trs.Logger,
+-		test:   trs,
+-	}
++func newTestMetricsEngine(t *testing.T) *MetricsEngine {
++	m, err := NewMetricsEngine(metrics.NewRegistry(), testutils.NewLogger(t))
++	require.NoError(t, err)
++	return m
+ }
+ 
+ func zeroTestRunDuration() time.Duration {
+diff --git a/metrics/engine/ingester_test.go b/metrics/engine/ingester_test.go
+index 71f7a7c84..b299322e3 100644
+--- a/metrics/engine/ingester_test.go
++++ b/metrics/engine/ingester_test.go
+@@ -19,7 +19,7 @@ func TestIngesterOutputFlushMetrics(t *testing.T) {
+ 	testMetric, err := piState.Registry.NewMetric("test_metric", metrics.Trend)
+ 	require.NoError(t, err)
+ 
+-	ingester := outputIngester{
++	ingester := OutputIngester{
+ 		logger: piState.Logger,
+ 		metricsEngine: &MetricsEngine{
+ 			ObservedMetrics: make(map[string]*metrics.Metric),
+@@ -55,9 +55,8 @@ func TestIngesterOutputFlushSubmetrics(t *testing.T) {
+ 	require.NoError(t, err)
+ 
+ 	me := &MetricsEngine{
+-		test: &lib.TestRunState{
+-			TestPreInitState: piState,
+-		},
++		logger:          piState.Logger,
++		registry:        piState.Registry,
+ 		ObservedMetrics: make(map[string]*metrics.Metric),
+ 	}
+ 	_, err = me.getThresholdMetricOrSubmetric("test_metric{a:1}")
+@@ -66,7 +65,7 @@ func TestIngesterOutputFlushSubmetrics(t *testing.T) {
+ 	// assert that observed metrics is empty before to start
+ 	require.Empty(t, me.ObservedMetrics)
+ 
+-	ingester := outputIngester{
++	ingester := OutputIngester{
+ 		logger:        piState.Logger,
+ 		metricsEngine: me,
+ 		cardinality:   newCardinalityControl(),
+@@ -107,7 +106,7 @@ func TestOutputFlushMetricsTimeSeriesWarning(t *testing.T) {
+ 	require.NoError(t, err)
+ 
+ 	logger, hook := testutils.NewLoggerWithHook(nil)
+-	ingester := outputIngester{
++	ingester := OutputIngester{
+ 		logger: logger,
+ 		metricsEngine: &MetricsEngine{
+ 			ObservedMetrics: make(map[string]*metrics.Metric),
+diff --git a/metrics/metric_test.go b/metrics/metric_test.go
+index 4b29ebe54..cfd2d7510 100644
+--- a/metrics/metric_test.go
++++ b/metrics/metric_test.go
+@@ -15,7 +15,7 @@ func TestNewMetric(t *testing.T) {
+ 	}{
+ 		"Counter": {Counter, &CounterSink{}},
+ 		"Gauge":   {Gauge, &GaugeSink{}},
+-		"Trend":   {Trend, &TrendSink{}},
++		"Trend":   {Trend, NewTrendSink()},
+ 		"Rate":    {Rate, &RateSink{}},
+ 	}
+ 
+diff --git a/metrics/sample_test.go b/metrics/sample_test.go
+index 2c2042f7f..f5654e7ea 100644
+--- a/metrics/sample_test.go
++++ b/metrics/sample_test.go
+@@ -99,11 +99,11 @@ func TestGetResolversForTrendColumnsCalculation(t *testing.T) {
+ }
+ 
+ func createTestTrendSink(count int) *TrendSink {
+-	sink := TrendSink{}
++	sink := NewTrendSink()
+ 
+ 	for i := 0; i < count; i++ {
+ 		sink.Add(Sample{Value: float64(i)})
+ 	}
+ 
+-	return &sink
++	return sink
+ }
+diff --git a/metrics/sink_test.go b/metrics/sink_test.go
+index ddf708126..685597db7 100644
+--- a/metrics/sink_test.go
++++ b/metrics/sink_test.go
+@@ -19,7 +19,7 @@ func TestNewSink(t *testing.T) {
+ 		{mt: Counter, sink: &CounterSink{}},
+ 		{mt: Gauge, sink: &GaugeSink{}},
+ 		{mt: Rate, sink: &RateSink{}},
+-		{mt: Trend, sink: &TrendSink{}},
++		{mt: Trend, sink: NewTrendSink()},
+ 	}
+ 	for _, tc := range tests {
+ 		assert.Equal(t, tc.sink, NewSink(tc.mt))
+@@ -101,56 +101,56 @@ func TestTrendSink(t *testing.T) {
+ 		t.Run("one value", func(t *testing.T) {
+ 			t.Parallel()
+ 
+-			sink := TrendSink{}
++			sink := NewTrendSink()
+ 			sink.Add(Sample{TimeSeries: TimeSeries{Metric: &Metric{}}, Value: 7.0})
+-			assert.Equal(t, uint64(1), sink.Count)
+-			assert.Equal(t, 7.0, sink.Min)
+-			assert.Equal(t, 7.0, sink.Max)
+-			assert.Equal(t, 7.0, sink.Avg)
+-			assert.Equal(t, 7.0, sink.Sum)
+-			assert.Equal(t, []float64{7.0}, sink.Values)
++			assert.Equal(t, uint64(1), sink.Count())
++			assert.Equal(t, 7.0, sink.Min())
++			assert.Equal(t, 7.0, sink.Max())
++			assert.Equal(t, 7.0, sink.Avg())
++			assert.Equal(t, 7.0, sink.Total())
++			assert.Equal(t, []float64{7.0}, sink.values)
+ 		})
+ 		t.Run("values", func(t *testing.T) {
+ 			t.Parallel()
+ 
+-			sink := TrendSink{}
++			sink := NewTrendSink()
+ 			for _, s := range unsortedSamples10 {
+ 				sink.Add(Sample{TimeSeries: TimeSeries{Metric: &Metric{}}, Value: s})
+ 			}
+-			assert.Equal(t, uint64(len(unsortedSamples10)), sink.Count)
+-			assert.Equal(t, 0.0, sink.Min)
+-			assert.Equal(t, 100.0, sink.Max)
+-			assert.Equal(t, 54.0, sink.Avg)
+-			assert.Equal(t, 540.0, sink.Sum)
+-			assert.Equal(t, unsortedSamples10, sink.Values)
++			assert.Equal(t, uint64(len(unsortedSamples10)), sink.Count())
++			assert.Equal(t, 0.0, sink.Min())
++			assert.Equal(t, 100.0, sink.Max())
++			assert.Equal(t, 54.0, sink.Avg())
++			assert.Equal(t, 540.0, sink.Total())
++			assert.Equal(t, unsortedSamples10, sink.values)
+ 		})
+ 		t.Run("negative", func(t *testing.T) {
+ 			t.Parallel()
+ 
+-			sink := TrendSink{}
++			sink := NewTrendSink()
+ 			for _, s := range []float64{-10, -20} {
+ 				sink.Add(Sample{TimeSeries: TimeSeries{Metric: &Metric{}}, Value: s})
+ 			}
+-			assert.Equal(t, uint64(2), sink.Count)
+-			assert.Equal(t, -20.0, sink.Min)
+-			assert.Equal(t, -10.0, sink.Max)
+-			assert.Equal(t, -15.0, sink.Avg)
+-			assert.Equal(t, -30.0, sink.Sum)
+-			assert.Equal(t, []float64{-10, -20}, sink.Values)
++			assert.Equal(t, uint64(2), sink.Count())
++			assert.Equal(t, -20.0, sink.Min())
++			assert.Equal(t, -10.0, sink.Max())
++			assert.Equal(t, -15.0, sink.Avg())
++			assert.Equal(t, -30.0, sink.Total())
++			assert.Equal(t, []float64{-10, -20}, sink.values)
+ 		})
+ 		t.Run("mixed", func(t *testing.T) {
+ 			t.Parallel()
+ 
+-			sink := TrendSink{}
++			sink := NewTrendSink()
+ 			for _, s := range []float64{1.4, 0, -1.2} {
+ 				sink.Add(Sample{TimeSeries: TimeSeries{Metric: &Metric{}}, Value: s})
+ 			}
+-			assert.Equal(t, uint64(3), sink.Count)
+-			assert.Equal(t, -1.2, sink.Min)
+-			assert.Equal(t, 1.4, sink.Max)
+-			assert.Equal(t, 0.067, math.Round(sink.Avg*1000)/1000)
+-			assert.Equal(t, 0.199, math.Floor(sink.Sum*1000)/1000)
+-			assert.Equal(t, []float64{1.4, 0, -1.2}, sink.Values)
++			assert.Equal(t, uint64(3), sink.Count())
++			assert.Equal(t, -1.2, sink.Min())
++			assert.Equal(t, 1.4, sink.Max())
++			assert.Equal(t, 0.067, math.Round(sink.Avg()*1000)/1000)
++			assert.Equal(t, 0.199, math.Floor(sink.Total()*1000)/1000)
++			assert.Equal(t, []float64{1.4, 0, -1.2}, sink.values)
+ 		})
+ 	})
+ 
+@@ -159,7 +159,7 @@ func TestTrendSink(t *testing.T) {
+ 		t.Run("no values", func(t *testing.T) {
+ 			t.Parallel()
+ 
+-			sink := TrendSink{}
++			sink := NewTrendSink()
+ 			for i := 1; i <= 100; i++ {
+ 				assert.Equal(t, 0.0, sink.P(float64(i)/100.0))
+ 			}
+@@ -167,7 +167,7 @@ func TestTrendSink(t *testing.T) {
+ 		t.Run("one value", func(t *testing.T) {
+ 			t.Parallel()
+ 
+-			sink := TrendSink{}
++			sink := NewTrendSink()
+ 			sink.Add(Sample{TimeSeries: TimeSeries{Metric: &Metric{}}, Value: 10.0})
+ 			for i := 1; i <= 100; i++ {
+ 				assert.Equal(t, 10.0, sink.P(float64(i)/100.0))
+@@ -176,7 +176,7 @@ func TestTrendSink(t *testing.T) {
+ 		t.Run("two values", func(t *testing.T) {
+ 			t.Parallel()
+ 
+-			sink := TrendSink{}
++			sink := NewTrendSink()
+ 			sink.Add(Sample{TimeSeries: TimeSeries{Metric: &Metric{}}, Value: 5.0})
+ 			sink.Add(Sample{TimeSeries: TimeSeries{Metric: &Metric{}}, Value: 10.0})
+ 			assert.Equal(t, false, sink.sorted)
+@@ -190,7 +190,7 @@ func TestTrendSink(t *testing.T) {
+ 		t.Run("more than 2", func(t *testing.T) {
+ 			t.Parallel()
+ 
+-			sink := TrendSink{}
++			sink := NewTrendSink()
+ 			for _, s := range unsortedSamples10 {
+ 				sink.Add(Sample{TimeSeries: TimeSeries{Metric: &Metric{}}, Value: s})
+ 			}
+@@ -205,7 +205,7 @@ func TestTrendSink(t *testing.T) {
+ 	t.Run("format", func(t *testing.T) {
+ 		t.Parallel()
+ 
+-		sink := TrendSink{}
++		sink := NewTrendSink()
+ 		for _, s := range unsortedSamples10 {
+ 			sink.Add(Sample{TimeSeries: TimeSeries{Metric: &Metric{}}, Value: s})
+ 		}
+@@ -260,12 +260,26 @@ func TestRateSink(t *testing.T) {
+ 	})
+ }
+ 
+-func TestDummySinkAddPanics(t *testing.T) {
+-	assert.Panics(t, func() {
+-		DummySink{}.Add(Sample{})
++func TestTrendSinkIsEmpty(t *testing.T) {
++	t.Parallel()
++
++	t.Run("new sink is empty", func(t *testing.T) {
++		t.Parallel()
++		sink := NewTrendSink()
++		assert.True(t, sink.IsEmpty())
+ 	})
+-}
+ 
+-func TestDummySinkFormatReturnsItself(t *testing.T) {
+-	assert.Equal(t, map[string]float64{"a": 1}, DummySink{"a": 1}.Format(0))
++	t.Run("sink with value is not empty", func(t *testing.T) {
++		t.Parallel()
++		sink := NewTrendSink()
++		sink.Add(Sample{TimeSeries: TimeSeries{Metric: &Metric{}}, Value: 42.0})
++		assert.False(t, sink.IsEmpty())
++	})
++
++	t.Run("accessor methods on empty sink return zero", func(t *testing.T) {
++		t.Parallel()
++		sink := NewTrendSink()
++		assert.Equal(t, uint64(0), sink.Count())
++		assert.Equal(t, 0.0, sink.Total())
++	})
+ }
+diff --git a/metrics/thresholds_test.go b/metrics/thresholds_test.go
+index 52701394a..b025a8497 100644
+--- a/metrics/thresholds_test.go
++++ b/metrics/thresholds_test.go
+@@ -639,6 +639,14 @@ func TestThresholdsRunAll(t *testing.T) {
+ 	}
+ }
+ 
++func getTrendSink(values ...float64) *TrendSink {
++	sink := NewTrendSink()
++	for _, v := range values {
++		sink.Add(Sample{Value: v})
++	}
++	return sink
++}
++
+ func TestThresholdsRun(t *testing.T) {
+ 	t.Parallel()
+ 
+@@ -656,8 +664,8 @@ func TestThresholdsRun(t *testing.T) {
+ 		{
+ 			name: "Running thresholds of existing sink",
+ 			args: args{
+-				sink:                 DummySink{"p(95)": 1234.5},
+-				thresholdExpressions: []string{"p(95)<2000"},
++				sink:                 &CounterSink{Value: 1234.5},
++				thresholdExpressions: []string{"count<2000"},
+ 				duration:             0,
+ 			},
+ 			want:    true,
+@@ -666,8 +674,8 @@ func TestThresholdsRun(t *testing.T) {
+ 		{
+ 			name: "Running thresholds of existing sink but failing threshold",
+ 			args: args{
+-				sink:                 DummySink{"p(95)": 3000},
+-				thresholdExpressions: []string{"p(95)<2000"},
++				sink:                 &CounterSink{Value: 3000},
++				thresholdExpressions: []string{"count<2000"},
+ 				duration:             0,
+ 			},
+ 			want:    false,
+@@ -676,7 +684,7 @@ func TestThresholdsRun(t *testing.T) {
+ 		{
+ 			name: "Running threshold on non existing sink does not fail",
+ 			args: args{
+-				sink:                 DummySink{"dummy": 0},
++				sink:                 &CounterSink{},
+ 				thresholdExpressions: []string{"p(95)<2000"},
+ 				duration:             0,
+ 			},
+@@ -686,7 +694,7 @@ func TestThresholdsRun(t *testing.T) {
+ 		{
+ 			name: "Running threshold on trend sink with no values and passing med statement succeeds",
+ 			args: args{
+-				sink:                 &TrendSink{Values: []float64{}},
++				sink:                 getTrendSink(),
+ 				thresholdExpressions: []string{"med<39"},
+ 				duration:             0,
+ 			},
+@@ -696,7 +704,7 @@ func TestThresholdsRun(t *testing.T) {
+ 		{
+ 			name: "Running threshold on trend sink with no values and non passing med statement fails",
+ 			args: args{
+-				sink:                 &TrendSink{Values: []float64{}},
++				sink:                 getTrendSink(),
+ 				thresholdExpressions: []string{"med>39"},
+ 				duration:             0,
+ 			},
+@@ -706,7 +714,7 @@ func TestThresholdsRun(t *testing.T) {
+ 		{
+ 			name: "Running threshold on trend sink with values and passing med statement succeeds",
+ 			args: args{
+-				sink:                 &TrendSink{Values: []float64{70, 80, 90}, Count: 3},
++				sink:                 getTrendSink(70, 80, 90),
+ 				thresholdExpressions: []string{"med>39"},
+ 				duration:             0,
+ 			},
+@@ -716,7 +724,7 @@ func TestThresholdsRun(t *testing.T) {
+ 		{
+ 			name: "Running threshold on trend sink with values and failing med statement fails",
+ 			args: args{
+-				sink:                 &TrendSink{Values: []float64{70, 80, 90}, Count: 3},
++				sink:                 getTrendSink(70, 80, 90),
+ 				thresholdExpressions: []string{"med<39"},
+ 				duration:             0,
+ 			},

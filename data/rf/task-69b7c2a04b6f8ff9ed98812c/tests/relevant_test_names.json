@@ -1,0 +1,13 @@
+{
+  "tests": [
+    {
+      "name": "innodb.innochecksum_flags_and_skip"
+    },
+    {
+      "name": "innodb_zip.innochecksum_2"
+    },
+    {
+      "name": "innodb_zip.innochecksum_3"
+    }
+  ]
+}

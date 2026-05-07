@@ -1,0 +1,153 @@
+diff --git a/scapy/contrib/automotive/obd/scanner.py b/scapy/contrib/automotive/obd/scanner.py
+index e1d55674..cf30d745 100644
+--- a/scapy/contrib/automotive/obd/scanner.py
++++ b/scapy/contrib/automotive/obd/scanner.py
+@@ -57,9 +57,12 @@ class OBD_Service_Enumerator(OBD_Enumerator):
+         for _, _, r, _, _ in self.results_with_positive_response:
+             dr = r.data_records[0]
+             key = next(iter((dr.lastlayer().fields.keys())))
+-            supported += [int(i[-2:], 16) for i in
+-                          getattr(dr, key, ["xxx00"])]
+-        return [i for i in supported if i % 0x20]
++            try:
++                supported += [int(i[-2:], 16) for i in
++                              getattr(dr, key, ["xxx00"])]
++            except TypeError:
++                pass
++        return list(set([i for i in supported if i % 0x20]))
+ 
+     def execute(self, socket, state, **kwargs):
+         # type: (_SocketUnion, EcuState, Any) -> None
+diff --git a/scapy/contrib/automotive/scanner/enumerator.py b/scapy/contrib/automotive/scanner/enumerator.py
+index 6537dac7..3adc0151 100644
+--- a/scapy/contrib/automotive/scanner/enumerator.py
++++ b/scapy/contrib/automotive/scanner/enumerator.py
+@@ -185,7 +185,7 @@ class ServiceEnumerator(AutomotiveTestCase):
+ 
+             if socket.closed:
+                 log_interactive.critical("[-] Socket closed during scan.")
+-                return
++                raise Scapy_Exception("Socket closed during scan")
+ 
+             self._store_result(state, req, res)
+ 
+@@ -229,6 +229,8 @@ class ServiceEnumerator(AutomotiveTestCase):
+         """
+         if response is None:
+             if cast(bool, kwargs.pop("retry_if_none_received", False)):
++                log_interactive.debug(
++                    "[i] Retry %s because None received", repr(request))
+                 return self._populate_retry(state, request)
+             return cast(bool, kwargs.pop("exit_if_no_answer_received", False))
+ 
+@@ -323,6 +325,9 @@ class ServiceEnumerator(AutomotiveTestCase):
+ 
+         if retry_if_busy_returncode and response.service == 0x7f \
+                 and self._get_negative_response_code(response) == 0x21:
++            log_interactive.debug(
++                "[i] Retry %s because retry_if_busy_returncode received",
++                repr(request))
+             return self._populate_retry(state, request)
+         return False
+ 
+@@ -462,7 +467,7 @@ class ServiceEnumerator(AutomotiveTestCase):
+         Helper function to get all results with negative response
+         :return: all results with negative response
+         """
+-        return [cast(_AutomotiveTestCaseFilteredScanResult, r) for r in self._results  # noqa: E501
++        return [r for r in self.results_with_response
+                 if r.resp and r.resp.service == 0x7f]
+ 
+     @property
+@@ -472,7 +477,7 @@ class ServiceEnumerator(AutomotiveTestCase):
+         Helper function to get all results with positive response
+         :return: all results with positive response
+         """
+-        return [cast(_AutomotiveTestCaseFilteredScanResult, r) for r in self._results  # noqa: E501
++        return [r for r in self.results_with_response  # noqa: E501
+                 if r.resp and r.resp.service != 0x7f]
+ 
+     @property
+diff --git a/scapy/tools/automotive/obdscanner.py b/scapy/tools/automotive/obdscanner.py
+index 154e1f09..45bedddd 100755
+--- a/scapy/tools/automotive/obdscanner.py
++++ b/scapy/tools/automotive/obdscanner.py
+@@ -81,6 +81,32 @@ def usage(is_error):
+           file=sys.stderr if is_error else sys.stdout)
+ 
+ 
++def get_can_socket(channel, interface, python_can_args):
++    if PYTHON_CAN:
++        if python_can_args:
++            arg_dict = dict((k, literal_eval(v)) for k, v in
++                            (pair.split('=') for pair in
++                             re.split(', | |,', python_can_args)))
++            return CANSocket(bustype=interface, channel=channel, **arg_dict)
++        else:
++            return CANSocket(bustype=interface, channel=channel)
++    else:
++        return CANSocket(channel=channel)
++
++
++def get_isotp_socket(csock, source, destination):
++    return ISOTPSocket(csock, source, destination, basecls=OBD, padding=True)
++
++
++def run_scan(isock, enumerators, full_scan, verbose, timeout):
++    s = OBD_Scanner(isock, test_cases=enumerators, full_scan=full_scan,
++                    verbose=verbose,
++                    timeout=timeout)
++    print("Starting OBD-Scan...")
++    s.scan()
++    s.show_testcases()
++
++
+ def main():
+ 
+     channel = None
+@@ -161,29 +187,13 @@ def main():
+         sys.exit(1)
+ 
+     csock = None
++    isock = None
+     try:
+-        if PYTHON_CAN:
+-            if python_can_args:
+-                arg_dict = dict((k, literal_eval(v)) for k, v in
+-                                (pair.split('=') for pair in
+-                                 re.split(', | |,', python_can_args)))
+-                csock = CANSocket(bustype=interface, channel=channel,
+-                                  **arg_dict)
+-            else:
+-                csock = CANSocket(bustype=interface, channel=channel)
+-        else:
+-            csock = CANSocket(channel=channel)
+-
+-        with ISOTPSocket(csock, source, destination,
+-                         basecls=OBD, padding=True) as isock:
+-            signal.signal(signal.SIGINT, signal_handler)
++        csock = get_can_socket(channel, interface, python_can_args)
++        isock = get_isotp_socket(csock, source, destination)
+ 
+-            s = OBD_Scanner(isock, test_cases=enumerators,
+-                            full_scan=full_scan, verbose=verbose,
+-                            timeout=timeout)
+-            print("Starting OBD-Scan...")
+-            s.scan()
+-            s.show_testcases()
++        signal.signal(signal.SIGINT, signal_handler)
++        run_scan(isock, enumerators, full_scan, verbose, timeout)
+ 
+     except Exception as e:
+         usage(True)
+@@ -195,7 +205,9 @@ def main():
+         sys.exit(1)
+ 
+     finally:
+-        if csock is not None:
++        if isock:
++            isock.close()
++        if csock:
+             csock.close()
+ 
+ 

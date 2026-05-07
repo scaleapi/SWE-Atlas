@@ -1,0 +1,202 @@
+diff --git a/pkg/handlers/ar.go b/pkg/handlers/ar.go
+index 4155ad41b..c7d6dd5aa 100644
+--- a/pkg/handlers/ar.go
++++ b/pkg/handlers/ar.go
+@@ -31,41 +31,35 @@ func (h *arHandler) HandleFile(ctx logContext.Context, input fileReader) (chan [
+ 	}
+ 
+ 	go func() {
+-		ctx, cancel := logContext.WithTimeout(ctx, maxTimeout)
+-		defer cancel()
+ 		defer close(archiveChan)
+ 
+-		// Update the metrics for the file processing.
+-		start := time.Now()
+-		var err error
+-		defer func() {
+-			h.measureLatencyAndHandleErrors(start, err)
+-			h.metrics.incFilesProcessed()
+-		}()
+-
+ 		// Defer a panic recovery to handle any panics that occur during the AR processing.
+ 		defer func() {
+ 			if r := recover(); r != nil {
+-				// Return the panic as an error.
++				var panicErr error
+ 				if e, ok := r.(error); ok {
+-					err = e
++					panicErr = e
+ 				} else {
+-					err = fmt.Errorf("panic occurred: %v", r)
++					panicErr = fmt.Errorf("panic occurred: %v", r)
+ 				}
+-				ctx.Logger().Error(err, "Panic occurred when reading ar archive")
++				ctx.Logger().Error(panicErr, "Panic occurred when attempting to open ar archive")
+ 			}
+ 		}()
+ 
+-		var arReader *deb.Ar
+-		arReader, err = deb.LoadAr(input)
++		start := time.Now()
++		arReader, err := deb.LoadAr(input)
+ 		if err != nil {
+-			ctx.Logger().Error(err, "error reading AR")
++			ctx.Logger().Error(err, "Error loading AR file")
+ 			return
+ 		}
+ 
+-		if err = h.processARFiles(ctx, arReader, archiveChan); err != nil {
+-			ctx.Logger().Error(err, "error processing AR files")
++		err = h.processARFiles(ctx, arReader, archiveChan)
++		if err == nil {
++			h.metrics.incFilesProcessed()
+ 		}
++
++		// Update the metrics for the file processing and handle any errors.
++		h.measureLatencyAndHandleErrors(start, err)
+ 	}()
+ 
+ 	return archiveChan, nil
+diff --git a/pkg/handlers/archive.go b/pkg/handlers/archive.go
+index 0b4e8e0bd..3e940b232 100644
+--- a/pkg/handlers/archive.go
++++ b/pkg/handlers/archive.go
+@@ -53,7 +53,6 @@ func (h *archiveHandler) HandleFile(ctx logContext.Context, input fileReader) (c
+ 	}
+ 
+ 	go func() {
+-		var err error
+ 		defer close(dataChan)
+ 
+ 		// The underlying 7zip library may panic when attempting to open an archive.
+@@ -61,26 +60,24 @@ func (h *archiveHandler) HandleFile(ctx logContext.Context, input fileReader) (c
+ 		// See: https://github.com/bodgit/sevenzip/blob/74bff0da9b233317e4ea7dd8c184a315db71af2a/types.go#L846
+ 		defer func() {
+ 			if r := recover(); r != nil {
+-				// Return the panic as an error.
++				var panicErr error
+ 				if e, ok := r.(error); ok {
+-					err = e
++					panicErr = e
+ 				} else {
+-					err = fmt.Errorf("panic occurred: %v", r)
++					panicErr = fmt.Errorf("panic occurred: %v", r)
+ 				}
+-				ctx.Logger().Error(err, "Panic occurred when attempting to open archive")
++				ctx.Logger().Error(panicErr, "Panic occurred when attempting to open archive")
+ 			}
+ 		}()
+ 
+-		// Update the metrics for the file processing.
+ 		start := time.Now()
+-		defer func() {
+-			h.measureLatencyAndHandleErrors(start, err)
++		err := h.openArchive(ctx, 0, input, dataChan)
++		if err == nil {
+ 			h.metrics.incFilesProcessed()
+-		}()
+-
+-		if err = h.openArchive(ctx, 0, input, dataChan); err != nil {
+-			ctx.Logger().Error(err, "error unarchiving chunk.")
+ 		}
++
++		// Update the metrics for the file processing and handle any errors.
++		h.measureLatencyAndHandleErrors(start, err)
+ 	}()
+ 
+ 	return dataChan, nil
+diff --git a/pkg/handlers/default.go b/pkg/handlers/default.go
+index 7db724cb4..c39a0c8e8 100644
+--- a/pkg/handlers/default.go
++++ b/pkg/handlers/default.go
+@@ -37,17 +37,14 @@ func (h *defaultHandler) HandleFile(ctx logContext.Context, input fileReader) (c
+ 	go func() {
+ 		defer close(dataChan)
+ 
+-		// Update the metrics for the file processing.
+ 		start := time.Now()
+-		var err error
+-		defer func() {
+-			h.measureLatencyAndHandleErrors(start, err)
++		err := h.handleNonArchiveContent(ctx, newMimeTypeReaderFromFileReader(input), dataChan)
++		if err == nil {
+ 			h.metrics.incFilesProcessed()
+-		}()
+-
+-		if err = h.handleNonArchiveContent(ctx, newMimeTypeReaderFromFileReader(input), dataChan); err != nil {
+-			ctx.Logger().Error(err, "error handling non-archive content.")
+ 		}
++
++		// Update the metrics for the file processing and handle errors.
++		h.measureLatencyAndHandleErrors(start, err)
+ 	}()
+ 
+ 	return dataChan, nil
+diff --git a/pkg/handlers/rpm.go b/pkg/handlers/rpm.go
+index 00142d15f..b9b397f6d 100644
+--- a/pkg/handlers/rpm.go
++++ b/pkg/handlers/rpm.go
+@@ -31,48 +31,41 @@ func (h *rpmHandler) HandleFile(ctx logContext.Context, input fileReader) (chan
+ 	}
+ 
+ 	go func() {
+-		ctx, cancel := logContext.WithTimeout(ctx, maxTimeout)
+-		defer cancel()
+ 		defer close(archiveChan)
+ 
+-		// Update the metrics for the file processing.
+-		start := time.Now()
+-		var err error
+-		defer func() {
+-			h.measureLatencyAndHandleErrors(start, err)
+-			h.metrics.incFilesProcessed()
+-		}()
+-
+ 		// Defer a panic recovery to handle any panics that occur during the RPM processing.
+ 		defer func() {
+ 			if r := recover(); r != nil {
+-				// Return the panic as an error.
++				var panicErr error
+ 				if e, ok := r.(error); ok {
+-					err = e
++					panicErr = e
+ 				} else {
+-					err = fmt.Errorf("panic occurred: %v", r)
++					panicErr = fmt.Errorf("panic occurred: %v", r)
+ 				}
+-				ctx.Logger().Error(err, "Panic occurred when reading rpm archive")
++				ctx.Logger().Error(panicErr, "Panic occurred when attempting to open rpm archive")
+ 			}
+ 		}()
+ 
+-		var rpm *rpmutils.Rpm
+-		rpm, err = rpmutils.ReadRpm(input)
++		start := time.Now()
++		rpm, err := rpmutils.ReadRpm(input)
+ 		if err != nil {
+-			ctx.Logger().Error(err, "error reading RPM")
++			ctx.Logger().Error(err, "error reading rpm file")
+ 			return
+ 		}
+ 
+-		var reader rpmutils.PayloadReader
+-		reader, err = rpm.PayloadReaderExtended()
++		reader, err := rpm.PayloadReaderExtended()
+ 		if err != nil {
+-			ctx.Logger().Error(err, "error getting RPM payload reader")
++			ctx.Logger().Error(err, "error reading rpm payload")
+ 			return
+ 		}
+ 
+-		if err = h.processRPMFiles(ctx, reader, archiveChan); err != nil {
+-			ctx.Logger().Error(err, "error processing RPM files")
++		err = h.processRPMFiles(ctx, reader, archiveChan)
++		if err == nil {
++			h.metrics.incFilesProcessed()
+ 		}
++
++		// Update the metrics for the file processing and handle any errors.
++		h.measureLatencyAndHandleErrors(start, err)
+ 	}()
+ 
+ 	return archiveChan, nil

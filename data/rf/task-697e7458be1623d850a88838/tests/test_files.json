@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "name": "test/contrib/automotive/obd/scanner.uts"
+    },
+    {
+      "name": "test/contrib/automotive/scanner/enumerator.uts"
+    }
+  ]
+}

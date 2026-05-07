@@ -1,0 +1,9 @@
+The `createGraphFrames` function in `public/app/plugins/datasource/tempo/graphTransform.ts` converts trace span data into node graph frames. It includes supporting logic for trace to graph conversion, trace duration calculation, span mapping, and related type definitions for trace rows, nodes, and edges.
+
+This functionality is entirely generic and has nothing Tempo specific about it. We are about to add node graph support to the Zipkin datasource plugin and would like to reuse this same logic without duplicating it. The `@grafana/o11y-ds-frontend` package already contains some of the lower level helpers that `createGraphFrames` relies on (like `getNonOverlappingDuration`, `getStats`, `makeFrames`, and `makeSpanMap` in `utils.ts`), but the core function and its supporting code are still stuck in the Tempo plugin.
+
+On top of that, the naming is not great. The shared package file is vaguely called `utils.ts`, and the function name `createGraphFrames` does not make it clear that it specifically produces node graph frames. The large mock trace response used for testing this functionality also lives in the Tempo plugin's test fixtures (`public/app/plugins/datasource/tempo/test/testResponse.ts`) rather than alongside the shared code.
+
+Can you refactor this so the trace to node graph conversion is properly shared through the `@grafana/o11y-ds-frontend` package with clear, descriptive naming?
+
+I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.

@@ -1,0 +1,425 @@
+diff --git a/mysql-test/suite/sys_vars/r/sysvars_innodb.result b/mysql-test/suite/sys_vars/r/sysvars_innodb.result
+index 565a4fbf22c..5810f23f14e 100644
+--- a/mysql-test/suite/sys_vars/r/sysvars_innodb.result
++++ b/mysql-test/suite/sys_vars/r/sysvars_innodb.result
+@@ -1092,7 +1092,7 @@ SESSION_VALUE	NULL
+ DEFAULT_VALUE	0
+ VARIABLE_SCOPE	GLOBAL
+ VARIABLE_TYPE	INT UNSIGNED
+-VARIABLE_COMMENT	Delay between log buffer spin lock polls (0 to use a blocking latch)
++VARIABLE_COMMENT	Deprecated parameter with no effect
+ NUMERIC_MIN_VALUE	0
+ NUMERIC_MAX_VALUE	6000
+ NUMERIC_BLOCK_SIZE	0
+diff --git a/mysql-test/suite/innodb/r/lsn_alloc_refactor.result b/mysql-test/suite/innodb/r/lsn_alloc_refactor.result
+new file mode 100644
+index 00000000000..44d7a69671f
+--- /dev/null
++++ b/mysql-test/suite/innodb/r/lsn_alloc_refactor.result
+@@ -0,0 +1,199 @@
++#
++# Verify InnoDB redo log LSN allocation works correctly
++#
++# 1. innodb_log_spin_wait_delay is deprecated
++SELECT VARIABLE_COMMENT LIKE '%eprecated%' AS is_deprecated
++FROM INFORMATION_SCHEMA.SYSTEM_VARIABLES
++WHERE VARIABLE_NAME = 'INNODB_LOG_SPIN_WAIT_DELAY';
++is_deprecated
++1
++SELECT @@global.innodb_log_spin_wait_delay;
++@@global.innodb_log_spin_wait_delay
++0
++SET GLOBAL innodb_log_spin_wait_delay = 100;
++SELECT @@global.innodb_log_spin_wait_delay;
++@@global.innodb_log_spin_wait_delay
++100
++SET GLOBAL innodb_log_spin_wait_delay = 0;
++# 2. Basic DML generates redo log
++CREATE TABLE t1 (a INT PRIMARY KEY, b VARCHAR(200)) ENGINE=InnoDB;
++INSERT INTO t1 VALUES (1, REPEAT('a', 200));
++INSERT INTO t1 VALUES (2, REPEAT('b', 200));
++INSERT INTO t1 VALUES (3, REPEAT('c', 200));
++SELECT COUNT(*) FROM t1;
++COUNT(*)
++3
++# 3. LSN ordering invariant: current >= flushed >= checkpoint
++SELECT VARIABLE_VALUE INTO @lsn_cur FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++SELECT VARIABLE_VALUE INTO @lsn_flush FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_FLUSHED';
++SELECT VARIABLE_VALUE INTO @lsn_cp FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_LAST_CHECKPOINT';
++SELECT @lsn_cur > 0 AS lsn_current_positive;
++lsn_current_positive
++1
++SELECT @lsn_cur >= @lsn_flush AS current_ge_flushed;
++current_ge_flushed
++1
++SELECT @lsn_flush >= @lsn_cp AS flushed_ge_checkpoint;
++flushed_ge_checkpoint
++1
++# 4. LSN advances after writes
++SELECT VARIABLE_VALUE INTO @lsn_before FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++INSERT INTO t1 SELECT a + 10, b FROM t1;
++SELECT VARIABLE_VALUE INTO @lsn_after FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++SELECT @lsn_after > @lsn_before AS lsn_advanced;
++lsn_advanced
++1
++# 5. Status counters work
++SELECT VARIABLE_VALUE > 0 AS os_log_written_positive
++FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_OS_LOG_WRITTEN';
++os_log_written_positive
++1
++SELECT VARIABLE_VALUE INTO @chk_age FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_CHECKPOINT_AGE';
++SELECT VARIABLE_VALUE INTO @lsn_cur_5 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++SELECT VARIABLE_VALUE INTO @lsn_cp_5 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_LAST_CHECKPOINT';
++SELECT @chk_age = @lsn_cur_5 - @lsn_cp_5 AS checkpoint_age_consistent;
++checkpoint_age_consistent
++1
++SELECT VARIABLE_VALUE > 0 AS lsn_flushed_positive
++FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_FLUSHED';
++lsn_flushed_positive
++1
++# 6. Force checkpoint
++SET GLOBAL innodb_log_checkpoint_now = 1;
++SELECT VARIABLE_VALUE INTO @lsn_cp_after FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_LAST_CHECKPOINT';
++SELECT @lsn_cp_after >= @lsn_cp AS checkpoint_advanced;
++checkpoint_advanced
++1
++# 7. Explicit transaction commit
++BEGIN;
++INSERT INTO t1 VALUES (100, REPEAT('x', 200));
++INSERT INTO t1 VALUES (101, REPEAT('y', 200));
++INSERT INTO t1 VALUES (102, REPEAT('z', 200));
++COMMIT;
++SELECT COUNT(*) FROM t1;
++COUNT(*)
++9
++# 8. Durable flush mode
++SET @save_flush = @@global.innodb_flush_log_at_trx_commit;
++SET GLOBAL innodb_flush_log_at_trx_commit = 1;
++SELECT VARIABLE_VALUE INTO @lsn_pre_sync FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++INSERT INTO t1 VALUES (200, REPEAT('f', 200));
++SELECT VARIABLE_VALUE INTO @lsn_flush_post FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_FLUSHED';
++SELECT @lsn_flush_post >= @lsn_pre_sync AS sync_flush_completed;
++sync_flush_completed
++1
++SET GLOBAL innodb_flush_log_at_trx_commit = @save_flush;
++# 9. Concurrent redo log writes via overlapping connections
++CREATE TABLE t_src (a INT AUTO_INCREMENT PRIMARY KEY, b VARCHAR(500)) ENGINE=InnoDB;
++SELECT COUNT(*) AS t_src_rows FROM t_src;
++t_src_rows
++100
++CREATE TABLE t_con1 LIKE t_src;
++CREATE TABLE t_con2 LIKE t_src;
++connect con1,localhost,root,,;
++connect con2,localhost,root,,;
++connection con1;
++INSERT INTO t_con1 SELECT 0, b FROM t_src;
++connection con2;
++INSERT INTO t_con2 SELECT 0, b FROM t_src;
++connection con1;
++connection default;
++SELECT COUNT(*) AS t_con1_rows FROM t_con1;
++t_con1_rows
++100
++SELECT COUNT(*) AS t_con2_rows FROM t_con2;
++t_con2_rows
++100
++# LSN invariant after concurrent writes
++SET GLOBAL innodb_log_checkpoint_now = 1;
++SELECT VARIABLE_VALUE INTO @lsn_cur3 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++SELECT VARIABLE_VALUE INTO @lsn_flush3 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_FLUSHED';
++SELECT VARIABLE_VALUE INTO @lsn_cp3 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_LAST_CHECKPOINT';
++SELECT @lsn_cur3 >= @lsn_flush3 AS current_ge_flushed;
++current_ge_flushed
++1
++SELECT @lsn_flush3 >= @lsn_cp3 AS flushed_ge_checkpoint;
++flushed_ge_checkpoint
++1
++disconnect con1;
++disconnect con2;
++# 10. Heavy write workload to exercise log buffer management
++connection default;
++CREATE TABLE t_bulk (a INT AUTO_INCREMENT PRIMARY KEY, b VARCHAR(500)) ENGINE=InnoDB;
++SELECT COUNT(*) AS t_bulk_rows FROM t_bulk;
++t_bulk_rows
++200
++# Force checkpoint after bulk writes
++SET GLOBAL innodb_log_checkpoint_now = 1;
++# LSN invariant after heavy load
++SELECT VARIABLE_VALUE INTO @lsn_cur4 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++SELECT VARIABLE_VALUE INTO @lsn_flush4 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_FLUSHED';
++SELECT VARIABLE_VALUE INTO @lsn_cp4 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_LAST_CHECKPOINT';
++SELECT @lsn_cur4 >= @lsn_flush4 AS current_ge_flushed;
++current_ge_flushed
++1
++SELECT @lsn_flush4 >= @lsn_cp4 AS flushed_ge_checkpoint;
++flushed_ge_checkpoint
++1
++# 11. Data survives server restart (recovery test)
++# restart
++SELECT COUNT(*) AS t1_rows FROM t1;
++t1_rows
++10
++SELECT COUNT(*) AS t_con1_rows FROM t_con1;
++t_con1_rows
++100
++SELECT COUNT(*) AS t_con2_rows FROM t_con2;
++t_con2_rows
++100
++SELECT COUNT(*) AS t_bulk_rows FROM t_bulk;
++t_bulk_rows
++200
++SELECT a, b = REPEAT('a', 200) AS b_ok FROM t1 WHERE a = 1;
++a	b_ok
++1	1
++SELECT a, b = REPEAT('x', 200) AS b_ok FROM t1 WHERE a = 100;
++a	b_ok
++100	1
++# LSN invariant after recovery
++SELECT VARIABLE_VALUE INTO @lsn_cur5 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++SELECT VARIABLE_VALUE INTO @lsn_flush5 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_FLUSHED';
++SELECT VARIABLE_VALUE INTO @lsn_cp5 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_LAST_CHECKPOINT';
++SELECT @lsn_cur5 > 0 AS lsn_current_positive;
++lsn_current_positive
++1
++SELECT @lsn_cur5 >= @lsn_flush5 AS current_ge_flushed;
++current_ge_flushed
++1
++SELECT @lsn_flush5 >= @lsn_cp5 AS flushed_ge_checkpoint;
++flushed_ge_checkpoint
++1
++# Deprecated variable persists after restart
++SELECT VARIABLE_COMMENT LIKE '%eprecated%' AS is_deprecated
++FROM INFORMATION_SCHEMA.SYSTEM_VARIABLES
++WHERE VARIABLE_NAME = 'INNODB_LOG_SPIN_WAIT_DELAY';
++is_deprecated
++1
++# Cleanup
++DROP TABLE t1, t_src, t_con1, t_con2, t_bulk;
+diff --git a/mysql-test/suite/innodb/t/lsn_alloc_refactor.test b/mysql-test/suite/innodb/t/lsn_alloc_refactor.test
+new file mode 100644
+index 00000000000..d2fa1a2a19e
+--- /dev/null
++++ b/mysql-test/suite/innodb/t/lsn_alloc_refactor.test
+@@ -0,0 +1,199 @@
++--source include/have_innodb.inc
++--source include/not_embedded.inc
++
++--echo #
++--echo # Verify InnoDB redo log LSN allocation works correctly
++--echo #
++
++--echo # 1. innodb_log_spin_wait_delay is deprecated
++SELECT VARIABLE_COMMENT LIKE '%eprecated%' AS is_deprecated
++FROM INFORMATION_SCHEMA.SYSTEM_VARIABLES
++WHERE VARIABLE_NAME = 'INNODB_LOG_SPIN_WAIT_DELAY';
++
++SELECT @@global.innodb_log_spin_wait_delay;
++--disable_warnings
++SET GLOBAL innodb_log_spin_wait_delay = 100;
++--enable_warnings
++SELECT @@global.innodb_log_spin_wait_delay;
++--disable_warnings
++SET GLOBAL innodb_log_spin_wait_delay = 0;
++--enable_warnings
++
++--echo # 2. Basic DML generates redo log
++CREATE TABLE t1 (a INT PRIMARY KEY, b VARCHAR(200)) ENGINE=InnoDB;
++INSERT INTO t1 VALUES (1, REPEAT('a', 200));
++INSERT INTO t1 VALUES (2, REPEAT('b', 200));
++INSERT INTO t1 VALUES (3, REPEAT('c', 200));
++
++SELECT COUNT(*) FROM t1;
++
++--echo # 3. LSN ordering invariant: current >= flushed >= checkpoint
++SELECT VARIABLE_VALUE INTO @lsn_cur FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++SELECT VARIABLE_VALUE INTO @lsn_flush FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_FLUSHED';
++SELECT VARIABLE_VALUE INTO @lsn_cp FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_LAST_CHECKPOINT';
++
++SELECT @lsn_cur > 0 AS lsn_current_positive;
++SELECT @lsn_cur >= @lsn_flush AS current_ge_flushed;
++SELECT @lsn_flush >= @lsn_cp AS flushed_ge_checkpoint;
++
++--echo # 4. LSN advances after writes
++SELECT VARIABLE_VALUE INTO @lsn_before FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++
++INSERT INTO t1 SELECT a + 10, b FROM t1;
++
++SELECT VARIABLE_VALUE INTO @lsn_after FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++
++SELECT @lsn_after > @lsn_before AS lsn_advanced;
++
++--echo # 5. Status counters work
++SELECT VARIABLE_VALUE > 0 AS os_log_written_positive
++FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_OS_LOG_WRITTEN';
++
++SELECT VARIABLE_VALUE INTO @chk_age FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_CHECKPOINT_AGE';
++SELECT VARIABLE_VALUE INTO @lsn_cur_5 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++SELECT VARIABLE_VALUE INTO @lsn_cp_5 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_LAST_CHECKPOINT';
++SELECT @chk_age = @lsn_cur_5 - @lsn_cp_5 AS checkpoint_age_consistent;
++
++SELECT VARIABLE_VALUE > 0 AS lsn_flushed_positive
++FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_FLUSHED';
++
++--echo # 6. Force checkpoint
++SET GLOBAL innodb_log_checkpoint_now = 1;
++
++SELECT VARIABLE_VALUE INTO @lsn_cp_after FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_LAST_CHECKPOINT';
++SELECT @lsn_cp_after >= @lsn_cp AS checkpoint_advanced;
++
++--echo # 7. Explicit transaction commit
++BEGIN;
++INSERT INTO t1 VALUES (100, REPEAT('x', 200));
++INSERT INTO t1 VALUES (101, REPEAT('y', 200));
++INSERT INTO t1 VALUES (102, REPEAT('z', 200));
++COMMIT;
++
++SELECT COUNT(*) FROM t1;
++
++--echo # 8. Durable flush mode
++SET @save_flush = @@global.innodb_flush_log_at_trx_commit;
++SET GLOBAL innodb_flush_log_at_trx_commit = 1;
++
++SELECT VARIABLE_VALUE INTO @lsn_pre_sync FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++
++INSERT INTO t1 VALUES (200, REPEAT('f', 200));
++
++SELECT VARIABLE_VALUE INTO @lsn_flush_post FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_FLUSHED';
++
++SELECT @lsn_flush_post >= @lsn_pre_sync AS sync_flush_completed;
++
++SET GLOBAL innodb_flush_log_at_trx_commit = @save_flush;
++
++--echo # 9. Concurrent redo log writes via overlapping connections
++CREATE TABLE t_src (a INT AUTO_INCREMENT PRIMARY KEY, b VARCHAR(500)) ENGINE=InnoDB;
++--disable_query_log
++BEGIN;
++let $i = 100;
++while ($i) {
++  eval INSERT INTO t_src (b) VALUES (REPEAT('s', 500));
++  dec $i;
++}
++COMMIT;
++--enable_query_log
++SELECT COUNT(*) AS t_src_rows FROM t_src;
++
++CREATE TABLE t_con1 LIKE t_src;
++CREATE TABLE t_con2 LIKE t_src;
++
++connect(con1,localhost,root,,);
++connect(con2,localhost,root,,);
++
++connection con1;
++--send INSERT INTO t_con1 SELECT 0, b FROM t_src
++
++connection con2;
++INSERT INTO t_con2 SELECT 0, b FROM t_src;
++
++connection con1;
++--reap
++
++connection default;
++SELECT COUNT(*) AS t_con1_rows FROM t_con1;
++SELECT COUNT(*) AS t_con2_rows FROM t_con2;
++
++--echo # LSN invariant after concurrent writes
++SET GLOBAL innodb_log_checkpoint_now = 1;
++SELECT VARIABLE_VALUE INTO @lsn_cur3 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++SELECT VARIABLE_VALUE INTO @lsn_flush3 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_FLUSHED';
++SELECT VARIABLE_VALUE INTO @lsn_cp3 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_LAST_CHECKPOINT';
++SELECT @lsn_cur3 >= @lsn_flush3 AS current_ge_flushed;
++SELECT @lsn_flush3 >= @lsn_cp3 AS flushed_ge_checkpoint;
++
++disconnect con1;
++disconnect con2;
++
++--echo # 10. Heavy write workload to exercise log buffer management
++connection default;
++CREATE TABLE t_bulk (a INT AUTO_INCREMENT PRIMARY KEY, b VARCHAR(500)) ENGINE=InnoDB;
++--disable_query_log
++let $i = 200;
++while ($i) {
++  eval INSERT INTO t_bulk (b) VALUES (REPEAT('x', 500));
++  dec $i;
++}
++--enable_query_log
++SELECT COUNT(*) AS t_bulk_rows FROM t_bulk;
++
++--echo # Force checkpoint after bulk writes
++SET GLOBAL innodb_log_checkpoint_now = 1;
++
++--echo # LSN invariant after heavy load
++SELECT VARIABLE_VALUE INTO @lsn_cur4 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++SELECT VARIABLE_VALUE INTO @lsn_flush4 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_FLUSHED';
++SELECT VARIABLE_VALUE INTO @lsn_cp4 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_LAST_CHECKPOINT';
++SELECT @lsn_cur4 >= @lsn_flush4 AS current_ge_flushed;
++SELECT @lsn_flush4 >= @lsn_cp4 AS flushed_ge_checkpoint;
++
++--echo # 11. Data survives server restart (recovery test)
++--source include/restart_mysqld.inc
++
++SELECT COUNT(*) AS t1_rows FROM t1;
++SELECT COUNT(*) AS t_con1_rows FROM t_con1;
++SELECT COUNT(*) AS t_con2_rows FROM t_con2;
++SELECT COUNT(*) AS t_bulk_rows FROM t_bulk;
++SELECT a, b = REPEAT('a', 200) AS b_ok FROM t1 WHERE a = 1;
++SELECT a, b = REPEAT('x', 200) AS b_ok FROM t1 WHERE a = 100;
++
++--echo # LSN invariant after recovery
++SELECT VARIABLE_VALUE INTO @lsn_cur5 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_CURRENT';
++SELECT VARIABLE_VALUE INTO @lsn_flush5 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_FLUSHED';
++SELECT VARIABLE_VALUE INTO @lsn_cp5 FROM INFORMATION_SCHEMA.GLOBAL_STATUS
++WHERE VARIABLE_NAME = 'INNODB_LSN_LAST_CHECKPOINT';
++SELECT @lsn_cur5 > 0 AS lsn_current_positive;
++SELECT @lsn_cur5 >= @lsn_flush5 AS current_ge_flushed;
++SELECT @lsn_flush5 >= @lsn_cp5 AS flushed_ge_checkpoint;
++
++--echo # Deprecated variable persists after restart
++SELECT VARIABLE_COMMENT LIKE '%eprecated%' AS is_deprecated
++FROM INFORMATION_SCHEMA.SYSTEM_VARIABLES
++WHERE VARIABLE_NAME = 'INNODB_LOG_SPIN_WAIT_DELAY';
++
++--echo # Cleanup
++DROP TABLE t1, t_src, t_con1, t_con2, t_bulk;

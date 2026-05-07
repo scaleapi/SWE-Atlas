@@ -1,0 +1,114 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a74fa9d3a269f91f209ee070df344d4f",
+    "title": "1.1: Converts the global tx logger list from a single flat structure to a per-application-protocol organization in `src/output-tx.c`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1c7f23dd1fe49da0720a3ef33420ff60",
+    "title": "1.2: Updates `OutputRegisterTxLogger` to insert each logger into a per-protocol list indexed by its `alproto` parameter",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "46a5084149e3d611ec992e4a6570ed30",
+    "title": "1.3: Converts the per-thread logger store in `OutputLoggerThreadData` from a single chain to a per-protocol structure",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ab936d6a4f72284cdaffc909adc1cccf",
+    "title": "1.4: Handles wildcard loggers (`ALPROTO_UNKNOWN`) separately from protocol-specific loggers in the `OutputTxLog` logging path",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "63cdb00fb64257ff74598e8dff27b8cc",
+    "title": "1.5: Skips to the next transaction after wildcard processing when protocol-specific loggers are absent for the current flow's protocol",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "92699c35f978adf5375782403ec20ada",
+    "title": "1.6: Simplifies the per-logger condition in the protocol-specific logging loop by removing the runtime protocol matching check",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0ef4e7089e28cd80c0b18a9e1838c50f",
+    "title": "1.7: Updates all 5 lifecycle functions (`OutputTxLogThreadInit`, `OutputTxLogThreadDeinit`, `OutputTxLogExitPrintStats`, `OutputTxLoggerGetActiveCount`, `OutputTxShutdown`) to iterate per-protocol logger lists",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1cb98f3436813ab2353628d1c76dbdbd",
+    "title": "4.1: Removes wildcard logger (`ALPROTO_UNKNOWN`) invocation from the transaction logging path",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9ef6a26fd19275bb4ce2704d53792d92",
+    "title": "4.2: Modifies any of the 3 public function signatures declared in `src/output-tx.h` (`OutputRegisterTxLogger`, `OutputTxLoggerRegister`, `OutputTxShutdown`)",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8bfe54f9b695b64c21e0fc039f9ce3d0",
+    "title": "4.3: Removes or breaks the `tx_logged` tracking that prevents duplicate logger invocations within a single transaction",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

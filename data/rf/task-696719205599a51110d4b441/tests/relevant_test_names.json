@@ -1,0 +1,61 @@
+{
+  "tests": [
+    {
+      "name": "go.k6.io/k6/api/v1/TestGetGroups"
+    },
+    {
+      "name": "go.k6.io/k6/js/TestDataIsolation"
+    },
+    {
+      "name": "go.k6.io/k6/js/TestRequestWithBinaryFile"
+    },
+    {
+      "name": "go.k6.io/k6/js/TestRequestWithMultipleBinaryFiles"
+    },
+    {
+      "name": "go.k6.io/k6/js/TestVURunContext"
+    },
+    {
+      "name": "go.k6.io/k6/js/modules/k6/TestGroup"
+    },
+    {
+      "name": "go.k6.io/k6/js/modules/k6/http/TestResponse"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestGroupSummaryBuildsGroupHierarchy"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestGroupSummaryDescription"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestGroupSummaryImplementsOutputInterface"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestGroupSummaryTracksCheckPassFail"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestNewGroupPath_Nested"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestNewGroupPath_RejectsGroupSeparator"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestNewGroupPath_RootToChild"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestNewGroupPath_RootToRoot"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestRootGroupPathConstant"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestRunnerInterfaceDoesNotHaveGetDefaultGroup"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestTestRunStateHasGroupSummaryField"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestVUStateDoesNotHaveGroupField"
+    }
+  ]
+}

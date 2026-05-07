@@ -1,0 +1,272 @@
+diff --git a/pkg/custom_detectors/custom_detectors_test.go b/pkg/custom_detectors/custom_detectors_test.go
+index b94ea94ce..69850fb0b 100644
+--- a/pkg/custom_detectors/custom_detectors_test.go
++++ b/pkg/custom_detectors/custom_detectors_test.go
+@@ -2,6 +2,8 @@ package custom_detectors
+ 
+ import (
+ 	"context"
++	"net/http"
++	"net/http/httptest"
+ 	"testing"
+ 
+ 	"github.com/stretchr/testify/assert"
+@@ -213,3 +215,258 @@ func BenchmarkProductIndices(b *testing.B) {
+ 		_ = productIndices(3, 2, 6)
+ 	}
+ }
++
++func TestFromData_MultipleMatches_NoVerify(t *testing.T) {
++	c := &customRegexWebhook{
++		&custom_detectorspb.CustomRegex{
++			Name:     "test",
++			Keywords: []string{"password"},
++			Regex:    map[string]string{"regex": `password\d`},
++		},
++	}
++
++	results, err := c.FromData(context.Background(), false, []byte("password1 password2 password3"))
++	assert.NoError(t, err)
++	assert.Equal(t, 3, len(results))
++	for _, r := range results {
++		assert.False(t, r.Verified)
++	}
++}
++
++func TestFromData_CancelledContext(t *testing.T) {
++	c := &customRegexWebhook{
++		&custom_detectorspb.CustomRegex{
++			Name:     "test",
++			Keywords: []string{"password"},
++			Regex:    map[string]string{"regex": `password\d`},
++		},
++	}
++
++	ctx, cancel := context.WithCancel(context.Background())
++	cancel()
++
++	results, err := c.FromData(ctx, false, []byte("password1 password2"))
++	if err != nil {
++		// Any error is acceptable when context is already cancelled.
++		return
++	}
++	// If no error, partial or empty results are acceptable.
++	assert.LessOrEqual(t, len(results), 2)
++}
++
++func TestFromData_VerifyWebhookSuccess(t *testing.T) {
++	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		w.WriteHeader(http.StatusOK)
++	}))
++	defer ts.Close()
++
++	c := &customRegexWebhook{
++		&custom_detectorspb.CustomRegex{
++			Name:     "test",
++			Keywords: []string{"password"},
++			Regex:    map[string]string{"regex": `password=\w+`},
++			Verify: []*custom_detectorspb.VerifierConfig{
++				{
++					Endpoint: ts.URL,
++					Unsafe:   true,
++					Headers:  []string{"Content-Type: application/json"},
++				},
++			},
++		},
++	}
++
++	results, err := c.FromData(context.Background(), true, []byte(`password=secret123`))
++	assert.NoError(t, err)
++	assert.Equal(t, 1, len(results))
++	assert.True(t, results[0].Verified)
++}
++
++func TestFromData_VerifyWebhookNon200(t *testing.T) {
++	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		w.WriteHeader(http.StatusForbidden)
++	}))
++	defer ts.Close()
++
++	c := &customRegexWebhook{
++		&custom_detectorspb.CustomRegex{
++			Name:     "test",
++			Keywords: []string{"password"},
++			Regex:    map[string]string{"regex": `password=\w+`},
++			Verify: []*custom_detectorspb.VerifierConfig{
++				{
++					Endpoint: ts.URL,
++					Unsafe:   true,
++				},
++			},
++		},
++	}
++
++	results, err := c.FromData(context.Background(), true, []byte(`password=secret123`))
++	assert.NoError(t, err)
++	assert.Equal(t, 1, len(results))
++	assert.False(t, results[0].Verified)
++}
++
++func TestFromData_MultipleMatchesVerified(t *testing.T) {
++	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		w.WriteHeader(http.StatusOK)
++	}))
++	defer ts.Close()
++
++	c := &customRegexWebhook{
++		&custom_detectorspb.CustomRegex{
++			Name:     "test",
++			Keywords: []string{"tok"},
++			Regex:    map[string]string{"regex": `tok_[a-z]+`},
++			Verify: []*custom_detectorspb.VerifierConfig{
++				{
++					Endpoint: ts.URL,
++					Unsafe:   true,
++				},
++			},
++		},
++	}
++
++	results, err := c.FromData(context.Background(), true, []byte("tok_alpha tok_beta tok_gamma"))
++	assert.NoError(t, err)
++	assert.Equal(t, 3, len(results))
++	for _, r := range results {
++		assert.True(t, r.Verified)
++	}
++}
++
++func TestFromData_VerifyHeadersForwarded(t *testing.T) {
++	var receivedAuth string
++	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		receivedAuth = r.Header.Get("Authorization")
++		w.WriteHeader(http.StatusOK)
++	}))
++	defer ts.Close()
++
++	c := &customRegexWebhook{
++		&custom_detectorspb.CustomRegex{
++			Name:     "test",
++			Keywords: []string{"key"},
++			Regex:    map[string]string{"regex": `key_\w+`},
++			Verify: []*custom_detectorspb.VerifierConfig{
++				{
++					Endpoint: ts.URL,
++					Unsafe:   true,
++					Headers:  []string{"Authorization: Bearer testtoken123"},
++				},
++			},
++		},
++	}
++
++	results, err := c.FromData(context.Background(), true, []byte("key_abc"))
++	assert.NoError(t, err)
++	assert.Equal(t, 1, len(results))
++	assert.Equal(t, "Bearer testtoken123", receivedAuth)
++}
++
++func TestFromData_NoMatches(t *testing.T) {
++	c := &customRegexWebhook{
++		&custom_detectorspb.CustomRegex{
++			Name:     "test",
++			Keywords: []string{"password"},
++			Regex:    map[string]string{"regex": `nomatch_pattern_xyz`},
++		},
++	}
++
++	results, err := c.FromData(context.Background(), false, []byte("this has no matching data"))
++	assert.NoError(t, err)
++	assert.Equal(t, 0, len(results))
++}
++
++func TestFromData_ResultRawContent(t *testing.T) {
++	c := &customRegexWebhook{
++		&custom_detectorspb.CustomRegex{
++			Name:     "test",
++			Keywords: []string{"secret"},
++			Regex:    map[string]string{"regex": `secret_[a-z0-9]+`},
++		},
++	}
++
++	results, err := c.FromData(context.Background(), false, []byte("secret_abc123"))
++	assert.NoError(t, err)
++	assert.Equal(t, 1, len(results))
++	assert.Equal(t, []byte("secret_abc123"), results[0].Raw)
++}
++
++func TestFromData_MultipleRegexPatterns(t *testing.T) {
++	c := &customRegexWebhook{
++		&custom_detectorspb.CustomRegex{
++			Name:     "test",
++			Keywords: []string{"key"},
++			Regex: map[string]string{
++				"id":     `id_[0-9]+`,
++				"secret": `secret_[a-z]+`,
++			},
++		},
++	}
++
++	results, err := c.FromData(context.Background(), false, []byte("id_123 secret_abc"))
++	assert.NoError(t, err)
++	assert.Equal(t, 1, len(results))
++	rawStr := string(results[0].Raw)
++	assert.Contains(t, rawStr, "id_123")
++	assert.Contains(t, rawStr, "secret_abc")
++}
++
++func TestFromData_VerifyMultipleEndpoints(t *testing.T) {
++	failServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		w.WriteHeader(http.StatusInternalServerError)
++	}))
++	defer failServer.Close()
++
++	successServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		w.WriteHeader(http.StatusOK)
++	}))
++	defer successServer.Close()
++
++	c := &customRegexWebhook{
++		&custom_detectorspb.CustomRegex{
++			Name:     "test",
++			Keywords: []string{"token"},
++			Regex:    map[string]string{"regex": `token_\w+`},
++			Verify: []*custom_detectorspb.VerifierConfig{
++				{Endpoint: failServer.URL, Unsafe: true},
++				{Endpoint: successServer.URL, Unsafe: true},
++			},
++		},
++	}
++
++	results, err := c.FromData(context.Background(), true, []byte("token_xyz"))
++	assert.NoError(t, err)
++	assert.Equal(t, 1, len(results))
++	assert.True(t, results[0].Verified)
++}
++
++func TestFromData_ConcurrentResultsComplete(t *testing.T) {
++	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		w.WriteHeader(http.StatusOK)
++	}))
++	defer ts.Close()
++
++	c := &customRegexWebhook{
++		&custom_detectorspb.CustomRegex{
++			Name:     "test",
++			Keywords: []string{"item"},
++			Regex:    map[string]string{"regex": `item\d`},
++			Verify: []*custom_detectorspb.VerifierConfig{
++				{Endpoint: ts.URL, Unsafe: true},
++			},
++		},
++	}
++
++	results, err := c.FromData(context.Background(), true, []byte("item1 item2 item3 item4 item5"))
++	assert.NoError(t, err)
++	assert.Equal(t, 5, len(results))
++
++	raws := make([]string, len(results))
++	for i, r := range results {
++		raws[i] = string(r.Raw)
++		assert.True(t, r.Verified)
++	}
++	assert.ElementsMatch(t, []string{"item1", "item2", "item3", "item4", "item5"}, raws)
++}

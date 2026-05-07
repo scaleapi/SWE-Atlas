@@ -1,0 +1,146 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "507daadb386afbb71117a08b54af8e0b",
+    "title": "1.1: Adds `IsNullish` import from `go.k6.io/k6/js/common` in all 7 files where `IsNullish` is called (including `browser_context_mapping.go`, `helpers.go`, `element_handle_options.go`, `frame_options.go`, `layout.go`, `mouse_options.go`, `page_options.go`)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "278fecbd184af93f623b6c7b4a6ec2a4",
+    "title": "1.2: Replaces `sobekValueExists` with `IsNullish` in all 4 functions (including `mergeWith`, `exportTo`, `exportArg`, `sobekEmptyString`) in `internal/js/modules/k6/browser/browser/helpers.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "162f6cf70f55783752c7949b6a1a57ba",
+    "title": "1.3: Replaces null/undefined patterns with `IsNullish` in all 13 functions (including `ElementHandleBaseOptions.Parse`, `ElementHandleBasePointerOptions.Parse`, `ElementHandleClickOptions.Parse`, ...) in `internal/js/modules/k6/browser/common/element_handle_options.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "49991627b0dfb4047ad6c8256f82bcd1",
+    "title": "1.4: Replaces null/undefined patterns with `IsNullish` in all 10 functions (including `FrameBaseOptions.Parse`, `FrameGotoOptions.Parse`, `FrameWaitForFunctionOptions.Parse`, ...) in `internal/js/modules/k6/browser/common/frame_options.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a57d89c808b3166bd67e0cebbaa9710f",
+    "title": "1.5: Replaces `sobekValueExists` with `IsNullish` in all 4 functions (including `parseContinueOptions`, `parseFulfillOptions`, `parseHeaders`, `parseWaitForResponseOptions`) in `internal/js/modules/k6/browser/browser/route_mapping.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "53a388110163bfe37d444594179f4ca9",
+    "title": "1.6: Replaces `sobekValueExists` with `IsNullish` in both functions (`addInitScript`, `parseWaitForEventOptions`) in `internal/js/modules/k6/browser/browser/browser_context_mapping.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5cd17ee34d3ce44f9dbfddf75a69cd72",
+    "title": "1.7: Replaces inline null/undefined patterns with `IsNullish` in all 4 functions (including `MouseClickOptions.Parse`, `MouseDblClickOptions.Parse`, `MouseDownUpOptions.Parse`, `MouseMoveOptions.Parse`) in `internal/js/modules/k6/browser/common/mouse_options.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "cb83c7abf573eb908df2c79a75ef00a4",
+    "title": "1.8: Replaces `sobekValueExists` with `IsNullish` in both functions (`parseGetByRoleOptions`, `parseGetByBaseOptions`) in `internal/js/modules/k6/browser/browser/page_mapping.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5d143977e98dbad459d862878650d77d",
+    "title": "1.9: Replaces inline null/undefined pattern with `IsNullish` in `Size.Parse` function in `internal/js/modules/k6/browser/common/layout.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d55e8e20481f3d8bb0d7ecb1b339e705",
+    "title": "1.10: Replaces null/undefined patterns with `IsNullish` in all 3 functions (including `PageEmulateMediaOptions.Parse`, `PageReloadOptions.Parse`, `PageScreenshotOptions.Parse`) in `internal/js/modules/k6/browser/common/page_options.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "fb85c1ccdf7213c85044c97150ac36b8",
+    "title": "3.1: Removes `sobekValueExists` function definition from `internal/js/modules/k6/browser/browser/helpers.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3030481a2ed7a327af89863289b63488",
+    "title": "3.2: Removes `sobekValueExists` function definition from `internal/js/modules/k6/browser/common/helpers.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1163319d2daacc4d827a34ac04b0ec36",
+    "title": "4.1: Removes null/undefined verification checks without replacing them with equivalent functionality",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4bf98f552400131654a005a0da25798d",
+    "title": "4.2: Modifies files outside the browser module scope, such as the `js/common` package implementation",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

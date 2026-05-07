@@ -1,0 +1,31 @@
+{
+  "files": [
+    {
+      "name": "internal/js/modules/k6/browser/browser/browser_context_mapping_test.go"
+    },
+    {
+      "name": "internal/js/modules/k6/browser/browser/helpers_test.go"
+    },
+    {
+      "name": "internal/js/modules/k6/browser/browser/page_mapping_test.go"
+    },
+    {
+      "name": "internal/js/modules/k6/browser/browser/route_options_test.go"
+    },
+    {
+      "name": "internal/js/modules/k6/browser/common/element_handle_options_test.go"
+    },
+    {
+      "name": "internal/js/modules/k6/browser/common/frame_options_test.go"
+    },
+    {
+      "name": "internal/js/modules/k6/browser/common/layout_test.go"
+    },
+    {
+      "name": "internal/js/modules/k6/browser/common/mouse_options_test.go"
+    },
+    {
+      "name": "internal/js/modules/k6/browser/common/page_options_test.go"
+    }
+  ]
+}

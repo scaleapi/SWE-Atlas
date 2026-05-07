@@ -1,0 +1,138 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d0a68b526fdee1bb4da6e3f15f97574d",
+    "title": "1.1: Introduces GroupSummary as a centralized mechanism that derives the group hierarchy from emitted metrics",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9d8ac4229c2269110dd4e128e077276e",
+    "title": "1.2: Reconstructs the group hierarchy by splitting the group tag value on the :: separator in the centralized GroupSummary mechanism",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b27f916e8d939bcaaed4dc6a409093b1",
+    "title": "1.3: Updates the group() function in js/modules/k6/k6.go to track groups via tags",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "23be8d1f8107013927c4cda5159e5dbc",
+    "title": "1.4: Updates the check() function in js/modules/k6/k6.go to use the check name directly for metric tagging",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "466cc075ce4a48250953717581f2776c",
+    "title": "1.5: Updates the end-of-test summary generation in cmd/run.go to use testRunState.GroupSummary.Group() as the RootGroup",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d21dd5e999cf4fcceb779d7949dd55ba",
+    "title": "1.6: Updates both REST API group route handlers (handleGetGroups, handleGetGroup) in api/v1/group_routes.go to use GroupSummary.Group()",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "79d7c6b1f6030858218cc873fc301b8e",
+    "title": "1.7: Adds GroupSummary to the outputs pipeline in cmd/run.go to receive metric samples via the output.Output interface",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9fe7711c1591ba63e87c9802bf57e814",
+    "title": "1.8: Removes the Group field from the VU State struct in lib/vu_state.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3b97b16e1cd5dc282159af9f1aca7e46",
+    "title": "1.9: Removes the GetDefaultGroup() method from the Runner interface in lib/runner.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d285f10e06803840dbfd3576790cfa8f",
+    "title": "3.1: Removes the defaultGroup field from the Runner struct in js/runner.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "87da48deb11e8959b7c97fc1cca06118",
+    "title": "3.2: Removes the GetDefaultGroup() method implementation from js/runner.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5930e19f8c6a96b8cbc5b2f9b9232cf1",
+    "title": "4.1: Removes the group tag from emitted metrics",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2e2c8996b730d7de197675e995263dfb",
+    "title": "4.2: Breaks the REST API /v1/groups endpoint",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

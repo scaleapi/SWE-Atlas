@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "github.com/grafana/grafana/pkg/registry/apis/iam/TestBuilderDoesNotHaveEnableDualWriterField"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/registry/apis/iam/TestBuilderHasLegacyStoreTracking"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/registry/apis/iam/TestBuilderLegacyStoreFieldsArePointerTypes"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/registry/apis/iam/TestBuilderResourcePermissionsStorageOptional"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/registry/apis/iam/TestBuilderSSOLegacyStoreField"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/registry/apis/iam/TestBuilderStandalone_NilLegacyStoresAllowed"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/registry/apis/iam/TestBuilderStandaloneMode_ZeroValue"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/registry/apis/iam/TestUpdateResourcePermissionsAPIGroupSignature"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "task_id": "69b7c2a04b6f8ff9ed98812e",
+  "repo": "MariaDB_server",
+  "base_commit": "e176066a9e02cf2bdedf9e79fb150029dde430f6",
+  "language": "C++",
+  "mount_path": "/app/source",
+  "initial_complexity": "Extreme",
+  "uid": "0f1a823e-3191-4800-a0ea-b9cfccb19f64"
+}

@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "createGraphFrames > computes self duration correctly for a parent with one child"
+    },
+    {
+      "name": "createGraphFrames > handles empty trace data"
+    },
+    {
+      "name": "createGraphFrames > handles missing spans"
+    },
+    {
+      "name": "createGraphFrames > handles single span response"
+    },
+    {
+      "name": "createGraphFrames > produces edge frames with expected field names"
+    },
+    {
+      "name": "createGraphFrames > produces node frames with expected field names"
+    },
+    {
+      "name": "createGraphFrames > transforms basic response into nodes and edges frame"
+    }
+  ]
+}

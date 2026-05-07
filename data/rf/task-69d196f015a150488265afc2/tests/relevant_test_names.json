@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "handles empty input"
+    },
+    {
+      "name": "handles missing secondary extract manager"
+    },
+    {
+      "name": "handles primary extract with undefined packageFiles"
+    },
+    {
+      "name": "handles secondary extract with undefined packageFiles"
+    },
+    {
+      "name": "ignores extracts without superseding managers"
+    },
+    {
+      "name": "keeps non-superseded package files"
+    },
+    {
+      "name": "keeps superseded package files with lock files"
+    },
+    {
+      "name": "removes superseded package files without lock files"
+    }
+  ]
+}

@@ -1,0 +1,968 @@
+diff --git a/apps/plugins/pkg/apis/plugins/v0alpha1/meta_constructors_test.go b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_constructors_test.go
+new file mode 100644
+index 00000000000..f01baab5731
+--- /dev/null
++++ b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_constructors_test.go
+@@ -0,0 +1,373 @@
++package v0alpha1
++
++import (
++	"bytes"
++	"testing"
++
++	"github.com/grafana/grafana-app-sdk/resource"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestNewMetaReturnsInitializedObject(t *testing.T) {
++	meta := NewMeta()
++	require.NotNil(t, meta)
++	assert.Equal(t, *NewMetaSpec(), meta.Spec)
++	assert.Equal(t, *NewMetaStatus(), meta.Status)
++}
++
++func TestNewPluginReturnsInitializedObject(t *testing.T) {
++	plugin := NewPlugin()
++	require.NotNil(t, plugin)
++	assert.Equal(t, *NewPluginSpec(), plugin.Spec)
++	assert.Equal(t, *NewPluginStatus(), plugin.Status)
++}
++
++func TestMetaKindRegistration(t *testing.T) {
++	kind := MetaKind()
++	assert.Equal(t, "Meta", kind.Kind())
++	assert.Equal(t, "metas", kind.Plural())
++	assert.Equal(t, "plugins.grafana.app", kind.Group())
++	assert.Equal(t, "v0alpha1", kind.Version())
++}
++
++func TestPluginKindRegistration(t *testing.T) {
++	kind := PluginKind()
++	assert.Equal(t, "Plugin", kind.Kind())
++	assert.Equal(t, "plugins", kind.Plural())
++	assert.Equal(t, "plugins.grafana.app", kind.Group())
++	assert.Equal(t, "v0alpha1", kind.Version())
++}
++
++func TestMetaGetAndSetSpec(t *testing.T) {
++	meta := NewMeta()
++	newSpec := MetaSpec{PluginJSON: MetaJSONData{Id: "test-id", Name: "Test"}}
++	err := meta.SetSpec(newSpec)
++	require.NoError(t, err)
++
++	got, ok := meta.GetSpec().(MetaSpec)
++	require.True(t, ok)
++	assert.Equal(t, "test-id", got.PluginJSON.Id)
++}
++
++func TestMetaSetSpecRejectsWrongType(t *testing.T) {
++	meta := NewMeta()
++	err := meta.SetSpec("not-a-spec")
++	assert.Error(t, err)
++}
++
++func TestMetaDeepCopyIsIsolated(t *testing.T) {
++	meta := NewMeta()
++	meta.Name = "original"
++	meta.Spec.PluginJSON.Id = "test-plugin"
++
++	copied := meta.DeepCopy()
++	assert.Equal(t, "original", copied.Name)
++	assert.Equal(t, "test-plugin", copied.Spec.PluginJSON.Id)
++
++	copied.Name = "modified"
++	copied.Spec.PluginJSON.Id = "changed"
++	assert.Equal(t, "original", meta.Name)
++	assert.Equal(t, "test-plugin", meta.Spec.PluginJSON.Id)
++}
++
++func TestMetaListDeepCopyIsIsolated(t *testing.T) {
++	list := &MetaList{Items: []Meta{*NewMeta()}}
++	list.Items[0].Name = "item1"
++
++	copied := list.DeepCopy()
++	require.Len(t, copied.Items, 1)
++	assert.Equal(t, "item1", copied.Items[0].Name)
++
++	copied.Items[0].Name = "modified"
++	assert.Equal(t, "item1", list.Items[0].Name)
++}
++
++func TestMetaSubresourceAccess(t *testing.T) {
++	meta := NewMeta()
++
++	subs := meta.GetSubresources()
++	assert.Contains(t, subs, "status")
++
++	_, found := meta.GetSubresource("status")
++	assert.True(t, found)
++
++	_, found = meta.GetSubresource("nonexistent")
++	assert.False(t, found)
++}
++
++func TestMetaSetSubresourceValidation(t *testing.T) {
++	meta := NewMeta()
++
++	err := meta.SetSubresource("status", MetaStatus{})
++	assert.NoError(t, err)
++
++	err = meta.SetSubresource("status", "wrong-type")
++	assert.Error(t, err)
++
++	err = meta.SetSubresource("unknown", nil)
++	assert.Error(t, err)
++}
++
++func TestMetaJSONCodecRoundTrip(t *testing.T) {
++	codec := &MetaJSONCodec{}
++	original := NewMeta()
++	original.Name = "roundtrip-test"
++	original.Spec.PluginJSON.Id = "test-plugin"
++
++	var buf bytes.Buffer
++	err := codec.Write(&buf, original)
++	require.NoError(t, err)
++
++	decoded := NewMeta()
++	err = codec.Read(&buf, decoded)
++	require.NoError(t, err)
++	assert.Equal(t, "roundtrip-test", decoded.Name)
++	assert.Equal(t, "test-plugin", decoded.Spec.PluginJSON.Id)
++}
++
++func TestMetaSpecNestedTypesExist(t *testing.T) {
++	spec := NewMetaSpec()
++	require.NotNil(t, spec)
++
++	jsonData := NewMetaJSONData()
++	require.NotNil(t, jsonData)
++	assert.Equal(t, MetaJSONDataType(""), jsonData.Type)
++
++	jsonData.Type = MetaJSONDataTypeDatasource
++	assert.Equal(t, MetaJSONDataTypeDatasource, jsonData.Type)
++	jsonData.Type = MetaJSONDataTypeApp
++	assert.Equal(t, MetaJSONDataTypeApp, jsonData.Type)
++	jsonData.Type = MetaJSONDataTypePanel
++	assert.Equal(t, MetaJSONDataTypePanel, jsonData.Type)
++	jsonData.Type = MetaJSONDataTypeRenderer
++	assert.Equal(t, MetaJSONDataTypeRenderer, jsonData.Type)
++}
++
++func TestMetaInfoAndDependencies(t *testing.T) {
++	info := NewMetaInfo()
++	require.NotNil(t, info)
++	assert.NotNil(t, info.Keywords)
++	assert.NotNil(t, info.Logos)
++
++	deps := NewMetaDependencies()
++	require.NotNil(t, deps)
++}
++
++func TestMetaIncludeAndRoute(t *testing.T) {
++	include := NewMetaInclude()
++	require.NotNil(t, include)
++
++	route := NewMetaRoute()
++	require.NotNil(t, route)
++
++	qo := NewMetaQueryOptions()
++	require.NotNil(t, qo)
++}
++
++func TestMetaExtensionsTypes(t *testing.T) {
++	ext := NewMetaExtensions()
++	require.NotNil(t, ext)
++
++	addedLink := NewMetaV0alpha1ExtensionsAddedLinks()
++	require.NotNil(t, addedLink)
++
++	addedComp := NewMetaV0alpha1ExtensionsAddedComponents()
++	require.NotNil(t, addedComp)
++
++	exposedComp := NewMetaV0alpha1ExtensionsExposedComponents()
++	require.NotNil(t, exposedComp)
++
++	extPoint := NewMetaV0alpha1ExtensionsExtensionPoints()
++	require.NotNil(t, extPoint)
++}
++
++func TestMetaRoleAndIAMTypes(t *testing.T) {
++	role := NewMetaRole()
++	require.NotNil(t, role)
++
++	roleRole := NewMetaV0alpha1RoleRole()
++	require.NotNil(t, roleRole)
++
++	rolePerm := NewMetaV0alpha1RoleRolePermissions()
++	require.NotNil(t, rolePerm)
++
++	iam := NewMetaIAM()
++	require.NotNil(t, iam)
++
++	iamPerm := NewMetaV0alpha1IAMPermissions()
++	require.NotNil(t, iamPerm)
++}
++
++func TestMetaRouteAuthTypes(t *testing.T) {
++	tokenAuth := NewMetaV0alpha1RouteTokenAuth()
++	require.NotNil(t, tokenAuth)
++
++	jwtAuth := NewMetaV0alpha1RouteJwtTokenAuth()
++	require.NotNil(t, jwtAuth)
++
++	urlParams := NewMetaV0alpha1RouteUrlParams()
++	require.NotNil(t, urlParams)
++}
++
++func TestMetaDependencySubTypes(t *testing.T) {
++	depPlugins := NewMetaV0alpha1DependenciesPlugins()
++	require.NotNil(t, depPlugins)
++
++	depExt := NewMetaV0alpha1DependenciesExtensions()
++	require.NotNil(t, depExt)
++
++	ef := NewMetaEnterpriseFeatures()
++	require.NotNil(t, ef)
++}
++
++func TestMetaInfoSubTypes(t *testing.T) {
++	author := NewMetaV0alpha1InfoAuthor()
++	require.NotNil(t, author)
++
++	logos := NewMetaV0alpha1InfoLogos()
++	require.NotNil(t, logos)
++
++	links := NewMetaV0alpha1InfoLinks()
++	require.NotNil(t, links)
++
++	screenshots := NewMetaV0alpha1InfoScreenshots()
++	require.NotNil(t, screenshots)
++}
++
++func TestMetaJSONDataCategoryConstants(t *testing.T) {
++	assert.Equal(t, MetaJSONDataCategory("tsdb"), MetaJSONDataCategoryTsdb)
++	assert.Equal(t, MetaJSONDataCategory("logging"), MetaJSONDataCategoryLogging)
++	assert.Equal(t, MetaJSONDataCategory("cloud"), MetaJSONDataCategoryCloud)
++	assert.Equal(t, MetaJSONDataCategory("tracing"), MetaJSONDataCategoryTracing)
++	assert.Equal(t, MetaJSONDataCategory("profiling"), MetaJSONDataCategoryProfiling)
++	assert.Equal(t, MetaJSONDataCategory("sql"), MetaJSONDataCategorySql)
++	assert.Equal(t, MetaJSONDataCategory("enterprise"), MetaJSONDataCategoryEnterprise)
++	assert.Equal(t, MetaJSONDataCategory("iot"), MetaJSONDataCategoryIot)
++	assert.Equal(t, MetaJSONDataCategory("other"), MetaJSONDataCategoryOther)
++}
++
++func TestMetaJSONDataStateConstants(t *testing.T) {
++	assert.Equal(t, MetaJSONDataState("alpha"), MetaJSONDataStateAlpha)
++	assert.Equal(t, MetaJSONDataState("beta"), MetaJSONDataStateBeta)
++}
++
++func TestMetaIncludeTypeAndRoleConstants(t *testing.T) {
++	assert.Equal(t, MetaIncludeType("dashboard"), MetaIncludeTypeDashboard)
++	assert.Equal(t, MetaIncludeType("page"), MetaIncludeTypePage)
++	assert.Equal(t, MetaIncludeType("panel"), MetaIncludeTypePanel)
++	assert.Equal(t, MetaIncludeType("datasource"), MetaIncludeTypeDatasource)
++
++	assert.Equal(t, MetaIncludeRole("Admin"), MetaIncludeRoleAdmin)
++	assert.Equal(t, MetaIncludeRole("Editor"), MetaIncludeRoleEditor)
++	assert.Equal(t, MetaIncludeRole("Viewer"), MetaIncludeRoleViewer)
++}
++
++func TestMetaDependenciesPluginsTypeConstants(t *testing.T) {
++	assert.Equal(t, MetaV0alpha1DependenciesPluginsType("app"), MetaV0alpha1DependenciesPluginsTypeApp)
++	assert.Equal(t, MetaV0alpha1DependenciesPluginsType("datasource"), MetaV0alpha1DependenciesPluginsTypeDatasource)
++	assert.Equal(t, MetaV0alpha1DependenciesPluginsType("panel"), MetaV0alpha1DependenciesPluginsTypePanel)
++}
++
++func TestMetaJSONDataWithAllOptionalFields(t *testing.T) {
++	alerting := true
++	backend := true
++	exe := "plugin-exe"
++	cat := MetaJSONDataCategoryCloud
++	state := MetaJSONDataStateAlpha
++
++	data := MetaJSONData{
++		Id:   "full-plugin",
++		Type: MetaJSONDataTypeDatasource,
++		Name: "Full Plugin",
++		Info: MetaInfo{
++			Keywords: []string{"test"},
++			Logos:    MetaV0alpha1InfoLogos{Small: "s.png", Large: "l.png"},
++			Updated:  "2024-01-01",
++			Version:  "1.0.0",
++		},
++		Dependencies: MetaDependencies{GrafanaDependency: ">=10.0.0"},
++		Alerting:     &alerting,
++		Backend:      &backend,
++		Executable:   &exe,
++		Category:     &cat,
++		State:        &state,
++		Includes:     []MetaInclude{*NewMetaInclude()},
++		Routes:       []MetaRoute{*NewMetaRoute()},
++		Roles:        []MetaRole{*NewMetaRole()},
++	}
++
++	assert.Equal(t, "full-plugin", data.Id)
++	assert.Equal(t, MetaJSONDataTypeDatasource, data.Type)
++	assert.True(t, *data.Alerting)
++	assert.True(t, *data.Backend)
++	assert.Equal(t, "plugin-exe", *data.Executable)
++	assert.Equal(t, MetaJSONDataCategoryCloud, *data.Category)
++	assert.Equal(t, MetaJSONDataStateAlpha, *data.State)
++	assert.Len(t, data.Includes, 1)
++	assert.Len(t, data.Routes, 1)
++	assert.Len(t, data.Roles, 1)
++}
++
++func TestMetaClientTypeExists(t *testing.T) {
++	var _ *MetaClient
++}
++
++func TestMetaMetadataExists(t *testing.T) {
++	md := NewMetaMetadata()
++	require.NotNil(t, md)
++	assert.NotNil(t, md.Finalizers)
++	assert.NotNil(t, md.Labels)
++}
++
++func TestMetaStatusOperatorState(t *testing.T) {
++	status := NewMetaStatus()
++	require.NotNil(t, status)
++
++	opState := NewMetastatusOperatorState()
++	require.NotNil(t, opState)
++}
++
++func TestMetaStaticMetadataRoundTrip(t *testing.T) {
++	meta := NewMeta()
++	meta.Name = "test-meta"
++	meta.Namespace = "default"
++
++	sm := meta.GetStaticMetadata()
++	assert.Equal(t, "test-meta", sm.Name)
++	assert.Equal(t, "default", sm.Namespace)
++}
++
++func TestMetaCommonMetadataRoundTrip(t *testing.T) {
++	meta := NewMeta()
++	meta.Name = "test"
++	meta.ResourceVersion = "42"
++
++	cm := meta.GetCommonMetadata()
++	assert.Equal(t, "42", cm.ResourceVersion)
++}
++
++func TestMetaListGetAndSetItems(t *testing.T) {
++	list := &MetaList{}
++	m1 := NewMeta()
++	m1.Name = "item-1"
++	m2 := NewMeta()
++	m2.Name = "item-2"
++
++	list.SetItems([]resource.Object{m1, m2})
++	items := list.GetItems()
++	assert.Len(t, items, 2)
++}
++
++func TestMetaCopyReturnsNewObject(t *testing.T) {
++	meta := NewMeta()
++	meta.Name = "original"
++	copied := meta.Copy()
++	require.NotNil(t, copied)
++	assert.Equal(t, "original", copied.(*Meta).Name)
++}
++
++func TestMetaSchemaReturnsSchema(t *testing.T) {
++	schema := MetaSchema()
++	require.NotNil(t, schema)
++}
+diff --git a/pkg/registry/apps/plugins/accesscontrol_test.go b/pkg/registry/apps/plugins/accesscontrol_test.go
+new file mode 100644
+index 00000000000..55bfe00fdf7
+--- /dev/null
++++ b/pkg/registry/apps/plugins/accesscontrol_test.go
+@@ -0,0 +1,12 @@
++package plugins
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++func TestPluginRBACActionsUnchanged(t *testing.T) {
++	assert.Equal(t, "plugins.plugins:create", ActionPluginsPluginsCreate)
++	assert.Equal(t, "plugins.plugins:read", ActionPluginsPluginsRead)
++}
+diff --git a/pkg/services/accesscontrol/permreg/permreg_meta_test.go b/pkg/services/accesscontrol/permreg/permreg_meta_test.go
+new file mode 100644
+index 00000000000..4b6231d63d8
+--- /dev/null
++++ b/pkg/services/accesscontrol/permreg/permreg_meta_test.go
+@@ -0,0 +1,26 @@
++package permreg
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestPermissionRegistryUsesRenamedMetasKey(t *testing.T) {
++	pr := newPermissionRegistry()
++
++	prefix, exists := pr.kindScopePrefix["plugins.metas"]
++	require.True(t, exists, "plugins.metas should be registered as a kind scope")
++	assert.Equal(t, "plugins.metas:uid:", prefix)
++
++	_, oldExists := pr.kindScopePrefix["plugins.pluginsmeta"]
++	assert.False(t, oldExists, "old key plugins.pluginsmeta should not exist")
++}
++
++func TestPermissionRegistryPluginsKeyUnchanged(t *testing.T) {
++	pr := newPermissionRegistry()
++	prefix, exists := pr.kindScopePrefix["plugins.plugins"]
++	require.True(t, exists)
++	assert.Equal(t, "plugins.plugins:uid:", prefix)
++}
+diff --git a/pkg/services/authz/rbac/mapper_meta_test.go b/pkg/services/authz/rbac/mapper_meta_test.go
+new file mode 100644
+index 00000000000..7f6c15bf0e7
+--- /dev/null
++++ b/pkg/services/authz/rbac/mapper_meta_test.go
+@@ -0,0 +1,36 @@
++package rbac
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestMapperRegistryUsesRenamedMetasResource(t *testing.T) {
++	registry := NewMapperRegistry()
++
++	mapping, found := registry.Get("plugins.grafana.app", "metas")
++	require.True(t, found, "metas should be registered under plugins.grafana.app")
++	assert.Contains(t, mapping.Prefix(), "plugins.metas")
++
++	_, oldFound := registry.Get("plugins.grafana.app", "pluginsmeta")
++	assert.False(t, oldFound, "old resource pluginsmeta should not be registered")
++}
++
++func TestMapperRegistryMetasScopeResolution(t *testing.T) {
++	registry := NewMapperRegistry()
++	mapping, found := registry.Get("plugins.grafana.app", "metas")
++	require.True(t, found)
++
++	scope := mapping.Scope("test-plugin")
++	assert.Contains(t, scope, "plugins.metas")
++	assert.Contains(t, scope, "test-plugin")
++}
++
++func TestMapperRegistryPluginsResourceUnchanged(t *testing.T) {
++	registry := NewMapperRegistry()
++	mapping, found := registry.Get("plugins.grafana.app", "plugins")
++	require.True(t, found)
++	assert.Contains(t, mapping.Prefix(), "plugins.plugins")
++}
+diff --git a/apps/plugins/pkg/app/meta/cloud_test.go b/apps/plugins/pkg/app/meta/cloud_test.go
+index bef2d1a5041..ea6368f1b82 100644
+--- a/apps/plugins/pkg/app/meta/cloud_test.go
++++ b/apps/plugins/pkg/app/meta/cloud_test.go
+@@ -19,10 +19,10 @@ func TestCloudProvider_GetMeta(t *testing.T) {
+ 	ctx := context.Background()
+ 
+ 	t.Run("successfully fetches plugin metadata", func(t *testing.T) {
+-		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
++		expectedMeta := pluginsv0alpha1.MetaJSONData{
+ 			Id:   "test-plugin",
+ 			Name: "Test Plugin",
+-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
++			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+ 		}
+ 
+ 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+@@ -108,10 +108,10 @@ func TestCloudProvider_GetMeta(t *testing.T) {
+ 
+ 	t.Run("uses custom TTL when provided", func(t *testing.T) {
+ 		customTTL := 2 * time.Hour
+-		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
++		expectedMeta := pluginsv0alpha1.MetaJSONData{
+ 			Id:   "test-plugin",
+ 			Name: "Test Plugin",
+-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
++			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+ 		}
+ 
+ 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+diff --git a/apps/plugins/pkg/app/meta/core_test.go b/apps/plugins/pkg/app/meta/core_test.go
+index a9d7103e4a2..d5235c9d120 100644
+--- a/apps/plugins/pkg/app/meta/core_test.go
++++ b/apps/plugins/pkg/app/meta/core_test.go
+@@ -22,10 +22,10 @@ func TestCoreProvider_GetMeta(t *testing.T) {
+ 	t.Run("returns cached plugin when available", func(t *testing.T) {
+ 		provider := NewCoreProvider()
+ 
+-		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
++		expectedMeta := pluginsv0alpha1.MetaJSONData{
+ 			Id:   "test-plugin",
+ 			Name: "Test Plugin",
+-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
++			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+ 		}
+ 
+ 		provider.mu.Lock()
+@@ -58,10 +58,10 @@ func TestCoreProvider_GetMeta(t *testing.T) {
+ 	t.Run("ignores version parameter", func(t *testing.T) {
+ 		provider := NewCoreProvider()
+ 
+-		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
++		expectedMeta := pluginsv0alpha1.MetaJSONData{
+ 			Id:   "test-plugin",
+ 			Name: "Test Plugin",
+-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
++			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+ 		}
+ 
+ 		provider.mu.Lock()
+@@ -81,10 +81,10 @@ func TestCoreProvider_GetMeta(t *testing.T) {
+ 		customTTL := 2 * time.Hour
+ 		provider := NewCoreProviderWithTTL(customTTL)
+ 
+-		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
++		expectedMeta := pluginsv0alpha1.MetaJSONData{
+ 			Id:   "test-plugin",
+ 			Name: "Test Plugin",
+-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
++			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+ 		}
+ 
+ 		provider.mu.Lock()
+@@ -271,11 +271,11 @@ func TestJsonDataToMeta(t *testing.T) {
+ 			},
+ 		}
+ 
+-		meta := jsonDataToPluginMetaJSONData(jsonData)
++		meta := jsonDataToMetaJSONData(jsonData)
+ 
+ 		assert.Equal(t, "test-plugin", meta.Id)
+ 		assert.Equal(t, "Test Plugin", meta.Name)
+-		assert.Equal(t, pluginsv0alpha1.PluginMetaJSONDataTypeDatasource, meta.Type)
++		assert.Equal(t, pluginsv0alpha1.MetaJSONDataTypeDatasource, meta.Type)
+ 		assert.Equal(t, "1.0.0", meta.Info.Version)
+ 		assert.Equal(t, "Test description", *meta.Info.Description)
+ 		assert.Equal(t, []string{"test", "plugin"}, meta.Info.Keywords)
+@@ -293,7 +293,7 @@ func TestJsonDataToMeta(t *testing.T) {
+ 			},
+ 		}
+ 
+-		meta := jsonDataToPluginMetaJSONData(jsonData)
++		meta := jsonDataToMetaJSONData(jsonData)
+ 
+ 		assert.Nil(t, meta.Info.Description)
+ 		assert.Nil(t, meta.Info.Author)
+diff --git a/apps/plugins/pkg/app/meta/manager_test.go b/apps/plugins/pkg/app/meta/manager_test.go
+index 3d3fe3c936c..31a75424a23 100644
+--- a/apps/plugins/pkg/app/meta/manager_test.go
++++ b/apps/plugins/pkg/app/meta/manager_test.go
+@@ -35,10 +35,10 @@ func TestProviderManager_GetMeta(t *testing.T) {
+ 	ctx := context.Background()
+ 
+ 	t.Run("returns cached result when available and not expired", func(t *testing.T) {
+-		cachedMeta := pluginsv0alpha1.PluginMetaJSONData{
++		cachedMeta := pluginsv0alpha1.MetaJSONData{
+ 			Id:   "test-plugin",
+ 			Name: "Test Plugin",
+-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
++			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+ 		}
+ 
+ 		provider := &mockProvider{
+@@ -60,7 +60,7 @@ func TestProviderManager_GetMeta(t *testing.T) {
+ 
+ 		provider.getMetaFunc = func(ctx context.Context, pluginID, version string) (*Result, error) {
+ 			return &Result{
+-				Meta: pluginsv0alpha1.PluginMetaJSONData{Id: "different"},
++				Meta: pluginsv0alpha1.MetaJSONData{Id: "different"},
+ 				TTL:  time.Hour,
+ 			}, nil
+ 		}
+@@ -73,10 +73,10 @@ func TestProviderManager_GetMeta(t *testing.T) {
+ 	})
+ 
+ 	t.Run("fetches from provider when not cached", func(t *testing.T) {
+-		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
++		expectedMeta := pluginsv0alpha1.MetaJSONData{
+ 			Id:   "test-plugin",
+ 			Name: "Test Plugin",
+-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
++			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+ 		}
+ 		expectedTTL := 2 * time.Hour
+ 
+@@ -108,15 +108,15 @@ func TestProviderManager_GetMeta(t *testing.T) {
+ 	})
+ 
+ 	t.Run("does not cache result with zero TTL and tries next provider", func(t *testing.T) {
+-		zeroTTLMeta := pluginsv0alpha1.PluginMetaJSONData{
++		zeroTTLMeta := pluginsv0alpha1.MetaJSONData{
+ 			Id:   "test-plugin",
+ 			Name: "Zero TTL Plugin",
+-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
++			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+ 		}
+-		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
++		expectedMeta := pluginsv0alpha1.MetaJSONData{
+ 			Id:   "test-plugin",
+ 			Name: "Test Plugin",
+-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
++			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+ 		}
+ 
+ 		provider1 := &mockProvider{
+@@ -154,10 +154,10 @@ func TestProviderManager_GetMeta(t *testing.T) {
+ 	})
+ 
+ 	t.Run("tries next provider when first returns ErrMetaNotFound", func(t *testing.T) {
+-		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
++		expectedMeta := pluginsv0alpha1.MetaJSONData{
+ 			Id:   "test-plugin",
+ 			Name: "Test Plugin",
+-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
++			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+ 		}
+ 
+ 		provider1 := &mockProvider{
+@@ -229,15 +229,15 @@ func TestProviderManager_GetMeta(t *testing.T) {
+ 	})
+ 
+ 	t.Run("skips expired cache entries", func(t *testing.T) {
+-		expiredMeta := pluginsv0alpha1.PluginMetaJSONData{
++		expiredMeta := pluginsv0alpha1.MetaJSONData{
+ 			Id:   "test-plugin",
+ 			Name: "Expired Plugin",
+-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
++			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+ 		}
+-		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
++		expectedMeta := pluginsv0alpha1.MetaJSONData{
+ 			Id:   "test-plugin",
+ 			Name: "Test Plugin",
+-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
++			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+ 		}
+ 
+ 		callCount := 0
+@@ -272,15 +272,15 @@ func TestProviderManager_GetMeta(t *testing.T) {
+ 	})
+ 
+ 	t.Run("uses first successful provider", func(t *testing.T) {
+-		expectedMeta1 := pluginsv0alpha1.PluginMetaJSONData{
++		expectedMeta1 := pluginsv0alpha1.MetaJSONData{
+ 			Id:   "test-plugin",
+ 			Name: "Provider 1 Plugin",
+-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
++			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+ 		}
+-		expectedMeta2 := pluginsv0alpha1.PluginMetaJSONData{
++		expectedMeta2 := pluginsv0alpha1.MetaJSONData{
+ 			Id:   "test-plugin",
+ 			Name: "Provider 2 Plugin",
+-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
++			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+ 		}
+ 
+ 		provider1 := &mockProvider{
+@@ -331,9 +331,9 @@ func TestProviderManager_Run(t *testing.T) {
+ 
+ func TestProviderManager_cleanupExpired(t *testing.T) {
+ 	t.Run("removes expired entries", func(t *testing.T) {
+-		validMeta := pluginsv0alpha1.PluginMetaJSONData{Id: "valid"}
+-		expiredMeta1 := pluginsv0alpha1.PluginMetaJSONData{Id: "expired1"}
+-		expiredMeta2 := pluginsv0alpha1.PluginMetaJSONData{Id: "expired2"}
++		validMeta := pluginsv0alpha1.MetaJSONData{Id: "valid"}
++		expiredMeta1 := pluginsv0alpha1.MetaJSONData{Id: "expired1"}
++		expiredMeta2 := pluginsv0alpha1.MetaJSONData{Id: "expired2"}
+ 
+ 		provider := &mockProvider{
+ 			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
+diff --git a/pkg/tests/apis/config_test.go b/pkg/tests/apis/config_test.go
+index bf00affdfff..a9e8d87e0a0 100644
+--- a/pkg/tests/apis/config_test.go
++++ b/pkg/tests/apis/config_test.go
+@@ -15,19 +15,19 @@ const pluginsDiscoveryJSON = `[
+ 	"freshness": "Current",
+ 	"resources": [
+ 		{
+-			"resource": "pluginmetas",
++			"resource": "metas",
+ 			"responseKind": {
+ 				"group": "",
+-				"kind": "PluginMeta",
++				"kind": "Meta",
+ 				"version": ""
+ 			},
+ 			"scope": "Namespaced",
+-			"singularResource": "pluginmeta",
++			"singularResource": "meta",
+ 			"subresources": [
+ 				{
+ 					"responseKind": {
+ 						"group": "",
+-						"kind": "PluginMeta",
++						"kind": "Meta",
+ 						"version": ""
+ 					},
+ 					"subresource": "status",
+diff --git a/pkg/tests/apis/plugins/discovery_test.go b/pkg/tests/apis/plugins/discovery_test.go
+index a6e507a630b..5e211cc45a1 100644
+--- a/pkg/tests/apis/plugins/discovery_test.go
++++ b/pkg/tests/apis/plugins/discovery_test.go
+@@ -21,19 +21,19 @@ func TestIntegrationPluginsIntegrationDiscovery(t *testing.T) {
+ 				"freshness": "Current",
+ 				"resources": [
+ 					{
+-						"resource": "pluginmetas",
++						"resource": "metas",
+ 						"responseKind": {
+ 							"group": "",
+-							"kind": "PluginMeta",
++							"kind": "Meta",
+ 							"version": ""
+ 						},
+ 						"scope": "Namespaced",
+-						"singularResource": "pluginmeta",
++						"singularResource": "meta",
+ 						"subresources": [
+ 							{
+ 								"responseKind": {
+ 									"group": "",
+-									"kind": "PluginMeta",
++									"kind": "Meta",
+ 									"version": ""
+ 								},
+ 								"subresource": "status",
+diff --git a/pkg/tests/apis/plugins/pluginmetas_test.go b/pkg/tests/apis/plugins/pluginmetas_test.go
+deleted file mode 100644
+index 1ffe8d35a50..00000000000
+--- a/pkg/tests/apis/plugins/pluginmetas_test.go
++++ /dev/null
+@@ -1,85 +0,0 @@
+-package plugins
+-
+-import (
+-	"context"
+-	"fmt"
+-	"testing"
+-
+-	"github.com/stretchr/testify/require"
+-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+-
+-	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
+-	"github.com/grafana/grafana/pkg/tests/apis"
+-	"github.com/grafana/grafana/pkg/util/testutil"
+-)
+-
+-func TestIntegrationPluginMetas(t *testing.T) {
+-	testutil.SkipIntegrationTestInShortMode(t)
+-
+-	t.Run("list plugin metas", func(t *testing.T) {
+-		helper := setupHelper(t)
+-		ctx := context.Background()
+-		client := helper.GetResourceClient(apis.ResourceClientArgs{
+-			User: helper.Org1.Admin,
+-			GVR:  gvrPlugins,
+-		})
+-
+-		plugin1Name := "test-plugin-metas-1"
+-		plugin1 := helper.LoadYAMLOrJSON(fmt.Sprintf(`{
+-			"apiVersion": "plugins.grafana.app/v0alpha1",
+-			"kind": "Plugin",
+-			"metadata": {"name": "%s"},
+-			"spec": {"id": "grafana-piechart-panel", "version": "1.0.0"}
+-		}`, plugin1Name))
+-		_, err := client.Resource.Create(ctx, plugin1, metav1.CreateOptions{})
+-		require.NoError(t, err)
+-
+-		plugin2Name := "test-plugin-metas-2"
+-		plugin2 := helper.LoadYAMLOrJSON(fmt.Sprintf(`{
+-			"apiVersion": "plugins.grafana.app/v0alpha1",
+-			"kind": "Plugin",
+-			"metadata": {"name": "%s"},
+-			"spec": {"id": "grafana-clock-panel", "version": "1.0.0"}
+-		}`, plugin2Name))
+-		_, err = client.Resource.Create(ctx, plugin2, metav1.CreateOptions{})
+-		require.NoError(t, err)
+-
+-		namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+-		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/pluginmetas", namespace)
+-		response := apis.DoRequest(helper, apis.RequestParams{
+-			User:   helper.Org1.Admin,
+-			Method: "GET",
+-			Path:   path,
+-		}, &pluginsv0alpha1.PluginMetaList{})
+-
+-		require.NotNil(t, response.Result)
+-		require.NotNil(t, response.Result.Items)
+-		require.GreaterOrEqual(t, len(response.Result.Items), 2)
+-
+-		foundIDs := make(map[string]bool)
+-		for _, item := range response.Result.Items {
+-			require.NotNil(t, item.Spec.PluginJSON)
+-			foundIDs[item.Spec.PluginJSON.Id] = true
+-			require.NotEmpty(t, item.Spec.PluginJSON.Id)
+-			require.NotEmpty(t, item.Spec.PluginJSON.Type)
+-			require.NotEmpty(t, item.Spec.PluginJSON.Name)
+-		}
+-		require.True(t, foundIDs["grafana-piechart-panel"])
+-		require.True(t, foundIDs["grafana-clock-panel"])
+-	})
+-
+-	t.Run("list plugin metas with no plugins", func(t *testing.T) {
+-		helper := setupHelper(t)
+-		namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+-		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/pluginmetas", namespace)
+-		response := apis.DoRequest(helper, apis.RequestParams{
+-			User:   helper.Org1.Admin,
+-			Method: "GET",
+-			Path:   path,
+-		}, &pluginsv0alpha1.PluginMetaList{})
+-
+-		require.NotNil(t, response.Result)
+-		require.NotNil(t, response.Result.Items)
+-		require.GreaterOrEqual(t, len(response.Result.Items), 0)
+-	})
+-}
+diff --git a/pkg/tests/apis/plugins/pluginmeta_test.go b/pkg/tests/apis/plugins/metas_test.go
+similarity index 52%
+rename from pkg/tests/apis/plugins/pluginmeta_test.go
+rename to pkg/tests/apis/plugins/metas_test.go
+index af70f02a6f8..c240d3fb91d 100644
+--- a/pkg/tests/apis/plugins/pluginmeta_test.go
++++ b/pkg/tests/apis/plugins/metas_test.go
+@@ -15,6 +15,72 @@ import (
+ 
+ func TestIntegrationPluginMeta(t *testing.T) {
+ 	testutil.SkipIntegrationTestInShortMode(t)
++	t.Run("list plugin metas", func(t *testing.T) {
++		helper := setupHelper(t)
++		ctx := context.Background()
++		client := helper.GetResourceClient(apis.ResourceClientArgs{
++			User: helper.Org1.Admin,
++			GVR:  gvrPlugins,
++		})
++
++		plugin1Name := "test-plugin-metas-1"
++		plugin1 := helper.LoadYAMLOrJSON(fmt.Sprintf(`{
++			"apiVersion": "plugins.grafana.app/v0alpha1",
++			"kind": "Plugin",
++			"metadata": {"name": "%s"},
++			"spec": {"id": "grafana-piechart-panel", "version": "1.0.0"}
++		}`, plugin1Name))
++		_, err := client.Resource.Create(ctx, plugin1, metav1.CreateOptions{})
++		require.NoError(t, err)
++
++		plugin2Name := "test-plugin-metas-2"
++		plugin2 := helper.LoadYAMLOrJSON(fmt.Sprintf(`{
++			"apiVersion": "plugins.grafana.app/v0alpha1",
++			"kind": "Plugin",
++			"metadata": {"name": "%s"},
++			"spec": {"id": "grafana-clock-panel", "version": "1.0.0"}
++		}`, plugin2Name))
++		_, err = client.Resource.Create(ctx, plugin2, metav1.CreateOptions{})
++		require.NoError(t, err)
++
++		namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
++		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/metas", namespace)
++		response := apis.DoRequest(helper, apis.RequestParams{
++			User:   helper.Org1.Admin,
++			Method: "GET",
++			Path:   path,
++		}, &pluginsv0alpha1.MetaList{})
++
++		require.NotNil(t, response.Result)
++		require.NotNil(t, response.Result.Items)
++		require.GreaterOrEqual(t, len(response.Result.Items), 2)
++
++		foundIDs := make(map[string]bool)
++		for _, item := range response.Result.Items {
++			require.NotNil(t, item.Spec.PluginJSON)
++			foundIDs[item.Spec.PluginJSON.Id] = true
++			require.NotEmpty(t, item.Spec.PluginJSON.Id)
++			require.NotEmpty(t, item.Spec.PluginJSON.Type)
++			require.NotEmpty(t, item.Spec.PluginJSON.Name)
++		}
++		require.True(t, foundIDs["grafana-piechart-panel"])
++		require.True(t, foundIDs["grafana-clock-panel"])
++	})
++
++	t.Run("list plugin metas with no plugins", func(t *testing.T) {
++		helper := setupHelper(t)
++		namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
++		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/metas", namespace)
++		response := apis.DoRequest(helper, apis.RequestParams{
++			User:   helper.Org1.Admin,
++			Method: "GET",
++			Path:   path,
++		}, &pluginsv0alpha1.MetaList{})
++
++		require.NotNil(t, response.Result)
++		require.NotNil(t, response.Result.Items)
++		require.GreaterOrEqual(t, len(response.Result.Items), 0)
++	})
+ 
+ 	t.Run("get plugin meta", func(t *testing.T) {
+ 		helper := setupHelper(t)
+@@ -35,12 +101,12 @@ func TestIntegrationPluginMeta(t *testing.T) {
+ 		require.NoError(t, err)
+ 
+ 		namespace := helper.Org1.Admin.Identity.GetNamespace()
+-		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/pluginmetas/%s", namespace, pluginName)
++		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/metas/%s", namespace, pluginName)
+ 		response := apis.DoRequest(helper, apis.RequestParams{
+ 			User:   helper.Org1.Admin,
+ 			Method: "GET",
+ 			Path:   path,
+-		}, &pluginsv0alpha1.PluginMeta{})
++		}, &pluginsv0alpha1.Meta{})
+ 
+ 		require.NotNil(t, response.Result)
+ 		require.NotNil(t, response.Result.Spec.PluginJSON)
+@@ -52,12 +118,12 @@ func TestIntegrationPluginMeta(t *testing.T) {
+ 	t.Run("get plugin meta for non-existent plugin", func(t *testing.T) {
+ 		helper := setupHelper(t)
+ 		namespace := helper.Org1.Admin.Identity.GetNamespace()
+-		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/pluginmetas/non-existent-plugin", namespace)
++		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/metas/non-existent-plugin", namespace)
+ 		response := apis.DoRequest(helper, apis.RequestParams{
+ 			User:   helper.Org1.Admin,
+ 			Method: "GET",
+ 			Path:   path,
+-		}, &pluginsv0alpha1.PluginMeta{})
++		}, &pluginsv0alpha1.Meta{})
+ 
+ 		require.NotNil(t, response.Status)
+ 		require.Equal(t, int32(404), response.Status.Code)
+@@ -82,12 +148,12 @@ func TestIntegrationPluginMeta(t *testing.T) {
+ 		require.NoError(t, err)
+ 
+ 		namespace := helper.Org1.Admin.Identity.GetNamespace()
+-		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/pluginmetas/%s", namespace, pluginName)
++		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/metas/%s", namespace, pluginName)
+ 		response := apis.DoRequest(helper, apis.RequestParams{
+ 			User:   helper.Org1.Admin,
+ 			Method: "GET",
+ 			Path:   path,
+-		}, &pluginsv0alpha1.PluginMeta{})
++		}, &pluginsv0alpha1.Meta{})
+ 
+ 		require.NotNil(t, response.Status)
+ 		require.Equal(t, int32(404), response.Status.Code)
+diff --git a/pkg/tests/apis/plugins/plugininstalls_test.go b/pkg/tests/apis/plugins/plugins_test.go
+similarity index 100%
+rename from pkg/tests/apis/plugins/plugininstalls_test.go
+rename to pkg/tests/apis/plugins/plugins_test.go

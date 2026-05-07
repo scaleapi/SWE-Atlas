@@ -1,0 +1,82 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e8c3b2a1f4a5678901234567890e5678",
+    "title": "1.1: Removes all 22 unexported wrapper methods (including click, dblclick, fill, focus, hover, check, uncheck, setChecked, isChecked, isEditable, ...) that only set options and forward to l.frame from the Locator type",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b5f0e9d8c1d2345678901234567b2345",
+    "title": "1.2: Preserves strict mode enforcement (opts.Strict = true) in all 23 refactored public Locator methods (including Click, Dblclick, Fill, Clear, Check, Uncheck, IsChecked, IsEditable, IsEnabled, IsDisabled, ...)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f9e4d3c2b5a6789012345678901a6789",
+    "title": "1.3: Retains retry behavior in all 6 action methods (Click, Dblclick, Hover, Check, Uncheck, SetChecked)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a7b8c9d0e1f2345678901234567c3456",
+    "title": "1.4: Calls the corresponding l.frame method directly from all 23 refactored public Locator methods (including Click, Dblclick, Fill, Clear, Check, Uncheck, IsChecked, IsEditable, Focus, GetAttribute, ...) instead of routing through private wrappers",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f9d4c3b2a5b6789012345678901f6789",
+    "title": "3.1: Removes orphaned doc comments from all 8 deleted private methods with comments (click, dblclick, check, uncheck, isChecked, isEditable, isEnabled, isDisabled) in locator.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a0e5d4c3b6c7890123456789012a7890",
+    "title": "4.1: Drops or alters the fmt.Errorf error-wrapping pattern (such as 'clearing %q: %w' or 'clicking on %q: %w' or 'filling %q with %q: %w') in any of the 23 refactored public Locator methods",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b1f6e5d4c7d8901234567890123b8901",
+    "title": "4.2: Changes the function signature of any of the 23 exported Locator methods (including Click, Dblclick, Fill, Clear, Check, Uncheck, IsChecked, IsEditable, IsEnabled, IsDisabled, ...)",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

@@ -1,0 +1,210 @@
+[
+  {
+    "id": "87018af4c747ac97e284a2822a3ff1fe",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e4f8909bc8ae00ee4951378b86f830c9",
+    "title": "1.1: Extracts the `RRD_ALGORITHM` enum, its 4 name constants, and both conversion functions (`rrd_algorithm_id(const char *name)`, `rrd_algorithm_name(RRD_ALGORITHM algorithm)`) from both source files (`src/database/rrd.h`, `src/database/rrd.c`) into both new files (`src/database/rrd-algorithm.h`, `src/database/rrd-algorithm.c`)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6e825f099cd32f215fd23ae8e1bda0ce",
+    "title": "1.2: Extracts the `RRDSET_TYPE` enum, its 4 name constants, and both conversion functions (`rrdset_type_id(const char *name)`, `rrdset_type_name(RRDSET_TYPE chart_type)`) from both source files (`src/database/rrdset.h`, `src/database/rrdset.c`) into both new files (`src/database/rrdset-type.h`, `src/database/rrdset-type.c`)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "bdd732e112aada1859221e36d9f62dfc",
+    "title": "1.3: Extracts both host label management functions (`reload_host_labels`, `rrdhost_set_is_parent_label`) from both `src/database/rrdhost.c` and `src/database/rrdhost.h` into both new files (`src/database/rrdhost-labels.c`, `src/database/rrdhost-labels.h`)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5b6ac0729a5f79a4a850e8b783ac4678",
+    "title": "1.4: Moves both pluginsd chart slot cleanup functions (`rrdhost_pluginsd_send_chart_slots_free`, `rrdhost_pluginsd_receive_chart_slots_free`) from both `src/database/rrdset-slots.c` and `src/database/rrdset-slots.h` into both new files (`src/database/rrdhost-slots.c`, `src/database/rrdhost-slots.h`)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f0513b8a77a09aa0a155ff8ff575783d",
+    "title": "1.5: Moves all 3 host collection lifecycle function implementations (`rrdhost_finalize_collection`, `rrd_finalize_collection_for_all_hosts`, `rrdhost_matches_window`) from `src/database/rrdhost.c` to `src/database/rrdhost-collection.c`, with `rrdhost_finalize_collection` and `rrd_finalize_collection_for_all_hosts` declared in the new `src/database/rrdhost-collection.h`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "58a1d0a70deb91c69ab7db1a46a68b10",
+    "title": "1.6: Moves both dimension metric storage entry points (`rrddim_store_metric`, `rrddim_store_metric_with_trace`) and their declarations from `src/database/rrdset-collection.c` and `src/database/rrddim.h` into both `src/database/rrddim-collection.c` and `src/database/rrddim-collection.h`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1bf89e62f224b3981dcfe8c70fb31791",
+    "title": "1.7: Renames the `RRD_MEMORY_MODE` typedef to `RRD_DB_MODE` with all 4 values (`RRD_DB_MODE_NONE`, `RRD_DB_MODE_RAM`, `RRD_DB_MODE_ALLOC`, `RRD_DB_MODE_DBENGINE`), all 4 name constants, and the `default_rrd_memory_mode` global variable type in `src/database/rrd-database-mode.h`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ea230c6e3902978c3827f7b43ae8ac1e",
+    "title": "1.8: Updates both database mode conversion function signatures (`rrd_memory_mode_name(RRD_DB_MODE id)`, `rrd_memory_mode_id(const char *name)`) to use `RRD_DB_MODE` as parameter and return types while keeping the function names unchanged",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4823163ab764f4cac4bf31079ceb46af",
+    "title": "1.9: Updates both the `storage_engine_get(RRD_DB_MODE mmode)` signature and the `STORAGE_ENGINE.id` struct field type from `RRD_MEMORY_MODE` to `RRD_DB_MODE` in `src/database/storage-engine.h`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0329f538188c18248fed0fd5d6291e7a",
+    "title": "1.10: Updates the `align_entries_to_pagesize(RRD_DB_MODE mode, long entries)` function signature in `src/database/rrd.h` to use `RRD_DB_MODE` instead of `RRD_MEMORY_MODE`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a6ade4a8eb54e4a8106b22d8aa5fcb3e",
+    "title": "1.11: Propagates the `RRD_MEMORY_MODE` to `RRD_DB_MODE` rename across all 32 affected non-test source files (including src/collectors/statsd.plugin/statsd.c, src/daemon/config/netdata-conf-db.c, src/daemon/main.c, src/daemon/service.c, src/database/contexts/contexts-loading.c, src/database/contexts/worker.c, src/database/rrdhost.c, src/database/rrddim.c, src/database/rrdset-index-id.c, src/streaming/stream-conf.c, ...) so no remaining non-test compilation units reference the removed `RRD_MEMORY_MODE` typedef or legacy `RRD_MEMORY_MODE_*` enum symbol names",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "28b6c231a5334a6a2f3fcc1d7ecd32ad",
+    "title": "1.12: Moves both KolmogorovSmirnov distribution sources (`KolmogorovSmirnovDist.c`, `KolmogorovSmirnovDist.h`) from `src/database/` to `src/web/api/queries/` and updates the include path in `src/web/api/queries/weights.c`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b0ea8c59373b91af3b6471d73a8dfb80",
+    "title": "1.13: Changes all 4 (`rrdhost_stream_parents_reset`, `rrdhost_stream_parents_update_from_destination`, `rrdhost_stream_parents_free`, `rrdhost_stream_parents_init`) function signatures in `src/streaming/stream-parents.h` from `RRDHOST *host` to `struct rrdhost *host`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ec824870f50adc3dd9f9ddcb5fa0115a",
+    "title": "1.14: Removes the `#include \"database/rrdhost-status.h\"` from `src/streaming/stream-parents.h`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a887211b98a57d33eb3497903f13e081",
+    "title": "1.15: Changes the `stream_sender_structures_init` function signature in `src/streaming/stream.h` from `RRDHOST *host` to `struct rrdhost *host`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ea5224da94a4259bab75b45cbfc073e1",
+    "title": "1.16: Registers all 10 newly created source files (rrd-algorithm.c, rrd-algorithm.h, rrdset-type.c, rrdset-type.h, rrdhost-labels.c, rrdhost-labels.h, rrdhost-slots.c, rrdhost-slots.h, rrdhost-collection.c, rrdhost-collection.h) in `CMakeLists.txt` and updates the KolmogorovSmirnov file paths",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "dfd0e4f7cfdeb32d769af8c2f623a7a8",
+    "title": "1.17: Removes the `inline` keyword from all 3 RRDSET obsolete flag helpers (`rrdset_is_obsolete___safe_from_collector_thread`, `rrdset_isnot_obsolete___safe_from_collector_thread`, `rrdset_update_heterogeneous_flag`) in `src/database/rrdset.c`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8d5af52dbf82ddad57a685806986673c",
+    "title": "1.18: Removes the duplicate `rrdset_set_update_every_s` declaration from `src/database/rrdset.h`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5c68c711aaa3ff75a7688e47201febb1",
+    "title": "1.19: Relocates all 4 primary RRDSET chart lookup APIs (`rrdset_find`, `rrdset_find_and_acquire`, `rrdset_find_bytype`, `rrdset_find_byname`) and their related localhost helper macros from `src/database/rrdset.h` into both index headers (`src/database/rrdset-index-id.h`, `src/database/rrdset-index-name.h`)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1f31247f3d670799305efe5fc2a25aee",
+    "title": "1.20: Removes the forward declaration of `store_metric_at_tier` from `src/database/rrddim-backfill.c`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6e069c6ab2cccfd18f50b12ac64b9612",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6ffd2918bf69f14edc7fb98fb1e2915",
+    "title": "3.1: Reformats the `rrdset_debug` macro in `src/database/rrdset.h` into a multi-line form",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "dc4bc811402f1ee87946b7f62bf4a439",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d658f1d9982284c84f2fb1aad87dd1d0",
+    "title": "4.1: Modifies test files (such as src/daemon/unit_test.c, src/database/engine/dbengine-unittest.c, src/collectors/cgroups.plugin/tests/test_doubles.c, or src/database/engine/dbengine-stresstest.c)",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "da18ca36a118f90e329c3ffba5af5462",
+    "title": "4.2: Alters the logic inside moved functions (such as adding, removing, or reordering conditionals in `reload_host_labels`, `rrdhost_finalize_collection`, `rrddim_store_metric`, or `align_entries_to_pagesize`) beyond what is required for the type rename",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

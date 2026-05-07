@@ -1,0 +1,25 @@
+[metadata]
+author_name = "ScaleAI"
+author_email = "unknown"
+difficulty = "hard"
+category = "refactoring"
+tags = ["refactoring", "master-validator", "rubric-graded", "C++"]
+
+[verifier]
+timeout_sec = 7200
+
+[verifier.env]
+EVAL_API_KEY = "${OPENAI_API_KEY}"
+EVAL_BASE_URL = "${OPENAI_API_BASE}"
+EVAL_MODEL = "${EVAL_MODEL:-anthropic/claude-opus-4-5-20251101}"
+
+[agent]
+timeout_sec = 3600
+
+[environment]
+docker_image = "ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_MariaDB_server_69b7c2a04b6f8ff9ed98812d_1.0@sha256:5cffe9e1c3013073887b2badbe3e4e751306fcdeb2d18512608e8da5f6e42762"
+build_timeout_sec = 1800
+allow_internet = true
+cpus = 16
+memory_mb = 16384
+storage_mb = 20480

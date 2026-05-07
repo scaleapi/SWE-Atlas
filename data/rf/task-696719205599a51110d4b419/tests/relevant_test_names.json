@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/TestChunkerSmallChunkPassthrough"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/TestChunkerPreservesMetadata"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/TestChunkerEmptyData"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/TestChunkerLargeDataSplitsCorrectly"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/TestChunkerConstants"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/TestChunkerFunctionSignature"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/TestChunker"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/filesystem/TestSource_ChunksSendCompleteData"
+    }
+  ]
+}

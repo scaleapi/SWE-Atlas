@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "name": "test/contrib/gtp.uts"
+    },
+    {
+      "name": "test/contrib/gtp_v2.uts"
+    }
+  ]
+}

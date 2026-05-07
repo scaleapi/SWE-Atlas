@@ -1,0 +1,259 @@
+diff --git a/client/landing/stepper/declarative-flow/internals/components/checklist-card/index.tsx b/client/landing/stepper/declarative-flow/internals/components/checklist-card/index.tsx
+new file mode 100644
+index 00000000000..dfd6b7930e8
+--- /dev/null
++++ b/client/landing/stepper/declarative-flow/internals/components/checklist-card/index.tsx
+@@ -0,0 +1,34 @@
++import { Card, CardBody } from '@wordpress/components';
++import { Icon } from '@wordpress/icons';
++import { type TranslateResult } from 'i18n-calypso';
++import './style.scss';
++
++export interface ChecklistCardItem {
++	icon: React.ReactElement;
++	text: TranslateResult;
++}
++
++interface ChecklistCardProps {
++	title: TranslateResult;
++	items: ChecklistCardItem[];
++}
++
++export const ChecklistCard = ( { title, items }: ChecklistCardProps ) => {
++	return (
++		<Card className="checklist-card">
++			<CardBody>
++				<div className="checklist-card__title">{ title }</div>
++				<div className="checklist-card__items">
++					{ items.map( ( item, index ) => (
++						<div key={ index } className="checklist-card__item">
++							<div className="checklist-card__item-icon">
++								<Icon icon={ item.icon } size={ 20 } />
++							</div>
++							<div className="checklist-card__item-text">{ item.text }</div>
++						</div>
++					) ) }
++				</div>
++			</CardBody>
++		</Card>
++	);
++};
+diff --git a/client/landing/stepper/declarative-flow/internals/components/checklist-card/style.scss b/client/landing/stepper/declarative-flow/internals/components/checklist-card/style.scss
+new file mode 100644
+index 00000000000..c96d6015e96
+--- /dev/null
++++ b/client/landing/stepper/declarative-flow/internals/components/checklist-card/style.scss
+@@ -0,0 +1,36 @@
++@import "@wordpress/base-styles/breakpoints";
++
++.checklist-card {
++	max-width: 440px;
++}
++
++.checklist-card__title {
++	font-weight: 500;
++	margin: 0.5rem 0 1.5rem;
++	color: var(--studio-gray-100);
++}
++
++.checklist-card__items {
++	display: flex;
++	flex-direction: column;
++	gap: 0.75rem;
++	margin-bottom: 0.75rem;
++}
++
++.checklist-card__item-icon {
++	border: 1px solid var(--studio-gray-5);
++	border-radius: 4px;
++	padding: 0.75rem;
++	line-height: 0;
++	svg {
++		margin: 0;
++	}
++}
++
++.checklist-card__item {
++	display: flex;
++	align-items: center;
++	gap: 1rem;
++	font-size: 0.875rem;
++	color: var(--studio-gray-50);
++}
+diff --git a/client/landing/stepper/declarative-flow/internals/components/index.tsx b/client/landing/stepper/declarative-flow/internals/components/index.tsx
+index 017ac85bedf..8c5e3e22498 100644
+--- a/client/landing/stepper/declarative-flow/internals/components/index.tsx
++++ b/client/landing/stepper/declarative-flow/internals/components/index.tsx
+@@ -1,3 +1,4 @@
++export { ChecklistCard } from './checklist-card';
+ export { default as GoogleDomainsTransferInstructions } from './google-domains-transfer-instructions';
+ export { default as SitePreview } from './site-preview';
+ export { default as StepRoute } from './step-route';
+diff --git a/client/landing/stepper/declarative-flow/internals/steps-repository/site-migration-application-password-authorization/components/authorization.tsx b/client/landing/stepper/declarative-flow/internals/steps-repository/site-migration-application-password-authorization/components/authorization.tsx
+index bd071c81831..20623ee724f 100644
+--- a/client/landing/stepper/declarative-flow/internals/steps-repository/site-migration-application-password-authorization/components/authorization.tsx
++++ b/client/landing/stepper/declarative-flow/internals/steps-repository/site-migration-application-password-authorization/components/authorization.tsx
+@@ -1,34 +1,8 @@
+ import { formatNumber } from '@automattic/number-formatters';
+ import { NextButton } from '@automattic/onboarding';
+-import { Icon, loop, backup, shield } from '@wordpress/icons';
+-import { useTranslate, type TranslateResult } from 'i18n-calypso';
+-
+-interface AuthorizationBenefitsItem {
+-	icon: React.ReactElement;
+-	text: TranslateResult;
+-}
+-
+-interface AuthorizationBenefitsProps {
+-	benefits: AuthorizationBenefitsItem[];
+-}
+-
+-const AuthorizationBenefits = ( { benefits }: AuthorizationBenefitsProps ) => {
+-	return (
+-		<div className="site-migration-application-password-authorization__benefits">
+-			{ benefits.map( ( benefit, index ) => (
+-				<div
+-					className="site-migration-application-password-authorization__benefits-item"
+-					key={ index }
+-				>
+-					<div className="site-migration-application-password-authorization__benefits-item-icon">
+-						<Icon icon={ benefit.icon } size={ 20 } />
+-					</div>
+-					<span>{ benefit.text }</span>
+-				</div>
+-			) ) }
+-		</div>
+-	);
+-};
++import { loop, backup, shield } from '@wordpress/icons';
++import { useTranslate } from 'i18n-calypso';
++import { ChecklistCard } from 'calypso/landing/stepper/declarative-flow/internals/components/checklist-card';
+ 
+ interface AuthorizationProps {
+ 	onShareCredentialsClick: () => void;
+@@ -53,37 +27,33 @@ const Authorization = ( { onShareCredentialsClick, onAuthorizationClick }: Autho
+ 					{ translate( 'Share credentials instead' ) }
+ 				</button>
+ 			</div>
+-			<div className="site-migration-application-password-authorization__benefits-container">
+-				<h3>{ translate( "Here's what else you're getting" ) }</h3>
+-				<AuthorizationBenefits
+-					benefits={ [
+-						{
+-							icon: loop,
+-							text: translate(
+-								'Uninterrupted service throughout the entire migration experience.'
+-							),
+-						},
+-						{
+-							icon: backup,
+-							text: translate(
+-								'Unmatched reliability with %(uptimePercent)s uptime and unmetered traffic.',
+-								{
+-									args: {
+-										uptimePercent: formatNumber( 0.99999, {
+-											numberFormatOptions: { style: 'percent', maximumFractionDigits: 3 },
+-										} ),
+-									},
+-									comment: '99.999% uptime',
+-								}
+-							),
+-						},
+-						{
+-							icon: shield,
+-							text: translate( 'Round-the-clock security monitoring and DDoS protection.' ),
+-						},
+-					] }
+-				/>
+-			</div>
++			<ChecklistCard
++				title={ translate( "Here's what else you're getting" ) }
++				items={ [
++					{
++						icon: loop,
++						text: translate( 'Uninterrupted service throughout the entire migration experience.' ),
++					},
++					{
++						icon: backup,
++						text: translate(
++							'Unmatched reliability with %(uptimePercent)s uptime and unmetered traffic.',
++							{
++								args: {
++									uptimePercent: formatNumber( 0.99999, {
++										numberFormatOptions: { style: 'percent', maximumFractionDigits: 3 },
++									} ),
++								},
++								comment: '99.999% uptime',
++							}
++						),
++					},
++					{
++						icon: shield,
++						text: translate( 'Round-the-clock security monitoring and DDoS protection.' ),
++					},
++				] }
++			/>
+ 		</div>
+ 	);
+ };
+diff --git a/client/landing/stepper/declarative-flow/internals/steps-repository/site-migration-application-password-authorization/style.scss b/client/landing/stepper/declarative-flow/internals/steps-repository/site-migration-application-password-authorization/style.scss
+index f7ff5add310..ef3f5c19f58 100644
+--- a/client/landing/stepper/declarative-flow/internals/steps-repository/site-migration-application-password-authorization/style.scss
++++ b/client/landing/stepper/declarative-flow/internals/steps-repository/site-migration-application-password-authorization/style.scss
+@@ -40,47 +40,18 @@
+ 	.site-migration-application-password-authorization__authorization {
+ 		display: flex;
+ 		flex-direction: column;
+-		gap: 1em;
++		gap: 0.5rem;
+ 		align-items: center;
+-	}
+-	.site-migration-application-password-authorization__benefits-container {
+-		display: flex;
+-		flex-direction: column;
+-		align-items: center;
+-		margin-top: 1em;
+-		h3 {
+-			font-size: $font-title-small;
+-			margin-bottom: 0.75em;
++		.action_buttons__button {
++			width: 300px;
+ 		}
+-	}
+-	.site-migration-application-password-authorization__benefits {
+-		padding: 2em;
+-		background-color: var(--color-border-shadow);
+-		border-radius: 4px;
+-		@include break-small {
+-			width: 350px;
++		.checklist-card {
++			margin-top: 1rem;
+ 		}
+-		display: flex;
+-		flex-direction: column;
+-		gap: 1em;
+-	}
+-	.site-migration-application-password-authorization__benefits-item {
+-		display: flex;
+-		flex-direction: row;
+-		gap: 0.5em;
+-		font-size: $font-body-small;
+-		.site-migration-application-password-authorization__benefits-item-icon {
+-			width: 42px;
+-			height: 42px;
+-			background-color: var(--studio-gray-5);
+-			border-radius: 4px;
+-			display: flex;
+-			align-items: center;
+-			justify-content: center;
+-			flex-shrink: 0;
+-			svg {
+-				fill: var(--studio-gray-70);
+-			}
++		.navigation-link {
++			color: var(--color-neutral-70, #1d2327);
++			font-weight: 500;
++			text-decoration: underline;
+ 		}
+ 	}
+ 	.site-migration-application-password-authorization__contact-me-button {

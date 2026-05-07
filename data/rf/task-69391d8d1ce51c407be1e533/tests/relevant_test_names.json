@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "test_delete_custom_domain_already_pending"
+    },
+    {
+      "name": "test_delete_custom_domain_creates_job"
+    },
+    {
+      "name": "test_delete_custom_domain_returns_none"
+    },
+    {
+      "name": "test_delete_custom_domain_sets_pending_deletion"
+    }
+  ]
+}

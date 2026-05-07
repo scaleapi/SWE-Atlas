@@ -1,0 +1,13 @@
+{
+  "files": [
+    {
+      "name": "js/compiler/compiler_test.go"
+    },
+    {
+      "name": "js/compiler/enhanced_test.go"
+    },
+    {
+      "name": "js/compiler/sourcemap_wrap_test.go"
+    }
+  ]
+}

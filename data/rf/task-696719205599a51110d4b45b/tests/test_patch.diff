@@ -1,0 +1,725 @@
+diff --git a/pkg/tsdb/elasticsearch/client/aggregation_builder_test.go b/pkg/tsdb/elasticsearch/client/aggregation_builder_test.go
+new file mode 100644
+index 00000000000..eb2c0a52654
+--- /dev/null
++++ b/pkg/tsdb/elasticsearch/client/aggregation_builder_test.go
+@@ -0,0 +1,136 @@
++package es
++
++import (
++	"encoding/json"
++	"testing"
++	"time"
++
++	"github.com/grafana/grafana-plugin-sdk-go/backend"
++	"github.com/grafana/grafana/pkg/components/simplejson"
++	"github.com/stretchr/testify/require"
++)
++
++func newTestSearchRequestBuilder() *SearchRequestBuilder {
++	from := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
++	to := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
++	timeRange := backend.TimeRange{From: from, To: to}
++	return NewSearchRequestBuilder(10*time.Second, timeRange)
++}
++
++func TestAggBuilder_GeoHashGrid(t *testing.T) {
++	b := newTestSearchRequestBuilder()
++	b.Agg().GeoHashGrid("1", "location", nil)
++
++	sr, err := b.Build()
++	require.NoError(t, err)
++	require.Len(t, sr.Aggs, 1)
++	require.Equal(t, "1", sr.Aggs[0].Key)
++	require.Equal(t, "geohash_grid", sr.Aggs[0].Aggregation.Type)
++
++	body, err := json.Marshal(sr)
++	require.NoError(t, err)
++	j, err := simplejson.NewJson(body)
++	require.NoError(t, err)
++	require.Equal(t, "location", j.GetPath("aggs", "1", "geohash_grid", "field").MustString())
++	require.Equal(t, DefaultGeoHashPrecision, j.GetPath("aggs", "1", "geohash_grid", "precision").MustInt())
++}
++
++func TestAggBuilder_Nested(t *testing.T) {
++	b := newTestSearchRequestBuilder()
++	b.Agg().Nested("1", "comments", func(a *NestedAggregation, ib AggBuilder) {
++		ib.Metric("2", "avg", "comments.rating", nil)
++	})
++
++	sr, err := b.Build()
++	require.NoError(t, err)
++	require.Len(t, sr.Aggs, 1)
++	require.Equal(t, "1", sr.Aggs[0].Key)
++	require.Equal(t, "nested", sr.Aggs[0].Aggregation.Type)
++	require.Len(t, sr.Aggs[0].Aggregation.Aggs, 1)
++	require.Equal(t, "2", sr.Aggs[0].Aggregation.Aggs[0].Key)
++	require.Equal(t, "avg", sr.Aggs[0].Aggregation.Aggs[0].Aggregation.Type)
++}
++
++func TestAggBuilder_Pipeline(t *testing.T) {
++	b := newTestSearchRequestBuilder()
++	b.Agg().Pipeline("1", "derivative", "the_sum", func(a *PipelineAggregation) {
++		a.Settings["unit"] = "day"
++	})
++
++	sr, err := b.Build()
++	require.NoError(t, err)
++	require.Len(t, sr.Aggs, 1)
++	require.Equal(t, "1", sr.Aggs[0].Key)
++	require.Equal(t, "derivative", sr.Aggs[0].Aggregation.Type)
++
++	body, err := json.Marshal(sr)
++	require.NoError(t, err)
++	j, err := simplejson.NewJson(body)
++	require.NoError(t, err)
++	require.Equal(t, "the_sum", j.GetPath("aggs", "1", "derivative", "buckets_path").MustString())
++	require.Equal(t, "day", j.GetPath("aggs", "1", "derivative", "unit").MustString())
++}
++
++func TestAggBuilder_Metric_WithSettings(t *testing.T) {
++	b := newTestSearchRequestBuilder()
++	b.Agg().Metric("1", "percentiles", "response_time", func(a *MetricAggregation) {
++		a.Settings["percents"] = []float64{25, 50, 75, 95, 99}
++	})
++
++	sr, err := b.Build()
++	require.NoError(t, err)
++	require.Len(t, sr.Aggs, 1)
++	require.Equal(t, "1", sr.Aggs[0].Key)
++	require.Equal(t, "percentiles", sr.Aggs[0].Aggregation.Type)
++
++	body, err := json.Marshal(sr)
++	require.NoError(t, err)
++	j, err := simplejson.NewJson(body)
++	require.NoError(t, err)
++	require.Equal(t, "response_time", j.GetPath("aggs", "1", "percentiles", "field").MustString())
++	percents := j.GetPath("aggs", "1", "percentiles", "percents").MustArray()
++	require.Len(t, percents, 5)
++}
++
++func TestAggBuilder_EmptyBuild(t *testing.T) {
++	b := newTestSearchRequestBuilder()
++	sr, err := b.Build()
++	require.NoError(t, err)
++	require.Nil(t, sr.Aggs)
++}
++
++func TestAggBuilder_TermsOrderReplacement(t *testing.T) {
++	b := newTestSearchRequestBuilder()
++	b.Agg().Terms("1", "status", func(a *TermsAggregation, ib AggBuilder) {
++		a.Order["_term"] = "asc"
++	})
++
++	sr, err := b.Build()
++	require.NoError(t, err)
++	require.Len(t, sr.Aggs, 1)
++
++	body, err := json.Marshal(sr)
++	require.NoError(t, err)
++	j, err := simplejson.NewJson(body)
++	require.NoError(t, err)
++	require.Equal(t, "asc", j.GetPath("aggs", "1", "terms", "order", "_key").MustString())
++
++	orderMap := j.GetPath("aggs", "1", "terms", "order").MustMap()
++	_, hasTermKey := orderMap["_term"]
++	require.False(t, hasTermKey)
++}
++
++func TestAggBuilder_NilCallback(t *testing.T) {
++	b := newTestSearchRequestBuilder()
++	aggBuilder := b.Agg()
++	aggBuilder.Terms("1", "status", nil)
++	aggBuilder.Histogram("2", "price", nil)
++	aggBuilder.DateHistogram("3", "@timestamp", nil)
++	aggBuilder.Filters("4", nil)
++	aggBuilder.GeoHashGrid("5", "location", nil)
++	aggBuilder.Nested("6", "comments", nil)
++
++	sr, err := b.Build()
++	require.NoError(t, err)
++	require.Len(t, sr.Aggs, 6)
++}
+diff --git a/pkg/tsdb/elasticsearch/client/http_transport_test.go b/pkg/tsdb/elasticsearch/client/http_transport_test.go
+new file mode 100644
+index 00000000000..51ffd1387f3
+--- /dev/null
++++ b/pkg/tsdb/elasticsearch/client/http_transport_test.go
+@@ -0,0 +1,171 @@
++package es
++
++import (
++	"context"
++	"io"
++	"net/http"
++	"net/http/httptest"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++
++	"github.com/grafana/grafana-plugin-sdk-go/backend"
++	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
++)
++
++func TestClient_PostMethod(t *testing.T) {
++	var receivedMethod string
++
++	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
++		receivedMethod = r.Method
++
++		rw.Header().Set("Content-Type", "application/x-ndjson")
++		_, err := rw.Write([]byte(`{
++			"responses": [
++				{ "hits": { "hits": [], "total": { "value": 0, "relation": "eq" } }, "status": 200 }
++			]
++		}`))
++		require.NoError(t, err)
++	}))
++	defer ts.Close()
++
++	ds := DatasourceInfo{
++		URL:        ts.URL,
++		HTTPClient: ts.Client(),
++		Database:   "test-*",
++	}
++
++	c, err := NewClient(context.Background(), &ds, log.New())
++	require.NoError(t, err)
++
++	from := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
++	to := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
++	timeRange := backend.TimeRange{From: from, To: to}
++
++	msb := c.MultiSearch()
++	msb.Search(10*time.Second, timeRange)
++
++	ms, err := msb.Build()
++	require.NoError(t, err)
++
++	_, err = c.ExecuteMultisearch(ms)
++	require.NoError(t, err)
++
++	assert.Equal(t, http.MethodPost, receivedMethod)
++}
++
++func TestClient_URLPathConstruction(t *testing.T) {
++	var receivedPath string
++	var receivedQuery string
++
++	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
++		receivedPath = r.URL.Path
++		receivedQuery = r.URL.RawQuery
++
++		rw.Header().Set("Content-Type", "application/x-ndjson")
++		_, err := rw.Write([]byte(`{
++			"responses": [
++				{ "hits": { "hits": [], "total": { "value": 0, "relation": "eq" } }, "status": 200 }
++			]
++		}`))
++		require.NoError(t, err)
++	}))
++	defer ts.Close()
++
++	ds := DatasourceInfo{
++		URL:                        ts.URL,
++		HTTPClient:                 ts.Client(),
++		Database:                   "test-*",
++		MaxConcurrentShardRequests: 5,
++		IncludeFrozen:              true,
++	}
++
++	c, err := NewClient(context.Background(), &ds, log.New())
++	require.NoError(t, err)
++
++	from := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
++	to := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
++	timeRange := backend.TimeRange{From: from, To: to}
++
++	msb := c.MultiSearch()
++	msb.Search(10*time.Second, timeRange)
++
++	ms, err := msb.Build()
++	require.NoError(t, err)
++
++	_, err = c.ExecuteMultisearch(ms)
++	require.NoError(t, err)
++
++	assert.Equal(t, "/_msearch", receivedPath)
++	assert.Contains(t, receivedQuery, "max_concurrent_shard_requests=5")
++	assert.Contains(t, receivedQuery, "ignore_throttled=false")
++}
++
++func TestClient_RequestBodyReceived(t *testing.T) {
++	var receivedBody []byte
++
++	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
++		var err error
++		receivedBody, err = io.ReadAll(r.Body)
++		require.NoError(t, err)
++
++		rw.Header().Set("Content-Type", "application/x-ndjson")
++		_, err = rw.Write([]byte(`{
++			"responses": [
++				{ "hits": { "hits": [], "total": { "value": 0, "relation": "eq" } }, "status": 200 }
++			]
++		}`))
++		require.NoError(t, err)
++	}))
++	defer ts.Close()
++
++	ds := DatasourceInfo{
++		URL:        ts.URL,
++		HTTPClient: ts.Client(),
++		Database:   "test-*",
++	}
++
++	c, err := NewClient(context.Background(), &ds, log.New())
++	require.NoError(t, err)
++
++	from := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
++	to := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
++	timeRange := backend.TimeRange{From: from, To: to}
++
++	msb := c.MultiSearch()
++	msb.Search(10*time.Second, timeRange)
++
++	ms, err := msb.Build()
++	require.NoError(t, err)
++
++	_, err = c.ExecuteMultisearch(ms)
++	require.NoError(t, err)
++
++	require.NotEmpty(t, receivedBody, "Server should receive a non-empty request body")
++}
++
++func TestClient_InvalidURL(t *testing.T) {
++	ds := &DatasourceInfo{
++		URL:        "://invalid-url",
++		HTTPClient: http.DefaultClient,
++		Database:   "test-*",
++	}
++
++	c, err := NewClient(context.Background(), ds, log.NewNullLogger())
++	require.NoError(t, err)
++
++	from := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
++	to := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
++	timeRange := backend.TimeRange{From: from, To: to}
++
++	msb := c.MultiSearch()
++	msb.Search(10*time.Second, timeRange)
++	ms, err := msb.Build()
++	require.NoError(t, err)
++
++	_, err = c.ExecuteMultisearch(ms)
++	require.Error(t, err)
++	require.True(t, backend.IsDownstreamError(err))
++}
+diff --git a/pkg/tsdb/elasticsearch/client/query_builder_test.go b/pkg/tsdb/elasticsearch/client/query_builder_test.go
+new file mode 100644
+index 00000000000..8c20960bb2c
+--- /dev/null
++++ b/pkg/tsdb/elasticsearch/client/query_builder_test.go
+@@ -0,0 +1,97 @@
++package es
++
++import (
++	"encoding/json"
++	"testing"
++
++	"github.com/grafana/grafana/pkg/components/simplejson"
++	"github.com/stretchr/testify/require"
++)
++
++func TestQueryBuilder_EmptyBuild(t *testing.T) {
++	qb := NewQueryBuilder()
++	q, err := qb.Build()
++	require.NoError(t, err)
++	require.NotNil(t, q)
++	require.Nil(t, q.Bool)
++}
++
++func TestQueryBuilder_BoolWithFilters(t *testing.T) {
++	qb := NewQueryBuilder()
++	qb.Bool().Filter().AddDateRangeFilter("@timestamp", 100, 50, DateFormatEpochMS)
++	qb.Bool().Filter().AddQueryStringFilter("error AND critical", true)
++
++	q, err := qb.Build()
++	require.NoError(t, err)
++	require.NotNil(t, q.Bool)
++	require.Len(t, q.Bool.Filters, 2)
++
++	rangeFilter, ok := q.Bool.Filters[0].(*RangeFilter)
++	require.True(t, ok)
++	require.Equal(t, "@timestamp", rangeFilter.Key)
++	require.Equal(t, int64(100), rangeFilter.Lte)
++	require.Equal(t, int64(50), rangeFilter.Gte)
++
++	qsFilter, ok := q.Bool.Filters[1].(*QueryStringFilter)
++	require.True(t, ok)
++	require.Equal(t, "error AND critical", qsFilter.Query)
++	require.True(t, qsFilter.AnalyzeWildcard)
++}
++
++func TestQueryBuilder_BoolReturnsExistingBuilder(t *testing.T) {
++	qb := NewQueryBuilder()
++	b1 := qb.Bool()
++	b2 := qb.Bool()
++	require.Same(t, b1, b2)
++}
++
++func TestFilterQueryBuilder_EmptyQueryStringIgnored(t *testing.T) {
++	fb := NewFilterQueryBuilder()
++	fb.AddQueryStringFilter("   ", false)
++	fb.AddQueryStringFilter("", false)
++
++	filters, err := fb.Build()
++	require.NoError(t, err)
++	require.Len(t, filters, 0)
++}
++
++func TestFilterQueryBuilder_EmptyBuild(t *testing.T) {
++	fb := NewFilterQueryBuilder()
++	filters, err := fb.Build()
++	require.NoError(t, err)
++	require.Len(t, filters, 0)
++}
++
++func TestBoolQueryBuilder_FilterReturnsExistingBuilder(t *testing.T) {
++	bqb := NewBoolQueryBuilder()
++	f1 := bqb.Filter()
++	f2 := bqb.Filter()
++	require.Same(t, f1, f2)
++}
++
++func TestBoolQueryBuilder_EmptyBuild(t *testing.T) {
++	bqb := NewBoolQueryBuilder()
++	bq, err := bqb.Build()
++	require.NoError(t, err)
++	require.NotNil(t, bq)
++	require.Nil(t, bq.Filters)
++}
++
++func TestQueryBuilder_MarshalJSON(t *testing.T) {
++	qb := NewQueryBuilder()
++	qb.Bool().Filter().AddDateRangeFilter("@timestamp", 200, 100, DateFormatEpochMS)
++
++	q, err := qb.Build()
++	require.NoError(t, err)
++
++	body, err := json.Marshal(q)
++	require.NoError(t, err)
++
++	j, err := simplejson.NewJson(body)
++	require.NoError(t, err)
++
++	rangeFilter := j.GetPath("bool", "filter", "range", "@timestamp")
++	require.Equal(t, int64(100), rangeFilter.Get("gte").MustInt64())
++	require.Equal(t, int64(200), rangeFilter.Get("lte").MustInt64())
++	require.Equal(t, DateFormatEpochMS, rangeFilter.Get("format").MustString())
++}
+diff --git a/pkg/tsdb/elasticsearch/client/request_encoder_test.go b/pkg/tsdb/elasticsearch/client/request_encoder_test.go
+new file mode 100644
+index 00000000000..494078e4ab2
+--- /dev/null
++++ b/pkg/tsdb/elasticsearch/client/request_encoder_test.go
+@@ -0,0 +1,168 @@
++package es
++
++import (
++	"context"
++	"io"
++	"net/http"
++	"net/http/httptest"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/require"
++
++	"github.com/grafana/grafana-plugin-sdk-go/backend"
++	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
++)
++
++func TestClient_IntervalSubstitution(t *testing.T) {
++	var requestBody string
++
++	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
++		buf, err := io.ReadAll(r.Body)
++		require.NoError(t, err)
++		requestBody = string(buf)
++
++		rw.Header().Set("Content-Type", "application/x-ndjson")
++		_, err = rw.Write([]byte(`{
++			"responses": [
++				{
++					"hits": { "hits": [], "total": { "value": 0, "relation": "eq" } },
++					"status": 200
++				}
++			]
++		}`))
++		require.NoError(t, err)
++	}))
++	defer ts.Close()
++
++	ds := DatasourceInfo{
++		URL:        ts.URL,
++		HTTPClient: ts.Client(),
++		Database:   "test-*",
++	}
++
++	c, err := NewClient(context.Background(), &ds, log.New())
++	require.NoError(t, err)
++
++	interval := 15 * time.Second
++	from := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
++	to := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
++	timeRange := backend.TimeRange{From: from, To: to}
++
++	msb := c.MultiSearch()
++	s := msb.Search(interval, timeRange)
++	s.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
++		a.FixedInterval = "$__interval"
++		ab.Metric("1", "avg", "@hostname", func(a *MetricAggregation) {
++			a.Settings["script"] = "$__interval_ms*@hostname"
++		})
++	})
++
++	ms, err := msb.Build()
++	require.NoError(t, err)
++
++	_, err = c.ExecuteMultisearch(ms)
++	require.NoError(t, err)
++
++	require.Contains(t, requestBody, "15s")
++	require.Contains(t, requestBody, "15000")
++	require.NotContains(t, requestBody, "$__interval_ms")
++	require.NotContains(t, requestBody, "$__interval\"")
++}
++
++func TestClient_NDJSONFormat(t *testing.T) {
++	var requestBody string
++
++	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
++		buf, err := io.ReadAll(r.Body)
++		require.NoError(t, err)
++		requestBody = string(buf)
++
++		rw.Header().Set("Content-Type", "application/x-ndjson")
++		_, err = rw.Write([]byte(`{
++			"responses": [
++				{
++					"hits": { "hits": [], "total": { "value": 0, "relation": "eq" } },
++					"status": 200
++				}
++			]
++		}`))
++		require.NoError(t, err)
++	}))
++	defer ts.Close()
++
++	ds := DatasourceInfo{
++		URL:        ts.URL,
++		HTTPClient: ts.Client(),
++		Database:   "logs-*",
++	}
++
++	c, err := NewClient(context.Background(), &ds, log.New())
++	require.NoError(t, err)
++
++	from := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
++	to := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
++	timeRange := backend.TimeRange{From: from, To: to}
++
++	msb := c.MultiSearch()
++	msb.Search(10*time.Second, timeRange)
++
++	ms, err := msb.Build()
++	require.NoError(t, err)
++
++	_, err = c.ExecuteMultisearch(ms)
++	require.NoError(t, err)
++
++	lines := strings.Split(strings.TrimRight(requestBody, "\n"), "\n")
++	require.Equal(t, 2, len(lines), "NDJSON should have header and body lines")
++
++	for _, line := range lines {
++		require.NotEmpty(t, line, "NDJSON lines should not be empty")
++		require.True(t, strings.HasPrefix(strings.TrimSpace(line), "{"), "Each line should be valid JSON")
++	}
++}
++
++func TestClient_ContentTypeHeader(t *testing.T) {
++	var receivedContentType string
++
++	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
++		receivedContentType = r.Header.Get("Content-Type")
++
++		rw.Header().Set("Content-Type", "application/x-ndjson")
++		_, err := rw.Write([]byte(`{
++			"responses": [
++				{
++					"hits": { "hits": [], "total": { "value": 0, "relation": "eq" } },
++					"status": 200
++				}
++			]
++		}`))
++		require.NoError(t, err)
++	}))
++	defer ts.Close()
++
++	ds := DatasourceInfo{
++		URL:        ts.URL,
++		HTTPClient: ts.Client(),
++		Database:   "test-*",
++	}
++
++	c, err := NewClient(context.Background(), &ds, log.New())
++	require.NoError(t, err)
++
++	from := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
++	to := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
++	timeRange := backend.TimeRange{From: from, To: to}
++
++	msb := c.MultiSearch()
++	msb.Search(10*time.Second, timeRange)
++
++	ms, err := msb.Build()
++	require.NoError(t, err)
++
++	_, err = c.ExecuteMultisearch(ms)
++	require.NoError(t, err)
++
++	require.Equal(t, "application/x-ndjson", receivedContentType)
++}
+diff --git a/pkg/tsdb/elasticsearch/client/response_parser_test.go b/pkg/tsdb/elasticsearch/client/response_parser_test.go
+new file mode 100644
+index 00000000000..c9f86ea1828
+--- /dev/null
++++ b/pkg/tsdb/elasticsearch/client/response_parser_test.go
+@@ -0,0 +1,123 @@
++package es
++
++import (
++	"strings"
++	"testing"
++
++	"github.com/stretchr/testify/require"
++)
++
++func TestStreamMultiSearchResponse_WithAggregations(t *testing.T) {
++	jsonBody := `{
++		"responses": [
++			{
++				"hits": { "hits": [], "total": { "value": 10, "relation": "eq" } },
++				"aggregations": { "2": { "buckets": [{ "key": 1000, "doc_count": 5 }] } }
++			}
++		]
++	}`
++
++	msr := &MultiSearchResponse{}
++	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
++	require.NoError(t, err)
++	require.Len(t, msr.Responses, 1)
++	require.NotNil(t, msr.Responses[0].Aggregations)
++	require.Contains(t, msr.Responses[0].Aggregations, "2")
++	require.NotNil(t, msr.Responses[0].Hits)
++	require.NotNil(t, msr.Responses[0].Hits.Total)
++	require.Equal(t, 10, msr.Responses[0].Hits.Total.Value)
++}
++
++func TestStreamMultiSearchResponse_WithErrorField(t *testing.T) {
++	jsonBody := `{
++		"responses": [
++			{
++				"error": { "type": "index_not_found_exception", "reason": "no such index" }
++			}
++		]
++	}`
++
++	msr := &MultiSearchResponse{}
++	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
++	require.NoError(t, err)
++	require.Len(t, msr.Responses, 1)
++	require.NotNil(t, msr.Responses[0].Error)
++	require.Equal(t, "index_not_found_exception", msr.Responses[0].Error["type"])
++}
++
++func TestStreamMultiSearchResponse_WithHitsData(t *testing.T) {
++	jsonBody := `{
++		"responses": [
++			{
++				"hits": {
++					"total": { "value": 2, "relation": "eq" },
++					"hits": [
++						{ "_id": "1", "_source": { "message": "hello" } },
++						{ "_id": "2", "_source": { "message": "world" } }
++					]
++				}
++			}
++		]
++	}`
++
++	msr := &MultiSearchResponse{}
++	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
++	require.NoError(t, err)
++	require.Len(t, msr.Responses, 1)
++	require.NotNil(t, msr.Responses[0].Hits)
++	require.Len(t, msr.Responses[0].Hits.Hits, 2)
++	require.Equal(t, "1", msr.Responses[0].Hits.Hits[0]["_id"])
++	require.Equal(t, "2", msr.Responses[0].Hits.Hits[1]["_id"])
++}
++
++func TestStreamMultiSearchResponse_MultipleResponses(t *testing.T) {
++	jsonBody := `{
++		"responses": [
++			{ "hits": { "hits": [], "total": { "value": 5, "relation": "eq" } } },
++			{ "hits": { "hits": [], "total": { "value": 10, "relation": "eq" } } },
++			{ "hits": { "hits": [], "total": { "value": 15, "relation": "eq" } } }
++		]
++	}`
++
++	msr := &MultiSearchResponse{}
++	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
++	require.NoError(t, err)
++	require.Len(t, msr.Responses, 3)
++	require.Equal(t, 5, msr.Responses[0].Hits.Total.Value)
++	require.Equal(t, 10, msr.Responses[1].Hits.Total.Value)
++	require.Equal(t, 15, msr.Responses[2].Hits.Total.Value)
++}
++
++func TestStreamMultiSearchResponse_UnknownFieldsSkipped(t *testing.T) {
++	jsonBody := `{
++		"took": 5,
++		"responses": [
++			{
++				"took": 2,
++				"timed_out": false,
++				"hits": { "hits": [] }
++			}
++		]
++	}`
++
++	msr := &MultiSearchResponse{}
++	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
++	require.NoError(t, err)
++	require.Len(t, msr.Responses, 1)
++}
++
++func TestStreamMultiSearchResponse_NestedUnknownObject(t *testing.T) {
++	jsonBody := `{
++		"responses": [
++			{
++				"hits": { "hits": [] },
++				"_shards": { "total": 5, "successful": 5, "skipped": 0, "failed": 0 }
++			}
++		]
++	}`
++
++	msr := &MultiSearchResponse{}
++	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
++	require.NoError(t, err)
++	require.Len(t, msr.Responses, 1)
++}

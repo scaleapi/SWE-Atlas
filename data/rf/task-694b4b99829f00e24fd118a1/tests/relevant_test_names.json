@@ -1,0 +1,118 @@
+{
+  "tests": [
+    {
+      "name": "TestDumpMethodSharedBase::test_packet_has_psdump"
+    },
+    {
+      "name": "TestDumpMethodSharedBase::test_packet_has_pdfdump"
+    },
+    {
+      "name": "TestDumpMethodSharedBase::test_packet_has_svgdump"
+    },
+    {
+      "name": "TestDumpMethodSharedBase::test_packetlist_has_psdump"
+    },
+    {
+      "name": "TestDumpMethodSharedBase::test_packetlist_has_pdfdump"
+    },
+    {
+      "name": "TestDumpMethodSharedBase::test_packetlist_has_svgdump"
+    },
+    {
+      "name": "TestDumpMethodSharedBase::test_psdump_comes_from_shared_base"
+    },
+    {
+      "name": "TestDumpMethodSharedBase::test_pdfdump_comes_from_shared_base"
+    },
+    {
+      "name": "TestDumpMethodSharedBase::test_svgdump_comes_from_shared_base"
+    },
+    {
+      "name": "TestDumpMethodSharedBase::test_psdump_not_defined_directly_on_packet"
+    },
+    {
+      "name": "TestDumpMethodSharedBase::test_pdfdump_not_defined_directly_on_packet"
+    },
+    {
+      "name": "TestDumpMethodSharedBase::test_svgdump_not_defined_directly_on_packet"
+    },
+    {
+      "name": "TestDumpMethodSharedBase::test_psdump_not_defined_directly_on_packetlist"
+    },
+    {
+      "name": "TestDumpMethodSharedBase::test_pdfdump_not_defined_directly_on_packetlist"
+    },
+    {
+      "name": "TestDumpMethodBehavior::test_packet_psdump_writes_eps_to_given_filename"
+    },
+    {
+      "name": "TestDumpMethodBehavior::test_packet_pdfdump_writes_pdf_to_given_filename"
+    },
+    {
+      "name": "TestDumpMethodBehavior::test_packet_svgdump_writes_svg_to_given_filename"
+    },
+    {
+      "name": "TestDumpMethodBehavior::test_packet_and_packetlist_share_psdump"
+    },
+    {
+      "name": "TestDumpMethodBehavior::test_packet_and_packetlist_share_pdfdump"
+    },
+    {
+      "name": "TestDumpMethodBehavior::test_packet_and_packetlist_share_svgdump"
+    },
+    {
+      "name": "TestDumpMethodBehavior::test_psdump_delegates_to_canvas_generation"
+    },
+    {
+      "name": "TestDumpMethodBehavior::test_pdfdump_delegates_to_canvas_generation"
+    },
+    {
+      "name": "TestDumpMethodBehavior::test_svgdump_delegates_to_canvas_generation"
+    },
+    {
+      "name": "TestDumpMethodTempFileBranch::test_psdump_no_filename_writes_to_temp"
+    },
+    {
+      "name": "TestDumpMethodTempFileBranch::test_pdfdump_no_filename_writes_to_temp"
+    },
+    {
+      "name": "TestDumpMethodTempFileBranch::test_svgdump_no_filename_writes_to_temp"
+    },
+    {
+      "name": "TestDumpMethodTempFileBranch::test_psdump_no_filename_launches_viewer"
+    },
+    {
+      "name": "TestDumpMethodTempFileBranch::test_pdfdump_no_filename_launches_viewer"
+    },
+    {
+      "name": "TestDumpMethodTempFileBranch::test_svgdump_no_filename_launches_viewer"
+    },
+    {
+      "name": "TestDumpMethodTempFileBranch::test_psdump_no_filename_windows_startfile"
+    },
+    {
+      "name": "TestDumpMethodTempFileBranch::test_pdfdump_no_filename_windows_startfile"
+    },
+    {
+      "name": "TestDumpMethodTempFileBranch::test_svgdump_no_filename_windows_startfile"
+    },
+    {
+      "name": "TestRandStringCompat::test_randstring_produces_bytes"
+    },
+    {
+      "name": "TestRandStringCompat::test_randstring_respects_charset"
+    },
+    {
+      "name": "TestRandStringCompat::test_randstring_consistent_length"
+    },
+    {
+      "name": "TestSuperSocketClose::test_close_on_windows_with_invalid_fd"
+    },
+    {
+      "name": "TestSuperSocketClose::test_close_skips_invalid_fd_on_non_windows"
+    },
+    {
+      "name": "TestSuperSocketClose::test_close_works_with_valid_fd_on_non_windows"
+    }
+  ]
+}

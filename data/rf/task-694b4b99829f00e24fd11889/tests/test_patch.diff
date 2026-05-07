@@ -1,0 +1,416 @@
+diff --git a/pkg/handlers/handlers_error_handling_test.go b/pkg/handlers/handlers_error_handling_test.go
+new file mode 100644
+index 000000000..8f7da7498
+--- /dev/null
++++ b/pkg/handlers/handlers_error_handling_test.go
+@@ -0,0 +1,410 @@
++package handlers
++
++import (
++	"errors"
++	"os"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/gabriel-vasile/mimetype"
++	"github.com/prometheus/client_golang/prometheus"
++	dto "github.com/prometheus/client_model/go"
++	"github.com/stretchr/testify/assert"
++
++	logContext "github.com/trufflesecurity/trufflehog/v3/pkg/context"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/iobuf"
++)
++
++type errorPanicReader struct{}
++
++func (r errorPanicReader) Read(p []byte) (int, error) {
++	panic(errors.New("induced error panic"))
++}
++
++type stringPanicReader struct{}
++
++func (r stringPanicReader) Read(p []byte) (int, error) {
++	panic("induced string panic")
++}
++
++func counterValue(cv *prometheus.CounterVec, label string) float64 {
++	c, err := cv.GetMetricWithLabelValues(label)
++	if err != nil {
++		return 0
++	}
++	var m dto.Metric
++	c.Write(&m)
++	return m.GetCounter().GetValue()
++}
++
++// TestARHandlerFilesProcessedOnlyOnSuccess verifies that the AR handler
++// does not count files as processed when they fail to load.
++func TestARHandlerFilesProcessedOnlyOnSuccess(t *testing.T) {
++	handler := newARHandler()
++	label := string(arHandlerType)
++
++	rdr, err := newFileReader(strings.NewReader("not a valid AR archive"))
++	assert.NoError(t, err)
++	defer rdr.Close()
++
++	before := counterValue(handler.metrics.filesProcessed, label)
++
++	ctx := logContext.AddLogger(logContext.Background())
++	archiveChan, err := handler.HandleFile(ctx, rdr)
++	assert.NoError(t, err)
++
++	for range archiveChan {
++	}
++
++	after := counterValue(handler.metrics.filesProcessed, label)
++	assert.Equal(t, before, after, "filesProcessed must not increment when AR loading fails")
++}
++
++// TestRPMHandlerFilesProcessedOnlyOnSuccess verifies that the RPM handler
++// does not count files as processed when they fail to load.
++func TestRPMHandlerFilesProcessedOnlyOnSuccess(t *testing.T) {
++	handler := newRPMHandler()
++	label := string(rpmHandlerType)
++
++	rdr, err := newFileReader(strings.NewReader("not a valid RPM file"))
++	assert.NoError(t, err)
++	defer rdr.Close()
++
++	before := counterValue(handler.metrics.filesProcessed, label)
++
++	ctx := logContext.AddLogger(logContext.Background())
++	archiveChan, err := handler.HandleFile(ctx, rdr)
++	assert.NoError(t, err)
++
++	for range archiveChan {
++	}
++
++	after := counterValue(handler.metrics.filesProcessed, label)
++	assert.Equal(t, before, after, "filesProcessed must not increment when RPM loading fails")
++}
++
++// TestArchiveHandlerFilesProcessedOnlyOnSuccess verifies that the archive
++// handler does not count files as processed when archive opening fails.
++func TestArchiveHandlerFilesProcessedOnlyOnSuccess(t *testing.T) {
++	handler := newArchiveHandler()
++	label := string(archiveHandlerType)
++
++	rdr, err := newFileReader(strings.NewReader("not a valid archive"))
++	assert.NoError(t, err)
++	defer rdr.Close()
++
++	before := counterValue(handler.metrics.filesProcessed, label)
++
++	ctx := logContext.AddLogger(logContext.Background())
++	dataChan, err := handler.HandleFile(ctx, rdr)
++	assert.NoError(t, err)
++
++	for range dataChan {
++	}
++
++	after := counterValue(handler.metrics.filesProcessed, label)
++	assert.Equal(t, before, after, "filesProcessed must not increment when archive processing fails")
++}
++
++// TestDefaultHandlerFilesProcessedOnSuccess verifies that the default handler
++// increments filesProcessed when it successfully processes content.
++func TestDefaultHandlerFilesProcessedOnSuccess(t *testing.T) {
++	handler := newDefaultHandler(defaultHandlerType)
++	label := string(defaultHandlerType)
++
++	file, err := os.Open("testdata/nonarchive.txt")
++	assert.NoError(t, err)
++	defer file.Close()
++
++	rdr, err := newFileReader(file)
++	assert.NoError(t, err)
++	defer rdr.Close()
++
++	before := counterValue(handler.metrics.filesProcessed, label)
++
++	ctx := logContext.AddLogger(logContext.Background())
++	dataChan, err := handler.HandleFile(ctx, rdr)
++	assert.NoError(t, err)
++
++	count := 0
++	for range dataChan {
++		count++
++	}
++	assert.Greater(t, count, 0, "should produce output for valid text content")
++
++	after := counterValue(handler.metrics.filesProcessed, label)
++	assert.Greater(t, after, before, "filesProcessed must increment on successful processing")
++}
++
++// TestARHandlerFilesProcessedOnSuccess verifies the AR handler increments
++// filesProcessed when it successfully processes content.
++func TestARHandlerFilesProcessedOnSuccess(t *testing.T) {
++	handler := newARHandler()
++	label := string(arHandlerType)
++
++	file, err := os.Open("testdata/test.deb")
++	assert.NoError(t, err)
++	defer file.Close()
++
++	rdr, err := newFileReader(file)
++	assert.NoError(t, err)
++	defer rdr.Close()
++
++	before := counterValue(handler.metrics.filesProcessed, label)
++
++	ctx, cancel := logContext.WithTimeout(logContext.Background(), 5*time.Second)
++	defer cancel()
++	archiveChan, err := handler.HandleFile(logContext.AddLogger(ctx), rdr)
++	assert.NoError(t, err)
++
++	for range archiveChan {
++	}
++
++	after := counterValue(handler.metrics.filesProcessed, label)
++	assert.Greater(t, after, before, "filesProcessed must increment on successful AR processing")
++}
++
++// TestRPMHandlerFilesProcessedOnSuccess verifies the RPM handler increments
++// filesProcessed when it successfully processes content.
++func TestRPMHandlerFilesProcessedOnSuccess(t *testing.T) {
++	handler := newRPMHandler()
++	label := string(rpmHandlerType)
++
++	file, err := os.Open("testdata/test.rpm")
++	assert.NoError(t, err)
++	defer file.Close()
++
++	rdr, err := newFileReader(file)
++	assert.NoError(t, err)
++	defer rdr.Close()
++
++	before := counterValue(handler.metrics.filesProcessed, label)
++
++	ctx, cancel := logContext.WithTimeout(logContext.Background(), 5*time.Second)
++	defer cancel()
++	archiveChan, err := handler.HandleFile(logContext.AddLogger(ctx), rdr)
++	assert.NoError(t, err)
++
++	for range archiveChan {
++	}
++
++	after := counterValue(handler.metrics.filesProcessed, label)
++	assert.Greater(t, after, before, "filesProcessed must increment on successful RPM processing")
++}
++
++// TestARHandlerPanicRecoveryWithError verifies the AR handler recovers from
++// panics that produce error values without crashing.
++func TestARHandlerPanicRecoveryWithError(t *testing.T) {
++	handler := newARHandler()
++
++	rdr := fileReader{
++		BufferedReadSeeker: iobuf.NewBufferedReaderSeeker(errorPanicReader{}),
++		mime:               mimetype.Detect([]byte("")),
++	}
++
++	ctx := logContext.AddLogger(logContext.Background())
++	archiveChan, err := handler.HandleFile(ctx, rdr)
++	assert.NoError(t, err)
++
++	done := make(chan struct{})
++	go func() {
++		for range archiveChan {
++		}
++		close(done)
++	}()
++
++	select {
++	case <-done:
++	case <-time.After(5 * time.Second):
++		t.Fatal("AR handler did not recover from panic")
++	}
++}
++
++// TestARHandlerPanicRecoveryWithString verifies the AR handler recovers from
++// panics that produce non-error values (e.g. strings).
++func TestARHandlerPanicRecoveryWithString(t *testing.T) {
++	handler := newARHandler()
++
++	rdr := fileReader{
++		BufferedReadSeeker: iobuf.NewBufferedReaderSeeker(stringPanicReader{}),
++		mime:               mimetype.Detect([]byte("")),
++	}
++
++	ctx := logContext.AddLogger(logContext.Background())
++	archiveChan, err := handler.HandleFile(ctx, rdr)
++	assert.NoError(t, err)
++
++	done := make(chan struct{})
++	go func() {
++		for range archiveChan {
++		}
++		close(done)
++	}()
++
++	select {
++	case <-done:
++	case <-time.After(5 * time.Second):
++		t.Fatal("AR handler did not recover from string panic")
++	}
++}
++
++// TestArchiveHandlerPanicRecoveryWithError verifies the archive handler
++// recovers from error-type panics.
++func TestArchiveHandlerPanicRecoveryWithError(t *testing.T) {
++	handler := newArchiveHandler()
++
++	rdr := fileReader{
++		BufferedReadSeeker: iobuf.NewBufferedReaderSeeker(errorPanicReader{}),
++		mime:               mimetype.Detect([]byte("")),
++	}
++
++	ctx := logContext.AddLogger(logContext.Background())
++	dataChan, err := handler.HandleFile(ctx, rdr)
++	assert.NoError(t, err)
++
++	done := make(chan struct{})
++	go func() {
++		for range dataChan {
++		}
++		close(done)
++	}()
++
++	select {
++	case <-done:
++	case <-time.After(5 * time.Second):
++		t.Fatal("archive handler did not recover from panic")
++	}
++}
++
++// TestArchiveHandlerPanicRecoveryWithString verifies the archive handler
++// recovers from string-type panics.
++func TestArchiveHandlerPanicRecoveryWithString(t *testing.T) {
++	handler := newArchiveHandler()
++
++	rdr := fileReader{
++		BufferedReadSeeker: iobuf.NewBufferedReaderSeeker(stringPanicReader{}),
++		mime:               mimetype.Detect([]byte("")),
++	}
++
++	ctx := logContext.AddLogger(logContext.Background())
++	dataChan, err := handler.HandleFile(ctx, rdr)
++	assert.NoError(t, err)
++
++	done := make(chan struct{})
++	go func() {
++		for range dataChan {
++		}
++		close(done)
++	}()
++
++	select {
++	case <-done:
++	case <-time.After(5 * time.Second):
++		t.Fatal("archive handler did not recover from string panic")
++	}
++}
++
++// TestRPMHandlerPanicRecoveryWithError verifies the RPM handler recovers
++// from error-type panics.
++func TestRPMHandlerPanicRecoveryWithError(t *testing.T) {
++	handler := newRPMHandler()
++
++	rdr := fileReader{
++		BufferedReadSeeker: iobuf.NewBufferedReaderSeeker(errorPanicReader{}),
++		mime:               mimetype.Detect([]byte("")),
++	}
++
++	ctx := logContext.AddLogger(logContext.Background())
++	archiveChan, err := handler.HandleFile(ctx, rdr)
++	assert.NoError(t, err)
++
++	done := make(chan struct{})
++	go func() {
++		for range archiveChan {
++		}
++		close(done)
++	}()
++
++	select {
++	case <-done:
++	case <-time.After(5 * time.Second):
++		t.Fatal("RPM handler did not recover from panic")
++	}
++}
++
++// TestRPMHandlerPanicRecoveryWithString verifies the RPM handler recovers
++// from string-type panics.
++func TestRPMHandlerPanicRecoveryWithString(t *testing.T) {
++	handler := newRPMHandler()
++
++	rdr := fileReader{
++		BufferedReadSeeker: iobuf.NewBufferedReaderSeeker(stringPanicReader{}),
++		mime:               mimetype.Detect([]byte("")),
++	}
++
++	ctx := logContext.AddLogger(logContext.Background())
++	archiveChan, err := handler.HandleFile(ctx, rdr)
++	assert.NoError(t, err)
++
++	done := make(chan struct{})
++	go func() {
++		for range archiveChan {
++		}
++		close(done)
++	}()
++
++	select {
++	case <-done:
++	case <-time.After(5 * time.Second):
++		t.Fatal("RPM handler did not recover from string panic")
++	}
++}
++
++// TestARHandlerPanicDoesNotIncrementFilesProcessed verifies that when the
++// AR handler recovers from a panic, filesProcessed is not incremented.
++func TestARHandlerPanicDoesNotIncrementFilesProcessed(t *testing.T) {
++	handler := newARHandler()
++	label := string(arHandlerType)
++
++	rdr := fileReader{
++		BufferedReadSeeker: iobuf.NewBufferedReaderSeeker(errorPanicReader{}),
++		mime:               mimetype.Detect([]byte("")),
++	}
++
++	before := counterValue(handler.metrics.filesProcessed, label)
++
++	ctx := logContext.AddLogger(logContext.Background())
++	archiveChan, err := handler.HandleFile(ctx, rdr)
++	assert.NoError(t, err)
++
++	for range archiveChan {
++	}
++
++	after := counterValue(handler.metrics.filesProcessed, label)
++	assert.Equal(t, before, after, "filesProcessed must not increment after panic recovery")
++}
++
++// TestRPMHandlerPanicDoesNotIncrementFilesProcessed verifies that when the
++// RPM handler recovers from a panic, filesProcessed is not incremented.
++func TestRPMHandlerPanicDoesNotIncrementFilesProcessed(t *testing.T) {
++	handler := newRPMHandler()
++	label := string(rpmHandlerType)
++
++	rdr := fileReader{
++		BufferedReadSeeker: iobuf.NewBufferedReaderSeeker(errorPanicReader{}),
++		mime:               mimetype.Detect([]byte("")),
++	}
++
++	before := counterValue(handler.metrics.filesProcessed, label)
++
++	ctx := logContext.AddLogger(logContext.Background())
++	archiveChan, err := handler.HandleFile(ctx, rdr)
++	assert.NoError(t, err)
++
++	for range archiveChan {
++	}
++
++	after := counterValue(handler.metrics.filesProcessed, label)
++	assert.Equal(t, before, after, "filesProcessed must not increment after panic recovery")
++}

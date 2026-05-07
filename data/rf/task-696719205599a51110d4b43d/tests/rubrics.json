@@ -1,0 +1,122 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ffb65c2ded4dd1b62f1a6160031d4472",
+    "title": "1.1: Creates `Dialer.IOSamples` method in `lib/netext/dialer.go` with signature `(sampleTime time.Time, ctm metrics.TagsAndMeta, builtinMetrics *metrics.BuiltinMetrics) metrics.SampleContainer`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d3a2fc888109ce3d243b544695f82e0a",
+    "title": "1.2: Scopes `Dialer.IOSamples` in `lib/netext/dialer.go` to emitting only both IO samples (data_sent, data_received)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "679af0c6436b7ee86064abe9bb70dc67",
+    "title": "1.3: Removes the `NetTrail` struct definition from `lib/netext/dialer.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0b07fa293a6a50b2036fe7f5f3ce5c00",
+    "title": "1.4: Removes all 3 methods associated with `NetTrail` (GetSamples, GetTags, GetTime) from `lib/netext/dialer.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "fed534671af89ba33f878d7ee5fa93b1",
+    "title": "1.5: Removes the `metrics.ConnectedSampleContainer` interface compliance check for `NetTrail` from `lib/netext/dialer.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "553b68b49f5b29ddd0ad1ee5d5caa523",
+    "title": "1.6: Adds iteration metric emission logic in `js/runner.go` that emits both iteration samples (iteration_duration, iterations)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e347869700922a5eac037c81f2400064",
+    "title": "1.7: Guards iteration metric emission in `js/runner.go` behind both conditions (isFullIteration, isDefault)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1180d558aed8181d1b4327aca98496cb",
+    "title": "1.8: Updates `js/runner.go` to call `Dialer.IOSamples` for network metric emission",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "bbe62acfd5c261f9593e026621eac3bd",
+    "title": "2.1: Removes or updates the TODO comment referencing the GitHub discussion in `lib/netext/dialer.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "21c44647fc614160ef56560f4ea9c744",
+    "title": "2.2: Includes a godoc comment on the `Dialer.IOSamples` method in `lib/netext/dialer.go`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0abfbfb90d07e6bf4ea010898de28726",
+    "title": "4.1: Modifies or removes any of the 2 atomic byte tracking operations (atomic.SwapInt64 for BytesWritten, atomic.SwapInt64 for BytesRead) in the Dialer",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

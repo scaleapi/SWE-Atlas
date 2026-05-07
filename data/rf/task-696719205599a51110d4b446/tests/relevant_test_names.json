@@ -1,0 +1,55 @@
+{
+  "tests": [
+    {
+      "name": "TestSetupData"
+    },
+    {
+      "name": "TestPatchStatus"
+    },
+    {
+      "name": "TestDataIsolation"
+    },
+    {
+      "name": "TestNewMetricsEngineWithThresholds"
+    },
+    {
+      "name": "TestMetricsEngineGetThresholdMetricOrSubmetricError"
+    },
+    {
+      "name": "TestNewMetricsEngineNoThresholds"
+    },
+    {
+      "name": "TestMetricsEngineEvaluateThresholdNoAbort"
+    },
+    {
+      "name": "TestMetricsEngineEvaluateIgnoreEmptySink"
+    },
+    {
+      "name": "TestIngesterOutputFlushMetrics"
+    },
+    {
+      "name": "TestIngesterOutputFlushSubmetrics"
+    },
+    {
+      "name": "TestOutputFlushMetricsTimeSeriesWarning"
+    },
+    {
+      "name": "TestNewMetric"
+    },
+    {
+      "name": "TestNewSink"
+    },
+    {
+      "name": "TestTrendSink"
+    },
+    {
+      "name": "TestTrendSinkIsEmpty"
+    },
+    {
+      "name": "TestThresholdsRun"
+    },
+    {
+      "name": "TestGetResolversForTrendColumnsCalculation"
+    }
+  ]
+}

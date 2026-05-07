@@ -1,0 +1,162 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "99dd70bbfc11d8bc54279784bef1e4ca",
+    "title": "1.1: Introduces exported getGrafanaFilter in public/app/features/alerting/unified/rule-list/hooks/filters.ts for Grafana-managed rules",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d2d0afb810c9311fe22461859726e5d3",
+    "title": "1.2: Introduces exported getDatasourceFilter in public/app/features/alerting/unified/rule-list/hooks/filters.ts for datasource-managed rules",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7ee018563f2657206359794c3156d436",
+    "title": "1.3: Supplies backendFilter fields for Grafana rules API from getGrafanaFilter in public/app/features/alerting/unified/rule-list/hooks/filters.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "60ccc77c307837057c20af91e33777e9",
+    "title": "1.4: Skips backend-owned facets in getGrafanaFilter frontend matchers in public/app/features/alerting/unified/rule-list/hooks/filters.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2eefacaba511d0720a10fade1c6f404c",
+    "title": "1.5: Keeps every filter facet client-side in getDatasourceFilter output in public/app/features/alerting/unified/rule-list/hooks/filters.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d9eddac77695ad047faa98ff7854bf05",
+    "title": "1.6: Updates PaginatedGrafanaLoader.tsx to source group filtering from getGrafanaFilter",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7f996a680562193ad078572d7448f260",
+    "title": "1.7: Updates useFilteredRulesIterator.ts to source Grafana filtering from getGrafanaFilter",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b3045ee9a04bae3cf8597958e76a1bb8",
+    "title": "1.8: Updates PaginatedDataSourceLoader.tsx to source group filtering from getDatasourceFilter",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e45395de3f4205c152bd737dc5e0e29f",
+    "title": "1.9: Updates useFilteredRulesIterator.ts to source datasource filtering from getDatasourceFilter",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "027ceb0e85e4e660ae6027b1d96d7231",
+    "title": "1.10: Refactors monolithic ruleFilter in public/app/features/alerting/unified/rule-list/hooks/filters.ts into separated per-concern filter units",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "fc35476a2b6ae8584031af6e5aca6223",
+    "title": "1.11: Applies alertingUIUseBackendFilters gating to Grafana backend offload inside getGrafanaFilter in public/app/features/alerting/unified/rule-list/hooks/filters.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2d0618fc733617476588d1cc7f2d9bc4",
+    "title": "1.12: Colocates exported buildTitleSearch in public/app/features/alerting/unified/rule-list/hooks/filters.ts away from useFilteredRulesIterator.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "47b8575cf2cb9c31aa8c4bb78cef61c4",
+    "title": "1.13: Colocates filter state normalization in public/app/features/alerting/unified/rule-list/hooks/filters.ts away from useFilteredRulesIterator.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7c8601d2d93905e347107768913f7efc",
+    "title": "3.1: Removes exported ruleFilter entry points that branch on backendFiltered from public/app/features/alerting/unified/rule-list/hooks/filters.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a8945727788a1d5b11e4a163d80c4b2c",
+    "title": "4.1: Removes label-based filtering paths that ruleFilter previously covered in public/app/features/alerting/unified/rule-list/hooks/filters.ts",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a31dfb0a5da35ec147fae95bc3022d5e",
+    "title": "4.2: Modifies test files or testing logic",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

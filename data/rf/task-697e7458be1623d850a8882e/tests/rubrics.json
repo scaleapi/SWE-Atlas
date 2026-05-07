@@ -1,0 +1,114 @@
+[
+  {
+    "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7",
+    "title": "1.1: Consolidates client creation into a single function in pkg/sources/s3/s3.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8",
+    "title": "1.2: Preserves handling of all 4 existing credential types (S3_SessionToken, S3_AccessKey, S3_Unauthenticated, S3_CloudEnvironment) in the consolidated function",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9",
+    "title": "1.3: Preserves IAM role assumption via STS in the consolidated function",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+    "title": "1.4: Collapses the duplicated branching in scanBuckets for regional client creation",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1",
+    "title": "1.5: Unifies the Chunks method into a single code path regardless of role configuration",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3",
+    "title": "1.6: Skips the affected bucket gracefully in scanBuckets when regional client creation fails",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4",
+    "title": "2.1: Removes the outdated comment describing the purpose of the separate role client creation function",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4",
+    "title": "3.1: Removes the newRoleClient function that is made obsolete by the consolidation",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5",
+    "title": "4.1: Modifies test files in the repository",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6",
+    "title": "4.2: Alters exported method signatures of the Source type in pkg/sources/s3/s3.go",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

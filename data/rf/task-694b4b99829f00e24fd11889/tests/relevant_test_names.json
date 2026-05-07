@@ -1,0 +1,46 @@
+{
+  "tests": [
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/handlers/TestARHandlerFilesProcessedOnSuccess"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/handlers/TestARHandlerFilesProcessedOnlyOnSuccess"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/handlers/TestARHandlerPanicDoesNotIncrementFilesProcessed"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/handlers/TestARHandlerPanicRecoveryWithError"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/handlers/TestARHandlerPanicRecoveryWithString"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/handlers/TestArchiveHandlerFilesProcessedOnlyOnSuccess"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/handlers/TestArchiveHandlerPanicRecoveryWithError"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/handlers/TestArchiveHandlerPanicRecoveryWithString"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/handlers/TestDefaultHandlerFilesProcessedOnSuccess"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/handlers/TestRPMHandlerFilesProcessedOnSuccess"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/handlers/TestRPMHandlerFilesProcessedOnlyOnSuccess"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/handlers/TestRPMHandlerPanicDoesNotIncrementFilesProcessed"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/handlers/TestRPMHandlerPanicRecoveryWithError"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/handlers/TestRPMHandlerPanicRecoveryWithString"
+    }
+  ]
+}

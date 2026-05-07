@@ -1,0 +1,97 @@
+{
+  "tests": [
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/BenchmarkBufferedFileWriterString_BufferOnly_Medium"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/BenchmarkBufferedFileWriterString_BufferOnly_Small"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/BenchmarkBufferedFileWriterString_BufferWithFile_Medium"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/BenchmarkBufferedFileWriterString_BufferWithFile_Small"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/BenchmarkBufferedFileWriterString_OnlyFile_Medium"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/BenchmarkBufferedFileWriterString_OnlyFile_Small"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/BenchmarkBufferedFileWriterWriteLarge"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/BenchmarkBufferedFileWriterWriteSmall"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer/TestBufferGrow"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer/TestBufferPoolGetPut"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer/TestBufferWrite"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer/TestBufferWriteWithNilBuffer"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer_writer/TestBufferWriterCloseForWriting"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer_writer/TestBufferWriterLen"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer_writer/TestBufferWriterLifecycle"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer_writer/TestBufferWriterReadCloser"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer_writer/TestBufferWriterString"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer_writer/TestBufferWriterWrite"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/TestBufferedFileWriterClose"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/TestBufferedFileWriterLen"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/TestBufferedFileWriterNewThreshold"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/TestBufferedFileWriterStateTransitionOnClose"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/TestBufferedFileWriterString"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/TestBufferedFileWriterWriteAfterFlush"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/TestBufferedFileWriterWriteExceedsThreshold"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/TestBufferedFileWriterWriteInReadOnlyState"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer/TestBufferedFileWriterWriteWithinThreshold"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer/TestNewBufferPool"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer/TestPoolPutShrinkOversized"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer/TestReadCloserClose"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer/TestReadCloserNilOnClose"
+    }
+  ]
+}

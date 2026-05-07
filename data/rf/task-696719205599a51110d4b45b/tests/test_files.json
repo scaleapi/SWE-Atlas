@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "name": "pkg/tsdb/elasticsearch/client/aggregation_builder_test.go"
+    },
+    {
+      "name": "pkg/tsdb/elasticsearch/client/client_test.go"
+    },
+    {
+      "name": "pkg/tsdb/elasticsearch/client/http_transport_test.go"
+    },
+    {
+      "name": "pkg/tsdb/elasticsearch/client/query_builder_test.go"
+    },
+    {
+      "name": "pkg/tsdb/elasticsearch/client/request_encoder_test.go"
+    },
+    {
+      "name": "pkg/tsdb/elasticsearch/client/response_parser_test.go"
+    },
+    {
+      "name": "pkg/tsdb/elasticsearch/client/search_request_test.go"
+    }
+  ]
+}

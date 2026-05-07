@@ -1,0 +1,70 @@
+{
+  "tests": [
+    {
+      "name": "useGenerateActionCallback - redirectTo interface compliance > should accept the redirectTo parameter and return a callable action callback"
+    },
+    {
+      "name": "useGenerateActionCallback - redirectTo interface compliance > should return UseActionCallback when redirectTo is provided"
+    },
+    {
+      "name": "useGenerateActionCallback - redirectTo interface compliance > should return a callable action callback when redirectTo is absent"
+    },
+    {
+      "name": "useGenerateActionHook - redirectTo interface compliance > should forward redirectTo to useGenerateActionCallback"
+    },
+    {
+      "name": "useGenerateActionHook - redirectTo interface compliance > should not include redirectTo when it is not provided"
+    },
+    {
+      "name": "CTAButton redirect flow > should redirect to a non-checkout URL when promotional condition is active and upgrade button is clicked"
+    },
+    {
+      "name": "CTAButton redirect flow > should redirect to checkout URL when promotional condition is inactive and upgrade button is clicked"
+    },
+    {
+      "name": "CTAButton redirect flow > should preserve plugin slug in redirect URL when promotional condition is active"
+    },
+    {
+      "name": "CTAButton redirect flow > should call useIsPluginAvailableOnAllPlans hook when rendering"
+    },
+    {
+      "name": "PlanUSPS > should show generic all paid plans text when promotional condition is active for Personal plan"
+    },
+    {
+      "name": "PlanUSPS > should show plan-specific text when promotional condition is inactive"
+    },
+    {
+      "name": "PlanUSPS > should not apply promotional pricing for marketplace products"
+    },
+    {
+      "name": "PlanUSPS > should not apply promotional pricing for preinstalled premium plugins"
+    },
+    {
+      "name": "PlanUSPS > should return null when shouldUpgrade is false"
+    },
+    {
+      "name": "PlanUSPS > should not show promo text when shouldUpgrade is false even if promo is active"
+    },
+    {
+      "name": "PlanUSPS > should use monthly cost label when promotional condition is active"
+    },
+    {
+      "name": "PlanUSPS > should show generic text for Business plan tier when promotional condition is active"
+    },
+    {
+      "name": "PlanUSPS > should show Business plan specific text when promotional condition is inactive"
+    },
+    {
+      "name": "useIsPluginAvailableOnAllPlans > should return true when useSummerSpecialStatus returns true"
+    },
+    {
+      "name": "useIsPluginAvailableOnAllPlans > should return false when useSummerSpecialStatus returns false"
+    },
+    {
+      "name": "useIsPluginAvailableOnAllPlans > should handle null siteId and return the delegated value"
+    },
+    {
+      "name": "useIsPluginAvailableOnAllPlans > should forward siteId and isInSignup to useSummerSpecialStatus"
+    }
+  ]
+}

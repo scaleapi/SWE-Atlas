@@ -1,0 +1,868 @@
+diff --git a/pkg/gitparse/gitparse.go b/pkg/gitparse/gitparse.go
+index dbcf4604c..3c364644a 100644
+--- a/pkg/gitparse/gitparse.go
++++ b/pkg/gitparse/gitparse.go
+@@ -16,6 +16,7 @@ import (
+ 
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/context"
++	bufferwriter "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer_writer"
+ 	bufferedfilewriter "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer"
+ )
+ 
+@@ -47,55 +48,6 @@ type contentWriter interface { // Write appends data to the content storage.
+ 	String() (string, error)
+ }
+ 
+-// state represents the current mode of buffer.
+-type state uint8
+-
+-const (
+-	// writeOnly indicates the buffer is in write-only mode.
+-	writeOnly state = iota
+-	// readOnly indicates the buffer has been closed and is in read-only mode.
+-	readOnly
+-)
+-
+-// buffer is a wrapper around bytes.Buffer, implementing the contentWriter interface.
+-// This allows bytes.Buffer to be used wherever a contentWriter is required, ensuring compatibility
+-// with the contentWriter interface while leveraging the existing implementation of bytes.Buffer.
+-type buffer struct {
+-	state state // current state of the buffer (writeOnly or readOnly)
+-	bytes.Buffer
+-}
+-
+-func newBuffer() *buffer { return &buffer{state: writeOnly} }
+-
+-// Write delegates the writing operation to the underlying bytes.Buffer, ignoring the context.
+-// The context is included to satisfy the contentWriter interface, allowing for future extensions
+-// where context handling might be necessary (e.g., for timeouts or cancellation).
+-func (b *buffer) Write(_ context.Context, data []byte) (int, error) {
+-	if b.state == readOnly {
+-		return 0, fmt.Errorf("buffer is in read-only mode")
+-	}
+-	return b.Buffer.Write(data)
+-}
+-
+-// ReadCloser provides a read-closer for the buffer's content.
+-// It wraps the buffer's content in a NopCloser to provide a ReadCloser without additional closing behavior,
+-// as closing a bytes.Buffer is a no-op.
+-func (b *buffer) ReadCloser() (io.ReadCloser, error) {
+-	if b.state == writeOnly {
+-		return nil, fmt.Errorf("buffer is in write-only mode")
+-	}
+-	return io.NopCloser(bytes.NewReader(b.Bytes())), nil
+-}
+-
+-// CloseForWriting is a no-op for buffer, as there is no resource cleanup needed for bytes.Buffer.
+-func (b *buffer) CloseForWriting() error {
+-	b.state = readOnly
+-	return nil
+-}
+-
+-// String returns the buffer's content as a string.
+-func (b *buffer) String() (string, error) { return b.Buffer.String(), nil }
+-
+ // Diff contains the information about a file diff in a commit.
+ // It abstracts the underlying content representation, allowing for flexible handling of diff content.
+ // The use of contentWriter enables the management of diff data either in memory or on disk,
+@@ -124,8 +76,8 @@ func withCustomContentWriter(cr contentWriter) diffOption {
+ // All Diffs must have an associated commit.
+ // The contentWriter is used to manage the diff's content, allowing for flexible handling of diff data.
+ // By default, a buffer is used as the contentWriter, but this can be overridden with a custom contentWriter.
+-func newDiff(commit *Commit, opts ...diffOption) *Diff {
+-	diff := &Diff{Commit: commit, contentWriter: newBuffer()}
++func newDiff(ctx context.Context, commit *Commit, opts ...diffOption) *Diff {
++	diff := &Diff{Commit: commit, contentWriter: bufferwriter.New(ctx)}
+ 	for _, opt := range opts {
+ 		opt(diff)
+ 	}
+@@ -356,13 +308,13 @@ func (c *Parser) FromReader(ctx context.Context, stdOut io.Reader, diffChan chan
+ 	var latestState = Initial
+ 
+ 	diff := func(c *Commit, opts ...diffOption) *Diff {
+-		opts = append(opts, withCustomContentWriter(newBuffer()))
+-		return newDiff(c, opts...)
++		opts = append(opts, withCustomContentWriter(bufferwriter.New(ctx)))
++		return newDiff(ctx, c, opts...)
+ 	}
+ 	if c.useCustomContentWriter {
+ 		diff = func(c *Commit, opts ...diffOption) *Diff {
+-			opts = append(opts, withCustomContentWriter(bufferedfilewriter.New()))
+-			return newDiff(c, opts...)
++			opts = append(opts, withCustomContentWriter(bufferedfilewriter.New(ctx)))
++			return newDiff(ctx, c, opts...)
+ 		}
+ 	}
+ 	currentDiff := diff(currentCommit)
+diff --git a/pkg/writers/buffer/buffer.go b/pkg/writers/buffer/buffer.go
+new file mode 100644
+index 000000000..9adea74cb
+--- /dev/null
++++ b/pkg/writers/buffer/buffer.go
+@@ -0,0 +1,183 @@
++// Package buffer provides a custom buffer type that includes metrics for tracking buffer usage.
++// It also provides a pool for managing buffer reusability.
++package buffer
++
++import (
++	"bytes"
++	"fmt"
++	"sync"
++	"time"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/context"
++)
++
++type poolMetrics struct{}
++
++func (poolMetrics) recordShrink(amount int) {
++	shrinkCount.Inc()
++	shrinkAmount.Add(float64(amount))
++}
++
++func (poolMetrics) recordBufferRetrival() {
++	activeBufferCount.Inc()
++	checkoutCount.Inc()
++	bufferCount.Inc()
++}
++
++func (poolMetrics) recordBufferReturn(bufCap, bufLen int64) {
++	activeBufferCount.Dec()
++	totalBufferSize.Add(float64(bufCap))
++	totalBufferLength.Add(float64(bufLen))
++}
++
++// PoolOpts is a function that configures a BufferPool.
++type PoolOpts func(pool *Pool)
++
++// Pool of buffers.
++type Pool struct {
++	*sync.Pool
++	bufferSize uint32
++
++	metrics poolMetrics
++}
++
++const defaultBufferSize = 1 << 12 // 4KB
++// NewBufferPool creates a new instance of BufferPool.
++func NewBufferPool(opts ...PoolOpts) *Pool {
++	pool := &Pool{bufferSize: defaultBufferSize}
++
++	for _, opt := range opts {
++		opt(pool)
++	}
++	pool.Pool = &sync.Pool{
++		New: func() any {
++			return &Buffer{Buffer: bytes.NewBuffer(make([]byte, 0, pool.bufferSize))}
++		},
++	}
++
++	return pool
++}
++
++// Get returns a Buffer from the pool.
++func (p *Pool) Get(ctx context.Context) *Buffer {
++	buf, ok := p.Pool.Get().(*Buffer)
++	if !ok {
++		ctx.Logger().Error(fmt.Errorf("Buffer pool returned unexpected type"), "using new Buffer")
++		buf = &Buffer{Buffer: bytes.NewBuffer(make([]byte, 0, p.bufferSize))}
++	}
++	p.metrics.recordBufferRetrival()
++	buf.resetMetric()
++
++	return buf
++}
++
++// Put returns a Buffer to the pool.
++func (p *Pool) Put(buf *Buffer) {
++	p.metrics.recordBufferReturn(int64(buf.Cap()), int64(buf.Len()))
++
++	// If the Buffer is more than twice the default size, replace it with a new Buffer.
++	// This prevents us from returning very large buffers to the pool.
++	const maxAllowedCapacity = 2 * defaultBufferSize
++	if buf.Cap() > maxAllowedCapacity {
++		p.metrics.recordShrink(buf.Cap() - defaultBufferSize)
++		buf = &Buffer{Buffer: bytes.NewBuffer(make([]byte, 0, p.bufferSize))}
++	} else {
++		// Reset the Buffer to clear any existing data.
++		buf.Reset()
++	}
++	buf.recordMetric()
++
++	p.Pool.Put(buf)
++}
++
++// Buffer is a wrapper around bytes.Buffer that includes a timestamp for tracking Buffer checkout duration.
++type Buffer struct {
++	*bytes.Buffer
++	checkedOutAt time.Time
++}
++
++// NewBuffer creates a new instance of Buffer.
++func NewBuffer() *Buffer { return &Buffer{Buffer: bytes.NewBuffer(make([]byte, 0, defaultBufferSize))} }
++
++func (b *Buffer) Grow(size int) {
++	b.Buffer.Grow(size)
++	b.recordGrowth(size)
++}
++
++func (b *Buffer) resetMetric() { b.checkedOutAt = time.Now() }
++
++func (b *Buffer) recordMetric() {
++	dur := time.Since(b.checkedOutAt)
++	checkoutDuration.Observe(float64(dur.Microseconds()))
++	checkoutDurationTotal.Add(float64(dur.Microseconds()))
++}
++
++func (b *Buffer) recordGrowth(size int) {
++	growCount.Inc()
++	growAmount.Add(float64(size))
++}
++
++// Write date to the buffer.
++func (b *Buffer) Write(ctx context.Context, data []byte) (int, error) {
++	if b.Buffer == nil {
++		// This case should ideally never occur if buffers are properly managed.
++		ctx.Logger().Error(fmt.Errorf("buffer is nil, initializing a new buffer"), "action", "initializing_new_buffer")
++		b.Buffer = bytes.NewBuffer(make([]byte, 0, defaultBufferSize))
++		b.resetMetric()
++	}
++
++	size := len(data)
++	bufferLength := b.Buffer.Len()
++	totalSizeNeeded := bufferLength + size
++	// If the total size is within the threshold, write to the buffer.
++	ctx.Logger().V(4).Info(
++		"writing to buffer",
++		"data_size", size,
++		"content_size", bufferLength,
++	)
++
++	availableSpace := b.Buffer.Cap() - bufferLength
++	growSize := totalSizeNeeded - bufferLength
++	if growSize > availableSpace {
++		ctx.Logger().V(4).Info(
++			"buffer size exceeded, growing buffer",
++			"current_size", bufferLength,
++			"new_size", totalSizeNeeded,
++			"available_space", availableSpace,
++			"grow_size", growSize,
++		)
++		// We are manually growing the buffer so we can track the growth via metrics.
++		// Knowing the exact data size, we directly resize to fit it, rather than exponential growth
++		// which may require multiple allocations and copies if the size required is much larger
++		// than double the capacity. Our approach aligns with default behavior when growth sizes
++		// happen to match current capacity, retaining asymptotic efficiency benefits.
++		b.Buffer.Grow(growSize)
++	}
++
++	return b.Buffer.Write(data)
++}
++
++// readCloser is a custom implementation of io.ReadCloser. It wraps a bytes.Reader
++// for reading data from an in-memory buffer and includes an onClose callback.
++// The onClose callback is used to return the buffer to the pool, ensuring buffer re-usability.
++type readCloser struct {
++	*bytes.Reader
++	onClose func()
++}
++
++// ReadCloser creates a new instance of readCloser.
++func ReadCloser(data []byte, onClose func()) *readCloser {
++	return &readCloser{Reader: bytes.NewReader(data), onClose: onClose}
++}
++
++// Close implements the io.Closer interface. It calls the onClose callback to return the buffer
++// to the pool, enabling buffer reuse. This method should be called by the consumers of ReadCloser
++// once they have finished reading the data to ensure proper resource management.
++func (brc *readCloser) Close() error {
++	if brc.onClose == nil {
++		return nil
++	}
++
++	brc.onClose() // Return the buffer to the pool
++	return nil
++}
+diff --git a/pkg/writers/buffer/metrics.go b/pkg/writers/buffer/metrics.go
+new file mode 100644
+index 000000000..2d4d8afce
+--- /dev/null
++++ b/pkg/writers/buffer/metrics.go
+@@ -0,0 +1,88 @@
++package buffer
++
++import (
++	"github.com/prometheus/client_golang/prometheus"
++	"github.com/prometheus/client_golang/prometheus/promauto"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
++)
++
++var (
++	activeBufferCount = promauto.NewGauge(prometheus.GaugeOpts{
++		Namespace: common.MetricsNamespace,
++		Subsystem: common.MetricsSubsystem,
++		Name:      "active_buffer_count",
++		Help:      "Current number of active buffers.",
++	})
++
++	bufferCount = promauto.NewGauge(prometheus.GaugeOpts{
++		Namespace: common.MetricsNamespace,
++		Subsystem: common.MetricsSubsystem,
++		Name:      "buffer_count",
++		Help:      "Total number of buffers managed by the pool.",
++	})
++
++	totalBufferLength = promauto.NewGauge(prometheus.GaugeOpts{
++		Namespace: common.MetricsNamespace,
++		Subsystem: common.MetricsSubsystem,
++		Name:      "total_buffer_length",
++		Help:      "Total length of all buffers combined.",
++	})
++
++	totalBufferSize = promauto.NewGauge(prometheus.GaugeOpts{
++		Namespace: common.MetricsNamespace,
++		Subsystem: common.MetricsSubsystem,
++		Name:      "total_buffer_size",
++		Help:      "Total size of all buffers combined.",
++	})
++
++	growCount = promauto.NewCounter(prometheus.CounterOpts{
++		Namespace: common.MetricsNamespace,
++		Subsystem: common.MetricsSubsystem,
++		Name:      "grow_count",
++		Help:      "Total number of times buffers in the pool have grown.",
++	})
++
++	growAmount = promauto.NewCounter(prometheus.CounterOpts{
++		Namespace: common.MetricsNamespace,
++		Subsystem: common.MetricsSubsystem,
++		Name:      "grow_amount",
++		Help:      "Total amount of bytes buffers in the pool have grown by.",
++	})
++
++	shrinkCount = promauto.NewCounter(prometheus.CounterOpts{
++		Namespace: common.MetricsNamespace,
++		Subsystem: common.MetricsSubsystem,
++		Name:      "shrink_count",
++		Help:      "Total number of times buffers in the pool have shrunk.",
++	})
++
++	shrinkAmount = promauto.NewCounter(prometheus.CounterOpts{
++		Namespace: common.MetricsNamespace,
++		Subsystem: common.MetricsSubsystem,
++		Name:      "shrink_amount",
++		Help:      "Total amount of bytes buffers in the pool have shrunk by.",
++	})
++
++	checkoutDurationTotal = promauto.NewCounter(prometheus.CounterOpts{
++		Namespace: common.MetricsNamespace,
++		Subsystem: common.MetricsSubsystem,
++		Name:      "checkout_duration_total_us",
++		Help:      "Total duration in microseconds of Buffer checkouts.",
++	})
++
++	checkoutDuration = promauto.NewHistogram(prometheus.HistogramOpts{
++		Namespace: common.MetricsNamespace,
++		Subsystem: common.MetricsSubsystem,
++		Name:      "checkout_duration_us",
++		Help:      "Duration in microseconds of Buffer checkouts.",
++		Buckets:   []float64{50, 500, 5000},
++	})
++
++	checkoutCount = promauto.NewCounter(prometheus.CounterOpts{
++		Namespace: common.MetricsNamespace,
++		Subsystem: common.MetricsSubsystem,
++		Name:      "checkout_count",
++		Help:      "Total number of Buffer checkouts.",
++	})
++)
+diff --git a/pkg/writers/buffer_writer/bufferwriter.go b/pkg/writers/buffer_writer/bufferwriter.go
+new file mode 100644
+index 000000000..5cc70490e
+--- /dev/null
++++ b/pkg/writers/buffer_writer/bufferwriter.go
+@@ -0,0 +1,106 @@
++// Package bufferwritter provides a contentWriter implementation using a shared buffer pool for memory management.
++package bufferwriter
++
++import (
++	"fmt"
++	"io"
++	"time"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/context"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer"
++)
++
++type metrics struct{}
++
++func (metrics) recordDataProcessed(size uint64, dur time.Duration) {
++	totalWriteSize.Add(float64(size))
++	totalWriteDuration.Add(float64(dur.Microseconds()))
++}
++
++func init() { bufferPool = buffer.NewBufferPool() }
++
++// bufferPool is the shared Buffer pool used by all BufferedFileWriters.
++// This allows for efficient reuse of buffers across multiple writers.
++var bufferPool *buffer.Pool
++
++// state represents the current mode of buffer.
++type state uint8
++
++const (
++	// writeOnly indicates the buffer is in write-only mode.
++	writeOnly state = iota
++	// readOnly indicates the buffer has been closed and is in read-only mode.
++	readOnly
++)
++
++// BufferWriter implements contentWriter, using a shared buffer pool for memory management.
++type BufferWriter struct {
++	buf     *buffer.Buffer // The current buffer in use.
++	bufPool *buffer.Pool   // The buffer pool used to manage the buffer.
++	size    int            // The total size of the content written to the buffer.
++	state   state          // The current state of the buffer.
++
++	metrics metrics
++}
++
++// New creates a new instance of BufferWriter.
++func New(ctx context.Context) *BufferWriter {
++	buf := bufferPool.Get(ctx)
++	if buf == nil {
++		buf = buffer.NewBuffer()
++	}
++	return &BufferWriter{buf: buf, state: writeOnly, bufPool: bufferPool}
++}
++
++// Write delegates the writing operation to the underlying bytes.Buffer, ignoring the context.
++// The context is included to satisfy the contentWriter interface, allowing for future extensions
++// where context handling might be necessary (e.g., for timeouts or cancellation).
++func (b *BufferWriter) Write(ctx context.Context, data []byte) (int, error) {
++	if b.state != writeOnly {
++		return 0, fmt.Errorf("buffer must be in write-only mode to write data; current state: %d", b.state)
++	}
++
++	size := len(data)
++	b.size += size
++	start := time.Now()
++	defer func(start time.Time) {
++		bufferLength := uint64(b.buf.Len())
++		b.metrics.recordDataProcessed(bufferLength, time.Since(start))
++
++		ctx.Logger().V(4).Info(
++			"write complete",
++			"data_size", size,
++			"buffer_len", bufferLength,
++			"buffer_size", b.buf.Cap(),
++		)
++	}(start)
++	return b.buf.Write(ctx, data)
++}
++
++// ReadCloser provides a read-closer for the buffer's content.
++// It wraps the buffer's content in a NopCloser to provide a ReadCloser without additional closing behavior,
++// as closing a bytes.Buffer is a no-op.
++func (b *BufferWriter) ReadCloser() (io.ReadCloser, error) {
++	if b.state != readOnly {
++		return nil, fmt.Errorf("buffer is in read-only mode")
++	}
++
++	return buffer.ReadCloser(b.buf.Bytes(), func() { b.bufPool.Put(b.buf) }), nil
++}
++
++// CloseForWriting is a no-op for buffer, as there is no resource cleanup needed for bytes.Buffer.
++func (b *BufferWriter) CloseForWriting() error {
++	b.state = readOnly
++	return nil
++}
++
++// String returns the buffer's content as a string.
++func (b *BufferWriter) String() (string, error) {
++	if b.buf == nil {
++		return "", fmt.Errorf("buffer is nil")
++	}
++	return b.buf.String(), nil
++}
++
++// Len returns the length of the buffer's content.
++func (b *BufferWriter) Len() int { return b.size }
+diff --git a/pkg/writers/buffer_writer/metrics.go b/pkg/writers/buffer_writer/metrics.go
+new file mode 100644
+index 000000000..73a85b300
+--- /dev/null
++++ b/pkg/writers/buffer_writer/metrics.go
+@@ -0,0 +1,24 @@
++package bufferwriter
++
++import (
++	"github.com/prometheus/client_golang/prometheus"
++	"github.com/prometheus/client_golang/prometheus/promauto"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
++)
++
++var (
++	totalWriteSize = promauto.NewCounter(prometheus.CounterOpts{
++		Namespace: common.MetricsNamespace,
++		Subsystem: common.MetricsSubsystem,
++		Name:      "buffer_writer_total_write_size_bytes",
++		Help:      "Total size of data written by the BufferWriter in bytes.",
++	})
++
++	totalWriteDuration = promauto.NewCounter(prometheus.CounterOpts{
++		Namespace: common.MetricsNamespace,
++		Subsystem: common.MetricsSubsystem,
++		Name:      "buffer_writer_total_write_duration_microseconds",
++		Help:      "Total duration of write operations by the BufferWriter in microseconds.",
++	})
++)
+diff --git a/pkg/writers/buffered_file_writer/bufferedfilewriter.go b/pkg/writers/buffered_file_writer/bufferedfilewriter.go
+index 088cc3ff8..d1c929340 100644
+--- a/pkg/writers/buffered_file_writer/bufferedfilewriter.go
++++ b/pkg/writers/buffered_file_writer/bufferedfilewriter.go
+@@ -7,115 +7,18 @@ import (
+ 	"fmt"
+ 	"io"
+ 	"os"
+-	"sync"
+ 	"time"
+ 
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/cleantemp"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/context"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer"
+ )
+ 
+-type bufferPoolMetrics struct{}
+-
+-func (bufferPoolMetrics) recordGrowth(growthAmount int) {
+-	growCount.Inc()
+-	growAmount.Add(float64(growthAmount))
+-}
+-
+-func (bufferPoolMetrics) recordShrink(amount int) {
+-	shrinkCount.Inc()
+-	shrinkAmount.Add(float64(amount))
+-}
+-
+-func (bufferPoolMetrics) recordCheckoutDuration(duration time.Duration) {
+-	checkoutDuration.Observe(float64(duration.Microseconds()))
+-	checkoutCount.Inc()
+-	checkoutDurationTotal.Add(float64(duration.Microseconds()))
+-}
+-
+-func (bufferPoolMetrics) recordBufferRetrival() {
+-	activeBufferCount.Inc()
+-	bufferCount.Inc()
+-}
+-
+-func (bufferPoolMetrics) recordBufferReturn(bufCap, bufLen int64) {
+-	activeBufferCount.Dec()
+-	totalBufferSize.Add(float64(bufCap))
+-	totalBufferLength.Add(float64(bufLen))
+-}
+-
+-type bufPoolOpt func(pool *bufferPool)
+-
+-type bufferPool struct {
+-	bufferSize uint32
+-	*sync.Pool
+-
+-	metrics bufferPoolMetrics
+-}
+-
+-const defaultBufferSize = 1 << 12 // 4KB
+-func newBufferPool(opts ...bufPoolOpt) *bufferPool {
+-	pool := &bufferPool{bufferSize: defaultBufferSize}
+-
+-	for _, opt := range opts {
+-		opt(pool)
+-	}
+-	pool.Pool = &sync.Pool{
+-		New: func() any {
+-			buf := &buffer{Buffer: bytes.NewBuffer(make([]byte, 0, pool.bufferSize))}
+-			return buf
+-		},
+-	}
+-
+-	return pool
+-}
+-
+ // sharedBufferPool is the shared buffer pool used by all BufferedFileWriters.
+ // This allows for efficient reuse of buffers across multiple writers.
+-var sharedBufferPool *bufferPool
+-
+-func init() { sharedBufferPool = newBufferPool() }
+-
+-// buffer is a wrapper around bytes.Buffer that includes a timestamp for tracking buffer checkout duration.
+-type buffer struct {
+-	*bytes.Buffer
+-	checkedOut time.Time
+-}
++var sharedBufferPool *buffer.Pool
+ 
+-func (bp *bufferPool) get(ctx context.Context) *buffer {
+-	buf, ok := bp.Pool.Get().(*buffer)
+-	if !ok {
+-		ctx.Logger().Error(fmt.Errorf("buffer pool returned unexpected type"), "using new buffer")
+-		buf = &buffer{Buffer: bytes.NewBuffer(make([]byte, 0, bp.bufferSize))}
+-	}
+-	buf.checkedOut = time.Now()
+-	bp.metrics.recordBufferRetrival()
+-
+-	return buf
+-}
+-
+-func (bp *bufferPool) growBufferWithSize(buf *buffer, size int) {
+-	// Grow the buffer to accommodate the new data.
+-	bp.metrics.recordGrowth(size)
+-	buf.Grow(size)
+-}
+-
+-func (bp *bufferPool) put(buf *buffer) {
+-	bp.metrics.recordBufferReturn(int64(buf.Cap()), int64(buf.Len()))
+-	bp.metrics.recordCheckoutDuration(time.Since(buf.checkedOut))
+-
+-	// If the buffer is more than twice the default size, replace it with a new buffer.
+-	// This prevents us from returning very large buffers to the pool.
+-	const maxAllowedCapacity = 2 * defaultBufferSize
+-	if buf.Cap() > maxAllowedCapacity {
+-		bp.metrics.recordShrink(buf.Cap() - defaultBufferSize)
+-		buf = &buffer{Buffer: bytes.NewBuffer(make([]byte, 0, bp.bufferSize))}
+-	} else {
+-		// Reset the buffer to clear any existing data.
+-		buf.Reset()
+-	}
+-
+-	bp.Put(buf)
+-}
++func init() { sharedBufferPool = buffer.NewBufferPool() }
+ 
+ type bufferedFileWriterMetrics struct{}
+ 
+@@ -150,8 +53,8 @@ type BufferedFileWriter struct {
+ 	threshold uint64 // Threshold for switching to file writing.
+ 	size      uint64 // Total size of the data written.
+ 
+-	bufPool  *bufferPool    // Pool for storing buffers for reuse.
+-	buf      *buffer        // Buffer for storing data under the threshold in memory.
++	bufPool  *buffer.Pool   // Pool for storing buffers for reuse.
++	buf      *buffer.Buffer // Buffer for storing data under the threshold in memory.
+ 	filename string         // Name of the temporary file.
+ 	file     io.WriteCloser // File for storing data over the threshold.
+ 
+@@ -170,10 +73,15 @@ func WithThreshold(threshold uint64) Option {
+ 
+ const defaultThreshold = 10 * 1024 * 1024 // 10MB
+ // New creates a new BufferedFileWriter with the given options.
+-func New(opts ...Option) *BufferedFileWriter {
++func New(ctx context.Context, opts ...Option) *BufferedFileWriter {
++	buf := sharedBufferPool.Get(ctx)
++	if buf == nil {
++		buf = buffer.NewBuffer()
++	}
+ 	w := &BufferedFileWriter{
+ 		threshold: defaultThreshold,
+ 		state:     writeOnly,
++		buf:       buf,
+ 		bufPool:   sharedBufferPool,
+ 	}
+ 	for _, opt := range opts {
+@@ -220,13 +128,7 @@ func (w *BufferedFileWriter) Write(ctx context.Context, data []byte) (int, error
+ 	}
+ 
+ 	size := uint64(len(data))
+-
+-	if w.buf == nil || w.buf.Len() == 0 {
+-		w.buf = w.bufPool.get(ctx)
+-	}
+-
+ 	bufferLength := w.buf.Len()
+-
+ 	start := time.Now()
+ 	defer func(start time.Time) {
+ 		w.metrics.recordDataProcessed(size, time.Since(start))
+@@ -242,32 +144,7 @@ func (w *BufferedFileWriter) Write(ctx context.Context, data []byte) (int, error
+ 
+ 	totalSizeNeeded := uint64(bufferLength) + size
+ 	if totalSizeNeeded <= w.threshold {
+-		// If the total size is within the threshold, write to the buffer.
+-		ctx.Logger().V(4).Info(
+-			"writing to buffer",
+-			"data_size", size,
+-			"content_size", bufferLength,
+-		)
+-
+-		availableSpace := w.buf.Cap() - bufferLength
+-		growSize := int(totalSizeNeeded) - bufferLength
+-		if growSize > availableSpace {
+-			ctx.Logger().V(4).Info(
+-				"buffer size exceeded, growing buffer",
+-				"current_size", bufferLength,
+-				"new_size", totalSizeNeeded,
+-				"available_space", availableSpace,
+-				"grow_size", growSize,
+-			)
+-			// We are manually growing the buffer so we can track the growth via metrics.
+-			// Knowing the exact data size, we directly resize to fit it, rather than exponential growth
+-			// which may require multiple allocations and copies if the size required is much larger
+-			// than double the capacity. Our approach aligns with default behavior when growth sizes
+-			// happen to match current capacity, retaining asymptotic efficiency benefits.
+-			w.bufPool.growBufferWithSize(w.buf, growSize)
+-		}
+-
+-		return w.buf.Write(data)
++		return w.buf.Write(ctx, data)
+ 	}
+ 
+ 	// Switch to file writing if threshold is exceeded.
+@@ -289,7 +166,7 @@ func (w *BufferedFileWriter) Write(ctx context.Context, data []byte) (int, error
+ 			if _, err := w.buf.WriteTo(w.file); err != nil {
+ 				return 0, err
+ 			}
+-			w.bufPool.put(w.buf)
++			w.bufPool.Put(w.buf)
+ 		}
+ 	}
+ 	ctx.Logger().V(4).Info("writing to file", "data_size", size)
+@@ -336,10 +213,7 @@ func (w *BufferedFileWriter) ReadCloser() (io.ReadCloser, error) {
+ 	}
+ 
+ 	// Data is in memory.
+-	return &bufferReadCloser{
+-		Reader:  bytes.NewReader(w.buf.Bytes()),
+-		onClose: func() { w.bufPool.put(w.buf) },
+-	}, nil
++	return buffer.ReadCloser(w.buf.Bytes(), func() { w.bufPool.Put(w.buf) }), nil
+ }
+ 
+ // autoDeletingFileReader wraps an *os.File and deletes the file on Close.
+@@ -355,23 +229,3 @@ func (r *autoDeletingFileReader) Close() error {
+ 	defer os.Remove(r.Name()) // Delete the file after closing
+ 	return r.File.Close()
+ }
+-
+-// bufferReadCloser is a custom implementation of io.ReadCloser. It wraps a bytes.Reader
+-// for reading data from an in-memory buffer and includes an onClose callback.
+-// The onClose callback is used to return the buffer to the pool, ensuring buffer re-usability.
+-type bufferReadCloser struct {
+-	*bytes.Reader
+-	onClose func()
+-}
+-
+-// Close implements the io.Closer interface. It calls the onClose callback to return the buffer
+-// to the pool, enabling buffer reuse. This method should be called by the consumers of ReadCloser
+-// once they have finished reading the data to ensure proper resource management.
+-func (brc *bufferReadCloser) Close() error {
+-	if brc.onClose == nil {
+-		return nil
+-	}
+-
+-	brc.onClose() // Return the buffer to the pool
+-	return nil
+-}
+diff --git a/pkg/writers/buffered_file_writer/metrics.go b/pkg/writers/buffered_file_writer/metrics.go
+index a940090e5..89954c4f2 100644
+--- a/pkg/writers/buffered_file_writer/metrics.go
++++ b/pkg/writers/buffered_file_writer/metrics.go
+@@ -8,95 +8,17 @@ import (
+ )
+ 
+ var (
+-	activeBufferCount = promauto.NewGauge(prometheus.GaugeOpts{
+-		Namespace: common.MetricsNamespace,
+-		Subsystem: common.MetricsSubsystem,
+-		Name:      "active_buffer_count",
+-		Help:      "Current number of active buffers.",
+-	})
+-
+-	bufferCount = promauto.NewGauge(prometheus.GaugeOpts{
+-		Namespace: common.MetricsNamespace,
+-		Subsystem: common.MetricsSubsystem,
+-		Name:      "buffer_count",
+-		Help:      "Total number of buffers managed by the pool.",
+-	})
+-
+-	totalBufferLength = promauto.NewGauge(prometheus.GaugeOpts{
+-		Namespace: common.MetricsNamespace,
+-		Subsystem: common.MetricsSubsystem,
+-		Name:      "total_buffer_length",
+-		Help:      "Total length of all buffers combined.",
+-	})
+-
+-	totalBufferSize = promauto.NewGauge(prometheus.GaugeOpts{
+-		Namespace: common.MetricsNamespace,
+-		Subsystem: common.MetricsSubsystem,
+-		Name:      "total_buffer_size",
+-		Help:      "Total size of all buffers combined.",
+-	})
+-
+-	growCount = promauto.NewCounter(prometheus.CounterOpts{
+-		Namespace: common.MetricsNamespace,
+-		Subsystem: common.MetricsSubsystem,
+-		Name:      "grow_count",
+-		Help:      "Total number of times buffers in the pool have grown.",
+-	})
+-
+-	growAmount = promauto.NewCounter(prometheus.CounterOpts{
+-		Namespace: common.MetricsNamespace,
+-		Subsystem: common.MetricsSubsystem,
+-		Name:      "grow_amount",
+-		Help:      "Total amount of bytes buffers in the pool have grown by.",
+-	})
+-
+-	shrinkCount = promauto.NewCounter(prometheus.CounterOpts{
+-		Namespace: common.MetricsNamespace,
+-		Subsystem: common.MetricsSubsystem,
+-		Name:      "shrink_count",
+-		Help:      "Total number of times buffers in the pool have shrunk.",
+-	})
+-
+-	shrinkAmount = promauto.NewCounter(prometheus.CounterOpts{
+-		Namespace: common.MetricsNamespace,
+-		Subsystem: common.MetricsSubsystem,
+-		Name:      "shrink_amount",
+-		Help:      "Total amount of bytes buffers in the pool have shrunk by.",
+-	})
+-
+-	checkoutDurationTotal = promauto.NewCounter(prometheus.CounterOpts{
+-		Namespace: common.MetricsNamespace,
+-		Subsystem: common.MetricsSubsystem,
+-		Name:      "checkout_duration_total_us",
+-		Help:      "Total duration in microseconds of buffer checkouts.",
+-	})
+-
+-	checkoutDuration = promauto.NewHistogram(prometheus.HistogramOpts{
+-		Namespace: common.MetricsNamespace,
+-		Subsystem: common.MetricsSubsystem,
+-		Name:      "checkout_duration_us",
+-		Help:      "Duration in microseconds of buffer checkouts.",
+-		Buckets:   []float64{50, 500, 5000},
+-	})
+-
+-	checkoutCount = promauto.NewCounter(prometheus.CounterOpts{
+-		Namespace: common.MetricsNamespace,
+-		Subsystem: common.MetricsSubsystem,
+-		Name:      "checkout_count",
+-		Help:      "Total number of buffer checkouts.",
+-	})
+-
+ 	totalWriteSize = promauto.NewCounter(prometheus.CounterOpts{
+ 		Namespace: common.MetricsNamespace,
+ 		Subsystem: common.MetricsSubsystem,
+-		Name:      "total_write_size_bytes",
++		Name:      "buffered_file_writer_total_write_size_bytes",
+ 		Help:      "Total size of data written by the BufferedFileWriter in bytes.",
+ 	})
+ 
+ 	totalWriteDuration = promauto.NewCounter(prometheus.CounterOpts{
+ 		Namespace: common.MetricsNamespace,
+ 		Subsystem: common.MetricsSubsystem,
+-		Name:      "total_write_duration_microseconds",
++		Name:      "buffered_file_writer_total_write_duration_microseconds",
+ 		Help:      "Total duration of write operations by the BufferedFileWriter in microseconds.",
+ 	})
+ 

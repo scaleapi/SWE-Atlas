@@ -1,0 +1,22 @@
+{
+  "tests": [
+    {
+      "name": "go.k6.io/k6/js/compiler/TestCorruptSourceMap"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestMinimalSourceMap"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestOptionsWithoutStrict"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestParseCommonJSWrapBehavior"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestParseCommonJSWrapBehavior/no_wrapping_preserves_original_source"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestParseCommonJSWrapBehavior/wrapping_produces_CommonJS_module_function"
+    }
+  ]
+}

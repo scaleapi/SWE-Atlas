@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "name": "scapy/contrib/gtp.uts"
+    },
+    {
+      "name": "scapy/contrib/openflow.uts"
+    },
+    {
+      "name": "scapy/contrib/openflow3.uts"
+    },
+    {
+      "name": "scapy/contrib/socks.uts"
+    },
+    {
+      "name": "test/regression.uts"
+    }
+  ]
+}

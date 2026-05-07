@@ -1,0 +1,281 @@
+diff --git a/scapy/base_classes.py b/scapy/base_classes.py
+index ec532110..62332472 100644
+--- a/scapy/base_classes.py
++++ b/scapy/base_classes.py
+@@ -291,8 +291,8 @@ class Packet_metaclass(_Generic_metaclass):
+                 ):
+         # type: (...) -> Type['scapy.packet.Packet']
+         if "fields_desc" in dct:  # perform resolution of references to other packets  # noqa: E501
+-            current_fld = dct["fields_desc"]  # type: List[Union['scapy.fields.Field'[Any, Any], Packet_metaclass]]  # noqa: E501
+-            resolved_fld = []  # type: List['scapy.fields.Field'[Any, Any]]
++            current_fld = dct["fields_desc"]  # type: List[Union[scapy.fields.Field[Any, Any], Packet_metaclass]]  # noqa: E501
++            resolved_fld = []  # type: List[scapy.fields.Field[Any, Any]]
+             for fld_or_pkt in current_fld:
+                 if isinstance(fld_or_pkt, Packet_metaclass):
+                     # reference to another fields_desc
+@@ -308,7 +308,7 @@ class Packet_metaclass(_Generic_metaclass):
+                     break
+ 
+         if resolved_fld:  # perform default value replacements
+-            final_fld = []  # type: List['scapy.fields.Field'[Any, Any]]
++            final_fld = []  # type: List[scapy.fields.Field[Any, Any]]
+             names = []
+             for f in resolved_fld:
+                 if f.name in names:
+@@ -361,7 +361,7 @@ class Packet_metaclass(_Generic_metaclass):
+         return newcls
+ 
+     def __getattr__(self, attr):
+-        # type: (str) -> 'scapy.fields.Field'[Any, Any]
++        # type: (str) -> scapy.fields.Field[Any, Any]
+         for k in self.fields_desc:  # type: ignore
+             if k.name == attr:
+                 return k  # type: ignore
+@@ -398,7 +398,7 @@ class Field_metaclass(_Generic_metaclass):
+                 bases,  # type: Tuple[type, ...]
+                 dct  # type: Dict[str, Any]
+                 ):
+-        # type: (...) -> Type['scapy.fields.Field'[Any, Any]]
++        # type: (...) -> Type[scapy.fields.Field[Any, Any]]
+         dct.setdefault("__slots__", [])
+         newcls = super(Field_metaclass, cls).__new__(cls, name, bases, dct)
+         return newcls
+diff --git a/scapy/contrib/homeplugav.py b/scapy/contrib/homeplugav.py
+index 171eb7d0..dba1848d 100644
+--- a/scapy/contrib/homeplugav.py
++++ b/scapy/contrib/homeplugav.py
+@@ -15,6 +15,15 @@
+ # scapy.contrib.description = HomePlugAV Layer
+ # scapy.contrib.status = loads
+ 
++"""
++HomePlugAV Layer for Scapy
++
++Copyright (C) FlUxIuS (Sebastien Dudek)
++
++HomePlugAV Management Message Type
++Key (type value) : Description
++"""
++
+ from __future__ import absolute_import
+ import struct
+ 
+@@ -46,14 +55,6 @@ from scapy.fields import (
+ from scapy.layers.l2 import Ether
+ from scapy.modules.six.moves import range
+ 
+-"""
+-    Copyright (C) HomePlugAV Layer for Scapy by FlUxIuS (Sebastien Dudek)
+-"""
+-
+-"""
+-    HomePlugAV Management Message Type
+-    Key (type value) : Description
+-"""
+ HPAVTypeList = {0xA000: "'Get Device/sw version Request'",
+                 0xA001: "'Get Device/sw version Confirmation'",
+                 0xA008: "'Read MAC Memory Request'",
+@@ -703,7 +704,7 @@ class AutoConnection(Packet):
+                    XByteField("ConnCoQoSPrio", 0x00),
+                    ShortField("ConnRate", 0),
+                    LEIntField("ConnTTL", 0),
+-                   ShortField("CSPECversion", 0),
++                   ShortField("version", 0),
+                    StrFixedLenField("VlanTag",
+                                     b"\x00" * 4,
+                                     4),
+@@ -1199,7 +1200,7 @@ class ModulePIB(Packet):
+                          lambda pkt:(0x1FBC >= pkt.__offset and 0x1FBD <= pkt.__offset + pkt.__length)),  # noqa: E501
+         ConditionalField(XByteField("OptimizationBackwardCompatible", 0),
+                          lambda pkt:(0x1FBD >= pkt.__offset and 0x1FBE <= pkt.__offset + pkt.__length)),  # noqa: E501
+-        ConditionalField(XByteField("reserved_21", 0),
++        ConditionalField(XByteField("reserved_21b", 0),
+                          lambda pkt:(0x1FBE >= pkt.__offset and 0x1FBF <= pkt.__offset + pkt.__length)),  # noqa: E501
+         ConditionalField(XByteField("MaxPbsPerSymbol", 0),
+                          lambda pkt:(0x1FBF >= pkt.__offset and 0x1FC0 <= pkt.__offset + pkt.__length)),  # noqa: E501
+diff --git a/scapy/contrib/loraphy2wan.py b/scapy/contrib/loraphy2wan.py
+index 313f433d..a1a75bb6 100644
+--- a/scapy/contrib/loraphy2wan.py
++++ b/scapy/contrib/loraphy2wan.py
+@@ -16,9 +16,11 @@
+ # scapy.contrib.status = loads
+ 
+ """
+-    Copyright (C) 2020  Sebastien Dudek (@FlUxIuS)
+-    initially developed @PentHertz
+-    and improved at @Trend Micro
++Copyright (C) 2020  Sebastien Dudek (@FlUxIuS)
++initially developed @PentHertz
++and improved at @Trend Micro
++
++Spec: lorawantm_specification v1.1
+ """
+ 
+ from scapy.packet import Packet
+@@ -365,7 +367,7 @@ class ForceRejoinReq(Packet):
+     fields_desc = [BitField("RFU", 0, 2),
+                    BitField("Period", 0, 3),
+                    BitField("Max_Retries", 0, 3),
+-                   BitField("RFU", 0, 1),
++                   BitField("RFU2", 0, 1),
+                    BitField("RejoinType", 0, 3),
+                    BitField("DR", 0, 4)]
+ 
+diff --git a/scapy/contrib/pnio_dcp.py b/scapy/contrib/pnio_dcp.py
+index 2ea3c6ce..e5ec6801 100644
+--- a/scapy/contrib/pnio_dcp.py
++++ b/scapy/contrib/pnio_dcp.py
+@@ -21,10 +21,24 @@
+ 
+ from scapy.compat import orb
+ from scapy.all import Packet, bind_layers, Padding
+-from scapy.fields import ByteEnumField, ShortField, XShortField, \
+-    ShortEnumField, FieldLenField, XByteField, XIntField, MultiEnumField, \
+-    IPField, MACField, StrLenField, PacketListField, PadField, \
+-    ConditionalField, LenField
++from scapy.fields import (
++    ByteEnumField,
++    ConditionalField,
++    FieldLenField,
++    IPField,
++    LenField,
++    MACField,
++    MultiEnumField,
++    MultipleTypeField,
++    PacketListField,
++    PadField,
++    ShortEnumField,
++    ShortField,
++    StrLenField,
++    XByteField,
++    XIntField,
++    XShortField,
++)
+ 
+ # minimum packet is 60 bytes.. 14 bytes are Ether()
+ MIN_PACKET_LENGTH = 44
+@@ -539,13 +553,21 @@ class ProfinetDCP(Packet):
+                                         BLOCK_QUALIFIERS),
+                          lambda pkt: pkt.service_id == 4 and
+                          pkt.service_type == 0),
+-        # Name Of Station
+-        ConditionalField(StrLenField("name_of_station", "et200sp",
+-                         length_from=lambda x: x.dcp_block_length - 2),
+-                         lambda pkt: pkt.service_id == 4 and
+-                         pkt.service_type == 0 and pkt.option == 2 and
+-                         pkt.sub_option == 2),
+-
++        # (Common) Name Of Station
++        ConditionalField(
++            MultipleTypeField(
++                [
++                    (StrLenField("name_of_station", "et200sp",
++                                 length_from=lambda x: x.dcp_block_length - 2),
++                     lambda pkt: pkt.service_id == 4),
++                ],
++                StrLenField("name_of_station", "et200sp",
++                            length_from=lambda x: x.dcp_block_length),
++            ),
++            lambda pkt: pkt.service_type == 0 and pkt.option == 2 and
++            pkt.sub_option == 2
++        ),
++        # DCP SET REQUEST #
+         # MAC
+         ConditionalField(MACField("mac", "00:00:00:00:00:00"),
+                          lambda pkt: pkt.service_id == 4 and
+@@ -566,12 +588,7 @@ class ProfinetDCP(Packet):
+                          pkt.sub_option == 2),
+ 
+         # DCP IDENTIFY REQUEST #
+-        # Name of station
+-        ConditionalField(StrLenField("name_of_station", "et200sp",
+-                                     length_from=lambda x: x.dcp_block_length),
+-                         lambda pkt: pkt.service_id == 5 and
+-                         pkt.service_type == 0 and pkt.option == 2 and
+-                         pkt.sub_option == 2),
++        # Name of station (handled above)
+ 
+         # Alias name
+         ConditionalField(StrLenField("alias_name", "et200sp",
+diff --git a/scapy/contrib/vqp.py b/scapy/contrib/vqp.py
+index 9bc5a750..5d4476fb 100644
+--- a/scapy/contrib/vqp.py
++++ b/scapy/contrib/vqp.py
+@@ -15,11 +15,18 @@
+ # scapy.contrib.description = VLAN Query Protocol
+ # scapy.contrib.status = loads
+ 
+-import struct
+-
+-from scapy.packet import Packet, bind_layers
+-from scapy.fields import ByteEnumField, ByteField, ConditionalField, \
+-    FieldLenField, IntEnumField, IntField, IPField, MACField, StrLenField
++from scapy.packet import Packet, bind_layers, bind_bottom_up
++from scapy.fields import (
++    ByteEnumField,
++    ByteField,
++    FieldLenField,
++    IPField,
++    IntEnumField,
++    IntField,
++    MACField,
++    MultipleTypeField,
++    StrLenField,
++)
+ from scapy.layers.inet import UDP
+ 
+ 
+@@ -51,26 +58,22 @@ class VQPEntry(Packet):
+             3078: "ReqMACAddress", 3079: "unknown",
+             3080: "ResMACAddress"
+         }),
+-        FieldLenField("len", None),
+-        ConditionalField(IPField("datatom", "0.0.0.0"),
+-                         lambda p: p.datatype == 3073),
+-        ConditionalField(MACField("data", "00:00:00:00:00:00"),
+-                         lambda p: p.datatype == 3078),
+-        ConditionalField(MACField("data", "00:00:00:00:00:00"),
+-                         lambda p: p.datatype == 3080),
+-        ConditionalField(StrLenField("data", None,
+-                                     length_from=lambda p: p.len),
+-                         lambda p: p.datatype not in [3073, 3078, 3080]),
++        FieldLenField("len", None, length_of="data", fmt="H"),
++        MultipleTypeField(
++            [
++                (IPField("data", "0.0.0.0"),
++                    lambda p: p.datatype == 3073),
++                (MACField("data", "00:00:00:00:00:00"),
++                    lambda p: p.datatype in [3078, 3080]),
++            ],
++            StrLenField("data", None, length_from=lambda p: p.len)
++        )
+     ]
+ 
+-    def post_build(self, p, pay):
+-        if self.len is None:
+-            tmp_len = len(p.data)
+-            p = p[:2] + struct.pack("!H", tmp_len) + p[4:]
+-        return p
+ 
++bind_bottom_up(UDP, VQP, sport=1589)
++bind_bottom_up(UDP, VQP, dport=1589)
++bind_layers(UDP, VQP, sport=1589, dport=1589)
+ 
+-bind_layers(UDP, VQP, sport=1589)
+-bind_layers(UDP, VQP, dport=1589)
+ bind_layers(VQP, VQPEntry,)
+ bind_layers(VQPEntry, VQPEntry,)
+diff --git a/scapy/tools/UTscapy.py b/scapy/tools/UTscapy.py
+index 85a217a3..337c76ff 100644
+--- a/scapy/tools/UTscapy.py
++++ b/scapy/tools/UTscapy.py
+@@ -1082,6 +1082,9 @@ def main():
+         KW_KO.append("not_libpcap")
+         if VERB > 2:
+             print(" " + arrow + " libpcap mode")
++    elif WINDOWS and not NON_ROOT:
++        print("ERROR: libpcap is required on Windows for root tests")
++        raise SystemExit
+ 
+     KW_KO.append("disabled")
+ 

@@ -1,0 +1,40 @@
+{
+  "tests": [
+    {
+      "name": "tests/user_settings/test_set_default_mailbox.py::test_cannot_default_other_user_mailbox"
+    },
+    {
+      "name": "tests/user_settings/test_set_default_mailbox.py::test_cannot_set_mailbox_stores_msg"
+    },
+    {
+      "name": "tests/user_settings/test_set_default_mailbox.py::test_cannot_set_unverified"
+    },
+    {
+      "name": "tests/user_settings/test_set_default_mailbox.py::test_create_mailbox_log_email_already_used"
+    },
+    {
+      "name": "tests/user_settings/test_set_default_mailbox.py::test_create_mailbox_log_email_cannot_be_used"
+    },
+    {
+      "name": "tests/user_settings/test_set_default_mailbox.py::test_create_mailbox_log_invalid_email"
+    },
+    {
+      "name": "tests/user_settings/test_set_default_mailbox.py::test_create_mailbox_log_not_premium"
+    },
+    {
+      "name": "tests/user_settings/test_set_default_mailbox.py::test_dashboard_set_default_mailbox"
+    },
+    {
+      "name": "tests/user_settings/test_set_default_mailbox.py::test_dashboard_set_default_mailbox_unverified"
+    },
+    {
+      "name": "tests/user_settings/test_set_default_mailbox.py::test_set_already_default_mailbox_is_noop"
+    },
+    {
+      "name": "tests/user_settings/test_set_default_mailbox.py::test_set_default_mailbox"
+    },
+    {
+      "name": "tests/user_settings/test_set_default_mailbox.py::test_set_default_mailbox_in_user_settings"
+    }
+  ]
+}

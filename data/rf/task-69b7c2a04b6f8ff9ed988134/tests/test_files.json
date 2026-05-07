@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "name": "src/tests/output-tx.c"
+    },
+    {
+      "name": "src/runmode-unittests.c"
+    }
+  ]
+}

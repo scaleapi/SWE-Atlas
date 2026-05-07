@@ -1,0 +1,9 @@
+{
+  "task_id": "696719205599a51110d4b434",
+  "repo": "Automattic_wp-calypso",
+  "base_commit": "03dfa77e25f5a8d6f328ac8553015797ecb32bf8",
+  "language": "TypeScript",
+  "mount_path": "/workspace",
+  "initial_complexity": "Mid",
+  "uid": "0f1a823e-3191-4800-a0ea-b9cfccb19f64"
+}

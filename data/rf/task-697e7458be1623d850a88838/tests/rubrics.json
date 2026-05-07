@@ -1,0 +1,138 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "cb059d64ef21a609a208ed627e2bb260",
+    "title": "1.1: Adds defensive error handling around PID response parsing in scapy/contrib/automotive/obd/scanner.py to prevent crashes from unexpected response data",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9210f51d297cf3052395900fd00e3f1a",
+    "title": "1.2: Ensures the supported PID detection in scapy/contrib/automotive/obd/scanner.py returns only unique PID values",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4cdaa4eacd5f2f78a4c58dee5de85ddf",
+    "title": "1.3: Changes closed-socket handling in ServiceEnumerator.execute in scapy/contrib/automotive/scanner/enumerator.py to signal an error instead of silently returning",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5233c9c6380f93059a979bbde1d9401c",
+    "title": "1.4: Fixes the results_with_negative_response property in scapy/contrib/automotive/scanner/enumerator.py to exclude entries where no response was received",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    "title": "1.5: Fixes the results_with_positive_response property in scapy/contrib/automotive/scanner/enumerator.py to exclude entries where no response was received",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "bfd408c72b33f6d820d2c7e587459314",
+    "title": "1.6: Adds cleanup for the ISOTP socket in the finally block of main() in scapy/tools/automotive/obdscanner.py to prevent resource leaks",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "450f95e0bb2426a661398414c180fcaa",
+    "title": "1.7: Implements get_can_socket() in scapy/tools/automotive/obdscanner.py that accepts channel, interface, and python_can_args parameters, returns a CANSocket, and is called from main()",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9225c47f3cd40dd244408b5ea280183c",
+    "title": "1.8: Implements get_isotp_socket() in scapy/tools/automotive/obdscanner.py that accepts csock, source, and destination parameters, returns an ISOTPSocket, and is called from main()",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6a7ba253ff3d382d9076f14388b35fad",
+    "title": "1.9: Implements run_scan() in scapy/tools/automotive/obdscanner.py that accepts isock, enumerators, full_scan, verbose, and timeout parameters, and is called from main()",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "801fbe8619f340e3de8307dc9148346b",
+    "title": "2.1: Adds debug logging in scapy/contrib/automotive/scanner/enumerator.py when retrying a request due to a None response",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "fc027432ea53da96205a12c25794dd20",
+    "title": "2.2: Adds debug logging in scapy/contrib/automotive/scanner/enumerator.py when retrying a request due to a busy return code",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0e359368582e694eee9ae8b7ea9b0f92",
+    "title": "4.1: Introduces syntax errors, import errors, or undefined references in modified source files",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "29289bf2c090dd17a669374cc5c9bfce",
+    "title": "4.2: Modifies test files or testing logic despite the explicit prompt constraint",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

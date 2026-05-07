@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "name": "public/app/features/alerting/unified/Silences.test.tsx"
+    },
+    {
+      "name": "public/app/features/alerting/unified/hooks/useSilenceNavData.test.tsx"
+    }
+  ]
+}

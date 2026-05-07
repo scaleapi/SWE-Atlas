@@ -1,0 +1,594 @@
+diff --git a/lib/modules/manager/pep621/artifacts.ts b/lib/modules/manager/pep621/artifacts.ts
+index 5fa070e4f..67a8435f4 100644
+--- a/lib/modules/manager/pep621/artifacts.ts
++++ b/lib/modules/manager/pep621/artifacts.ts
+@@ -1,8 +1,8 @@
+ import is from '@sindresorhus/is';
+ import { writeLocalFile } from '../../../util/fs';
+ import type { UpdateArtifact, UpdateArtifactsResult } from '../types';
++import { parsePyProject } from './extract';
+ import { processors } from './processors';
+-import { parsePyProject } from './utils';
+ 
+ export async function updateArtifacts(
+   updateArtifact: UpdateArtifact,
+@@ -11,7 +11,7 @@ export async function updateArtifacts(
+ 
+   await writeLocalFile(packageFileName, newPackageFileContent);
+ 
+-  const project = parsePyProject(packageFileName, newPackageFileContent);
++  const project = parsePyProject(newPackageFileContent, packageFileName);
+   if (is.nullOrUndefined(project)) {
+     return [
+       {
+diff --git a/lib/modules/manager/pep621/extract.ts b/lib/modules/manager/pep621/extract.ts
+index cde3fd551..94637de93 100644
+--- a/lib/modules/manager/pep621/extract.ts
++++ b/lib/modules/manager/pep621/extract.ts
+@@ -1,5 +1,5 @@
+-import is from '@sindresorhus/is';
+ import { logger } from '../../../logger';
++import { massage as massageToml, parse as parseToml } from '../../../util/toml';
+ import { PythonVersionDatasource } from '../../datasource/python-version';
+ import * as pep440 from '../../versioning/pep440';
+ import type {
+@@ -8,12 +8,23 @@ import type {
+   PackageFileContent,
+ } from '../types';
+ import { processors } from './processors';
+-import {
+-  depTypes,
+-  parseDependencyGroupRecord,
+-  parseDependencyList,
+-  parsePyProject,
+-} from './utils';
++import { type PyProject, PyProjectSchema } from './schema';
++
++export function parsePyProject(
++  content: string,
++  packageFile?: string,
++): PyProject | null {
++  try {
++    const jsonMap = parseToml(massageToml(content));
++    return PyProjectSchema.parse(jsonMap);
++  } catch (err) {
++    logger.debug(
++      { packageFile, err },
++      `Failed to parse and validate pyproject file`,
++    );
++    return null;
++  }
++}
+ 
+ export async function extractPackageFile(
+   content: string,
+@@ -22,20 +33,17 @@ export async function extractPackageFile(
+ ): Promise<PackageFileContent | null> {
+   logger.trace(`pep621.extractPackageFile(${packageFile})`);
+ 
+-  const deps: PackageDependency[] = [];
+-
+-  const def = parsePyProject(packageFile, content);
+-  if (is.nullOrUndefined(def)) {
++  const def = parsePyProject(content, packageFile);
++  if (!def) {
+     return null;
+   }
+ 
+-  const packageFileVersion = def.project?.version;
++  const deps: PackageDependency[] = [];
++
+   const pythonConstraint = def.project?.['requires-python'];
+-  let extractedConstraints;
+-  if (is.nonEmptyString(pythonConstraint)) {
+-    extractedConstraints = {
+-      extractedConstraints: { python: pythonConstraint },
+-    };
++  const extractedConstraints: Record<string, string> = {};
++  if (pythonConstraint) {
++    extractedConstraints.python = pythonConstraint;
+     deps.push({
+       packageName: 'python',
+       depType: 'requires-python',
+@@ -44,32 +52,27 @@ export async function extractPackageFile(
+       datasource: PythonVersionDatasource.id,
+       versioning: pep440.id,
+     });
+-  } else {
+-    extractedConstraints = {};
+   }
+ 
+-  // pyProject standard definitions
+-  deps.push(
+-    ...parseDependencyList(depTypes.dependencies, def.project?.dependencies),
+-  );
+-  deps.push(
+-    ...parseDependencyGroupRecord(
+-      depTypes.dependencyGroups,
+-      def['dependency-groups'],
+-    ),
+-  );
+-  deps.push(
+-    ...parseDependencyGroupRecord(
+-      depTypes.optionalDependencies,
+-      def.project?.['optional-dependencies'],
+-    ),
+-  );
+-  deps.push(
+-    ...parseDependencyList(
+-      depTypes.buildSystemRequires,
+-      def['build-system']?.requires,
+-    ),
+-  );
++  const projectDependencies = def.project?.dependencies;
++  if (projectDependencies) {
++    deps.push(...projectDependencies);
++  }
++
++  const dependencyGroups = def['dependency-groups'];
++  if (dependencyGroups) {
++    deps.push(...dependencyGroups);
++  }
++
++  const projectOptionalDependencies = def.project?.['optional-dependencies'];
++  if (projectOptionalDependencies) {
++    deps.push(...projectOptionalDependencies);
++  }
++
++  const buildSystemRequires = def['build-system']?.requires;
++  if (buildSystemRequires) {
++    deps.push(...buildSystemRequires);
++  }
+ 
+   // process specific tool sets
+   let processedDeps = deps;
+@@ -82,7 +85,8 @@ export async function extractPackageFile(
+     );
+   }
+ 
++  const packageFileVersion = def.project?.version;
+   return processedDeps.length
+-    ? { ...extractedConstraints, deps: processedDeps, packageFileVersion }
++    ? { extractedConstraints, deps: processedDeps, packageFileVersion }
+     : null;
+ }
+diff --git a/lib/modules/manager/pep621/processors/hatch.ts b/lib/modules/manager/pep621/processors/hatch.ts
+index 0cb8cbe14..65ae5e8c4 100644
+--- a/lib/modules/manager/pep621/processors/hatch.ts
++++ b/lib/modules/manager/pep621/processors/hatch.ts
+@@ -1,11 +1,9 @@
+-import is from '@sindresorhus/is';
+ import type {
+   PackageDependency,
+   UpdateArtifact,
+   UpdateArtifactsResult,
+ } from '../../types';
+ import type { PyProject } from '../schema';
+-import { parseDependencyList } from '../utils';
+ import type { PyProjectProcessor } from './types';
+ 
+ export class HatchProcessor implements PyProjectProcessor {
+@@ -13,22 +11,10 @@ export class HatchProcessor implements PyProjectProcessor {
+     pyproject: PyProject,
+     deps: PackageDependency[],
+   ): PackageDependency[] {
+-    const hatch_envs = pyproject.tool?.hatch?.envs;
+-    if (is.nullOrUndefined(hatch_envs)) {
+-      return deps;
++    const hatchDeps = pyproject.tool?.hatch?.deps;
++    if (hatchDeps) {
++      deps.push(...hatchDeps);
+     }
+-
+-    for (const [envName, env] of Object.entries(hatch_envs)) {
+-      const depType = `tool.hatch.envs.${envName}`;
+-      const envDeps = parseDependencyList(depType, env?.dependencies);
+-      deps.push(...envDeps);
+-      const extraDeps = parseDependencyList(
+-        depType,
+-        env?.['extra-dependencies'],
+-      );
+-      deps.push(...extraDeps);
+-    }
+-
+     return deps;
+   }
+ 
+diff --git a/lib/modules/manager/pep621/processors/pdm.ts b/lib/modules/manager/pep621/processors/pdm.ts
+index 32491532c..d2d427fa8 100644
+--- a/lib/modules/manager/pep621/processors/pdm.ts
++++ b/lib/modules/manager/pep621/processors/pdm.ts
+@@ -1,4 +1,3 @@
+-import is from '@sindresorhus/is';
+ import { quote } from 'shlex';
+ import { TEMPORARY_ERROR } from '../../../../constants/error-messages';
+ import { logger } from '../../../../logger';
+@@ -16,7 +15,7 @@ import type {
+ } from '../../types';
+ import { PdmLockfileSchema, type PyProject } from '../schema';
+ import type { Pep621ManagerData } from '../types';
+-import { depTypes, parseDependencyGroupRecord } from '../utils';
++import { depTypes } from '../utils';
+ import type { PyProjectProcessor } from './types';
+ 
+ const pdmUpdateCMD = 'pdm update --no-sync --update-eager';
+@@ -27,19 +26,15 @@ export class PdmProcessor implements PyProjectProcessor {
+     deps: PackageDependency[],
+   ): PackageDependency<Pep621ManagerData>[] {
+     const pdm = project.tool?.pdm;
+-    if (is.nullOrUndefined(pdm)) {
++    if (!pdm) {
+       return deps;
+     }
+ 
+-    deps.push(
+-      ...parseDependencyGroupRecord(
+-        depTypes.pdmDevDependencies,
+-        pdm['dev-dependencies'],
+-      ),
+-    );
++    const devDependencies = pdm['dev-dependencies'];
++    deps.push(...devDependencies);
+ 
+     const pdmSource = pdm.source;
+-    if (is.nullOrUndefined(pdmSource)) {
++    if (!pdmSource) {
+       return deps;
+     }
+ 
+@@ -67,7 +62,7 @@ export class PdmProcessor implements PyProjectProcessor {
+     packageFile: string,
+   ): Promise<PackageDependency[]> {
+     if (
+-      is.nullOrUndefined(project.tool?.pdm) &&
++      !project.tool?.pdm &&
+       project['build-system']?.['build-backend'] !== 'pdm.backend'
+     ) {
+       return Promise.resolve(deps);
+@@ -104,7 +99,7 @@ export class PdmProcessor implements PyProjectProcessor {
+     const lockFileName = getSiblingFileName(packageFileName, 'pdm.lock');
+     try {
+       const existingLockFileContent = await readLocalFile(lockFileName, 'utf8');
+-      if (is.nullOrUndefined(existingLockFileContent)) {
++      if (!existingLockFileContent) {
+         logger.debug('No pdm.lock found');
+         return null;
+       }
+@@ -180,7 +175,7 @@ function generateCMDs(updatedDeps: Upgrade<Pep621ManagerData>[]): string[] {
+   for (const dep of updatedDeps) {
+     switch (dep.depType) {
+       case depTypes.optionalDependencies: {
+-        if (is.nullOrUndefined(dep.managerData?.depGroup)) {
++        if (!dep.managerData?.depGroup) {
+           logger.once.warn(
+             { dep: dep.depName },
+             'Unexpected optional dependency without group',
+@@ -196,7 +191,7 @@ function generateCMDs(updatedDeps: Upgrade<Pep621ManagerData>[]): string[] {
+       }
+       case depTypes.dependencyGroups:
+       case depTypes.pdmDevDependencies: {
+-        if (is.nullOrUndefined(dep.managerData?.depGroup)) {
++        if (!dep.managerData?.depGroup) {
+           logger.once.warn(
+             { dep: dep.depName },
+             'Unexpected dev dependency without group',
+@@ -234,7 +229,7 @@ function addPackageToCMDRecord(
+   commandPrefix: string,
+   packageName: string,
+ ): void {
+-  if (is.nullOrUndefined(packagesByCMD[commandPrefix])) {
++  if (!packagesByCMD[commandPrefix]) {
+     packagesByCMD[commandPrefix] = [];
+   }
+   packagesByCMD[commandPrefix].push(packageName);
+diff --git a/lib/modules/manager/pep621/processors/uv.ts b/lib/modules/manager/pep621/processors/uv.ts
+index 5284bc268..93e3de6c3 100644
+--- a/lib/modules/manager/pep621/processors/uv.ts
++++ b/lib/modules/manager/pep621/processors/uv.ts
+@@ -20,7 +20,7 @@ import type {
+ } from '../../types';
+ import { applyGitSource } from '../../util';
+ import { type PyProject, UvLockfileSchema } from '../schema';
+-import { depTypes, parseDependencyList } from '../utils';
++import { depTypes } from '../utils';
+ import type { PyProjectProcessor } from './types';
+ 
+ const uvUpdateCMD = 'uv lock';
+@@ -28,7 +28,7 @@ const uvUpdateCMD = 'uv lock';
+ export class UvProcessor implements PyProjectProcessor {
+   process(project: PyProject, deps: PackageDependency[]): PackageDependency[] {
+     const uv = project.tool?.uv;
+-    if (is.nullOrUndefined(uv)) {
++    if (!uv) {
+       return deps;
+     }
+ 
+@@ -42,12 +42,10 @@ export class UvProcessor implements PyProjectProcessor {
+       ?.filter((index) => !index.explicit && index.name !== defaultIndex?.name)
+       ?.map(({ url }) => url);
+ 
+-    deps.push(
+-      ...parseDependencyList(
+-        depTypes.uvDevDependencies,
+-        uv['dev-dependencies'],
+-      ),
+-    );
++    const devDependencies = uv['dev-dependencies'];
++    if (devDependencies) {
++      deps.push(...devDependencies);
++    }
+ 
+     // https://docs.astral.sh/uv/concepts/dependencies/#dependency-sources
+     // Skip sources that do not make sense to handle (e.g. path).
+@@ -157,7 +155,7 @@ export class UvProcessor implements PyProjectProcessor {
+     const lockFileName = getSiblingFileName(packageFileName, 'uv.lock');
+     try {
+       const existingLockFileContent = await readLocalFile(lockFileName, 'utf8');
+-      if (is.nullOrUndefined(existingLockFileContent)) {
++      if (!existingLockFileContent) {
+         logger.debug('No uv.lock found');
+         return null;
+       }
+@@ -336,7 +334,7 @@ async function getUvIndexCredentials(
+ ): Promise<NodeJS.ProcessEnv> {
+   const uv_indexes = project.tool?.uv?.index;
+ 
+-  if (is.nullOrUndefined(uv_indexes)) {
++  if (!uv_indexes) {
+     return {};
+   }
+ 
+diff --git a/lib/modules/manager/pep621/schema.ts b/lib/modules/manager/pep621/schema.ts
+index c509e31de..708b5b0b2 100644
+--- a/lib/modules/manager/pep621/schema.ts
++++ b/lib/modules/manager/pep621/schema.ts
+@@ -2,16 +2,55 @@ import { z } from 'zod';
+ import { LooseArray, LooseRecord, Toml } from '../../../util/schema-utils';
+ import { normalizePythonDepName } from '../../datasource/pypi/common';
+ import { PixiConfigSchema } from '../pixi/schema';
++import type { PackageDependency } from '../types';
++import { depTypes, pep508ToPackageDependency } from './utils';
+ 
+ export type PyProject = z.infer<typeof PyProjectSchema>;
+ 
+-const DependencyListSchema = z.array(z.string()).optional();
+-const DependencyRecordSchema = z
+-  .record(z.string(), z.array(z.string()))
+-  .optional();
++type Pep508DependencySchema = z.ZodType<PackageDependency<Record<string, any>>>;
++
++function Pep508Dependency(depType: string): Pep508DependencySchema {
++  return z.string().transform((x, ctx) => {
++    const res = pep508ToPackageDependency(depType, x);
++
++    if (!res) {
++      ctx.addIssue({
++        code: z.ZodIssueCode.custom,
++        message: 'should be a valid PEP508 dependency',
++        fatal: true,
++      });
++
++      return z.NEVER;
++    }
++
++    return res;
++  }) as Pep508DependencySchema;
++}
++
++type DependencyGroupSchema = z.ZodType<
++  PackageDependency<Record<string, any>>[]
++>;
++
++function DependencyGroup(depType: string): DependencyGroupSchema {
++  return LooseRecord(LooseArray(Pep508Dependency(depType))).transform(
++    (depGroups) => {
++      const deps: PackageDependency[] = [];
++      for (const [depGroup, groupDeps] of Object.entries(depGroups)) {
++        for (const dep of groupDeps) {
++          if (dep.packageName) {
++            dep.depName = dep.packageName;
++          }
++          dep.managerData = { depGroup };
++          deps.push(dep);
++        }
++      }
++      return deps;
++    },
++  ) as unknown as DependencyGroupSchema;
++}
+ 
+ const PdmSchema = z.object({
+-  'dev-dependencies': DependencyRecordSchema,
++  'dev-dependencies': DependencyGroup(depTypes.pdmDevDependencies).catch([]),
+   source: z
+     .array(
+       z.object({
+@@ -23,19 +62,32 @@ const PdmSchema = z.object({
+     .optional(),
+ });
+ 
+-const HatchSchema = z.object({
+-  envs: z
+-    .record(
++const HatchSchema = z
++  .object({
++    envs: LooseRecord(
+       z.string(),
+-      z
+-        .object({
+-          dependencies: DependencyListSchema,
+-          'extra-dependencies': DependencyListSchema,
+-        })
+-        .optional(),
+-    )
+-    .optional(),
+-});
++      z.object({
++        dependencies: z.unknown(),
++        'extra-dependencies': z.unknown(),
++      }),
++    ),
++  })
++  .catch({ envs: {} })
++  .transform(({ envs }) => {
++    const deps: PackageDependency[] = [];
++    for (const [
++      envName,
++      { dependencies, 'extra-dependencies': extraDependencies },
++    ] of Object.entries(envs)) {
++      const depType = `tool.hatch.envs.${envName}`;
++      const HatchDependency = LooseArray(Pep508Dependency(depType)).catch([]);
++      deps.push(
++        ...HatchDependency.parse(dependencies),
++        ...HatchDependency.parse(extraDependencies),
++      );
++    }
++    return { deps };
++  });
+ 
+ const UvIndexSource = z.object({
+   index: z.string(),
+@@ -71,7 +123,9 @@ const UvSource = z.union([
+ ]);
+ 
+ const UvSchema = z.object({
+-  'dev-dependencies': DependencyListSchema,
++  'dev-dependencies': LooseArray(
++    Pep508Dependency(depTypes.uvDevDependencies),
++  ).catch([]),
+   'required-version': z.string().optional(),
+   sources: LooseRecord(
+     // uv applies the same normalization as for Python dependencies on sources
+@@ -94,32 +148,35 @@ export const PyProjectSchema = z.object({
+   project: z
+     .object({
+       version: z.string().optional().catch(undefined),
+-      'requires-python': z.string().optional(),
+-      dependencies: DependencyListSchema,
+-      'optional-dependencies': DependencyRecordSchema,
++      'requires-python': z.string().optional().catch(undefined),
++      dependencies: LooseArray(Pep508Dependency(depTypes.dependencies)).catch(
++        [],
++      ),
++      'optional-dependencies': DependencyGroup(
++        depTypes.optionalDependencies,
++      ).catch([]),
+     })
+-    .optional(),
++    .optional()
++    .catch(undefined),
+   'build-system': z
+     .object({
+-      requires: DependencyListSchema,
+-      'build-backend': z.string().optional(),
++      requires: LooseArray(
++        Pep508Dependency(depTypes.buildSystemRequires),
++      ).catch([]),
++      'build-backend': z.string().optional().catch(undefined),
+     })
+-    .optional(),
+-  'dependency-groups': z
+-    .record(
+-      z.string(),
+-      // Skip non-string entries, like `{include-group = "typing"}`, as they are not dependencies.
+-      LooseArray(z.string()),
+-    )
+-    .optional(),
++    .optional()
++    .catch(undefined),
++  'dependency-groups': DependencyGroup(depTypes.dependencyGroups).catch([]),
+   tool: z
+     .object({
+-      pixi: PixiConfigSchema.optional(),
+-      pdm: PdmSchema.optional(),
+-      hatch: HatchSchema.optional(),
+-      uv: UvSchema.optional(),
++      pixi: PixiConfigSchema.optional().catch(undefined),
++      pdm: PdmSchema.optional().catch(undefined),
++      hatch: HatchSchema.optional().catch(undefined),
++      uv: UvSchema.optional().catch(undefined),
+     })
+-    .optional(),
++    .optional()
++    .catch(undefined),
+ });
+ 
+ export const PdmLockfileSchema = Toml.pipe(
+diff --git a/lib/modules/manager/pep621/utils.ts b/lib/modules/manager/pep621/utils.ts
+index 178239a06..e7dfaeae3 100644
+--- a/lib/modules/manager/pep621/utils.ts
++++ b/lib/modules/manager/pep621/utils.ts
+@@ -1,13 +1,10 @@
+ import is from '@sindresorhus/is';
+ import { logger } from '../../../logger';
+ import { regEx } from '../../../util/regex';
+-import { massage as massageToml, parse as parseToml } from '../../../util/toml';
+ import { PypiDatasource } from '../../datasource/pypi';
+ import { normalizePythonDepName } from '../../datasource/pypi/common';
+ import type { PackageDependency } from '../types';
+-import type { PyProject } from './schema';
+-import { PyProjectSchema } from './schema';
+-import type { Pep508ParseResult, Pep621ManagerData } from './types';
++import type { Pep508ParseResult } from './types';
+ 
+ const pep508Regex = regEx(
+   /^(?<packageName>[A-Z0-9._-]+)\s*(\[(?<extras>[A-Z0-9\s,._-]+)\])?\s*(?<currentValue>[^;]+)?(;\s*(?<marker>.*))?/i,
+@@ -91,58 +88,3 @@ export function pep508ToPackageDependency(
+   }
+   return dep;
+ }
+-
+-export function parseDependencyGroupRecord(
+-  depType: string,
+-  records: Record<string, string[]> | null | undefined,
+-): PackageDependency[] {
+-  if (is.nullOrUndefined(records)) {
+-    return [];
+-  }
+-
+-  const deps: PackageDependency<Pep621ManagerData>[] = [];
+-  for (const [depGroup, pep508Strings] of Object.entries(records)) {
+-    for (const dep of parseDependencyList(depType, pep508Strings)) {
+-      deps.push({
+-        ...dep,
+-        depName: dep.packageName!,
+-        managerData: { depGroup },
+-      });
+-    }
+-  }
+-  return deps;
+-}
+-
+-export function parseDependencyList(
+-  depType: string,
+-  list: string[] | null | undefined,
+-): PackageDependency[] {
+-  if (is.nullOrUndefined(list)) {
+-    return [];
+-  }
+-
+-  const deps: PackageDependency[] = [];
+-  for (const element of list) {
+-    const dep = pep508ToPackageDependency(depType, element);
+-    if (is.truthy(dep)) {
+-      deps.push(dep);
+-    }
+-  }
+-  return deps;
+-}
+-
+-export function parsePyProject(
+-  packageFile: string,
+-  content: string,
+-): PyProject | null {
+-  try {
+-    const jsonMap = parseToml(massageToml(content));
+-    return PyProjectSchema.parse(jsonMap);
+-  } catch (err) {
+-    logger.debug(
+-      { packageFile, err },
+-      `Failed to parse and validate pyproject file`,
+-    );
+-    return null;
+-  }
+-}

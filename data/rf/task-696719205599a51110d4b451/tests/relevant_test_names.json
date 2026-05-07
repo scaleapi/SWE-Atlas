@@ -1,0 +1,85 @@
+{
+  "tests": [
+    {
+      "name": "go.k6.io/k6/api/TestLogger"
+    },
+    {
+      "name": "go.k6.io/k6/api/TestPing"
+    },
+    {
+      "name": "go.k6.io/k6/api/v1/TestGetGroups"
+    },
+    {
+      "name": "go.k6.io/k6/api/v1/TestGetMetrics"
+    },
+    {
+      "name": "go.k6.io/k6/api/v1/TestGetMetric"
+    },
+    {
+      "name": "go.k6.io/k6/api/v1/TestSetupData"
+    },
+    {
+      "name": "go.k6.io/k6/api/v1/TestGetStatus"
+    },
+    {
+      "name": "go.k6.io/k6/api/v1/TestPatchStatus"
+    },
+    {
+      "name": "go.k6.io/k6/cmd/tests/TestAbortedByThreshold"
+    },
+    {
+      "name": "go.k6.io/k6/cmd/tests/TestAbortedByUserWithGoodThresholds"
+    },
+    {
+      "name": "go.k6.io/k6/cmd/tests/TestAbortedByUserWithRestAPI"
+    },
+    {
+      "name": "go.k6.io/k6/core/TestEngineRun"
+    },
+    {
+      "name": "go.k6.io/k6/core/TestEngineAtTime"
+    },
+    {
+      "name": "go.k6.io/k6/core/TestEngineThresholdsWillAbort"
+    },
+    {
+      "name": "go.k6.io/k6/core/TestEngineAbortedByThresholds"
+    },
+    {
+      "name": "go.k6.io/k6/core/TestEngineRunsTeardownEvenAfterTestRunIsAborted"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestOptions"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestCreateIngester"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestCreateIngesterReturnsDifferentInstances"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestGetMetricsWithBreachedThresholdsCountInitiallyZero"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestGetMetricsWithBreachedThresholdsCountConcurrentSafe"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestStartThresholdCalculationsPassingThresholds"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestStartThresholdCalculationsBreachedThresholds"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestStartThresholdCalculationsAbortOnFail"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestStartThresholdCalculationsNoMetrics"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestStartThresholdCalculationsMultipleMetricsMixed"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestStartThresholdCalculationsUpdatesBreachedCount"
+    }
+  ]
+}

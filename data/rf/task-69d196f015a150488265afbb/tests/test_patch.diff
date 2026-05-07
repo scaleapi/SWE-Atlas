@@ -1,0 +1,336 @@
+diff --git a/public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.test.tsx b/public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.test.tsx
+new file mode 100644
+index 00000000000..9fca3b88ddc
+--- /dev/null
++++ b/public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.test.tsx
+@@ -0,0 +1,211 @@
++import { screen, render, waitFor } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { TestProvider } from 'test/helpers/TestProvider';
++
++import { DashboardMeta } from 'app/types';
++
++import { SaveProvisionedDashboard, Props } from './SaveProvisionedDashboard';
++
++jest.mock('./SaveDashboardForm', () => ({
++  SaveDashboardFormCommonOptions: () => <div data-testid="common-options" />,
++}));
++
++const mockSaveDashboard = jest.fn();
++const mockMutationResult = {
++  isSuccess: false,
++  isError: false,
++  error: undefined as unknown,
++};
++
++jest.mock('../../provisioning/api', () => ({
++  ...jest.requireActual('../../provisioning/api'),
++  useUpdateRepositoryFilesMutation: () => [mockSaveDashboard, mockMutationResult],
++}));
++
++jest.mock('@grafana/runtime', () => ({
++  ...jest.requireActual('@grafana/runtime'),
++  getAppEvents: () => ({
++    publish: jest.fn(),
++  }),
++}));
++
++function getInputByName(name: string): HTMLInputElement | HTMLTextAreaElement {
++  const el = document.querySelector<HTMLInputElement | HTMLTextAreaElement>(
++    `input[name="${name}"], textarea[name="${name}"]`
++  );
++  if (!el) {
++    throw new Error(`No input found with name="${name}"`);
++  }
++  return el;
++}
++
++function buildMeta(overrides: Partial<DashboardMeta> = {}): DashboardMeta {
++  return {
++    canStar: false,
++    isSnapshot: false,
++    canShare: false,
++    canDelete: false,
++    canSave: true,
++    canEdit: true,
++    k8s: {
++      annotations: {
++        'grafana.app/repoName': 'my-repo',
++        'grafana.app/repoPath': 'dashboards/test.json#main',
++      },
++    },
++    ...overrides,
++  } as DashboardMeta;
++}
++
++function buildProps(overrides: Partial<Props> = {}): Props {
++  return {
++    meta: buildMeta(),
++    dashboard: { setState: jest.fn() } as any,
++    drawer: { onClose: jest.fn() } as any,
++    changeInfo: {
++      changedSaveModel: { title: 'Test Dashboard' },
++      initialSaveModel: {},
++      diffs: {},
++      diffCount: 1,
++      hasChanges: true,
++      hasTimeChanges: false,
++      hasVariableValueChanges: false,
++      hasRefreshChange: false,
++    } as any,
++    ...overrides,
++  };
++}
++
++function renderComponent(props = buildProps()) {
++  return render(
++    <TestProvider>
++      <SaveProvisionedDashboard {...props} />
++    </TestProvider>
++  );
++}
++
++beforeEach(() => {
++  jest.clearAllMocks();
++  mockMutationResult.isSuccess = false;
++  mockMutationResult.isError = false;
++  mockMutationResult.error = undefined;
++  delete (window as any).location;
++  (window as any).location = { reload: jest.fn() };
++});
++
++describe('SaveProvisionedDashboard', () => {
++  describe('form rendering', () => {
++    it('renders a form element', () => {
++      const { container } = renderComponent();
++      expect(container.querySelector('form')).toBeInTheDocument();
++    });
++
++    it('renders the Repository field as a read-only input', () => {
++      renderComponent();
++      const input = getInputByName('repo');
++      expect(input).toBeInTheDocument();
++      expect(input).toHaveAttribute('readOnly');
++    });
++
++    it('renders the Path field', () => {
++      renderComponent();
++      expect(getInputByName('path')).toBeInTheDocument();
++    });
++
++    it('renders the Branch field', () => {
++      renderComponent();
++      expect(getInputByName('ref')).toBeInTheDocument();
++    });
++
++    it('renders the Comment textarea', () => {
++      renderComponent();
++      expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
++    });
++
++    it('Save button has type submit', () => {
++      renderComponent();
++      const saveBtn = screen.getByRole('button', { name: /save/i });
++      expect(saveBtn).toHaveAttribute('type', 'submit');
++    });
++  });
++
++  describe('default values from metadata', () => {
++    it('populates repo from annotations', () => {
++      renderComponent();
++      expect(getInputByName('repo')).toHaveValue('my-repo');
++    });
++
++    it('populates path without the ref fragment', () => {
++      renderComponent();
++      expect(getInputByName('path')).toHaveValue('dashboards/test.json');
++    });
++
++    it('populates ref extracted from path fragment', () => {
++      renderComponent();
++      expect(getInputByName('ref')).toHaveValue('main');
++    });
++
++    it('handles metadata with no annotations', () => {
++      const props = buildProps({ meta: buildMeta({ k8s: undefined }) });
++      renderComponent(props);
++      expect(getInputByName('repo')).toHaveValue('');
++    });
++
++    it('handles path without a ref fragment', () => {
++      const meta = buildMeta({
++        k8s: {
++          annotations: {
++            'grafana.app/repoName': 'other-repo',
++            'grafana.app/repoPath': 'simple/path.json',
++          },
++        },
++      });
++      const props = buildProps({ meta });
++      renderComponent(props);
++      expect(getInputByName('path')).toHaveValue('simple/path.json');
++      expect(getInputByName('ref')).toHaveValue('');
++    });
++  });
++
++  describe('form submission', () => {
++    it('calls the mutation with correct field mappings on submit', async () => {
++      renderComponent();
++      await userEvent.click(screen.getByRole('button', { name: /save/i }));
++      await waitFor(() => {
++        expect(mockSaveDashboard).toHaveBeenCalled();
++        const callArgs = mockSaveDashboard.mock.calls[0][0];
++        expect(callArgs.name).toBe('my-repo');
++        expect(callArgs.path).toBe('dashboards/test.json');
++        expect(callArgs.ref).toBe('main');
++        expect(callArgs.body).toEqual({ title: 'Test Dashboard' });
++        expect(callArgs).toHaveProperty('message');
++        expect(callArgs).not.toHaveProperty('comment');
++      });
++    });
++  });
++
++  describe('success handling', () => {
++    it('clears dashboard dirty state on successful save', async () => {
++      mockSaveDashboard.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({}) });
++      const props = buildProps();
++      const { rerender } = render(
++        <TestProvider>
++          <SaveProvisionedDashboard {...props} />
++        </TestProvider>
++      );
++
++      await userEvent.click(screen.getByRole('button', { name: /save/i }));
++
++      mockMutationResult.isSuccess = true;
++      rerender(
++        <TestProvider>
++          <SaveProvisionedDashboard {...props} />
++        </TestProvider>
++      );
++
++      await waitFor(() => {
++        expect(props.dashboard.setState).toHaveBeenCalledWith({ isDirty: false });
++      });
++    });
++  });
++});
+diff --git a/public/app/features/provisioning/api/endpoints.test.ts b/public/app/features/provisioning/api/endpoints.test.ts
+new file mode 100644
+index 00000000000..27c31db8076
+--- /dev/null
++++ b/public/app/features/provisioning/api/endpoints.test.ts
+@@ -0,0 +1,113 @@
++import {
++  useGetRepositoryExportQuery,
++  useCreateRepositoryExportMutation,
++  useGetRepositoryFilesQuery,
++  useUpdateRepositoryFilesMutation,
++  useCreateRepositoryFilesMutation,
++  useDeleteRepositoryFilesMutation,
++  useGetRepositoryHelloQuery,
++  useGetRepositoryWebhookQuery,
++  useCreateRepositoryWebhookMutation,
++  generatedAPI,
++} from './endpoints';
++
++describe('Provisioning API endpoints', () => {
++  describe('renamed endpoint hooks are exported', () => {
++    it.each([
++      ['useGetRepositoryExportQuery', useGetRepositoryExportQuery],
++      ['useCreateRepositoryExportMutation', useCreateRepositoryExportMutation],
++      ['useGetRepositoryFilesQuery', useGetRepositoryFilesQuery],
++      ['useUpdateRepositoryFilesMutation', useUpdateRepositoryFilesMutation],
++      ['useCreateRepositoryFilesMutation', useCreateRepositoryFilesMutation],
++      ['useDeleteRepositoryFilesMutation', useDeleteRepositoryFilesMutation],
++      ['useGetRepositoryHelloQuery', useGetRepositoryHelloQuery],
++      ['useGetRepositoryWebhookQuery', useGetRepositoryWebhookQuery],
++      ['useCreateRepositoryWebhookMutation', useCreateRepositoryWebhookMutation],
++    ])('exports %s as a function', (_name, hook) => {
++      expect(typeof hook).toBe('function');
++    });
++  });
++
++  describe('connect-prefixed endpoints are removed', () => {
++    it('no endpoint name starts with connect', () => {
++      const endpointNames = Object.keys(generatedAPI.endpoints);
++      const connectPrefixed = endpointNames.filter((n) => n.startsWith('connect'));
++      expect(connectPrefixed).toEqual([]);
++    });
++  });
++
++  describe('watch endpoints are removed', () => {
++    it('does not include watchRepositoryList or watchRepository', () => {
++      const endpointNames = Object.keys(generatedAPI.endpoints);
++      expect(endpointNames).not.toContain('watchRepositoryList');
++      expect(endpointNames).not.toContain('watchRepository');
++    });
++  });
++
++  describe('file operation endpoints include ref support', () => {
++    function getEndpointQueryFn(endpointName: string): (arg: Record<string, unknown>) => Record<string, unknown> {
++      let queryFn: ((arg: Record<string, unknown>) => Record<string, unknown>) | undefined;
++      generatedAPI.enhanceEndpoints({
++        endpoints: {
++          [endpointName]: (definition: { query: (arg: Record<string, unknown>) => Record<string, unknown> }) => {
++            queryFn = definition.query;
++          },
++        },
++      });
++      if (!queryFn) {
++        throw new Error(`Could not extract query function for endpoint "${endpointName}"`);
++      }
++      return queryFn;
++    }
++
++    it.each([
++      'getRepositoryFiles',
++      'updateRepositoryFiles',
++      'createRepositoryFiles',
++      'deleteRepositoryFiles',
++    ])('%s endpoint is registered', (endpointName) => {
++      expect(generatedAPI.endpoints).toHaveProperty(endpointName);
++    });
++
++    it('getRepositoryFiles passes ref as a query param', () => {
++      const queryFn = getEndpointQueryFn('getRepositoryFiles');
++      const result = queryFn({ name: 'my-repo', path: 'dashboards/test.json', ref: 'some-branch' });
++      expect(result.params).toHaveProperty('ref', 'some-branch');
++    });
++
++    it('updateRepositoryFiles passes ref as a query param', () => {
++      const queryFn = getEndpointQueryFn('updateRepositoryFiles');
++      const result = queryFn({
++        name: 'my-repo',
++        path: 'dashboards/test.json',
++        ref: 'some-branch',
++        body: { kind: 'Dashboard' },
++        message: 'update file',
++      });
++      expect(result.params).toHaveProperty('ref', 'some-branch');
++    });
++
++    it('createRepositoryFiles passes ref as a query param', () => {
++      const queryFn = getEndpointQueryFn('createRepositoryFiles');
++      const result = queryFn({
++        name: 'my-repo',
++        path: 'dashboards/test.json',
++        ref: 'some-branch',
++        body: { kind: 'Dashboard' },
++        message: 'create file',
++      });
++      expect(result.params).toHaveProperty('ref', 'some-branch');
++    });
++
++    it('deleteRepositoryFiles passes ref as a query param', () => {
++      const queryFn = getEndpointQueryFn('deleteRepositoryFiles');
++      const result = queryFn({
++        name: 'my-repo',
++        path: 'dashboards/test.json',
++        ref: 'some-branch',
++        message: 'delete file',
++      });
++      expect(result.params).toHaveProperty('ref', 'some-branch');
++    });
++  });
++});

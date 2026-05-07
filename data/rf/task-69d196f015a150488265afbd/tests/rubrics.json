@@ -1,0 +1,146 @@
+[
+  {
+    "id": "f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5",
+    "title": "Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ecc904a556ed4f51a1139762a582d520",
+    "title": "1.1: Adds useIsPluginAvailableOnAllPlans at client/my-sites/plugins/use-is-plugin-available-on-all-plans/index.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "02c005f08299491cb744d34ffa5ad906",
+    "title": "1.2: PlanUSPS uses promotional eligibility from useIsPluginAvailableOnAllPlans to switch to generic all-paid-plans messaging",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "fd3428aa829f4b909051fbf4ebc4f053",
+    "title": "1.3: FreePrice shows generic 'on paid plans' label instead of a specific plan name when promotional condition is active",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "52ab9fbf3b0c4995b0b1fd5fb280bf22",
+    "title": "1.4: CTAButton calls useIsPluginAvailableOnAllPlans for the selected site",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b2c3d4e5f6a748901234567890abcdef",
+    "title": "1.5: CTAButton install flow uses useIsPluginAvailableOnAllPlans to determine upgrade routing",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1f8d19727e01402aa79786ae99611b6e",
+    "title": "1.6: Plugin install flow routes to /plans/ with redirect_to preserving plugin install URL when promo active",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a833aba87a644f8c8a845bee7c773d9c",
+    "title": "1.7: PlansFeaturesMainProps includes optional redirectTo",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3a06744cc47e4f6297f34083079a9e0a",
+    "title": "1.8: PlansFeaturesMain passes redirectTo into useGenerateActionHook only when isPluginAvailableOnAllPlans",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1eb671cd17854368bbd1f41882b5d968",
+    "title": "1.9: Replaces useSummerSpecialStatus with useIsPluginAvailableOnAllPlans in both (getSimplifiedPlanFeaturesGroupedForFeaturesGrid and getPlanFeaturesGroupedForFeaturesGrid) calls in plans-features-main/index.tsx",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0bfa2613a65c4da39c31c6c1a79d306c",
+    "title": "1.10: useGenerateActionHook accepts redirectTo and forwards to useGenerateActionCallback",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "728fe20d652941dcb32f64b7afc18a50",
+    "title": "1.11: useGenerateActionCallback and useUpgradeHandler accept redirectTo",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ac0ea5fbd43e4b25b57cbc6bdd57df24",
+    "title": "1.12: Checkout addQueryArgs includes redirect_to when redirectTo provided",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5",
+    "title": "4.1: Modifies test files in the repository",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7",
+    "title": "4.2: Hardcodes the promotional condition instead of consuming useSummerSpecialStatus from @automattic/plans-grid-next",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

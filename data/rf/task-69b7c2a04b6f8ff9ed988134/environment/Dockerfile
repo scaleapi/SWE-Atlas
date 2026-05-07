@@ -1,0 +1,1 @@
+FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_OISF_suricata_69b7c2a04b6f8ff9ed988134_1.0@sha256:ec78c9fc018106e06883b92f6358685b0f227f4eceedb44ca756662e427677a7

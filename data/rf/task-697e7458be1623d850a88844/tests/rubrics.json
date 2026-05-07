@@ -1,0 +1,138 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "50e381116d0849e7dad2c9b5bd452361",
+    "title": "1.1: Adds a client field of type *http.Client to all 11 detectors' Scanner structs, including abbysale, abstract, abuseipdb, accuweather, adafruitio, adzuna, ...",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "38afb3268d970b60975deb3cdec4df6a",
+    "title": "1.2: Provides a default HTTP client fallback when the Scanner's client field is nil in all 11 detectors, including abbysale, abstract, abuseipdb, accuweather, adafruitio, adzuna, ...",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5173a9727cbdaffcf289ded0a13e72f6",
+    "title": "1.3: Extracts the verification logic out of FromData into a separate function or method in all 11 detectors, including verifyAbbysale, verifyAbstract, verifyAbuseIPDB, verifyAccuweather, verifyAdafruitIO, verifyAdzuna, ...",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
+    "title": "1.4: Ensures all 11 extracted verification functions return both a verification outcome and an error, including verifyAbbysale, verifyAbstract, verifyAbuseIPDB, verifyAccuweather, verifyAdafruitIO, verifyAdzuna, ...",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "eeb76bd9161fe0a3a2315e780fa64901",
+    "title": "1.5: Captures verification errors on the result using SetVerificationError in all 11 detectors, including abbysale, abstract, abuseipdb, accuweather, adafruitio, adzuna, ...",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "411cd35ea70562bc51ea94f40f6a78c8",
+    "title": "1.6: Replaces broad status code range checks with explicit handling of specific status codes in all 11 detectors, including abbysale, abstract, abuseipdb, accuweather, adafruitio, adzuna, ...",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ab2c2499d68192dc48d637c48c40008a",
+    "title": "1.7: Defines all 9 API base URL constants (abbysaleURL, abstractURL, abuseipdbURL, accuweatherURL, adafruitioURL, adzunaURL, aeroworkflowURL, agoraURL, alibabaURL) instead of inline string literals",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "897b9ee6d694dd1063051f20c7eca664",
+    "title": "1.8: Moves the false positive check outside the verification block in all 11 detectors so it runs regardless of the verify flag, including abbysale, abstract, abuseipdb, accuweather, adafruitio, adzuna, ...",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "130cd321c567e7a4d9c3f36f9e280395",
+    "title": "1.9: Organizes imports following standard Go grouping conventions in all 9 detector files (abbysale.go, abuseipdb.go, accuweather.go, adafruitio.go, aeroworkflow.go, agora.go, aha.go, alibaba.go, artifactory.go)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "aabeb073e6afed910a73de6851e30085",
+    "title": "1.10: Validates the abuseipdb response body content in addition to the status code",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "860726a102d466ded43d5bf121c8697c",
+    "title": "1.11: Treats accuweather HTTP 403 as a verified token rather than an invalid one",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2fdd835d7c4401a250724fca99c82785",
+    "title": "1.12: Preserves aha's use of a domain extracted from input data for its API URL",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e6574fc16978cfba45826461fb0ea971",
+    "title": "1.13: Surfaces alibaba's structured JSON error responses in the verification error",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ed3b6ee22d9cb56e515d380b7f6ff21c",
+    "title": "4.1: Removes or modifies existing public Scanner method signatures (FromData, Keywords, or Type)",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6",
+    "title": "4.2: Modifies test files",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

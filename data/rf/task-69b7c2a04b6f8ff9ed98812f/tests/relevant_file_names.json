@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "name": "rust/src/filecontainer_tests.rs"
+    },
+    {
+      "name": "rust/src/lib.rs"
+    }
+  ]
+}

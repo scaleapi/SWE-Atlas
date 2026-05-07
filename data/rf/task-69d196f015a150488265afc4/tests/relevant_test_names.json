@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "extracts and exclude android images"
+    },
+    {
+      "name": "extracts executors"
+    },
+    {
+      "name": "extracts orb definitions"
+    },
+    {
+      "name": "handles registry alias"
+    }
+  ]
+}

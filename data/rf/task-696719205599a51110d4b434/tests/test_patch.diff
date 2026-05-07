@@ -1,0 +1,561 @@
+diff --git a/client/dashboard/components/overview-card/test/index.test.tsx b/client/dashboard/components/overview-card/test/index.test.tsx
+new file mode 100644
+index 00000000000..2c6fe519b5f
+--- /dev/null
++++ b/client/dashboard/components/overview-card/test/index.test.tsx
+@@ -0,0 +1,245 @@
++/**
++ * @jest-environment jsdom
++ */
++import '@testing-library/jest-dom';
++import { screen } from '@testing-library/react';
++import { render } from '../../../test-utils';
++import OverviewCard from '../index';
++
++jest.mock( '@wordpress/i18n', () => ( {
++	...jest.requireActual( '@wordpress/i18n' ),
++	__: ( text: string ) => text,
++	_n: ( single: string ) => single,
++	sprintf: ( format: string, ...args: unknown[] ) => {
++		let result = format;
++		args.forEach( ( arg ) => {
++			result = result.replace( /%[sd]/, String( arg ) );
++		} );
++		return result;
++	},
++} ) );
++
++jest.mock( '../../../app/analytics', () => ( {
++	useAnalytics: () => ( { recordTracksEvent: jest.fn() } ),
++} ) );
++
++jest.mock( '@automattic/api-core', () =>
++	new Proxy(
++		{},
++		{
++			get: ( _target, prop ) => {
++				if ( typeof prop === 'string' && prop.startsWith( '__' ) ) {
++					return undefined;
++				}
++				return jest.fn();
++			},
++		}
++	)
++);
++
++jest.mock( '@automattic/api-queries', () =>
++	new Proxy(
++		{},
++		{
++			get: () => jest.fn( () => ( { queryKey: [ 'mock' ], queryFn: jest.fn() } ) ),
++		}
++	)
++);
++
++jest.mock( '@wordpress/icons', () =>
++	new Proxy( {}, { get: () => 'icon-mock' } )
++);
++
++jest.mock( '../../../app/router/emails', () => ( { emailsRoute: {} } ) );
++jest.mock( '../../../app/locale', () => ( { useLocale: () => 'en' } ) );
++
++jest.mock( '@automattic/urls', () =>
++	new Proxy( {}, { get: () => 'mock-url' } )
++);
++
++jest.mock( '@automattic/number-formatters', () => ( {
++	formatCurrency: jest.fn( () => '$0.00' ),
++} ) );
++
++jest.mock( '@automattic/domains-table/src/utils/paths', () => ( {
++	domainManagementEdit: jest.fn(),
++	domainUseMyDomain: jest.fn(),
++} ) );
++
++jest.mock( '@automattic/components/src/logos/jetpack-logo', () => ( {
++	JetpackLogo: () => null,
++} ) );
++
++jest.mock( '../../../app/auth', () => ( {
++	useAuth: () => ( {
++		user: { ID: 1, display_name: 'Test', email: 'test@example.com' },
++	} ),
++} ) );
++jest.mock( '../../../app/breadcrumbs', () => () => null );
++jest.mock( '../../../app/router/me', () => ( {
++	purchaseSettingsRoute: { useParams: () => ( { purchaseId: '1' } ) },
++} ) );
++jest.mock( '../../../components/formatted-time', () => ( {
++	useFormattedTime: ( date: string ) => date || 'N/A',
++} ) );
++jest.mock( '../../../components/time-since', () => ( {
++	useTimeSince: () => 'recently',
++} ) );
++jest.mock( '../../../components/icons', () =>
++	new Proxy( {}, { get: () => 'icon-mock' } )
++);
++jest.mock( '../../../components/clipboard-input-control', () => ( {
++	__esModule: true,
++	default: () => null,
++} ) );
++jest.mock( '../../../components/action-list', () => {
++	const React = require( 'react' );
++	const ActionList = ( { children }: any ) =>
++		React.createElement( 'div', null, children );
++	ActionList.ActionItem = () => null;
++	return { ActionList };
++} );
++jest.mock( '../../../components/page-header', () => ( {
++	PageHeader: () => null,
++} ) );
++jest.mock( '../../../components/page-layout', () => ( {
++	__esModule: true,
++	default: ( { children }: any ) => children,
++} ) );
++jest.mock( '../../../components/purchase-expiry-status', () => ( {
++	PurchaseExpiryStatus: () => null,
++} ) );
++jest.mock( '../../../me/billing-purchases/urls', () => ( {
++	getPurchaseUrlForId: () => '/purchase/1',
++} ) );
++jest.mock( '../../../utils/datetime', () => ( {
++	formatDate: ( date: string ) => date,
++} ) );
++jest.mock( '../../../utils/site-backup', () => ( {
++	getBackupUrl: () => '/backup',
++} ) );
++jest.mock( '../../../utils/is-dashboard-backport', () => ( {
++	isDashboardBackport: () => false,
++} ) );
++jest.mock( '../../../utils/site-performance', () => ( {
++	getPerformanceStatus: jest.fn(),
++	getStatusIntent: jest.fn(),
++	getStatusText: jest.fn(),
++} ) );
++jest.mock( '../../../utils/site-types', () => ( {
++	isSelfHostedJetpackConnected: () => false,
++} ) );
++jest.mock( '../../../utils/site-plan', () => ( {
++	getCurrentPlanSlug: jest.fn(),
++	getCurrentPlanTitle: jest.fn(),
++	JETPACK_PLANS: [],
++	JETPACK_PRODUCTS: [],
++} ) );
++jest.mock( '../../../sites/site-icon', () => ( {
++	__esModule: true,
++	default: () => null,
++} ) );
++jest.mock( '../../../sites/hosting-feature-gate', () => ( {
++	__esModule: true,
++	default: ( { children }: any ) => children,
++} ) );
++jest.mock( '../../../sites/performance/use-site-performance-data', () => ( {
++	useSitePerformanceData: () => ( {} ),
++} ) );
++
++describe( 'OverviewCard', () => {
++	test( 'renders title and heading', () => {
++		render( <OverviewCard title="Expiry" heading="Jan 1, 2026" /> );
++		expect( screen.getByText( 'Expiry' ) ).toBeVisible();
++		expect( screen.getByText( 'Jan 1, 2026' ) ).toBeVisible();
++	} );
++
++	test( 'renders description when provided', () => {
++		render(
++			<OverviewCard
++				title="Site"
++				heading="My Website"
++				description="example.wordpress.com"
++			/>
++		);
++		expect( screen.getByText( 'example.wordpress.com' ) ).toBeVisible();
++	} );
++
++	test( 'renders without heading or description gracefully', () => {
++		render( <OverviewCard title="Empty Card" /> );
++		expect( screen.getByText( 'Empty Card' ) ).toBeVisible();
++	} );
++
++	test( 'renders loading skeleton when isLoading is true', () => {
++		const { container } = render( <OverviewCard title="Loading" isLoading /> );
++		expect( screen.getByText( 'Loading' ) ).toBeVisible();
++		expect( container.querySelector( '.dashboard-overview-card' ) ).toBeInTheDocument();
++	} );
++
++	test( 'renders a relative link as a router Link', () => {
++		render(
++			<OverviewCard title="Site" heading="My Site" link="/v2/sites/example" />
++		);
++		const linkElement = screen.getByRole( 'link' );
++		expect( linkElement ).toBeVisible();
++	} );
++
++	test( 'renders with disabled state', () => {
++		const { container } = render(
++			<OverviewCard title="Disabled" heading="N/A" disabled />
++		);
++		expect(
++			container.querySelector( '.dashboard-overview-card--disabled' )
++		).toBeInTheDocument();
++	} );
++
++	test( 'renders with intent variant', () => {
++		const { container } = render(
++			<OverviewCard title="Warning" heading="Check" intent="warning" />
++		);
++		expect(
++			container.querySelector( '.dashboard-overview-card--warning' )
++		).toBeInTheDocument();
++	} );
++} );
++
++describe( 'OverviewCard relocation from sites/ to shared components/', () => {
++	test( 'component is no longer available at the old sites/overview-card path', () => {
++		expect( () => require( '../../../sites/overview-card' ) ).toThrow();
++	} );
++
++	test( 'all domain overview consumers load after relocation', () => {
++		const consumers = [
++			'../../../domains/domain-overview/featured-card-emails',
++			'../../../domains/domain-overview/featured-card-privacy',
++			'../../../domains/domain-overview/featured-card-renew',
++			'../../../domains/domain-overview/featured-card-site',
++		];
++		for ( const consumer of consumers ) {
++			const mod = require( consumer );
++			expect( mod.default ).toBeDefined();
++		}
++	} );
++
++	test( 'all site overview consumers load after relocation', () => {
++		const consumers = [
++			'../../../sites/overview-subscribers-card',
++			'../../../sites/overview-migrate-site-card',
++			'../../../sites/overview-visibility-card',
++			'../../../sites/overview-agency-site-share-card',
++			'../../../sites/overview-backup-card',
++			'../../../sites/overview-performance-card',
++			'../../../sites/overview-scan-card',
++			'../../../sites/overview-plan-card',
++		];
++		for ( const consumer of consumers ) {
++			const mod = require( consumer );
++			expect( mod.default ).toBeDefined();
++		}
++	} );
++
++	test( 'hosting feature gated component loads after relocation', () => {
++		const mod = require( '../../../sites/hosting-feature-gated-with-overview-card' );
++		expect( mod.default ).toBeDefined();
++	} );
++} );
+diff --git a/client/dashboard/me/billing-purchases/purchase-settings/test/index.test.tsx b/client/dashboard/me/billing-purchases/purchase-settings/test/index.test.tsx
+new file mode 100644
+index 00000000000..65f574de8c2
+--- /dev/null
++++ b/client/dashboard/me/billing-purchases/purchase-settings/test/index.test.tsx
+@@ -0,0 +1,76 @@
++/**
++ * @jest-environment jsdom
++ */
++import '@testing-library/jest-dom';
++
++jest.mock( '@automattic/api-core', () => ( {
++	isExpiring: jest.fn( () => false ),
++	isOneTimePurchase: jest.fn( () => false ),
++	isRenewing: jest.fn( () => true ),
++	isIncludedWithPlan: jest.fn( () => false ),
++	canPurchaseBeUpgraded: jest.fn( () => false ),
++	getTitleForDisplay: jest.fn( () => 'Test Plan' ),
++	getSubtitleForDisplay: jest.fn( () => null ),
++	SubscriptionBillPeriod: { PLAN_CENTENNIAL_PERIOD: 36500 },
++	WPCOM_DIFM_LITE: 'difm_lite',
++	DomainProductSlugs: { TRANSFER_IN: 'transfer_in' },
++	TITAN_MAIL_MONTHLY_SLUG: 'titan_monthly',
++} ) );
++
++jest.mock( '@automattic/api-queries', () => ( {
++	purchaseQuery: jest.fn( () => ( { queryKey: [ 'purchase' ], queryFn: jest.fn() } ) ),
++	siteBySlugQuery: jest.fn( () => ( { queryKey: [ 'site' ], queryFn: jest.fn() } ) ),
++} ) );
++
++jest.mock( '@automattic/number-formatters', () => ( {
++	formatCurrency: jest.fn( () => '$9.99' ),
++	getCurrencyDefaults: jest.fn( () => ( {} ) ),
++} ) );
++
++jest.mock( '@automattic/i18n-utils', () => ( {
++	useLocale: () => 'en',
++} ) );
++
++jest.mock( '@wordpress/i18n', () => ( {
++	...jest.requireActual( '@wordpress/i18n' ),
++	__: ( text: string ) => text,
++	_n: ( single: string ) => single,
++	sprintf: ( format: string, ...args: unknown[] ) => {
++		let result = format;
++		args.forEach( ( arg ) => {
++			result = result.replace( /%[sd]/, String( arg ) );
++		} );
++		return result;
++	},
++} ) );
++
++jest.mock( '@wordpress/icons', () =>
++	new Proxy( {}, { get: () => 'icon-mock' } )
++);
++
++jest.mock( '../../../../app/analytics', () => ( {
++	useAnalytics: () => ( { recordTracksEvent: jest.fn() } ),
++} ) );
++
++jest.mock( '../../../../app/auth', () => ( {
++	useAuth: () => ( {
++		user: { ID: 1, display_name: 'Test User', email: 'test@example.com' },
++	} ),
++} ) );
++
++jest.mock( '../../../../app/locale', () => ( {
++	useLocale: () => 'en',
++} ) );
++
++describe( 'PurchaseSettings module', () => {
++	test( 'does not export PurchaseSettingsCard', () => {
++		const mod = require( '../index' );
++		expect( mod.PurchaseSettingsCard ).toBeUndefined();
++	} );
++
++	test( 'OverviewCard is importable from shared components path', () => {
++		const OverviewCard = require( '../../../../components/overview-card' ).default;
++		expect( OverviewCard ).toBeDefined();
++		expect( typeof OverviewCard ).toBe( 'function' );
++	} );
++} );
+diff --git a/client/dashboard/me/monetize-subscriptions/test/monetize-subscription.test.tsx b/client/dashboard/me/monetize-subscriptions/test/monetize-subscription.test.tsx
+new file mode 100644
+index 00000000000..64fa1951e48
+--- /dev/null
++++ b/client/dashboard/me/monetize-subscriptions/test/monetize-subscription.test.tsx
+@@ -0,0 +1,222 @@
++/**
++ * @jest-environment jsdom
++ */
++import '@testing-library/jest-dom';
++import { render, screen } from '@testing-library/react';
++
++const mockSubscription = {
++	ID: 1,
++	title: 'Test Subscription',
++	site_title: 'My Test Site',
++	site_url: 'https://test.example.com',
++	end_date: '2026-12-31',
++	renew_interval: 'monthly',
++	renewal_price: '999',
++	currency: 'USD',
++	is_renewable: true,
++	product_slug: 'test_slug',
++};
++
++jest.mock( '@tanstack/react-query', () => ( {
++	useQuery: jest.fn( () => ( { data: mockSubscription } ) ),
++	useMutation: jest.fn( () => ( { mutate: jest.fn(), isPending: false } ) ),
++} ) );
++
++jest.mock( '@tanstack/react-router', () => ( {
++	useNavigate: () => jest.fn(),
++	Link: ( { children, to, ...props }: any ) => <a href={ to } { ...props }>{ children }</a>,
++	createLink: ( component: any ) => component,
++} ) );
++
++jest.mock( '@automattic/api-queries', () => ( {
++	monetizeSubscriptionQuery: jest.fn( () => ( {} ) ),
++	monetizeSubscriptionDisableAutoRenew: jest.fn( () => ( {} ) ),
++	monetizeSubscriptionResumeAutoRenew: jest.fn( () => ( {} ) ),
++	monetizeSubscriptionStop: jest.fn( () => ( {} ) ),
++	purchaseQuery: jest.fn( () => ( {} ) ),
++	siteBySlugQuery: jest.fn( () => ( {} ) ),
++} ) );
++
++jest.mock( '@automattic/number-formatters', () => ( {
++	formatCurrency: jest.fn( () => '$9.99' ),
++	getCurrencyDefaults: jest.fn( () => ( {} ) ),
++} ) );
++
++jest.mock( '@automattic/i18n-utils', () => ( {
++	useLocale: () => 'en',
++} ) );
++
++jest.mock( '@automattic/urls', () => ( {
++	CALYPSO_CONTACT: 'https://wordpress.com/help/contact',
++} ) );
++
++jest.mock( '@automattic/api-core', () => ( {
++	isExpiring: jest.fn( () => false ),
++	isOneTimePurchase: jest.fn( () => false ),
++	isRenewing: jest.fn( () => true ),
++	SubscriptionBillPeriod: { PLAN_CENTENNIAL_PERIOD: 36500 },
++} ) );
++
++jest.mock( '@wordpress/data', () => ( {
++	useDispatch: () => ( { createErrorNotice: jest.fn() } ),
++} ) );
++
++jest.mock( '@wordpress/dataviews', () => ( {
++	DataForm: () => null,
++} ) );
++
++jest.mock( '@wordpress/notices', () => ( {
++	store: 'notices-store',
++} ) );
++
++jest.mock( '@wordpress/i18n', () => ( {
++	__: ( text: string ) => text,
++	sprintf: ( format: string, ...args: unknown[] ) => {
++		let result = format;
++		args.forEach( ( arg ) => {
++			result = result.replace( /%[sd]/, String( arg ) );
++		} );
++		return result;
++	},
++} ) );
++
++jest.mock( '@wordpress/icons', () =>
++	new Proxy( {}, { get: () => 'icon-mock' } )
++);
++
++jest.mock( '@wordpress/components', () => {
++	const React = require( 'react' );
++	return {
++		__experimentalGrid: ( { children, ...props }: any ) =>
++			React.createElement( 'div', { 'data-testid': 'grid-layout', ...props }, children ),
++		__experimentalVStack: ( { children, ...props }: any ) =>
++			React.createElement( 'div', props, children ),
++		Card: ( { children }: any ) => React.createElement( 'div', null, children ),
++		CardBody: ( { children }: any ) => React.createElement( 'div', null, children ),
++		Button: ( { children, ...props }: any ) =>
++			React.createElement( 'button', props, children ),
++		Notice: ( { children }: any ) =>
++			React.createElement( 'div', null, children ),
++		ToggleControl: () => null,
++	};
++} );
++
++jest.mock( '../../../app/analytics', () => ( {
++	useAnalytics: () => ( { recordTracksEvent: jest.fn() } ),
++} ) );
++
++jest.mock( '../../../app/locale', () => ( {
++	useLocale: () => 'en',
++} ) );
++
++jest.mock( '../../../app/auth', () => ( {
++	useAuth: () => ( {
++		user: { ID: 1, display_name: 'Test User', email: 'test@example.com' },
++	} ),
++} ) );
++
++jest.mock( '../../../app/breadcrumbs', () => () => null );
++jest.mock( '../../../app/router/emails', () => ( { emailsRoute: {} } ) );
++jest.mock( '@wordpress/element', () => ( {
++	...jest.requireActual( 'react' ),
++	createInterpolateElement: ( str: string ) => str,
++} ) );
++jest.mock( '@automattic/domains-table/src/utils/paths', () => ( {
++	domainManagementEdit: jest.fn(),
++	domainUseMyDomain: jest.fn(),
++} ) );
++jest.mock( '../../../components/clipboard-input-control', () => ( {
++	__esModule: true,
++	default: () => null,
++} ) );
++jest.mock( '../../../app/router/me', () => ( {
++	monetizeSubscriptionRoute: {
++		useParams: () => ( { subscriptionId: '123' } ),
++	},
++	purchaseSettingsRoute: {
++		useParams: () => ( { purchaseId: '1' } ),
++	},
++} ) );
++jest.mock( '../../../components/action-list', () => {
++	const React = require( 'react' );
++	const ActionList = ( { children }: any ) =>
++		React.createElement( 'div', null, children );
++	ActionList.ActionItem = ( { title }: any ) =>
++		React.createElement( 'div', null, title );
++	return { __esModule: true, default: ActionList };
++} );
++jest.mock( '../../../components/flash-message', () => ( {
++	addFlashMessage: jest.fn( ( opts: any ) => opts.to ),
++} ) );
++jest.mock( '../../../components/formatted-time', () => ( {
++	useFormattedTime: ( date: string ) => date || 'N/A',
++} ) );
++jest.mock( '../../../components/overview-card', () => {
++	const React = require( 'react' );
++	return {
++		__esModule: true,
++		default: ( { title, heading, description }: any ) =>
++			React.createElement(
++				'div',
++				{ 'data-testid': 'overview-card' },
++				React.createElement( 'span', null, title ),
++				heading && React.createElement( 'span', null, String( heading ) ),
++				description && React.createElement( 'span', null, String( description ) )
++			),
++	};
++} );
++jest.mock( '../../../components/page-header', () => ( {
++	PageHeader: ( { title }: any ) => {
++		const React = require( 'react' );
++		return React.createElement( 'h1', null, title );
++	},
++} ) );
++jest.mock( '../../../components/page-layout', () => {
++	const React = require( 'react' );
++	return {
++		__esModule: true,
++		default: ( { children }: any ) =>
++			React.createElement( 'div', { 'data-testid': 'page-layout' }, children ),
++	};
++} );
++jest.mock( '../../../me/monetize-subscriptions/urls', () => ( {
++	getMonetizeSubscriptionsUrl: () => '/monetize',
++} ) );
++jest.mock( '../../../utils/datetime', () => ( {
++	formatDate: ( date: string ) => date,
++} ) );
++
++import MonetizeSubscriptionDetails from '../monetize-subscription';
++
++describe( 'MonetizeSubscriptionDetails', () => {
++	test( 'renders subscription cards showing site, expiry, price, and interval', () => {
++		render( <MonetizeSubscriptionDetails /> );
++
++		const cards = screen.getAllByTestId( 'overview-card' );
++		expect( cards.length ).toBeGreaterThanOrEqual( 3 );
++
++		expect( screen.getByText( 'Site' ) ).toBeVisible();
++		expect( screen.getByText( 'My Test Site' ) ).toBeVisible();
++	} );
++
++	test( 'renders expiry date card with correct renewal status', () => {
++		render( <MonetizeSubscriptionDetails /> );
++		expect( screen.getByText( 'Renews' ) ).toBeVisible();
++	} );
++
++	test( 'renders renewal price card for recurring subscriptions', () => {
++		render( <MonetizeSubscriptionDetails /> );
++		expect( screen.getByText( 'Renewal price' ) ).toBeVisible();
++	} );
++
++	test( 'renders renewal interval card with subscription interval', () => {
++		render( <MonetizeSubscriptionDetails /> );
++		expect( screen.getByText( 'Renewal interval' ) ).toBeVisible();
++		expect( screen.getByText( 'monthly' ) ).toBeVisible();
++	} );
++
++	test( 'does not depend on PurchaseSettingsCard export from billing module', () => {
++		const purchaseSettingsMod = require( '../../billing-purchases/purchase-settings' );
++		expect( purchaseSettingsMod.PurchaseSettingsCard ).toBeUndefined();
++	} );
++} );

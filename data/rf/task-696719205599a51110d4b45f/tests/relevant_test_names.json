@@ -1,0 +1,196 @@
+{
+  "tests": [
+    {
+      "name": "datasource-managed rules > groupFilter > should filter by group name"
+    },
+    {
+      "name": "datasource-managed rules > groupFilter > should filter by namespace (file path)"
+    },
+    {
+      "name": "datasource-managed rules > groupFilter > should return true when no filters are applied"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > dataSourceNames filter > should filter out rules that don't use the filtered datasource"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > dataSourceNames filter > should match rules that use the filtered datasource"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > dataSourceNames filter > should return false when there is an error parsing the query"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > plugins filter > should hide plugin-provided rules when plugins filter is set to hide"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > plugins filter > should not hide non-plugin rules when plugins filter is set to hide"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > plugins filter > should show plugin-provided rules when plugins filter is not set to hide"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should combine multiple filters with AND logic"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should filter by alert instance labels"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should filter by contact point for grafana alerting rules"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should filter by dashboard UID"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should filter by free form words in rule name"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should filter by labels"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should filter by rule health"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should filter by rule name"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should filter by rule state"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should filter by rule type"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should filter out non-grafana-alerting rules when filtering by contact point"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should filter out recording rules when filtering by dashboard UID"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should filter out recording rules when filtering by rule state"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should filter out rules without notification settings when filtering by contact point"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should normalize health values when filtering"
+    },
+    {
+      "name": "datasource-managed rules > ruleFilter > should return false if any filter does not match"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is disabled > should not include dashboardUid in backend filter"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is disabled > should not include ruleType in backend filter"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is disabled > should not include title in backend filter"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is disabled > should perform dashboardUid filtering on frontend"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is disabled > should perform freeFormWords filtering on frontend"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is disabled > should perform ruleName filtering on frontend"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is disabled > should perform ruleType filtering on frontend"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is enabled > should combine ruleName and freeFormWords in title"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is enabled > should include dashboardUid in backend filter when provided"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is enabled > should include ruleType in backend filter when provided"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is enabled > should include title in backend filter when freeFormWords are provided"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is enabled > should include title in backend filter when ruleName is provided"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is enabled > should not include dashboardUid in backend filter when not provided"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is enabled > should not include ruleType in backend filter when not provided"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is enabled > should not include title when no title filters are provided"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is enabled > should skip dashboardUid filtering on frontend when backend filtering is enabled"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is enabled > should skip freeFormWords filtering on frontend when backend filtering is enabled"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is enabled > should skip ruleName filtering on frontend when backend filtering is enabled"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is enabled > should skip ruleType filtering on frontend when backend filtering is enabled"
+    },
+    {
+      "name": "grafana-managed rules > backend filtering with alertingUIUseBackendFilters feature toggle > when alertingUIUseBackendFilters is enabled > should still apply other frontend filters"
+    },
+    {
+      "name": "grafana-managed rules > backendFilter > should handle empty backend filters"
+    },
+    {
+      "name": "grafana-managed rules > backendFilter > should include contactPoint in backend filter"
+    },
+    {
+      "name": "grafana-managed rules > backendFilter > should include ruleHealth in backend filter"
+    },
+    {
+      "name": "grafana-managed rules > backendFilter > should include ruleState in backend filter"
+    },
+    {
+      "name": "grafana-managed rules > groupFilter > should filter by group name"
+    },
+    {
+      "name": "grafana-managed rules > groupFilter > should filter by namespace (file path)"
+    },
+    {
+      "name": "grafana-managed rules > groupFilter > should return true when no filters are applied"
+    },
+    {
+      "name": "grafana-managed rules > ruleFilter - backend filters (should NOT be applied in frontend) > should NOT filter by contact point in frontend (returns true regardless)"
+    },
+    {
+      "name": "grafana-managed rules > ruleFilter - backend filters (should NOT be applied in frontend) > should NOT filter by rule health in frontend (returns true regardless)"
+    },
+    {
+      "name": "grafana-managed rules > ruleFilter - backend filters (should NOT be applied in frontend) > should NOT filter by rule state in frontend (returns true regardless)"
+    },
+    {
+      "name": "grafana-managed rules > ruleFilter - frontend filters > dataSourceNames filter > should filter out rules that don't use the filtered datasource"
+    },
+    {
+      "name": "grafana-managed rules > ruleFilter - frontend filters > dataSourceNames filter > should match rules that use the filtered datasource"
+    },
+    {
+      "name": "grafana-managed rules > ruleFilter - frontend filters > plugins filter > should hide plugin-provided rules when plugins filter is set to hide"
+    },
+    {
+      "name": "grafana-managed rules > ruleFilter - frontend filters > plugins filter > should not hide non-plugin rules when plugins filter is set to hide"
+    },
+    {
+      "name": "grafana-managed rules > ruleFilter - frontend filters > should filter by dashboard UID"
+    },
+    {
+      "name": "grafana-managed rules > ruleFilter - frontend filters > should filter by free form words in rule name"
+    },
+    {
+      "name": "grafana-managed rules > ruleFilter - frontend filters > should filter by labels"
+    },
+    {
+      "name": "grafana-managed rules > ruleFilter - frontend filters > should filter by rule name"
+    },
+    {
+      "name": "grafana-managed rules > ruleFilter - frontend filters > should filter by rule type"
+    }
+  ]
+}

@@ -1,0 +1,561 @@
+diff --git a/tests/rrdhost-system-info-unittest.c b/tests/rrdhost-system-info-unittest.c
+new file mode 100644
+index 000000000..afa4ee454
+--- /dev/null
++++ b/tests/rrdhost-system-info-unittest.c
+@@ -0,0 +1,555 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++
++#include "../src/database/rrdhost-system-info.h"
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++
++static int errors = 0;
++static int passed = 0;
++
++#define CHECK(cond, fmt, ...) do { \
++    if (!(cond)) { \
++        fprintf(stderr, "FAIL: " fmt "\n", ##__VA_ARGS__); \
++        errors++; \
++    } else { \
++        passed++; \
++    } \
++} while(0)
++
++static void test_create_and_free(void) {
++    fprintf(stderr, "\n--- test_create_and_free ---\n");
++
++    struct rrdhost_system_info *si = rrdhost_system_info_create();
++    CHECK(si != NULL, "rrdhost_system_info_create returned NULL");
++
++    CHECK(rrdhost_system_info_hops(si) == 0, "hops should be 0 after create");
++    CHECK(rrdhost_system_info_install_type(si) == NULL, "install_type should be NULL after create");
++    CHECK(rrdhost_system_info_prebuilt_dist(si) == NULL, "prebuilt_dist should be NULL after create");
++
++    rrdhost_system_info_free(si);
++    rrdhost_system_info_free(NULL);
++}
++
++static void test_hops_accessors(void) {
++    fprintf(stderr, "\n--- test_hops_accessors ---\n");
++
++    struct rrdhost_system_info *si = rrdhost_system_info_create();
++
++    CHECK(rrdhost_system_info_hops(si) == 0, "default hops should be 0");
++
++    rrdhost_system_info_hops_set(si, 3);
++    CHECK(rrdhost_system_info_hops(si) == 3, "hops should be 3 after set, got %d", rrdhost_system_info_hops(si));
++
++    rrdhost_system_info_hops_set(si, 0);
++    CHECK(rrdhost_system_info_hops(si) == 0, "hops should be 0 after reset");
++
++    rrdhost_system_info_hops_set(si, -1);
++    CHECK(rrdhost_system_info_hops(si) == -1, "hops should support negative values");
++
++    CHECK(rrdhost_system_info_hops(NULL) == 0, "hops(NULL) should return 0");
++
++    rrdhost_system_info_free(si);
++}
++
++static void test_install_type_accessor(void) {
++    fprintf(stderr, "\n--- test_install_type_accessor ---\n");
++
++    struct rrdhost_system_info *si = rrdhost_system_info_create();
++
++    CHECK(rrdhost_system_info_install_type(si) == NULL, "install_type should be NULL initially");
++
++    rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_NAME", "Ubuntu");
++    CHECK(rrdhost_system_info_install_type(si) == NULL, "install_type still NULL after setting unrelated field");
++
++    rrdhost_system_info_free(si);
++}
++
++static void test_prebuilt_dist_accessor(void) {
++    fprintf(stderr, "\n--- test_prebuilt_dist_accessor ---\n");
++
++    struct rrdhost_system_info *si = rrdhost_system_info_create();
++
++    CHECK(rrdhost_system_info_prebuilt_dist(si) == NULL, "prebuilt_dist should be NULL initially");
++
++    rrdhost_system_info_free(si);
++}
++
++static void test_ml_capable_via_stream(void) {
++    fprintf(stderr, "\n--- test_ml_capable_via_stream ---\n");
++
++    struct rrdhost_system_info *si = rrdhost_system_info_create();
++
++    BUFFER *wb = buffer_create(1024, NULL);
++    rrdhost_system_info_to_url_encode_stream(wb, si);
++    CHECK(strstr(buffer_tostring(wb), "ml_capable=0") != NULL, "ml_capable should be 0 by default");
++
++    buffer_flush(wb);
++    rrdhost_system_info_ml_capable_set(si, true);
++    rrdhost_system_info_to_url_encode_stream(wb, si);
++    CHECK(strstr(buffer_tostring(wb), "ml_capable=1") != NULL, "ml_capable should be 1 after set true");
++
++    buffer_flush(wb);
++    rrdhost_system_info_ml_capable_set(si, false);
++    rrdhost_system_info_to_url_encode_stream(wb, si);
++    CHECK(strstr(buffer_tostring(wb), "ml_capable=0") != NULL, "ml_capable should be 0 after set false");
++
++    buffer_free(wb);
++    rrdhost_system_info_free(si);
++}
++
++static void test_ml_enabled_via_stream(void) {
++    fprintf(stderr, "\n--- test_ml_enabled_via_stream ---\n");
++
++    struct rrdhost_system_info *si = rrdhost_system_info_create();
++
++    BUFFER *wb = buffer_create(1024, NULL);
++    rrdhost_system_info_to_url_encode_stream(wb, si);
++    CHECK(strstr(buffer_tostring(wb), "ml_enabled=0") != NULL, "ml_enabled should be 0 by default");
++
++    buffer_flush(wb);
++    rrdhost_system_info_ml_enabled_set(si, true);
++    rrdhost_system_info_to_url_encode_stream(wb, si);
++    CHECK(strstr(buffer_tostring(wb), "ml_enabled=1") != NULL, "ml_enabled should be 1 after set true");
++
++    buffer_free(wb);
++    rrdhost_system_info_free(si);
++}
++
++static void test_mc_version_via_stream(void) {
++    fprintf(stderr, "\n--- test_mc_version_via_stream ---\n");
++
++    struct rrdhost_system_info *si = rrdhost_system_info_create();
++
++    BUFFER *wb = buffer_create(1024, NULL);
++    rrdhost_system_info_to_url_encode_stream(wb, si);
++    CHECK(strstr(buffer_tostring(wb), "mc_version=0") != NULL, "mc_version should be 0 by default");
++
++    buffer_flush(wb);
++    rrdhost_system_info_mc_version_set(si, 42);
++    rrdhost_system_info_to_url_encode_stream(wb, si);
++    CHECK(strstr(buffer_tostring(wb), "mc_version=42") != NULL, "mc_version should be 42 after set");
++
++    buffer_free(wb);
++    rrdhost_system_info_free(si);
++}
++
++static void test_set_by_name_via_labels(void) {
++    fprintf(stderr, "\n--- test_set_by_name_via_labels ---\n");
++
++    struct rrdhost_system_info *si = rrdhost_system_info_create();
++
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_NAME", "Ubuntu") == 0,
++          "set_by_name NETDATA_HOST_OS_NAME should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_ID", "ubuntu") == 0,
++          "set_by_name NETDATA_HOST_OS_ID should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_ARCHITECTURE", "x86_64") == 0,
++          "set_by_name NETDATA_SYSTEM_ARCHITECTURE should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_KERNEL_NAME", "Linux") == 0,
++          "set_by_name NETDATA_SYSTEM_KERNEL_NAME should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_KERNEL_VERSION", "5.15.0") == 0,
++          "set_by_name NETDATA_SYSTEM_KERNEL_VERSION should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_INSTANCE_CLOUD_TYPE", "aws") == 0,
++          "set_by_name NETDATA_INSTANCE_CLOUD_TYPE should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_INSTANCE_CLOUD_INSTANCE_TYPE", "t3.micro") == 0,
++          "set_by_name NETDATA_INSTANCE_CLOUD_INSTANCE_TYPE should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_INSTANCE_CLOUD_INSTANCE_REGION", "us-east-1") == 0,
++          "set_by_name NETDATA_INSTANCE_CLOUD_INSTANCE_REGION should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_CPU_LOGICAL_CPU_COUNT", "4") == 0,
++          "set_by_name NETDATA_SYSTEM_CPU_LOGICAL_CPU_COUNT should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_CPU_FREQ", "2400") == 0,
++          "set_by_name NETDATA_SYSTEM_CPU_FREQ should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_CPU_MODEL", "Intel Xeon") == 0,
++          "set_by_name NETDATA_SYSTEM_CPU_MODEL should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_TOTAL_RAM", "8192") == 0,
++          "set_by_name NETDATA_SYSTEM_TOTAL_RAM should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_TOTAL_DISK_SIZE", "50000") == 0,
++          "set_by_name NETDATA_SYSTEM_TOTAL_DISK_SIZE should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_VIRTUALIZATION", "kvm") == 0,
++          "set_by_name NETDATA_SYSTEM_VIRTUALIZATION should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_VIRT_DETECTION", "systemd-detect-virt") == 0,
++          "set_by_name NETDATA_SYSTEM_VIRT_DETECTION should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_CONTAINER", "docker") == 0,
++          "set_by_name NETDATA_SYSTEM_CONTAINER should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_CONTAINER_DETECTION", "dockerenv") == 0,
++          "set_by_name NETDATA_SYSTEM_CONTAINER_DETECTION should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_HOST_IS_K8S_NODE", "true") == 0,
++          "set_by_name NETDATA_HOST_IS_K8S_NODE should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_CONTAINER_OS_NAME", "Alpine") == 0,
++          "set_by_name NETDATA_CONTAINER_OS_NAME should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_CONTAINER_OS_ID", "alpine") == 0,
++          "set_by_name NETDATA_CONTAINER_OS_ID should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_CONTAINER_OS_ID_LIKE", "busybox") == 0,
++          "set_by_name NETDATA_CONTAINER_OS_ID_LIKE should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_CONTAINER_OS_VERSION", "3.18") == 0,
++          "set_by_name NETDATA_CONTAINER_OS_VERSION should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_CONTAINER_OS_VERSION_ID", "3.18.0") == 0,
++          "set_by_name NETDATA_CONTAINER_OS_VERSION_ID should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_CONTAINER_OS_DETECTION", "os-release") == 0,
++          "set_by_name NETDATA_CONTAINER_OS_DETECTION should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_ID_LIKE", "debian") == 0,
++          "set_by_name NETDATA_HOST_OS_ID_LIKE should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_VERSION", "22.04") == 0,
++          "set_by_name NETDATA_HOST_OS_VERSION should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_VERSION_ID", "22.04") == 0,
++          "set_by_name NETDATA_HOST_OS_VERSION_ID should return 0");
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_DETECTION", "os-release") == 0,
++          "set_by_name NETDATA_HOST_OS_DETECTION should return 0");
++
++    RRDLABELS *labels = rrdlabels_create();
++    rrdhost_system_info_to_rrdlabels(si, labels);
++
++    char *value = NULL;
++    rrdlabels_get_value_strdup_or_null(labels, &value, "_os_name");
++    CHECK(value != NULL && strcmp(value, "Ubuntu") == 0, "label _os_name should be 'Ubuntu' after set_by_name");
++    freez(value); value = NULL;
++
++    rrdlabels_get_value_strdup_or_null(labels, &value, "_architecture");
++    CHECK(value != NULL && strcmp(value, "x86_64") == 0, "label _architecture should be 'x86_64'");
++    freez(value); value = NULL;
++
++    rrdlabels_get_value_strdup_or_null(labels, &value, "_cloud_provider_type");
++    CHECK(value != NULL && strcmp(value, "aws") == 0, "label _cloud_provider_type should be 'aws'");
++    freez(value); value = NULL;
++
++    rrdlabels_get_value_strdup_or_null(labels, &value, "_system_cores");
++    CHECK(value != NULL && strcmp(value, "4") == 0, "label _system_cores should be '4'");
++    freez(value); value = NULL;
++
++    rrdlabels_get_value_strdup_or_null(labels, &value, "_kernel_version");
++    CHECK(value != NULL && strcmp(value, "5.15.0") == 0, "label _kernel_version should be '5.15.0'");
++    freez(value); value = NULL;
++
++    rrdlabels_get_value_strdup_or_null(labels, &value, "_is_k8s_node");
++    CHECK(value != NULL && strcmp(value, "true") == 0, "label _is_k8s_node should be 'true'");
++    freez(value); value = NULL;
++
++    rrdlabels_get_value_strdup_or_null(labels, &value, "_container");
++    CHECK(value != NULL && strcmp(value, "docker") == 0, "label _container should be 'docker'");
++    freez(value); value = NULL;
++
++    rrdlabels_get_value_strdup_or_null(labels, &value, "_virtualization");
++    CHECK(value != NULL && strcmp(value, "kvm") == 0, "label _virtualization should be 'kvm'");
++    freez(value); value = NULL;
++
++    rrdlabels_get_value_strdup_or_null(labels, &value, "_install_type");
++    CHECK(value == NULL, "_install_type should be NULL (not set via set_by_name)");
++    freez(value);
++
++    rrdlabels_destroy(labels);
++    rrdhost_system_info_free(si);
++}
++
++static void test_set_by_name_unknown(void) {
++    fprintf(stderr, "\n--- test_set_by_name_unknown ---\n");
++
++    struct rrdhost_system_info *si = rrdhost_system_info_create();
++
++    CHECK(rrdhost_system_info_set_by_name(si, "UNKNOWN_VARIABLE", "value") == 1,
++          "set_by_name for unknown variable should return 1");
++
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_PROTOCOL_VERSION", "1") == 0,
++          "set_by_name NETDATA_PROTOCOL_VERSION should return 0 (silently ignored)");
++
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_CPU_VENDOR", "Intel") == 0,
++          "set_by_name NETDATA_SYSTEM_CPU_VENDOR should return 0 (silently ignored)");
++
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_CPU_DETECTION", "proc") == 0,
++          "set_by_name NETDATA_SYSTEM_CPU_DETECTION should return 0 (silently ignored)");
++
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_RAM_DETECTION", "proc") == 0,
++          "set_by_name NETDATA_SYSTEM_RAM_DETECTION should return 0 (silently ignored)");
++
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_DISK_DETECTION", "df") == 0,
++          "set_by_name NETDATA_SYSTEM_DISK_DETECTION should return 0 (silently ignored)");
++
++    CHECK(rrdhost_system_info_set_by_name(si, "NETDATA_CONTAINER_IS_OFFICIAL_IMAGE", "true") == 0,
++          "set_by_name NETDATA_CONTAINER_IS_OFFICIAL_IMAGE should return 0 (silently ignored)");
++
++    rrdhost_system_info_free(si);
++}
++
++static void test_set_by_name_overwrite(void) {
++    fprintf(stderr, "\n--- test_set_by_name_overwrite ---\n");
++
++    struct rrdhost_system_info *si = rrdhost_system_info_create();
++
++    rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_NAME", "Ubuntu");
++
++    RRDLABELS *labels = rrdlabels_create();
++    rrdhost_system_info_to_rrdlabels(si, labels);
++    char *value = NULL;
++    rrdlabels_get_value_strdup_or_null(labels, &value, "_os_name");
++    CHECK(value != NULL && strcmp(value, "Ubuntu") == 0, "first set should produce Ubuntu");
++    freez(value); value = NULL;
++    rrdlabels_destroy(labels);
++
++    rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_NAME", "Debian");
++
++    labels = rrdlabels_create();
++    rrdhost_system_info_to_rrdlabels(si, labels);
++    rrdlabels_get_value_strdup_or_null(labels, &value, "_os_name");
++    CHECK(value != NULL && strcmp(value, "Debian") == 0, "overwrite should produce Debian");
++    freez(value);
++    rrdlabels_destroy(labels);
++
++    rrdhost_system_info_free(si);
++}
++
++static void test_to_json_v1_null(void) {
++    fprintf(stderr, "\n--- test_to_json_v1_null ---\n");
++
++    BUFFER *wb = buffer_create(1024, NULL);
++    rrdhost_system_info_to_json_v1(wb, NULL);
++    CHECK(buffer_strlen(wb) == 0, "to_json_v1(NULL) should produce empty output");
++    buffer_free(wb);
++}
++
++static void test_to_json_v1_populated(void) {
++    fprintf(stderr, "\n--- test_to_json_v1_populated ---\n");
++
++    struct rrdhost_system_info *si = rrdhost_system_info_create();
++    rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_NAME", "Ubuntu");
++    rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_ARCHITECTURE", "x86_64");
++    rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_KERNEL_NAME", "Linux");
++    rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_KERNEL_VERSION", "5.15.0");
++    rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_CPU_LOGICAL_CPU_COUNT", "4");
++    rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_TOTAL_DISK_SIZE", "50000");
++    rrdhost_system_info_set_by_name(si, "NETDATA_INSTANCE_CLOUD_TYPE", "aws");
++
++    BUFFER *wb = buffer_create(4096, NULL);
++    buffer_strcat(wb, "{");
++    rrdhost_system_info_to_json_v1(wb, si);
++    buffer_strcat(wb, "}");
++
++    const char *output = buffer_tostring(wb);
++    CHECK(strstr(output, "os_name") != NULL, "v1 JSON should contain os_name key");
++    CHECK(strstr(output, "Ubuntu") != NULL, "v1 JSON should contain Ubuntu value");
++    CHECK(strstr(output, "architecture") != NULL, "v1 JSON should contain architecture key");
++    CHECK(strstr(output, "x86_64") != NULL, "v1 JSON should contain x86_64 value");
++    CHECK(strstr(output, "kernel_name") != NULL, "v1 JSON should contain kernel_name key");
++    CHECK(strstr(output, "kernel_version") != NULL, "v1 JSON should contain kernel_version key");
++    CHECK(strstr(output, "cores_total") != NULL, "v1 JSON should contain cores_total key");
++    CHECK(strstr(output, "total_disk_space") != NULL, "v1 JSON should contain total_disk_space key");
++    CHECK(strstr(output, "cloud_provider_type") != NULL, "v1 JSON should contain cloud_provider_type key");
++
++    buffer_free(wb);
++    rrdhost_system_info_free(si);
++}
++
++static void test_to_json_v2_null(void) {
++    fprintf(stderr, "\n--- test_to_json_v2_null ---\n");
++
++    BUFFER *wb = buffer_create(1024, NULL);
++    rrdhost_system_info_to_json_v2(wb, NULL);
++    CHECK(buffer_strlen(wb) == 0, "to_json_v2(NULL) should produce empty output");
++    buffer_free(wb);
++}
++
++static void test_to_json_v2_populated(void) {
++    fprintf(stderr, "\n--- test_to_json_v2_populated ---\n");
++
++    struct rrdhost_system_info *si = rrdhost_system_info_create();
++    rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_NAME", "Ubuntu");
++    rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_ID", "ubuntu");
++    rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_VERSION", "22.04");
++    rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_ARCHITECTURE", "x86_64");
++    rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_CPU_LOGICAL_CPU_COUNT", "8");
++    rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_TOTAL_RAM", "16384");
++    rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_KERNEL_NAME", "Linux");
++    rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_KERNEL_VERSION", "6.1.0");
++
++    BUFFER *wb = buffer_create(4096, NULL);
++    buffer_json_initialize(wb, "\"", "\"", 0, true, BUFFER_JSON_OPTIONS_DEFAULT);
++    rrdhost_system_info_to_json_v2(wb, si);
++
++    const char *output = buffer_tostring(wb);
++    CHECK(strstr(output, "hw") != NULL, "v2 JSON should contain hw object");
++    CHECK(strstr(output, "os") != NULL, "v2 JSON should contain os object");
++    CHECK(strstr(output, "architecture") != NULL, "v2 JSON should contain architecture");
++    CHECK(strstr(output, "x86_64") != NULL, "v2 JSON should contain x86_64");
++    CHECK(strstr(output, "cpus") != NULL, "v2 JSON should contain cpus");
++    CHECK(strstr(output, "memory") != NULL, "v2 JSON should contain memory");
++    CHECK(strstr(output, "kernel") != NULL, "v2 JSON should contain kernel object");
++
++    buffer_free(wb);
++    rrdhost_system_info_free(si);
++}
++
++static void test_to_url_encode_stream(void) {
++    fprintf(stderr, "\n--- test_to_url_encode_stream ---\n");
++
++    struct rrdhost_system_info *si = rrdhost_system_info_create();
++    rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_NAME", "Ubuntu 22.04");
++    rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_ARCHITECTURE", "x86_64");
++    rrdhost_system_info_ml_capable_set(si, true);
++    rrdhost_system_info_ml_enabled_set(si, true);
++    rrdhost_system_info_mc_version_set(si, 2);
++
++    BUFFER *wb = buffer_create(4096, NULL);
++    rrdhost_system_info_to_url_encode_stream(wb, si);
++
++    const char *output = buffer_tostring(wb);
++    CHECK(strstr(output, "ml_capable=1") != NULL, "URL stream should contain ml_capable=1");
++    CHECK(strstr(output, "ml_enabled=1") != NULL, "URL stream should contain ml_enabled=1");
++    CHECK(strstr(output, "mc_version=2") != NULL, "URL stream should contain mc_version=2");
++    CHECK(strstr(output, "NETDATA_SYSTEM_OS_NAME") != NULL, "URL stream should contain OS name key");
++    CHECK(strstr(output, "NETDATA_SYSTEM_ARCHITECTURE") != NULL, "URL stream should contain architecture key");
++    CHECK(strstr(output, "Ubuntu") == NULL || strstr(output, "Ubuntu%20") != NULL || strstr(output, "Ubuntu+") != NULL,
++          "space in Ubuntu 22.04 should be URL encoded");
++
++    buffer_free(wb);
++    rrdhost_system_info_free(si);
++}
++
++static int foreach_count;
++static int test_foreach_callback(const char *name, const char *value __maybe_unused, nd_uuid_t *uuid __maybe_unused) {
++    if (name)
++        foreach_count++;
++    return 1;
++}
++
++static void test_foreach(void) {
++    fprintf(stderr, "\n--- test_foreach ---\n");
++
++    struct rrdhost_system_info *si = rrdhost_system_info_create();
++    rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_NAME", "Ubuntu");
++    rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_KERNEL_NAME", "Linux");
++    rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_ARCHITECTURE", "x86_64");
++
++    foreach_count = 0;
++    nd_uuid_t test_uuid;
++    memset(&test_uuid, 0, sizeof(test_uuid));
++    int ret = rrdhost_system_info_foreach(si, test_foreach_callback, &test_uuid);
++
++    CHECK(ret > 0, "foreach should return positive sum, got %d", ret);
++    CHECK(foreach_count > 0, "foreach callback should have been called, count=%d", foreach_count);
++
++    rrdhost_system_info_free(si);
++}
++
++static void test_to_rrdlabels(void) {
++    fprintf(stderr, "\n--- test_to_rrdlabels ---\n");
++
++    struct rrdhost_system_info *si = rrdhost_system_info_create();
++    rrdhost_system_info_set_by_name(si, "NETDATA_HOST_OS_NAME", "Ubuntu");
++    rrdhost_system_info_set_by_name(si, "NETDATA_SYSTEM_ARCHITECTURE", "x86_64");
++    rrdhost_system_info_set_by_name(si, "NETDATA_INSTANCE_CLOUD_TYPE", "aws");
++    rrdhost_system_info_set_by_name(si, "NETDATA_HOST_IS_K8S_NODE", "true");
++
++    RRDLABELS *labels = rrdlabels_create();
++    rrdhost_system_info_to_rrdlabels(si, labels);
++
++    char *value = NULL;
++    rrdlabels_get_value_strdup_or_null(labels, &value, "_os_name");
++    CHECK(value != NULL && strcmp(value, "Ubuntu") == 0, "label _os_name should be 'Ubuntu'");
++    freez(value); value = NULL;
++
++    rrdlabels_get_value_strdup_or_null(labels, &value, "_architecture");
++    CHECK(value != NULL && strcmp(value, "x86_64") == 0, "label _architecture should be 'x86_64'");
++    freez(value); value = NULL;
++
++    rrdlabels_get_value_strdup_or_null(labels, &value, "_cloud_provider_type");
++    CHECK(value != NULL && strcmp(value, "aws") == 0, "label _cloud_provider_type should be 'aws'");
++    freez(value); value = NULL;
++
++    rrdlabels_get_value_strdup_or_null(labels, &value, "_is_k8s_node");
++    CHECK(value != NULL && strcmp(value, "true") == 0, "label _is_k8s_node should be 'true'");
++    freez(value);
++
++    rrdlabels_destroy(labels);
++    rrdhost_system_info_free(si);
++}
++
++static void test_from_host_labels(void) {
++    fprintf(stderr, "\n--- test_from_host_labels ---\n");
++
++    RRDLABELS *labels = rrdlabels_create();
++    rrdlabels_add(labels, "_os_name", "Debian", RRDLABEL_SRC_AUTO);
++    rrdlabels_add(labels, "_architecture", "aarch64", RRDLABEL_SRC_AUTO);
++    rrdlabels_add(labels, "_cloud_provider_type", "gcp", RRDLABEL_SRC_AUTO);
++    rrdlabels_add(labels, "_system_cores", "16", RRDLABEL_SRC_AUTO);
++
++    struct rrdhost_system_info *si = rrdhost_system_info_from_host_labels(labels);
++    CHECK(si != NULL, "from_host_labels should return non-NULL");
++
++    RRDLABELS *out_labels = rrdlabels_create();
++    rrdhost_system_info_to_rrdlabels(si, out_labels);
++
++    char *value = NULL;
++    rrdlabels_get_value_strdup_or_null(out_labels, &value, "_os_name");
++    CHECK(value != NULL && strcmp(value, "Debian") == 0, "round-trip _os_name should be 'Debian'");
++    freez(value); value = NULL;
++
++    rrdlabels_get_value_strdup_or_null(out_labels, &value, "_architecture");
++    CHECK(value != NULL && strcmp(value, "aarch64") == 0, "round-trip _architecture should be 'aarch64'");
++    freez(value); value = NULL;
++
++    rrdlabels_get_value_strdup_or_null(out_labels, &value, "_cloud_provider_type");
++    CHECK(value != NULL && strcmp(value, "gcp") == 0, "round-trip _cloud_provider_type should be 'gcp'");
++    freez(value); value = NULL;
++
++    rrdlabels_get_value_strdup_or_null(out_labels, &value, "_system_cores");
++    CHECK(value != NULL && strcmp(value, "16") == 0, "round-trip _system_cores should be '16'");
++    freez(value);
++
++    rrdlabels_destroy(out_labels);
++    rrdhost_system_info_free(si);
++    rrdlabels_destroy(labels);
++}
++
++static void test_buffer_key_value_urlencode(void) {
++    fprintf(stderr, "\n--- test_buffer_key_value_urlencode ---\n");
++
++    BUFFER *wb = buffer_create(256, NULL);
++
++    buffer_key_value_urlencode(wb, "&key1", "simple");
++    const char *output = buffer_tostring(wb);
++    CHECK(strstr(output, "&key1=simple") != NULL, "simple value should encode to key=value");
++
++    buffer_flush(wb);
++    buffer_key_value_urlencode(wb, "&key2", "hello world");
++    output = buffer_tostring(wb);
++    CHECK(strstr(output, "&key2=") != NULL, "key should be present");
++    CHECK(strstr(output, "hello world") == NULL, "space should be URL encoded");
++
++    buffer_flush(wb);
++    buffer_key_value_urlencode(wb, "&key3", NULL);
++    output = buffer_tostring(wb);
++    CHECK(strstr(output, "&key3=") != NULL, "NULL value should produce key=");
++
++    buffer_flush(wb);
++    buffer_key_value_urlencode(wb, "&key4", "");
++    output = buffer_tostring(wb);
++    CHECK(strstr(output, "&key4=") != NULL, "empty value should produce key=");
++
++    buffer_free(wb);
++}
++
++int main(int argc __maybe_unused, char **argv __maybe_unused) {
++    fprintf(stderr, "=== rrdhost-system-info unit tests ===\n");
++
++    test_create_and_free();
++    test_hops_accessors();
++    test_install_type_accessor();
++    test_prebuilt_dist_accessor();
++    test_ml_capable_via_stream();
++    test_ml_enabled_via_stream();
++    test_mc_version_via_stream();
++    test_set_by_name_via_labels();
++    test_set_by_name_unknown();
++    test_set_by_name_overwrite();
++    test_to_json_v1_null();
++    test_to_json_v1_populated();
++    test_to_json_v2_null();
++    test_to_json_v2_populated();
++    test_to_url_encode_stream();
++    test_foreach();
++    test_to_rrdlabels();
++    test_from_host_labels();
++    test_buffer_key_value_urlencode();
++
++    fprintf(stderr, "\n=== Results: %d passed, %d failed ===\n", passed, errors);
++
++    return errors > 0 ? 1 : 0;
++}

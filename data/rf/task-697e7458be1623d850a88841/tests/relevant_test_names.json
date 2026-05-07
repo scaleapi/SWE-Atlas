@@ -1,0 +1,97 @@
+{
+  "tests": [
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/common/TestSummarizeSource_AcceptsInputStructMap"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/common/TestSummarizeSource_IncludesNonEmptyValues"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/common/TestSummarizeSource_SkipsEmptyValues"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/components/textinputs/TestInput_HasValueAndIsDefaultFields"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/components/textinputs/TestGetInputs_RequiredEmptyField_UsesPlaceholderAndSetsIsDefault"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/components/textinputs/TestGetInputs_NonRequiredEmptyField_RemainsEmptyWithIsDefaultFalse"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/components/textinputs/TestGetInputs_MixedRequiredAndOptional"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/circleci/TestGetFields_RequiredFieldDefaults"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/circleci/TestCmd_IncludesTokenFlag"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/docker/TestCmd_IncludesImageFlag"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/docker/TestGetFields_RequiredFieldDefaults"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/filesystem/TestCmd_IncludesPathValue"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/filesystem/TestGetFields_RequiredFieldDefaults"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/gcs/TestGetFields_UsesHyphenatedKey"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/gcs/TestCmd_UsesHyphenatedFlag"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/gcs/TestGetFields_RequiredFieldDefaults"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/git/TestCmd_IncludesURIValue"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/git/TestGetFields_RequiredFieldDefaults"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/github/TestGetFields_OrgAndRepoAreRequired"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/github/TestGetSpecialInputs_BothDefault_RetainsBothWithValues"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/github/TestCmd_WithBothDefaults_IncludesBothFlags"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/s3/TestCmd_IncludesBucketFlag"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/s3/TestGetFields_RequiredFieldDefaults"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/syslog/TestCmd_IncludesAllRequiredFlags"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/syslog/TestGetFields_RequiredFieldDefaults"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/pages/source_configure/TestGetTrufflehogConfiguration_AllFieldsOptional"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/pages/source_configure/TestCmd_WithNoInput_ReturnsEmpty"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/pages/source_configure/TestSummary_WithNoInput_IndicatesDefaults"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/pages/source_select/TestNew_IncludesAzureRepos"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/gitlab/TestCmd_IncludesTokenFlag"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/tui/sources/gitlab/TestGetFields_RequiredFieldDefaults"
+    }
+  ]
+}

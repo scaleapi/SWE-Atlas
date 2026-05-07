@@ -1,0 +1,268 @@
+diff --git a/src/collectors/cgroups.plugin/tests/test_doubles.c b/src/collectors/cgroups.plugin/tests/test_doubles.c
+index 53fefa9c2..2e6d810b1 100644
+--- a/src/collectors/cgroups.plugin/tests/test_doubles.c
++++ b/src/collectors/cgroups.plugin/tests/test_doubles.c
+@@ -47,7 +47,7 @@ void mountinfo_free_all(struct mountinfo *mi)
+ RRDSET *rrdset_create_custom(
+     RRDHOST *host, const char *type, const char *id, const char *name, const char *family, const char *context,
+     const char *title, const char *units, const char *plugin, const char *module, long priority, int update_every,
+-    RRDSET_TYPE chart_type, RRD_MEMORY_MODE memory_mode, long history_entries)
++    RRDSET_TYPE chart_type, RRD_DB_MODE memory_mode, long history_entries)
+ {
+     UNUSED(host);
+     UNUSED(type);
+@@ -70,7 +70,7 @@ RRDSET *rrdset_create_custom(
+ 
+ RRDDIM *rrddim_add_custom(
+     RRDSET *st, const char *id, const char *name, collected_number multiplier, collected_number divisor,
+-    RRD_ALGORITHM algorithm, RRD_MEMORY_MODE memory_mode)
++    RRD_ALGORITHM algorithm, RRD_DB_MODE memory_mode)
+ {
+     UNUSED(st);
+     UNUSED(id);
+diff --git a/src/daemon/unit_test.c b/src/daemon/unit_test.c
+index 963e3b1c3..07d0486d7 100644
+--- a/src/daemon/unit_test.c
++++ b/src/daemon/unit_test.c
+@@ -1268,7 +1268,7 @@ int run_test(struct test *test)
+ {
+     fprintf(stderr, "\nRunning test '%s':\n%s\n", test->name, test->description);
+ 
+-    default_rrd_memory_mode = RRD_MEMORY_MODE_ALLOC;
++    default_rrd_memory_mode = RRD_DB_MODE_ALLOC;
+     nd_profile.update_every = test->update_every;
+ 
+     char name[101];
+@@ -1537,7 +1537,7 @@ int unit_test(long delay, long shift)
+     snprintfz(name, sizeof(name) - 1, "unittest-%d-%ld-%ld", repeat, delay, shift);
+ 
+     //debug_flags = 0xffffffff;
+-    default_rrd_memory_mode = RRD_MEMORY_MODE_ALLOC;
++    default_rrd_memory_mode = RRD_DB_MODE_ALLOC;
+     nd_profile.update_every = 1;
+ 
+     int do_abs = 1;
+diff --git a/src/database/engine/dbengine-stresstest.c b/src/database/engine/dbengine-stresstest.c
+index a68b87dbb..61d63b091 100644
+--- a/src/database/engine/dbengine-stresstest.c
++++ b/src/database/engine/dbengine-stresstest.c
+@@ -20,7 +20,7 @@ static RRDHOST *dbengine_rrdhost_find_or_create(char *name) {
+         NETDATA_VERSION,
+         nd_profile.update_every,
+         default_rrd_history_entries,
+-        RRD_MEMORY_MODE_DBENGINE,
++        RRD_DB_MODE_DBENGINE,
+         health_plugin_enabled(),
+         stream_send.enabled,
+         stream_send.parents.destination,
+@@ -140,7 +140,7 @@ void generate_dbengine_dataset(unsigned history_seconds)
+     int i;
+     time_t time_present;
+ 
+-    default_rrd_memory_mode = RRD_MEMORY_MODE_DBENGINE;
++    default_rrd_memory_mode = RRD_DB_MODE_DBENGINE;
+     default_rrdeng_page_cache_mb = 128;
+     // Worst case for uncompressible data
+     default_rrdeng_disk_quota_mb = (((uint64_t)DSET_DIMS * DSET_CHARTS) * sizeof(storage_number) * history_seconds) /
+@@ -333,7 +333,7 @@ void dbengine_stress_test(unsigned TEST_DURATION_SEC, unsigned DSET_CHARTS, unsi
+     if (PAGE_CACHE_MB < RRDENG_MIN_PAGE_CACHE_SIZE_MB)
+         PAGE_CACHE_MB = RRDENG_MIN_PAGE_CACHE_SIZE_MB;
+ 
+-    default_rrd_memory_mode = RRD_MEMORY_MODE_DBENGINE;
++    default_rrd_memory_mode = RRD_DB_MODE_DBENGINE;
+     default_rrdeng_page_cache_mb = PAGE_CACHE_MB;
+     if (DISK_SPACE_MB) {
+         fprintf(stderr, "By setting disk space limit data are allowed to be deleted. "
+diff --git a/src/database/engine/dbengine-unittest.c b/src/database/engine/dbengine-unittest.c
+index 937335f94..d25ec0697 100644
+--- a/src/database/engine/dbengine-unittest.c
++++ b/src/database/engine/dbengine-unittest.c
+@@ -106,7 +106,7 @@ static RRDHOST *dbengine_rrdhost_find_or_create(char *name) {
+         NETDATA_VERSION,
+         nd_profile.update_every,
+         default_rrd_history_entries,
+-        RRD_MEMORY_MODE_DBENGINE,
++        RRD_DB_MODE_DBENGINE,
+         health_plugin_enabled(),
+         stream_send.enabled,
+         stream_send.parents.destination,
+@@ -362,7 +362,7 @@ int test_dbengine(void) {
+     nd_log_limits_unlimited();
+     fprintf(stderr, "\nRunning DB-engine test\n");
+ 
+-    default_rrd_memory_mode = RRD_MEMORY_MODE_DBENGINE;
++    default_rrd_memory_mode = RRD_DB_MODE_DBENGINE;
+     fprintf(stderr, "Initializing localhost with hostname 'unittest-dbengine'");
+     RRDHOST *host = dbengine_rrdhost_find_or_create("unittest-dbengine");
+     if(!host)
+diff --git a/src/database/tests/rrd_refactor_test.c b/src/database/tests/rrd_refactor_test.c
+new file mode 100644
+index 000000000..3a0905913
+--- /dev/null
++++ b/src/database/tests/rrd_refactor_test.c
+@@ -0,0 +1,165 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++//
++// Standalone unit tests for the RRD database refactoring:
++// - RRD_DB_MODE enum rename and conversion functions
++// - RRD_ALGORITHM extraction and conversion functions
++// - RRDSET_TYPE extraction and conversion functions
++// - Storage engine lookup with renamed types
++//
++// Compiled separately by the test runner, not part of the main netdata binary.
++
++#include <stdio.h>
++#include <string.h>
++#include <stdlib.h>
++
++#include "database/rrd-database-mode.h"
++#include "database/rrd-algorithm.h"
++#include "database/rrdset-type.h"
++#include "database/storage-engine.h"
++#include "database/rrd.h"
++
++static int errors = 0;
++static int tests_passed = 0;
++
++#define ASSERT_EQ_INT(name, got, expected) do { \
++    if ((got) != (expected)) { \
++        fprintf(stderr, "FAIL: %s: got %d, expected %d\n", name, (int)(got), (int)(expected)); \
++        errors++; \
++    } else { tests_passed++; } \
++} while(0)
++
++#define ASSERT_EQ_STR(name, got, expected) do { \
++    if (strcmp((got), (expected)) != 0) { \
++        fprintf(stderr, "FAIL: %s: got '%s', expected '%s'\n", name, (got), (expected)); \
++        errors++; \
++    } else { tests_passed++; } \
++} while(0)
++
++#define ASSERT_NOT_NULL(name, ptr) do { \
++    if ((ptr) == NULL) { \
++        fprintf(stderr, "FAIL: %s: got NULL\n", name); \
++        errors++; \
++    } else { tests_passed++; } \
++} while(0)
++
++static void test_rrd_db_mode_enum_values(void) {
++    fprintf(stderr, "test_rrd_db_mode_enum_values...");
++    ASSERT_EQ_INT("RRD_DB_MODE_NONE", RRD_DB_MODE_NONE, 0);
++    ASSERT_EQ_INT("RRD_DB_MODE_RAM", RRD_DB_MODE_RAM, 1);
++    ASSERT_EQ_INT("RRD_DB_MODE_ALLOC", RRD_DB_MODE_ALLOC, 4);
++    ASSERT_EQ_INT("RRD_DB_MODE_DBENGINE", RRD_DB_MODE_DBENGINE, 5);
++    ASSERT_EQ_STR("RRD_DB_MODE_NONE_NAME", RRD_DB_MODE_NONE_NAME, "none");
++    ASSERT_EQ_STR("RRD_DB_MODE_RAM_NAME", RRD_DB_MODE_RAM_NAME, "ram");
++    ASSERT_EQ_STR("RRD_DB_MODE_ALLOC_NAME", RRD_DB_MODE_ALLOC_NAME, "alloc");
++    ASSERT_EQ_STR("RRD_DB_MODE_DBENGINE_NAME", RRD_DB_MODE_DBENGINE_NAME, "dbengine");
++    fprintf(stderr, "OK\n");
++}
++
++static void test_rrd_db_mode_conversions(void) {
++    fprintf(stderr, "test_rrd_db_mode_conversions...");
++    ASSERT_EQ_STR("name(NONE)", rrd_memory_mode_name(RRD_DB_MODE_NONE), "none");
++    ASSERT_EQ_STR("name(RAM)", rrd_memory_mode_name(RRD_DB_MODE_RAM), "ram");
++    ASSERT_EQ_STR("name(ALLOC)", rrd_memory_mode_name(RRD_DB_MODE_ALLOC), "alloc");
++    ASSERT_EQ_STR("name(DBENGINE)", rrd_memory_mode_name(RRD_DB_MODE_DBENGINE), "dbengine");
++    ASSERT_EQ_INT("id(none)", rrd_memory_mode_id("none"), RRD_DB_MODE_NONE);
++    ASSERT_EQ_INT("id(ram)", rrd_memory_mode_id("ram"), RRD_DB_MODE_RAM);
++    ASSERT_EQ_INT("id(alloc)", rrd_memory_mode_id("alloc"), RRD_DB_MODE_ALLOC);
++    ASSERT_EQ_INT("id(dbengine)", rrd_memory_mode_id("dbengine"), RRD_DB_MODE_DBENGINE);
++    ASSERT_EQ_INT("id(unknown)", rrd_memory_mode_id("nonexistent_mode"), RRD_DB_MODE_RAM);
++    fprintf(stderr, "OK\n");
++}
++
++static void test_rrd_algorithm_conversions(void) {
++    fprintf(stderr, "test_rrd_algorithm_conversions...");
++    ASSERT_EQ_STR("name(ABSOLUTE)", rrd_algorithm_name(RRD_ALGORITHM_ABSOLUTE), RRD_ALGORITHM_ABSOLUTE_NAME);
++    ASSERT_EQ_STR("name(INCREMENTAL)", rrd_algorithm_name(RRD_ALGORITHM_INCREMENTAL), RRD_ALGORITHM_INCREMENTAL_NAME);
++    ASSERT_EQ_STR("name(PCENT_DIFF)", rrd_algorithm_name(RRD_ALGORITHM_PCENT_OVER_DIFF_TOTAL), RRD_ALGORITHM_PCENT_OVER_DIFF_TOTAL_NAME);
++    ASSERT_EQ_STR("name(PCENT_ROW)", rrd_algorithm_name(RRD_ALGORITHM_PCENT_OVER_ROW_TOTAL), RRD_ALGORITHM_PCENT_OVER_ROW_TOTAL_NAME);
++    ASSERT_EQ_INT("id(absolute)", rrd_algorithm_id(RRD_ALGORITHM_ABSOLUTE_NAME), RRD_ALGORITHM_ABSOLUTE);
++    ASSERT_EQ_INT("id(incremental)", rrd_algorithm_id(RRD_ALGORITHM_INCREMENTAL_NAME), RRD_ALGORITHM_INCREMENTAL);
++    ASSERT_EQ_INT("id(pcent_diff)", rrd_algorithm_id(RRD_ALGORITHM_PCENT_OVER_DIFF_TOTAL_NAME), RRD_ALGORITHM_PCENT_OVER_DIFF_TOTAL);
++    ASSERT_EQ_INT("id(pcent_row)", rrd_algorithm_id(RRD_ALGORITHM_PCENT_OVER_ROW_TOTAL_NAME), RRD_ALGORITHM_PCENT_OVER_ROW_TOTAL);
++    ASSERT_EQ_INT("id(unknown)", rrd_algorithm_id("nonexistent_algorithm"), RRD_ALGORITHM_ABSOLUTE);
++    fprintf(stderr, "OK\n");
++}
++
++static void test_rrdset_type_conversions(void) {
++    fprintf(stderr, "test_rrdset_type_conversions...");
++    ASSERT_EQ_STR("name(LINE)", rrdset_type_name(RRDSET_TYPE_LINE), RRDSET_TYPE_LINE_NAME);
++    ASSERT_EQ_STR("name(AREA)", rrdset_type_name(RRDSET_TYPE_AREA), RRDSET_TYPE_AREA_NAME);
++    ASSERT_EQ_STR("name(STACKED)", rrdset_type_name(RRDSET_TYPE_STACKED), RRDSET_TYPE_STACKED_NAME);
++    ASSERT_EQ_STR("name(HEATMAP)", rrdset_type_name(RRDSET_TYPE_HEATMAP), RRDSET_TYPE_HEATMAP_NAME);
++    ASSERT_EQ_INT("id(line)", rrdset_type_id(RRDSET_TYPE_LINE_NAME), RRDSET_TYPE_LINE);
++    ASSERT_EQ_INT("id(area)", rrdset_type_id(RRDSET_TYPE_AREA_NAME), RRDSET_TYPE_AREA);
++    ASSERT_EQ_INT("id(stacked)", rrdset_type_id(RRDSET_TYPE_STACKED_NAME), RRDSET_TYPE_STACKED);
++    ASSERT_EQ_INT("id(heatmap)", rrdset_type_id(RRDSET_TYPE_HEATMAP_NAME), RRDSET_TYPE_HEATMAP);
++    ASSERT_EQ_INT("id(unknown)", rrdset_type_id("nonexistent_type"), RRDSET_TYPE_LINE);
++    fprintf(stderr, "OK\n");
++}
++
++static void test_storage_engine_modes(void) {
++    fprintf(stderr, "test_storage_engine_modes...");
++    STORAGE_ENGINE *eng;
++
++    eng = storage_engine_get(RRD_DB_MODE_NONE);
++    ASSERT_NOT_NULL("engine(NONE)", eng);
++    if (eng) ASSERT_EQ_INT("engine(NONE).id", eng->id, RRD_DB_MODE_NONE);
++
++    eng = storage_engine_get(RRD_DB_MODE_RAM);
++    ASSERT_NOT_NULL("engine(RAM)", eng);
++    if (eng) ASSERT_EQ_INT("engine(RAM).id", eng->id, RRD_DB_MODE_RAM);
++
++    eng = storage_engine_get(RRD_DB_MODE_ALLOC);
++    ASSERT_NOT_NULL("engine(ALLOC)", eng);
++    if (eng) ASSERT_EQ_INT("engine(ALLOC).id", eng->id, RRD_DB_MODE_ALLOC);
++
++    fprintf(stderr, "OK\n");
++}
++
++static void test_align_entries_to_pagesize(void) {
++    fprintf(stderr, "test_align_entries_to_pagesize...");
++    ASSERT_EQ_INT("DBENGINE->0", align_entries_to_pagesize(RRD_DB_MODE_DBENGINE, 1000), 0);
++    ASSERT_EQ_INT("NONE->5", align_entries_to_pagesize(RRD_DB_MODE_NONE, 1000), 5);
++
++    long alloc_small = align_entries_to_pagesize(RRD_DB_MODE_ALLOC, 2);
++    if (alloc_small < 5) {
++        fprintf(stderr, "FAIL: ALLOC(2): got %ld, expected >= 5\n", alloc_small);
++        errors++;
++    } else { tests_passed++; }
++
++    long alloc_big = align_entries_to_pagesize(RRD_DB_MODE_ALLOC, RRD_HISTORY_ENTRIES_MAX + 100);
++    if (alloc_big > RRD_HISTORY_ENTRIES_MAX) {
++        fprintf(stderr, "FAIL: ALLOC(MAX+100): got %ld, expected <= %d\n", alloc_big, RRD_HISTORY_ENTRIES_MAX);
++        errors++;
++    } else { tests_passed++; }
++
++    long ram_normal = align_entries_to_pagesize(RRD_DB_MODE_RAM, 100);
++    if (ram_normal < 100) {
++        fprintf(stderr, "FAIL: RAM(100): got %ld, expected >= 100\n", ram_normal);
++        errors++;
++    } else { tests_passed++; }
++
++    fprintf(stderr, "OK\n");
++}
++
++int main(int argc, char *argv[]) {
++    (void)argc; (void)argv;
++
++    fprintf(stderr, "=== RRD Refactor Tests ===\n");
++
++    test_rrd_db_mode_enum_values();
++    test_rrd_db_mode_conversions();
++    test_rrd_algorithm_conversions();
++    test_rrdset_type_conversions();
++    test_storage_engine_modes();
++    test_align_entries_to_pagesize();
++
++    fprintf(stderr, "\n%d passed, %d failed\n", tests_passed, errors);
++
++    if (errors > 0) {
++        fprintf(stderr, "TESTS FAILED\n");
++        return 1;
++    }
++    fprintf(stderr, "ALL RRD REFACTOR TESTS PASSED\n");
++    return 0;
++}

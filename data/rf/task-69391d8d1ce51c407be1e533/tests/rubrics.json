@@ -1,0 +1,90 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "abf03b45e91985bb0356a8a8e179715e",
+    "title": "1.1: Creates delete_custom_domain(domain: CustomDomain) function in app/custom_domain_utils.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "26eb3051aa66626eb1535431f143dd05",
+    "title": "1.2: Calls delete_custom_domain from the domain detail controller",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "87f9e9004105d8d56e727716665bbcc0",
+    "title": "1.3: Sets pending_deletion flag to True in delete_custom_domain",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "691deca772163910c9f07dc818fff6be",
+    "title": "1.4: Schedules deletion job in delete_custom_domain using Job.create",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1c6060d1aa1080f1617c74f99692088c",
+    "title": "3.1: Removes all 4 unused imports (arrow, JOB_DELETE_DOMAIN, Job, LOG) from the domain detail controller",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8841b4dfa303924e7b0e9a196ab1c10c",
+    "title": "4.1: Removes the domain deletion functionality entirely instead of extracting it",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5ce21be322edb48fb641f11d1a5299a8",
+    "title": "4.2: Changes any of the 2 deletion job parameters (JOB_DELETE_DOMAIN name, custom_domain_id payload key)",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

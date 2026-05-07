@@ -1,0 +1,419 @@
+diff --git a/mysql-test/suite/innodb/r/flst_validate.result b/mysql-test/suite/innodb/r/flst_validate.result
+new file mode 100644
+index 00000000000..27b389caffd
+--- /dev/null
++++ b/mysql-test/suite/innodb/r/flst_validate.result
+@@ -0,0 +1,24 @@
++# restart
++SET GLOBAL innodb_file_per_table = 0;
++Warnings:
++Warning	1287	'@@innodb_file_per_table' is deprecated and will be removed in a future release
++SET GLOBAL innodb_limit_optimistic_insert_debug = 2;
++CREATE TABLE t1(f1 INT NOT NULL PRIMARY KEY, f2 VARCHAR(100))ENGINE=InnoDB;
++INSERT INTO t1 SELECT seq, REPEAT('a', 50) FROM seq_1_to_4096;
++CREATE INDEX idx_f2 ON t1(f2);
++INSERT INTO t1 SELECT seq + 10000, REPEAT('b', 50) FROM seq_1_to_4096;
++DELETE FROM t1 WHERE f1 % 3 = 0;
++CHECK TABLE t1;
++Table	Op	Msg_type	Msg_text
++test.t1	check	status	OK
++SET GLOBAL innodb_file_per_table = 1;
++Warnings:
++Warning	1287	'@@innodb_file_per_table' is deprecated and will be removed in a future release
++CREATE TABLE t2(f1 INT PRIMARY KEY) ENGINE=InnoDB PARTITION BY KEY() PARTITIONS 64;
++DROP TABLE t2;
++DROP TABLE t1;
++InnoDB		0 transactions not purged
++set GLOBAL innodb_fast_shutdown= 0;
++# restart
++FOUND 1 /InnoDB: Defragmentation of system tablespace is successful/ in mysqld.1.err
++# restart
+diff --git a/mysql-test/suite/innodb/r/sys_defragment.result b/mysql-test/suite/innodb/r/sys_defragment.result
+new file mode 100644
+index 00000000000..f279d694e6e
+--- /dev/null
++++ b/mysql-test/suite/innodb/r/sys_defragment.result
+@@ -0,0 +1,25 @@
++# restart
++SET GLOBAL innodb_file_per_table= 0;
++Warnings:
++Warning	1287	'@@innodb_file_per_table' is deprecated and will be removed in a future release
++SET GLOBAL innodb_limit_optimistic_insert_debug = 2;
++CREATE TABLE t1(f1 INT NOT NULL, f2 INT NOT NULL, f3 INT NOT NULL)ENGINE=InnoDB;
++INSERT INTO t1 SELECT seq, seq, seq FROM seq_1_to_16384;
++SET GLOBAL innodb_file_per_table= default;
++Warnings:
++Warning	1287	'@@innodb_file_per_table' is deprecated and will be removed in a future release
++CREATE TABLE t2(f1 INT NOT NULL PRIMARY KEY,f2 VARCHAR(40))ENGINE=InnoDB PARTITION BY KEY() PARTITIONS 256;
++INSERT INTO t1 SELECT seq, seq, seq FROM seq_1_to_16384;
++DROP TABLE t2, t1;
++InnoDB		0 transactions not purged
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++name	file_size
++innodb_system	205520896
++set GLOBAL innodb_fast_shutdown= 0;
++# restart
++FOUND 1 /InnoDB: Moving the data from extents 4096 through 22016/ in mysqld.1.err
++FOUND 1 /InnoDB: Defragmentation of system tablespace is successful/ in mysqld.1.err
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++name	file_size
++innodb_system	14680064
++# restart
+diff --git a/mysql-test/suite/innodb/r/sys_defragment_fail.result b/mysql-test/suite/innodb/r/sys_defragment_fail.result
+new file mode 100644
+index 00000000000..5abf4e65772
+--- /dev/null
++++ b/mysql-test/suite/innodb/r/sys_defragment_fail.result
+@@ -0,0 +1,52 @@
++call mtr.add_suppression("InnoDB: Defragmentation of CLUST_IND in SYS_INDEXES failed: Data structure corruption");
++call mtr.add_suppression("InnoDB: Defragmentation of CLUST_IND in SYS_COLUMNS failed: Data structure corruption");
++call mtr.add_suppression("InnoDB: Cannot free the unused segments in system tablespace");
++# restart
++set GLOBAL innodb_file_per_table = 0;
++Warnings:
++Warning	1287	'@@innodb_file_per_table' is deprecated and will be removed in a future release
++set GLOBAL innodb_limit_optimistic_insert_debug = 2;
++CREATE TABLE t1(f1 INT NOT NULL, f2 INT NOT NULL)ENGINE=InnoDB;
++INSERT INTO t1 SELECT seq, seq FROM seq_1_to_4096;
++SET GLOBAL innodb_file_per_table= 1;
++Warnings:
++Warning	1287	'@@innodb_file_per_table' is deprecated and will be removed in a future release
++CREATE TABLE t2(f1 INT NOT NULL PRIMARY KEY,
++f2 VARCHAR(40))ENGINE=InnoDB PARTITION BY KEY() PARTITIONS 256;
++INSERT INTO t1 SELECT seq, seq FROM seq_1_to_4096;
++DROP TABLE t2;
++InnoDB		0 transactions not purged
++# restart
++FOUND 1 /InnoDB: User table exists in the system tablespace/ in mysqld.1.err
++DROP TABLE t1;
++InnoDB		0 transactions not purged
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++name	file_size
++innodb_system	58720256
++# restart: --debug_dbug=+d,fail_after_level_defragment
++FOUND 1 /InnoDB: Defragmentation of CLUST_IND in SYS_COLUMNS failed./ in mysqld.1.err
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++name	file_size
++innodb_system	58720256
++# restart: --debug_dbug=d,allocation_prepare_fail
++FOUND 1 /InnoDB: Defragmentation of CLUST_IND in SYS_INDEXES failed./ in mysqld.1.err
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++name	file_size
++innodb_system	58720256
++# restart: --debug_dbug=d,relation_page_prepare_fail
++FOUND 2 /InnoDB: Defragmentation of CLUST_IND in SYS_INDEXES failed./ in mysqld.1.err
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++name	file_size
++innodb_system	58720256
++# restart: --debug_dbug=d,remover_prepare_fail
++FOUND 3 /InnoDB: Defragmentation of CLUST_IND in SYS_INDEXES failed./ in mysqld.1.err
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++name	file_size
++innodb_system	58720256
++# restart
++FOUND 5 /InnoDB: Moving the data from extents 4096 through 8960/ in mysqld.1.err
++FOUND 1 /InnoDB: Defragmentation of system tablespace is successful/ in mysqld.1.err
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++name	file_size
++innodb_system	15728640
++# restart
+diff --git a/mysql-test/suite/innodb/r/sys_truncate.result b/mysql-test/suite/innodb/r/sys_truncate.result
+index bb8eafbe584..909f363096e 100644
+--- a/mysql-test/suite/innodb/r/sys_truncate.result
++++ b/mysql-test/suite/innodb/r/sys_truncate.result
+@@ -4,7 +4,7 @@ Warning	1287	'@@innodb_file_per_table' is deprecated and will be removed in a fu
+ SET UNIQUE_CHECKS=0, FOREIGN_KEY_CHECKS=0;
+ CREATE TABLE t1(f1 INT NOT NULL, f2 INT NOT NULL,
+ f3 INT NOT NULL, INDEX(f1),
+-INDEX(f2), INDEX(f3))ENGINE=InnoDB;
++INDEX(f2), INDEX(f3))STATS_PERSISTENT=0 ENGINE=InnoDB;
+ BEGIN;
+ INSERT INTO t1 SELECT seq, seq, seq FROM seq_1_to_16384;
+ INSERT INTO t1 SELECT seq, seq, seq FROM seq_1_to_16384;
+diff --git a/mysql-test/suite/innodb/r/sys_truncate_debug.result b/mysql-test/suite/innodb/r/sys_truncate_debug.result
+index b198d449a76..f51693d849c 100644
+--- a/mysql-test/suite/innodb/r/sys_truncate_debug.result
++++ b/mysql-test/suite/innodb/r/sys_truncate_debug.result
+@@ -9,7 +9,7 @@ Warning	1287	'@@innodb_file_per_table' is deprecated and will be removed in a fu
+ SET UNIQUE_CHECKS=0, FOREIGN_KEY_CHECKS=0;
+ CREATE TABLE t1(f1 INT NOT NULL, f2 INT NOT NULL,
+ f3 INT NOT NULL, INDEX(f1),
+-INDEX(f2), INDEX(f3))ENGINE=InnoDB;
++INDEX(f2), INDEX(f3))STATS_PERSISTENT=0 ENGINE=InnoDB;
+ BEGIN;
+ INSERT INTO t1 SELECT seq, seq, seq FROM seq_1_to_16384;
+ INSERT INTO t1 SELECT seq, seq, seq FROM seq_1_to_16384;
+diff --git a/mysql-test/suite/innodb/t/flst_validate.opt b/mysql-test/suite/innodb/t/flst_validate.opt
+new file mode 100644
+index 00000000000..063c06b9b7e
+--- /dev/null
++++ b/mysql-test/suite/innodb/t/flst_validate.opt
+@@ -0,0 +1,6 @@
++--innodb_page_size=4k
++--innodb_data_file_path=ibdata1:10M:autoextend:autoshrink
++--innodb_undo_tablespaces=0
++--innodb_stats_persistent=0
++--skip_partition=0
++--innodb_sys_tablespaces
+diff --git a/mysql-test/suite/innodb/t/flst_validate.test b/mysql-test/suite/innodb/t/flst_validate.test
+new file mode 100644
+index 00000000000..ae246572989
+--- /dev/null
++++ b/mysql-test/suite/innodb/t/flst_validate.test
+@@ -0,0 +1,43 @@
++--source include/have_innodb.inc
++--source include/have_debug.inc
++--source include/have_sequence.inc
++
++--let MYSQLD_DATADIR= `SELECT @@datadir`
++--source include/shutdown_mysqld.inc
++--copy_file $MYSQLD_DATADIR/ibdata1 $MYSQLD_DATADIR/ibdata1_copy
++--copy_file $MYSQLD_DATADIR/ib_logfile0 $MYSQLD_DATADIR/ib_logfile0_copy
++--source include/start_mysqld.inc
++
++SET GLOBAL innodb_file_per_table = 0;
++SET GLOBAL innodb_limit_optimistic_insert_debug = 2;
++
++CREATE TABLE t1(f1 INT NOT NULL PRIMARY KEY, f2 VARCHAR(100))ENGINE=InnoDB;
++INSERT INTO t1 SELECT seq, REPEAT('a', 50) FROM seq_1_to_4096;
++
++CREATE INDEX idx_f2 ON t1(f2);
++
++INSERT INTO t1 SELECT seq + 10000, REPEAT('b', 50) FROM seq_1_to_4096;
++
++DELETE FROM t1 WHERE f1 % 3 = 0;
++
++CHECK TABLE t1;
++
++SET GLOBAL innodb_file_per_table = 1;
++
++CREATE TABLE t2(f1 INT PRIMARY KEY) ENGINE=InnoDB PARTITION BY KEY() PARTITIONS 64;
++DROP TABLE t2;
++
++DROP TABLE t1;
++--source include/wait_all_purged.inc
++
++set GLOBAL innodb_fast_shutdown= 0;
++--source include/restart_mysqld.inc
++
++let SEARCH_FILE= $MYSQLTEST_VARDIR/log/mysqld.1.err;
++let SEARCH_PATTERN=InnoDB: Defragmentation of system tablespace is successful;
++--source include/search_pattern_in_file.inc
++
++--source include/shutdown_mysqld.inc
++--move_file $MYSQLD_DATADIR/ibdata1_copy $MYSQLD_DATADIR/ibdata1
++--move_file $MYSQLD_DATADIR/ib_logfile0_copy $MYSQLD_DATADIR/ib_logfile0
++--source include/start_mysqld.inc
+diff --git a/mysql-test/suite/innodb/t/sys_defragment.opt b/mysql-test/suite/innodb/t/sys_defragment.opt
+new file mode 100644
+index 00000000000..beba09e7f48
+--- /dev/null
++++ b/mysql-test/suite/innodb/t/sys_defragment.opt
+@@ -0,0 +1,6 @@
++--innodb_page_size=4k
++--innodb_data_file_path=ibdata1:1M:autoextend:autoshrink
++--innodb_undo_tablespaces=0
++--innodb_stats_persistent=0
++--skip_partition=0
++--innodb_sys_tablespaces
+diff --git a/mysql-test/suite/innodb/t/sys_defragment.test b/mysql-test/suite/innodb/t/sys_defragment.test
+new file mode 100644
+index 00000000000..93b219458a6
+--- /dev/null
++++ b/mysql-test/suite/innodb/t/sys_defragment.test
+@@ -0,0 +1,40 @@
++--source include/have_innodb.inc
++--source include/have_sequence.inc
++--source include/have_debug.inc
++
++--let MYSQLD_DATADIR= `SELECT @@datadir`
++--source include/shutdown_mysqld.inc
++--copy_file $MYSQLD_DATADIR/ibdata1 $MYSQLD_DATADIR/ibdata1_copy
++--copy_file $MYSQLD_DATADIR/ib_logfile0 $MYSQLD_DATADIR/ib_logfile0_copy
++--source include/start_mysqld.inc
++
++SET GLOBAL innodb_file_per_table= 0;
++SET GLOBAL innodb_limit_optimistic_insert_debug = 2;
++CREATE TABLE t1(f1 INT NOT NULL, f2 INT NOT NULL, f3 INT NOT NULL)ENGINE=InnoDB;
++INSERT INTO t1 SELECT seq, seq, seq FROM seq_1_to_16384;
++SET GLOBAL innodb_file_per_table= default;
++CREATE TABLE t2(f1 INT NOT NULL PRIMARY KEY,f2 VARCHAR(40))ENGINE=InnoDB PARTITION BY KEY() PARTITIONS 256;
++INSERT INTO t1 SELECT seq, seq, seq FROM seq_1_to_16384;
++DROP TABLE t2, t1;
++--source include/wait_all_purged.inc
++
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++
++set GLOBAL innodb_fast_shutdown= 0;
++--source include/restart_mysqld.inc
++
++let SEARCH_FILE= $MYSQLTEST_VARDIR/log/mysqld.1.err;
++let SEARCH_PATTERN=InnoDB: Moving the data from extents 4096 through 22016;
++--source include/search_pattern_in_file.inc
++
++let SEARCH_PATTERN=InnoDB: Defragmentation of system tablespace is successful;
++--source include/search_pattern_in_file.inc
++
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++
++--source include/shutdown_mysqld.inc
++
++--move_file $MYSQLD_DATADIR/ibdata1_copy $MYSQLD_DATADIR/ibdata1
++--move_file $MYSQLD_DATADIR/ib_logfile0_copy $MYSQLD_DATADIR/ib_logfile0
++
++--source include/start_mysqld.inc
+diff --git a/mysql-test/suite/innodb/t/sys_defragment_fail.opt b/mysql-test/suite/innodb/t/sys_defragment_fail.opt
+new file mode 100644
+index 00000000000..6326b7e90a3
+--- /dev/null
++++ b/mysql-test/suite/innodb/t/sys_defragment_fail.opt
+@@ -0,0 +1,6 @@
++--innodb_page_size=4k
++--innodb_data_file_path=ibdata1:15M:autoextend:autoshrink
++--innodb_undo_tablespaces=0
++--innodb_stats_persistent=0
++--skip_partition=0
++--innodb_sys_tablespaces
+diff --git a/mysql-test/suite/innodb/t/sys_defragment_fail.test b/mysql-test/suite/innodb/t/sys_defragment_fail.test
+new file mode 100644
+index 00000000000..6136d43d601
+--- /dev/null
++++ b/mysql-test/suite/innodb/t/sys_defragment_fail.test
+@@ -0,0 +1,90 @@
++--source include/have_innodb.inc
++--source include/have_debug.inc
++--source include/have_sequence.inc
++
++call mtr.add_suppression("InnoDB: Defragmentation of CLUST_IND in SYS_INDEXES failed: Data structure corruption");
++call mtr.add_suppression("InnoDB: Defragmentation of CLUST_IND in SYS_COLUMNS failed: Data structure corruption");
++call mtr.add_suppression("InnoDB: Cannot free the unused segments in system tablespace");
++
++--let MYSQLD_DATADIR= `SELECT @@datadir`
++--source include/shutdown_mysqld.inc
++--copy_file $MYSQLD_DATADIR/ibdata1 $MYSQLD_DATADIR/ibdata1_copy
++--copy_file $MYSQLD_DATADIR/ib_logfile0 $MYSQLD_DATADIR/ib_logfile0_copy
++--source include/start_mysqld.inc
++
++set GLOBAL innodb_file_per_table = 0;
++set GLOBAL innodb_limit_optimistic_insert_debug = 2;
++CREATE TABLE t1(f1 INT NOT NULL, f2 INT NOT NULL)ENGINE=InnoDB;
++INSERT INTO t1 SELECT seq, seq FROM seq_1_to_4096;
++
++SET GLOBAL innodb_file_per_table= 1;
++CREATE TABLE t2(f1 INT NOT NULL PRIMARY KEY,
++                f2 VARCHAR(40))ENGINE=InnoDB PARTITION BY KEY() PARTITIONS 256;
++
++INSERT INTO t1 SELECT seq, seq FROM seq_1_to_4096;
++DROP TABLE t2;
++
++--source include/wait_all_purged.inc
++let $restart_parameters=;
++--source include/restart_mysqld.inc
++
++let SEARCH_FILE= $MYSQLTEST_VARDIR/log/mysqld.1.err;
++let SEARCH_PATTERN=InnoDB: User table exists in the system tablespace;
++--source include/search_pattern_in_file.inc
++DROP TABLE t1;
++
++--source include/wait_all_purged.inc
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++
++let $restart_parameters=--debug_dbug=+d,fail_after_level_defragment;
++--source include/restart_mysqld.inc
++
++let SEARCH_FILE= $MYSQLTEST_VARDIR/log/mysqld.1.err;
++let SEARCH_PATTERN=InnoDB: Defragmentation of CLUST_IND in SYS_COLUMNS failed.;
++--source include/search_pattern_in_file.inc
++
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++
++let $restart_parameters=--debug_dbug=d,allocation_prepare_fail;
++--source include/restart_mysqld.inc
++
++let SEARCH_FILE= $MYSQLTEST_VARDIR/log/mysqld.1.err;
++let SEARCH_PATTERN=InnoDB: Defragmentation of CLUST_IND in SYS_INDEXES failed.;
++--source include/search_pattern_in_file.inc
++
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++
++let $restart_parameters=--debug_dbug=d,relation_page_prepare_fail;
++--source include/restart_mysqld.inc
++
++let SEARCH_FILE= $MYSQLTEST_VARDIR/log/mysqld.1.err;
++let SEARCH_PATTERN=InnoDB: Defragmentation of CLUST_IND in SYS_INDEXES failed.;
++--source include/search_pattern_in_file.inc
++
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++
++let $restart_parameters=--debug_dbug=d,remover_prepare_fail;
++--source include/restart_mysqld.inc
++
++let SEARCH_FILE= $MYSQLTEST_VARDIR/log/mysqld.1.err;
++let SEARCH_PATTERN=InnoDB: Defragmentation of CLUST_IND in SYS_INDEXES failed.;
++--source include/search_pattern_in_file.inc
++
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++
++let $restart_parameters=;
++--source include/restart_mysqld.inc
++
++let SEARCH_FILE= $MYSQLTEST_VARDIR/log/mysqld.1.err;
++let SEARCH_PATTERN= InnoDB: Moving the data from extents 4096 through 8960;
++--source include/search_pattern_in_file.inc
++
++let SEARCH_PATTERN=InnoDB: Defragmentation of system tablespace is successful;
++--source include/search_pattern_in_file.inc
++
++select name, file_size from information_schema.innodb_sys_tablespaces where space = 0;
++
++--source include/shutdown_mysqld.inc
++--move_file $MYSQLD_DATADIR/ibdata1_copy $MYSQLD_DATADIR/ibdata1
++--move_file $MYSQLD_DATADIR/ib_logfile0_copy $MYSQLD_DATADIR/ib_logfile0
++--source include/start_mysqld.inc
+diff --git a/mysql-test/suite/innodb/t/sys_truncate.opt b/mysql-test/suite/innodb/t/sys_truncate.opt
+index f940dadffd3..375d9847b65 100644
+--- a/mysql-test/suite/innodb/t/sys_truncate.opt
++++ b/mysql-test/suite/innodb/t/sys_truncate.opt
+@@ -1,2 +1,3 @@
+ --innodb_data_file_path=ibdata1:10M:autoextend:autoshrink
+ --innodb_sys_tablespaces
++--innodb_buffer_pool_size=75M
+diff --git a/mysql-test/suite/innodb/t/sys_truncate.test b/mysql-test/suite/innodb/t/sys_truncate.test
+index d5e05dea34c..fbba010dc09 100644
+--- a/mysql-test/suite/innodb/t/sys_truncate.test
++++ b/mysql-test/suite/innodb/t/sys_truncate.test
+@@ -1,10 +1,11 @@
+ --source include/have_innodb.inc
+ --source include/have_sequence.inc
++
+ SET GLOBAL INNODB_FILE_PER_TABLE= 0;
+ SET UNIQUE_CHECKS=0, FOREIGN_KEY_CHECKS=0;
+ CREATE TABLE t1(f1 INT NOT NULL, f2 INT NOT NULL,
+                 f3 INT NOT NULL, INDEX(f1),
+-                INDEX(f2), INDEX(f3))ENGINE=InnoDB;
++                INDEX(f2), INDEX(f3))STATS_PERSISTENT=0 ENGINE=InnoDB;
+ BEGIN;
+ INSERT INTO t1 SELECT seq, seq, seq FROM seq_1_to_16384;
+ INSERT INTO t1 SELECT seq, seq, seq FROM seq_1_to_16384;
+diff --git a/mysql-test/suite/innodb/t/sys_truncate_debug.opt b/mysql-test/suite/innodb/t/sys_truncate_debug.opt
+index b8a0ed244e4..97647d9843b 100644
+--- a/mysql-test/suite/innodb/t/sys_truncate_debug.opt
++++ b/mysql-test/suite/innodb/t/sys_truncate_debug.opt
+@@ -1,3 +1,4 @@
+ --innodb_data_file_path=ibdata1:1M:autoextend:autoshrink
+ --innodb_sys_tablespaces
+ --innodb_page_size=4k
++--innodb_buffer_pool_size=100M
+diff --git a/mysql-test/suite/innodb/t/sys_truncate_debug.test b/mysql-test/suite/innodb/t/sys_truncate_debug.test
+index be70ea743e9..7dcb5ffde2a 100644
+--- a/mysql-test/suite/innodb/t/sys_truncate_debug.test
++++ b/mysql-test/suite/innodb/t/sys_truncate_debug.test
+@@ -16,7 +16,7 @@ SET GLOBAL INNODB_FILE_PER_TABLE= 0;
+ SET UNIQUE_CHECKS=0, FOREIGN_KEY_CHECKS=0;
+ CREATE TABLE t1(f1 INT NOT NULL, f2 INT NOT NULL,
+                 f3 INT NOT NULL, INDEX(f1),
+-                INDEX(f2), INDEX(f3))ENGINE=InnoDB;
++                INDEX(f2), INDEX(f3))STATS_PERSISTENT=0 ENGINE=InnoDB;
+ BEGIN;
+ INSERT INTO t1 SELECT seq, seq, seq FROM seq_1_to_16384;
+ INSERT INTO t1 SELECT seq, seq, seq FROM seq_1_to_16384;

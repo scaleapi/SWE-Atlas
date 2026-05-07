@@ -1,0 +1,565 @@
+diff --git a/client/my-sites/plans-features-main/hooks/test/use-generate-action-callback-redirect.ts b/client/my-sites/plans-features-main/hooks/test/use-generate-action-callback-redirect.ts
+new file mode 100644
+index 00000000000..8f76568d05f
+--- /dev/null
++++ b/client/my-sites/plans-features-main/hooks/test/use-generate-action-callback-redirect.ts
+@@ -0,0 +1,134 @@
++/**
++ * @jest-environment jsdom
++ */
++// @ts-nocheck
++
++jest.mock( '@automattic/calypso-router', () => jest.fn() );
++jest.mock( '@automattic/calypso-analytics', () => ( {
++	recordTracksEvent: jest.fn(),
++} ) );
++jest.mock( '@automattic/calypso-products', () => ( {
++	getPlanPath: jest.fn( ( slug ) => slug || 'business' ),
++	PRODUCT_1GB_SPACE: '1gb_space',
++	isFreePlanProduct: jest.fn( () => false ),
++	isFlexiblePlanProduct: jest.fn( () => false ),
++	isPersonalPlan: jest.fn( () => false ),
++	isWpComFreePlan: jest.fn( () => false ),
++	planMatches: jest.fn( () => false ),
++	isWooExpressPlan: jest.fn( () => false ),
++	planSlugToSettingsPath: jest.fn( () => '' ),
++	isBusinessTrialPlan: jest.fn( () => false ),
++	isMigrationTrialPlan: jest.fn( () => false ),
++	isHostingTrialPlan: jest.fn( () => false ),
++	PLAN_HOSTING_TRIAL_MONTHLY: 'hosting-trial',
++	PLAN_MIGRATION_TRIAL_MONTHLY: 'migration-trial',
++	PLAN_BUSINESS: 'business',
++} ) );
++jest.mock( '@automattic/data-stores', () => ( {
++	Plans: {
++		useCurrentPlan: jest.fn( () => null ),
++		useCurrentPlanExpiryDate: jest.fn( () => null ),
++	},
++	AddOns: {},
++} ) );
++jest.mock( '@automattic/help-center/src/stores', () => ( {
++	HELP_CENTER_STORE: 'help-center',
++} ) );
++jest.mock( '@automattic/zendesk-client', () => ( {
++	useCanConnectToZendeskMessaging: jest.fn( () => ( { data: false } ) ),
++} ) );
++jest.mock( '@wordpress/data', () => ( {
++	useDispatch: jest.fn( () => ( { setShowHelpCenter: jest.fn() } ) ),
++} ) );
++jest.mock( 'calypso/lib/cart-values/cart-items', () => ( {
++	getPlanCartItem: jest.fn( () => ( { product_slug: 'business' } ) ),
++} ) );
++jest.mock( 'calypso/lib/url', () => ( {
++	addQueryArgs: jest.fn( ( args, url ) => {
++		const params = Object.entries( args ).map( ( [ k, v ] ) => k + '=' + encodeURIComponent( v ) ).join( '&' );
++		return params ? url + '?' + params : url;
++	} ),
++} ) );
++jest.mock( 'calypso/me/purchases/paths', () => ( {
++	cancelPurchase: jest.fn( () => '/cancel' ),
++} ) );
++jest.mock( 'calypso/my-sites/plans-features-main/hooks/use-free-trial-plan-slugs', () => ( {
++	useFreeTrialPlanSlugs: jest.fn( () => ( {} ) ),
++} ) );
++jest.mock( 'calypso/state', () => ( {
++	useSelector: jest.fn(),
++} ) );
++jest.mock( 'calypso/state/sites/plans/selectors', () => ( {
++	isCurrentUserCurrentPlanOwner: jest.fn( () => true ),
++} ) );
++jest.mock( 'calypso/state/sites/selectors', () => ( {
++	getSiteSlug: jest.fn( () => 'test.wordpress.com' ),
++	getSiteUrl: jest.fn( () => 'https://test.wordpress.com' ),
++	isCurrentPlanPaid: jest.fn( () => false ),
++} ) );
++jest.mock( '../use-current-plan-manage-href', () => jest.fn( () => '/manage' ) );
++jest.mock( '../use-non-owner-handler', () => ( {
++	useNonOwnerHandler: jest.fn( () => jest.fn() ),
++} ) );
++
++import { renderHook } from '@testing-library/react';
++import { useSelector } from 'calypso/state';
++import useGenerateActionCallback from '../use-generate-action-callback';
++
++describe( 'useGenerateActionCallback - redirectTo interface compliance', () => {
++	beforeEach( () => {
++		jest.clearAllMocks();
++		( useSelector as jest.Mock ).mockImplementation( ( selector ) =>
++			selector( {
++				ui: {},
++				sites: {
++					items: {
++						100: {
++							slug: 'test.wordpress.com',
++							URL: 'https://test.wordpress.com',
++							plan: { product_id: 1, product_slug: 'free_plan' },
++						},
++					},
++					plans: { 100: { data: [ { currentPlan: true, userIsOwner: true } ] } },
++				},
++			} )
++		);
++	} );
++
++	it( 'should accept the redirectTo parameter and return a callable action callback', () => {
++		const { result } = renderHook( () =>
++			useGenerateActionCallback( {
++				currentPlan: undefined,
++				eligibleForFreeHostingTrial: false,
++				siteId: 100,
++				redirectTo: '/marketplace/plugin/test/install/test.wordpress.com',
++			} )
++		);
++		expect( typeof result.current ).toBe( 'function' );
++		expect( () => result.current( { planSlug: 'business' } ) ).not.toThrow();
++	} );
++
++	it( 'should return UseActionCallback when redirectTo is provided', () => {
++		const { result } = renderHook( () =>
++			useGenerateActionCallback( {
++				currentPlan: undefined,
++				eligibleForFreeHostingTrial: false,
++				siteId: 100,
++				redirectTo: '/marketplace/plugin/test/install/test.wordpress.com',
++			} )
++		);
++		expect( typeof result.current ).toBe( 'function' );
++	} );
++
++	it( 'should return a callable action callback when redirectTo is absent', () => {
++		const { result } = renderHook( () =>
++			useGenerateActionCallback( {
++				currentPlan: undefined,
++				eligibleForFreeHostingTrial: false,
++				siteId: 100,
++			} )
++		);
++		expect( typeof result.current ).toBe( 'function' );
++		expect( () => result.current( { planSlug: 'business' } ) ).not.toThrow();
++	} );
++} );
+diff --git a/client/my-sites/plans-features-main/hooks/test/use-generate-action-hook-redirect.ts b/client/my-sites/plans-features-main/hooks/test/use-generate-action-hook-redirect.ts
+new file mode 100644
+index 00000000000..c653eadba00
+--- /dev/null
++++ b/client/my-sites/plans-features-main/hooks/test/use-generate-action-hook-redirect.ts
+@@ -0,0 +1,69 @@
++/**
++ * @jest-environment jsdom
++ */
++// @ts-nocheck
++
++jest.mock( 'react-redux', () => ( {
++	useSelector: jest.fn(),
++} ) );
++jest.mock( '@automattic/data-stores', () => ( {
++	...jest.requireActual( '@automattic/data-stores' ),
++	Plans: {
++		useCurrentPlan: jest.fn(),
++		useCurrentPlanExpiryDate: jest.fn(),
++	},
++} ) );
++jest.mock( 'i18n-calypso', () => ( {
++	useTranslate: () => jest.fn( ( text ) => text ),
++	localize: jest.fn(),
++	translate: jest.fn(),
++} ) );
++jest.mock( '@wordpress/data' );
++jest.mock( '../use-generate-action-callback', () => ( {
++	__esModule: true,
++	default: jest.fn( () => jest.fn() ),
++} ) );
++
++import { Plans } from '@automattic/data-stores';
++import { renderHook } from '@testing-library/react';
++import { useSelector } from 'react-redux';
++import useGenerateActionCallback from '../use-generate-action-callback';
++import useGenerateActionHook from '../use-generate-action-hook';
++
++describe( 'useGenerateActionHook - redirectTo interface compliance', () => {
++	beforeEach( () => {
++		jest.resetAllMocks();
++		( useSelector as jest.Mock ).mockImplementation( ( selector ) =>
++			selector( {
++				ui: {},
++				sites: { items: [] },
++				route: { query: { current: { get_domain: null } } },
++			} )
++		);
++		( Plans.useCurrentPlan as jest.Mock ).mockImplementation( () => null );
++	} );
++
++	it( 'should forward redirectTo to useGenerateActionCallback', () => {
++		renderHook( () =>
++			useGenerateActionHook( {
++				isInSignup: false,
++				isLaunchPage: false,
++				redirectTo: '/marketplace/plugin/test/install/test.wordpress.com',
++			} )
++		);
++		expect( useGenerateActionCallback ).toHaveBeenCalledWith(
++			expect.objectContaining( { redirectTo: '/marketplace/plugin/test/install/test.wordpress.com' } )
++		);
++	} );
++
++	it( 'should not include redirectTo when it is not provided', () => {
++		renderHook( () =>
++			useGenerateActionHook( {
++				isInSignup: false,
++				isLaunchPage: false,
++			} )
++		);
++		const callArgs = ( useGenerateActionCallback as jest.Mock ).mock.calls[ 0 ][ 0 ];
++		expect( callArgs.redirectTo ).toBeUndefined();
++	} );
++} );
+diff --git a/client/my-sites/plugins/plugin-details-CTA/test/cta-button-redirect.jsx b/client/my-sites/plugins/plugin-details-CTA/test/cta-button-redirect.jsx
+new file mode 100644
+index 00000000000..0b09cd0ae36
+--- /dev/null
++++ b/client/my-sites/plugins/plugin-details-CTA/test/cta-button-redirect.jsx
+@@ -0,0 +1,182 @@
++/**
++ * @jest-environment jsdom
++ */
++// @ts-nocheck
++
++jest.mock( '@automattic/calypso-router', () => jest.fn() );
++jest.mock( '@automattic/calypso-config', () => {
++	const fn = () => '';
++	fn.isEnabled = jest.fn( () => false );
++	return fn;
++} );
++jest.mock( 'i18n-calypso', () => ( {
++	useTranslate: () => ( x ) => x,
++	localize: ( component ) => component,
++	translate: ( x ) => x,
++} ) );
++jest.mock( 'calypso/state', () => ( {
++	useSelector: jest.fn(),
++	useDispatch: jest.fn( () => jest.fn() ),
++} ) );
++jest.mock( 'react-redux', () => ( {
++	useSelector: jest.fn( ( selector ) => selector( {} ) ),
++	useDispatch: jest.fn( () => jest.fn() ),
++} ) );
++jest.mock( 'calypso/state/ui/selectors', () => ( {
++	getSelectedSite: jest.fn( () => ( {
++		ID: 123,
++		slug: 'test.wordpress.com',
++		plan: { product_slug: 'free_plan' },
++		jetpack: false,
++	} ) ),
++} ) );
++jest.mock( 'calypso/state/current-user/selectors', () => ( {
++	getCurrentUserId: jest.fn( () => 1 ),
++} ) );
++jest.mock( 'calypso/state/sites/selectors', () => ( {
++	isJetpackSite: jest.fn( () => false ),
++} ) );
++jest.mock( 'calypso/state/selectors/site-has-feature', () => jest.fn( () => false ) );
++jest.mock( 'calypso/state/selectors/get-site-connection-status', () => jest.fn( () => true ) );
++jest.mock( 'calypso/state/selectors/is-site-automated-transfer', () => jest.fn( () => false ) );
++jest.mock( 'calypso/state/selectors/get-primary-domain-by-site-id', () => jest.fn( () => null ) );
++jest.mock( 'calypso/state/sites/domains/selectors', () => ( {
++	getDomainsBySiteId: jest.fn( () => [] ),
++} ) );
++jest.mock( 'calypso/state/sites/plans/selectors', () => ( {
++	isSiteOnECommerceTrial: jest.fn( () => false ),
++} ) );
++jest.mock( 'calypso/state/products-list/selectors', () => ( {
++	isMarketplaceProduct: jest.fn( () => false ),
++	getProductsList: jest.fn( () => ( {} ) ),
++} ) );
++jest.mock( 'calypso/state/marketplace/billing-interval/selectors', () => ( {
++	getBillingInterval: jest.fn( () => 'yearly' ),
++} ) );
++jest.mock( 'calypso/state/marketplace/purchase-flow/actions', () => ( {
++	productToBeInstalled: jest.fn(),
++} ) );
++jest.mock( 'calypso/state/plugins/installed/status/actions', () => ( {
++	removePluginStatuses: jest.fn(),
++} ) );
++jest.mock( 'calypso/state/analytics/actions', () => ( {
++	recordGoogleEvent: jest.fn( () => ( { type: 'ANALYTICS' } ) ),
++	recordTracksEvent: jest.fn( () => ( { type: 'TRACKS' } ) ),
++} ) );
++jest.mock( 'calypso/state/preferences/actions', () => ( {
++	savePreference: jest.fn(),
++} ) );
++jest.mock( 'calypso/state/preferences/selectors', () => ( {
++	getPreference: jest.fn( () => null ),
++	hasReceivedRemotePreferences: jest.fn( () => true ),
++} ) );
++jest.mock( 'calypso/blocks/eligibility-warnings', () => () => null );
++jest.mock( 'calypso/my-sites/plugins/use-atomic-site-has-equivalent-feature-to-plugin', () =>
++	jest.fn( () => false )
++);
++jest.mock( 'calypso/my-sites/plugins/use-preinstalled-premium-plugin', () =>
++	jest.fn( () => ( {
++		isPreinstalledPremiumPlugin: false,
++		preinstalledPremiumPluginProduct: null,
++	} ) )
++);
++jest.mock( 'calypso/my-sites/plugins/use-is-plugin-available-on-all-plans', () => ( {
++	useIsPluginAvailableOnAllPlans: jest.fn( () => false ),
++} ) );
++jest.mock( 'calypso/lib/plugins/utils', () => ( {
++	marketplacePlanToAdd: jest.fn( () => 'business-bundle' ),
++	getProductSlugByPeriodVariation: jest.fn( () => 'plugin-product' ),
++} ) );
++jest.mock( '../../categories/use-categories', () => ( {
++	getFirstCategoryFromTags: jest.fn( () => 'general' ),
++} ) );
++jest.mock( '../../plugin-custom-domain-dialog', () => ( {
++	PluginCustomDomainDialog: () => null,
++} ) );
++jest.mock( '../../plugin-price', () => ( {
++	getPeriodVariationValue: jest.fn( () => 'yearly' ),
++} ) );
++
++import page from '@automattic/calypso-router';
++import { render, fireEvent } from '@testing-library/react';
++import React from 'react';
++import { useSelector } from 'calypso/state';
++import { useIsPluginAvailableOnAllPlans } from 'calypso/my-sites/plugins/use-is-plugin-available-on-all-plans';
++import CTAButton from '../../plugin-details-CTA/CTA-button';
++
++const selectedSite = {
++	ID: 123,
++	slug: 'test.wordpress.com',
++	plan: { product_slug: 'free_plan' },
++	jetpack: false,
++};
++const plugin = {
++	slug: 'contact-form-7',
++	tags: { forms: {} },
++	variations: {},
++};
++
++describe( 'CTAButton redirect flow', () => {
++	beforeEach( () => {
++		jest.clearAllMocks();
++		( page ).mockClear();
++		( useSelector ).mockImplementation( ( selector ) =>
++			selector( {
++				ui: { selectedSiteId: 123 },
++				currentUser: { id: 1 },
++				sites: {
++					items: { 123: selectedSite },
++					domains: { items: {} },
++					plans: { 123: { data: [] } },
++					connection: { items: { 123: true } },
++				},
++				plugins: { installed: { statuses: {} } },
++				preferences: { remoteValues: {}, localValues: {} },
++				productsList: {},
++				marketplace: { billingInterval: { interval: 'yearly' } },
++			} )
++		);
++	} );
++
++	it( 'should redirect to a non-checkout URL when promotional condition is active and upgrade button is clicked', () => {
++		( useIsPluginAvailableOnAllPlans ).mockReturnValue( true );
++		const { getByRole } = render(
++			<CTAButton plugin={ plugin } hasEligibilityMessages={ false } disabled={ false } />
++		);
++		const button = getByRole( 'button' );
++		fireEvent.click( button );
++		expect( page ).toHaveBeenCalled();
++		const url = ( page ).mock.calls[ 0 ][ 0 ];
++		expect( url ).not.toMatch( /^\/checkout\// );
++	} );
++
++	it( 'should redirect to checkout URL when promotional condition is inactive and upgrade button is clicked', () => {
++		( useIsPluginAvailableOnAllPlans ).mockReturnValue( false );
++		const { getByRole } = render(
++			<CTAButton plugin={ plugin } hasEligibilityMessages={ false } disabled={ false } />
++		);
++		const button = getByRole( 'button' );
++		fireEvent.click( button );
++		expect( page ).toHaveBeenCalled();
++		const url = ( page ).mock.calls[ 0 ][ 0 ];
++		expect( url ).toMatch( /checkout/ );
++	} );
++
++	it( 'should preserve plugin slug in redirect URL when promotional condition is active', () => {
++		( useIsPluginAvailableOnAllPlans ).mockReturnValue( true );
++		const { getByRole } = render(
++			<CTAButton plugin={ plugin } hasEligibilityMessages={ false } disabled={ false } />
++		);
++		const button = getByRole( 'button' );
++		fireEvent.click( button );
++		expect( page ).toHaveBeenCalled();
++		const url = ( page ).mock.calls[ 0 ][ 0 ];
++		expect( url ).toContain( plugin.slug );
++	} );
++
++	it( 'should call useIsPluginAvailableOnAllPlans hook when rendering', () => {
++		( useIsPluginAvailableOnAllPlans ).mockReturnValue( false );
++		render( <CTAButton plugin={ plugin } hasEligibilityMessages={ false } disabled={ false } /> );
++		expect( useIsPluginAvailableOnAllPlans ).toHaveBeenCalled();
++	} );
++} );
+diff --git a/client/my-sites/plugins/plugin-details-CTA/test/usps.tsx b/client/my-sites/plugins/plugin-details-CTA/test/usps.tsx
+new file mode 100644
+index 00000000000..aaf67a111dd
+--- /dev/null
++++ b/client/my-sites/plugins/plugin-details-CTA/test/usps.tsx
+@@ -0,0 +1,105 @@
++/**
++ * @jest-environment jsdom
++ */
++// @ts-nocheck
++
++jest.mock( 'calypso/state', () => ( { useSelector: jest.fn() } ) );
++jest.mock( 'calypso/state/ui/selectors', () => ( { getSelectedSite: jest.fn() } ) );
++jest.mock( 'calypso/state/sites/selectors', () => ( { isJetpackSite: jest.fn( () => false ) } ) );
++jest.mock( 'calypso/state/products-list/selectors', () => ( { getProductDisplayCost: jest.fn() } ) );
++jest.mock( 'calypso/state/marketplace/billing-interval/selectors', () => ( { getBillingInterval: jest.fn( () => 'yearly' ) } ) );
++jest.mock( 'calypso/state/sites/plans/selectors', () => ( { isSiteOnECommerceTrial: jest.fn( () => false ) } ) );
++jest.mock( 'calypso/my-sites/plugins/use-is-plugin-available-on-all-plans', () => ( { useIsPluginAvailableOnAllPlans: jest.fn() } ) );
++jest.mock( 'calypso/my-sites/plugins/use-preinstalled-premium-plugin', () => jest.fn( () => ( { isPreinstalledPremiumPlugin: false } ) ) );
++jest.mock( 'calypso/my-sites/plugins/use-plugins-support-text', () => jest.fn( () => 'Support text' ) );
++jest.mock( '@automattic/calypso-config', () => { const fn = () => ''; fn.isEnabled = jest.fn( () => true ); return fn; } );
++jest.mock( 'calypso/my-sites/plugins/plugin-details-sidebar-usp', () => {
++	return function MockUSP( { title, description } ) {
++		return ( <div data-testid="usp"><div data-testid="usp-title">{ title }</div><div data-testid="usp-desc">{ description }</div></div> );
++	};
++} );
++
++import { render } from '@testing-library/react';
++import React from 'react';
++import { useSelector } from 'calypso/state';
++import { getProductDisplayCost } from 'calypso/state/products-list/selectors';
++import { useIsPluginAvailableOnAllPlans } from 'calypso/my-sites/plugins/use-is-plugin-available-on-all-plans';
++import { PlanUSPS } from '../usps';
++
++const mockSite = { ID: 123, slug: 'test.wordpress.com' };
++
++describe( 'PlanUSPS', () => {
++	beforeEach( () => {
++		jest.clearAllMocks();
++		( useSelector as jest.Mock ).mockImplementation( ( selector ) => selector( {
++			ui: { selectedSiteId: 123 },
++			sites: { items: { 123: mockSite } },
++			marketplace: { billingInterval: { interval: 'yearly' } },
++			productsList: {},
++		} ) );
++		( getProductDisplayCost as jest.Mock ).mockImplementation( ( state, plan, isMonthly ) => isMonthly ? 'US$4' : 'US$48' );
++	} );
++
++	it( 'should show generic all paid plans text when promotional condition is active for Personal plan', () => {
++		( useIsPluginAvailableOnAllPlans as jest.Mock ).mockReturnValue( true );
++		const { container } = render( <PlanUSPS pluginSlug="test-plugin" shouldUpgrade={ true } isFreePlan={ true } isMarketplaceProduct={ false } isAvailableOnAllPlans={ true } billingPeriod="yearly" /> );
++		expect( container.textContent ).toContain( 'all paid plans' );
++	} );
++
++	it( 'should show plan-specific text when promotional condition is inactive', () => {
++		( useIsPluginAvailableOnAllPlans as jest.Mock ).mockReturnValue( false );
++		const { container } = render( <PlanUSPS pluginSlug="test-plugin" shouldUpgrade={ true } isFreePlan={ true } isMarketplaceProduct={ false } isAvailableOnAllPlans={ false } billingPeriod="yearly" /> );
++		expect( container.textContent ).not.toContain( 'all paid plans' );
++	} );
++
++	it( 'should not apply promotional pricing for marketplace products', () => {
++		( useIsPluginAvailableOnAllPlans as jest.Mock ).mockReturnValue( true );
++		const { container } = render( <PlanUSPS pluginSlug="test-plugin" shouldUpgrade={ true } isFreePlan={ true } isMarketplaceProduct={ true } isAvailableOnAllPlans={ false } billingPeriod="yearly" /> );
++		expect( container.textContent ).not.toContain( 'all paid plans' );
++	} );
++
++	it( 'should not apply promotional pricing for preinstalled premium plugins', () => {
++		( useIsPluginAvailableOnAllPlans as jest.Mock ).mockReturnValue( true );
++		const usePreinstalledPremiumPlugin = require( 'calypso/my-sites/plugins/use-preinstalled-premium-plugin' );
++		usePreinstalledPremiumPlugin.mockReturnValue( { isPreinstalledPremiumPlugin: true } );
++		const { container } = render( <PlanUSPS pluginSlug="test-plugin" shouldUpgrade={ true } isFreePlan={ true } isMarketplaceProduct={ false } isAvailableOnAllPlans={ false } billingPeriod="yearly" /> );
++		expect( container.textContent ).not.toContain( 'all paid plans' );
++		usePreinstalledPremiumPlugin.mockReturnValue( { isPreinstalledPremiumPlugin: false } );
++	} );
++
++	it( 'should return null when shouldUpgrade is false', () => {
++		( useIsPluginAvailableOnAllPlans as jest.Mock ).mockReturnValue( true );
++		const { container } = render( <PlanUSPS pluginSlug="test-plugin" shouldUpgrade={ false } isFreePlan={ true } isMarketplaceProduct={ false } isAvailableOnAllPlans={ true } billingPeriod="yearly" /> );
++		expect( container.innerHTML ).toBe( '' );
++	} );
++
++	it( 'should not show promo text when shouldUpgrade is false even if promo is active', () => {
++		( useIsPluginAvailableOnAllPlans as jest.Mock ).mockReturnValue( true );
++		const { container } = render( <PlanUSPS pluginSlug="test-plugin" shouldUpgrade={ false } isFreePlan={ true } isMarketplaceProduct={ false } isAvailableOnAllPlans={ true } billingPeriod="yearly" /> );
++		expect( container.textContent ).not.toContain( 'all paid plans' );
++	} );
++
++	it( 'should use monthly cost label when promotional condition is active', () => {
++		( useIsPluginAvailableOnAllPlans as jest.Mock ).mockReturnValue( true );
++		const { container } = render( <PlanUSPS pluginSlug="test-plugin" shouldUpgrade={ true } isFreePlan={ true } isMarketplaceProduct={ false } isAvailableOnAllPlans={ true } billingPeriod="yearly" /> );
++		expect( container.textContent ).toContain( 'month' );
++	} );
++
++	it( 'should show generic text for Business plan tier when promotional condition is active', () => {
++		( useIsPluginAvailableOnAllPlans as jest.Mock ).mockReturnValue( true );
++		const config = require( '@automattic/calypso-config' );
++		config.isEnabled.mockReturnValue( false );
++		const { container } = render( <PlanUSPS pluginSlug="test-plugin" shouldUpgrade={ true } isFreePlan={ true } isMarketplaceProduct={ false } isAvailableOnAllPlans={ true } billingPeriod="yearly" /> );
++		expect( container.textContent ).toContain( 'all paid plans' );
++		config.isEnabled.mockReturnValue( true );
++	} );
++
++	it( 'should show Business plan specific text when promotional condition is inactive', () => {
++		( useIsPluginAvailableOnAllPlans as jest.Mock ).mockReturnValue( false );
++		const config = require( '@automattic/calypso-config' );
++		config.isEnabled.mockReturnValue( false );
++		const { container } = render( <PlanUSPS pluginSlug="test-plugin" shouldUpgrade={ true } isFreePlan={ true } isMarketplaceProduct={ false } isAvailableOnAllPlans={ false } billingPeriod="yearly" /> );
++		expect( container.textContent ).not.toContain( 'all paid plans' );
++		config.isEnabled.mockReturnValue( true );
++	} );
++} );
+diff --git a/client/my-sites/plugins/use-is-plugin-available-on-all-plans/test/index.ts b/client/my-sites/plugins/use-is-plugin-available-on-all-plans/test/index.ts
+new file mode 100644
+index 00000000000..0701bdadd72
+--- /dev/null
++++ b/client/my-sites/plugins/use-is-plugin-available-on-all-plans/test/index.ts
+@@ -0,0 +1,45 @@
++/**
++ * @jest-environment jsdom
++ */
++
++jest.mock( '@automattic/plans-grid-next', () => ( {
++	useSummerSpecialStatus: jest.fn( () => false ),
++} ) );
++
++import { renderHook } from '@testing-library/react';
++import { useSummerSpecialStatus } from '@automattic/plans-grid-next';
++import { useIsPluginAvailableOnAllPlans } from '../index';
++
++describe( 'useIsPluginAvailableOnAllPlans', () => {
++	it( 'should return true when useSummerSpecialStatus returns true', () => {
++		( useSummerSpecialStatus as jest.Mock ).mockReturnValue( true );
++		const { result } = renderHook( () =>
++			useIsPluginAvailableOnAllPlans( { siteId: 123 } )
++		);
++		expect( result.current ).toBe( true );
++	} );
++
++	it( 'should return false when useSummerSpecialStatus returns false', () => {
++		( useSummerSpecialStatus as jest.Mock ).mockReturnValue( false );
++		const { result } = renderHook( () =>
++			useIsPluginAvailableOnAllPlans( { siteId: 123 } )
++		);
++		expect( result.current ).toBe( false );
++	} );
++
++	it( 'should handle null siteId and return the delegated value', () => {
++		( useSummerSpecialStatus as jest.Mock ).mockReturnValue( false );
++		const { result } = renderHook( () =>
++			useIsPluginAvailableOnAllPlans( { siteId: null } )
++		);
++		expect( result.current ).toBe( false );
++	} );
++
++	it( 'should forward siteId and isInSignup to useSummerSpecialStatus', () => {
++		renderHook( () =>
++			useIsPluginAvailableOnAllPlans( { siteId: 456, isInSignup: true } )
++		);
++		expect( useSummerSpecialStatus ).toHaveBeenCalledWith( { siteId: 456, isInSignup: true } );
++	} );
++
++} );

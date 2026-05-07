@@ -1,0 +1,356 @@
+diff --git a/mysql-test/suite/innodb/r/innochecksum_flags_and_skip.result b/mysql-test/suite/innodb/r/innochecksum_flags_and_skip.result
+new file mode 100644
+index 00000000000..8e132c76a94
+--- /dev/null
++++ b/mysql-test/suite/innodb/r/innochecksum_flags_and_skip.result
+@@ -0,0 +1,28 @@
++CREATE TABLE t1(a INT PRIMARY KEY) ENGINE=InnoDB STATS_PERSISTENT=0;
++SET GLOBAL innodb_log_checkpoint_now=ON;
++FLUSH TABLE t1 FOR EXPORT;
++UNLOCK TABLES;
++INSERT INTO t1 SET a=1;
++FLUSH TABLE t1 FOR EXPORT;
++UNLOCK TABLES;
++# Skip InnoDB Doublewrite Buffer
++Should not exist when summary excludes dblwr pages
++Should exist when summary includes dblwr pages
++# restart
++CREATE TABLE ibd_1(f1 INT PRIMARY KEY)ENGINE=InnoDB;
++INSERT INTO ibd_1 VALUES(1), (2), (3), (4);
++# Pass wrong tablespace flag for ibdata2
++# Pass wrong tablespace flag for ibdata1
++Flag mismatch warning detected
++# Pass invalid tablespace flag for ibdata1
++FOUND 1 /not valid|[Ii]nvalid/ in result.log
++# ibdata2 without tablespace flags should fail
++# innochecksum should be succesfull
++NOT FOUND /Fail/ in result.log
++# Create a tablespace with page number > 2^31
++# Test innochecksum with the modified ibdata3
++FOUND 1 /--tablespace.flags/ in result.log
++# Test innochecksum with the modified ibdata3 with tablespace flags
++NOT FOUND /should be 0/ in result.log
++# restart
++DROP TABLE t1, ibd_1;
+diff --git a/mysql-test/suite/innodb/t/innochecksum_flags_and_skip.opt b/mysql-test/suite/innodb/t/innochecksum_flags_and_skip.opt
+new file mode 100644
+index 00000000000..5d265d61d14
+--- /dev/null
++++ b/mysql-test/suite/innodb/t/innochecksum_flags_and_skip.opt
+@@ -0,0 +1,2 @@
++--innodb_data_file_path=ibdata1:3M;ibdata2:1M:autoextend
++--innodb_sys_tablespaces
+diff --git a/mysql-test/suite/innodb/t/innochecksum_flags_and_skip.test b/mysql-test/suite/innodb/t/innochecksum_flags_and_skip.test
+new file mode 100644
+index 00000000000..1d1ea273b50
+--- /dev/null
++++ b/mysql-test/suite/innodb/t/innochecksum_flags_and_skip.test
+@@ -0,0 +1,179 @@
++--source include/have_innodb.inc
++--source include/not_embedded.inc
++--source include/have_debug.inc
++let MYSQLD_DATADIR= `SELECT @@datadir`;
++CREATE TABLE t1(a INT PRIMARY KEY) ENGINE=InnoDB STATS_PERSISTENT=0;
++SET GLOBAL innodb_log_checkpoint_now=ON;
++FLUSH TABLE t1 FOR EXPORT;
++UNLOCK TABLES;
++INSERT INTO t1 SET a=1;
++FLUSH TABLE t1 FOR EXPORT;
++UNLOCK TABLES;
++
++let INDEX_ID= `select INDEX_ID FROM INFORMATION_SCHEMA.INNODB_SYS_INDEXES WHERE TABLE_ID = (SELECT TABLE_ID FROM INFORMATION_SCHEMA.INNODB_SYS_TABLES WHERE NAME="test/t1")`;
++
++let FLAG= `SELECT flag FROM INFORMATION_SCHEMA.INNODB_SYS_TABLESPACES WHERE NAME="innodb_system"`;
++
++let $shutdown_timeout=0;
++--source include/shutdown_mysqld.inc
++let $resultlog=$MYSQLTEST_VARDIR/tmp/result.log;
++let $resultlog_1=$MYSQLTEST_VARDIR/tmp/result_1.log;
++
++exec $INNOCHECKSUM -S -r $MYSQLD_DATADIR/ibdata1 > $resultlog;
++--echo # Skip InnoDB Doublewrite Buffer
++exec $INNOCHECKSUM -S $MYSQLD_DATADIR/ibdata1 > $resultlog_1;
++
++perl;
++use strict;
++use warnings;
++use File::Spec::Functions qw(catfile);
++
++sub check_index_in_file {
++    my ($filename, $search_id, $file_desc, $expect_found) = @_;
++    my $found = 0;
++    open(my $fh, '<', $filename) or die "Could not open file '$filename': $!\n";
++    my $line_count = 0;
++    while (my $line = <$fh>) {
++        $line_count++;
++        chomp $line;
++        # Skip empty lines and header lines
++        next if $line =~ /^\s*$/;
++        next if $line =~ /index_id.*#pages/;  # Skip header line
++        # Split the line by whitespace
++        my @fields = grep { $_ ne '' } split(/\s+/, $line);
++        next unless @fields;  # Skip if no fields
++        # The first field is the index_id
++        my $current_id = $fields[0];
++        # Check if this is the ID we're looking for
++        if (defined $current_id && $current_id eq $search_id) {
++            $found = 1;
++            last;
++        }
++    }
++    close $fh;
++
++    if ($found != $expect_found) {
++        print "\n=== UNEXPECTED RESULT - SHOWING FILE CONTENTS ($file_desc) ===\n";
++        open($fh, '<', $filename) or die "Cannot reopen file: $!";
++        print while <$fh>;
++        close $fh;
++        print "=== END OF FILE ===\n\n";
++    }
++}
++
++my $search_id = $ENV{'INDEX_ID'};
++
++# Define file paths
++my $resultlog = catfile($ENV{'MYSQLTEST_VARDIR'}, 'tmp', 'result.log');
++my $resultlog_1 = catfile($ENV{'MYSQLTEST_VARDIR'}, 'tmp', 'result_1.log');
++
++# Check both files
++print "Should not exist when summary excludes dblwr pages\n";
++check_index_in_file($resultlog, $search_id, 'result.log', 0);
++
++print "Should exist when summary includes dblwr pages\n";
++check_index_in_file($resultlog_1, $search_id, 'result_1.log', 1);
++EOF
++
++remove_file $resultlog;
++remove_file $resultlog_1;
++
++# We expect deterministic checksum error when we pass
++# incorrect wrong flags to innochecksum. Below restart is needed
++# to make sure that we flush all the pages.
++--source include/start_mysqld.inc
++CREATE TABLE ibd_1(f1 INT PRIMARY KEY)ENGINE=InnoDB;
++INSERT INTO ibd_1 VALUES(1), (2), (3), (4);
++let $shutdown_timeout=;
++--source include/shutdown_mysqld.inc
++--echo # Pass wrong tablespace flag for ibdata2
++--error 1
++exec $INNOCHECKSUM -S --tablespace_flags=39 $MYSQLD_DATADIR/ibdata2 > $resultlog 2>&1;
++remove_file $resultlog;
++
++--echo # Pass wrong tablespace flag for ibdata1
++--error 1
++exec $INNOCHECKSUM -S --tablespace_flags=39 $MYSQLD_DATADIR/ibdata1 > $resultlog 2>&1;
++
++perl;
++my $f = "$ENV{MYSQLTEST_VARDIR}/tmp/result.log";
++open my $fh, '<', $f or die $!;
++my $ok = 0;
++while (<$fh>) { if (/[Ff]lag.*(ismatch|iffer)|(ismatch|iffer).*[Ff]lag/) { $ok = 1; last } }
++close $fh;
++print $ok ? "Flag mismatch warning detected\n" : "ERROR: No flag mismatch warning\n";
++EOF
++remove_file $resultlog;
++
++--echo # Pass invalid tablespace flag for ibdata1
++--error 1
++exec $INNOCHECKSUM -S --tablespace_flags=89 $MYSQLD_DATADIR/ibdata1 > $resultlog 2>&1;
++
++let SEARCH_FILE=$resultlog;
++let SEARCH_PATTERN=not valid|[Ii]nvalid;
++--source include/search_pattern_in_file.inc
++remove_file $resultlog;
++
++--echo # ibdata2 without tablespace flags should fail
++--error 1
++exec $INNOCHECKSUM -S $MYSQLD_DATADIR/ibdata2 > $resultlog 2>&1;
++remove_file $resultlog;
++
++--echo # innochecksum should be succesfull
++exec $INNOCHECKSUM -S --tablespace_flags=$FLAG $MYSQLD_DATADIR/ibdata2 > $resultlog 2>&1;
++
++let SEARCH_PATTERN=Fail;
++--source include/search_pattern_in_file.inc
++
++--echo # Create a tablespace with page number > 2^31
++--let $ibdata3 = $MYSQLD_DATADIR/ibdata3
++perl;
++do "$ENV{MTR_SUITE_DIR}/include/crc32.pl";
++my $polynomial = 0x82f63b78; # CRC-32C
++my $ps = 16384; # Default InnoDB page size
++my $page_num = 2147483649; # 2^31 + 1
++my $filename = "$ENV{MYSQLD_DATADIR}/ibdata3";
++
++# Create a zero-filled page
++my $page = "\0" x $ps;
++
++# Set page number (FIL_PAGE_OFFSET)
++substr($page, 4, 4) = pack('NN', $page_num);
++# Set a valid LSN (log sequence number)
++my $lsn = 0x12345678;
++substr($page, 16, 8) = pack('NN', $lsn & 0xFFFFFFFF, $lsn >> 32);
++
++# Calculate the checksum
++my $checksum = pack('N',
++    mycrc32(substr($page, 4, 22), 0, $polynomial) ^
++    mycrc32(substr($page, 38, $ps - 38 - 8), 0, $polynomial)
++);
++# Write the checksum at the beginning (FIL_PAGE_SPACE_OR_CHKSUM)
++# and at the end (FIL_PAGE_END_LSN_OLD_CHKSUM) of the page
++substr($page, 0, 4) = $checksum;
++substr($page, $ps - 8, 4) = $checksum;
++
++# Write the page to file
++open(my $fh, '>', $filename) or die "Could not open file $filename: $!";
++binmode $fh;
++print $fh $page;
++close $fh;
++EOF
++
++--echo # Test innochecksum with the modified ibdata3
++--error 1
++exec $INNOCHECKSUM -S $ibdata3 > $resultlog 2>&1;
++let SEARCH_PATTERN=--tablespace.flags;
++--source include/search_pattern_in_file.inc
++remove_file $resultlog;
++
++--echo # Test innochecksum with the modified ibdata3 with tablespace flags
++--error 1
++exec $INNOCHECKSUM -S --tablespace_flags=$FLAG $ibdata3 > $resultlog 2>&1;
++let SEARCH_PATTERN=should be 0;
++--source include/search_pattern_in_file.inc
++
++remove_file $ibdata3;
++--source include/start_mysqld.inc
++DROP TABLE t1, ibd_1;
++remove_file $resultlog;
+diff --git a/mysql-test/suite/innodb_zip/r/innochecksum_2.result b/mysql-test/suite/innodb_zip/r/innochecksum_2.result
+index e7e36e5188e..b6bb3abb14f 100644
+--- a/mysql-test/suite/innodb_zip/r/innochecksum_2.result
++++ b/mysql-test/suite/innodb_zip/r/innochecksum_2.result
+@@ -14,6 +14,12 @@ INSERT INTO t1 SELECT * from t1;
+ INSERT INTO t1 SELECT * from t1;
+ INSERT INTO t1 SELECT * from t1;
+ INSERT INTO t1 SELECT * from t1;
++CREATE TABLE t2 (j LONGBLOB) ENGINE = InnoDB
++ROW_FORMAT=COMPRESSED KEY_BLOCK_SIZE=2;
++CREATE TABLE t3 (j LONGBLOB) ENGINE = InnoDB
++ROW_FORMAT=COMPRESSED KEY_BLOCK_SIZE=4;
++CREATE TABLE t4(c1 INT PRIMARY KEY,c2 VARCHAR(20),
++INDEX(c2(10))) ENGINE=InnoDB;
+ # stop the server
+ 
+ Variables (--variable-name=value)
+@@ -92,5 +98,7 @@ skip-freed-pages                  FALSE
+ Number of pages:#
+ Number of pages:#
+ [4]:# Print the version of innochecksum and exit
+-innochecksum Ver #.#.## Restart the DB server
+-DROP TABLE t1;
++innochecksum Ver #.#.#
++[5]:# check t1.ibd and t2.ibd summary with and without tablespace_flags
++# Restart the DB server
++DROP TABLE t4, t3, t2, t1;
+diff --git a/mysql-test/suite/innodb_zip/t/innochecksum_2.opt b/mysql-test/suite/innodb_zip/t/innochecksum_2.opt
+index ac26eca328c..af67edaab10 100644
+--- a/mysql-test/suite/innodb_zip/t/innochecksum_2.opt
++++ b/mysql-test/suite/innodb_zip/t/innochecksum_2.opt
+@@ -1 +1,2 @@
+ --skip-innodb-doublewrite
++--innodb_sys_tablespaces
+diff --git a/mysql-test/suite/innodb_zip/t/innochecksum_2.test b/mysql-test/suite/innodb_zip/t/innochecksum_2.test
+index 57926d921f4..2a783593776 100644
+--- a/mysql-test/suite/innodb_zip/t/innochecksum_2.test
++++ b/mysql-test/suite/innodb_zip/t/innochecksum_2.test
+@@ -25,11 +25,29 @@ while ($i > 0) {
+   dec $i;
+ }
+ 
++CREATE TABLE t2 (j LONGBLOB) ENGINE = InnoDB
++ROW_FORMAT=COMPRESSED KEY_BLOCK_SIZE=2;
++
++CREATE TABLE t3 (j LONGBLOB) ENGINE = InnoDB
++ROW_FORMAT=COMPRESSED KEY_BLOCK_SIZE=4;
++
++CREATE TABLE t4(c1 INT PRIMARY KEY,c2 VARCHAR(20),
++		INDEX(c2(10))) ENGINE=InnoDB;
++
++let FLAG= `SELECT flag FROM INFORMATION_SCHEMA.INNODB_SYS_TABLESPACES WHERE NAME="test/t1"`;
++
++let FLAG2= `SELECT flag FROM INFORMATION_SCHEMA.INNODB_SYS_TABLESPACES WHERE NAME="test/t2"`;
++
++let FLAG3= `SELECT flag FROM INFORMATION_SCHEMA.INNODB_SYS_TABLESPACES WHERE NAME="test/t3"`;
++
++let FLAG4= `SELECT flag FROM INFORMATION_SCHEMA.INNODB_SYS_TABLESPACES WHERE NAME="test/t4"`;
++
+ --echo # stop the server
+ --source include/shutdown_mysqld.inc
+ 
+ # Page_type_dump for t1
+ --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
++--replace_regex /^tablespace-flags.*\n//
+ --exec $INNOCHECKSUM -v --page-type-dump $MYSQLTEST_VARDIR/tmp/dump.txt $MYSQLD_DATADIR/test/t1.ibd
+ --file_exists $MYSQLTEST_VARDIR/tmp/dump.txt
+ --remove_file $MYSQLTEST_VARDIR/tmp/dump.txt
+@@ -55,7 +73,11 @@ my $file= 'help_output_long.txt';
+ # open file in write mode
+ open IN_FILE,"<", "$dir/tmp/$file" or die $!;
+ open OUT_FILE, ">", "$dir/tmp/tmpfile" or die $!;
++my $skip_tf = 0;
+ while(<IN_FILE>) {
++ if (/tablespace.flags/i) { $skip_tf = 1; next; }
++ if ($skip_tf && /^\s{20}/) { next; }
++ $skip_tf = 0;
+  unless ($_=~ /^debug.*$/ || $_=~ /\-#, \-\-debug.*$/ || $_=~ /http:.*html/) {
+     $_=~ s/^\S*innochecksum.+Ver.+[0-9]*\.[0-9]*\.[0-9]*.+$/innochecksum Ver #.#.#/g;
+     $_=~ s/(Copyright\s\(c\))\s([0-9]*),\s([0-9]*)(.*)/$1 YEAR, YEAR $4/g;
+@@ -80,10 +102,33 @@ EOF
+ --exec $INNOCHECKSUM -c $MYSQLD_DATADIR/test/t1.ibd
+ 
+ --echo [4]:# Print the version of innochecksum and exit
+---replace_regex /.*innochecksum.*Ver.*[0-9]*.[0-9]*.[0-9]*.*/innochecksum Ver #.#.#/
+---exec $INNOCHECKSUM -V $MYSQLD_DATADIR/test/t1.ibd
++--replace_regex /.*innochecksum.*Ver [0-9]*\.[0-9]*\.[0-9]*, for .*\)/innochecksum Ver #.#.#/
++--exec $INNOCHECKSUM -V
++
++--echo [5]:# check t1.ibd and t2.ibd summary with and without tablespace_flags
++let $resultlog=$MYSQLTEST_VARDIR/tmp/result.log;
++let $resultlog_f=$MYSQLTEST_VARDIR/tmp/result_flags.log;
++
++--exec $INNOCHECKSUM -S $MYSQLD_DATADIR/test/t1.ibd -s 3 -e 5 > $resultlog
++--exec $INNOCHECKSUM -S $MYSQLD_DATADIR/test/t1.ibd --tablespace_flags=$FLAG -s 3 -e 5 > $resultlog_f
++--diff_files $resultlog $resultlog_f
++
++--exec $INNOCHECKSUM -S $MYSQLD_DATADIR/test/t2.ibd -s 3 -e 5 > $resultlog
++--exec $INNOCHECKSUM -S $MYSQLD_DATADIR/test/t2.ibd --tablespace_flags=$FLAG2 -s 3 -e 5 > $resultlog_f
++--diff_files $resultlog $resultlog_f
++
++--exec $INNOCHECKSUM -S $MYSQLD_DATADIR/test/t3.ibd -s 3 -e 5 > $resultlog
++--exec $INNOCHECKSUM -S $MYSQLD_DATADIR/test/t3.ibd --tablespace_flags=$FLAG3 -s 3 -e 5 > $resultlog_f
++--diff_files $resultlog $resultlog_f
++
++--exec $INNOCHECKSUM -S $MYSQLD_DATADIR/test/t4.ibd -s 3 -e 5 > $resultlog
++--exec $INNOCHECKSUM -S $MYSQLD_DATADIR/test/t4.ibd --tablespace_flags=$FLAG4 -s 3 -e 5 > $resultlog_f
++--diff_files $resultlog $resultlog_f
++
++remove_file $resultlog;
++remove_file $resultlog_f;
+ 
+ --echo # Restart the DB server
+ --source include/start_mysqld.inc
+ 
+-DROP TABLE t1;
++DROP TABLE t4, t3, t2, t1;
+diff --git a/mysql-test/suite/innodb_zip/t/innochecksum_3.test b/mysql-test/suite/innodb_zip/t/innochecksum_3.test
+index ef6d82253f4..0bf2ac0ad23 100644
+--- a/mysql-test/suite/innodb_zip/t/innochecksum_3.test
++++ b/mysql-test/suite/innodb_zip/t/innochecksum_3.test
+@@ -124,6 +124,7 @@ while(<IN_FILE>)
+  $_=~ s/$dir/MYSQLTEST_VARDIR/;
+  # Remove debug option, which is not in all builds
+  next if (/debug/);
++ next if (/tablespace.flags/i);
+  print OUT_FILE $_;
+ }
+ close(IN_FILE);

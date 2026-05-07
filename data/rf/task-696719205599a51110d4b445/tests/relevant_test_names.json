@@ -1,0 +1,46 @@
+{
+  "tests": [
+    {
+      "name": "go.k6.io/k6/output/cloud/insights/Test_Collector_CollectRequestMetadatas_DoesNothingWithEmptyData"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/insights/Test_Collector_CollectRequestMetadatas_FiltersAndStoresHTTPTrailsAsRequestMetadatas"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/insights/Test_Collector_PopAll_DoesNothingWithEmptyData"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/insights/Test_tracesFlusher_Flush_ReturnsNoErrorWithWorkingInsightsClientAndNonCancelledContextAndNoData"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/insights/Test_tracesFlusher_Flush_ReturnsNoErrorWithWorkingInsightsClientAndNonCancelledContextAndData"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/insights/Test_tracesFlusher_Flush_ReturnsErrorWithFailingInsightsClientAndNonCancelledContext"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/insights/TestEnabledReturnsTrueWhenTracesEnabled"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/insights/TestEnabledReturnsFalseWhenTracesDisabled"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/insights/TestEnabledReturnsFalseWhenTracesNotSet"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/insights/TestCollectorImplementsRequestMetadatasCollectorInterface"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/insights/TestFlusherImplementsRequestMetadatasFlusherInterface"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/insights/TestNewCollectorReturnsNonNil"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/insights/TestNewFlusherReturnsNonNil"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/insights/TestNewCollectorPopAllReturnsNilOnFreshCollector"
+    }
+  ]
+}

@@ -1,0 +1,252 @@
+diff --git a/client/dashboard/plugins/manage/components/test/action-render-modal.test.tsx b/client/dashboard/plugins/manage/components/test/action-render-modal.test.tsx
+new file mode 100644
+index 00000000000..e33ee0f3a35
+--- /dev/null
++++ b/client/dashboard/plugins/manage/components/test/action-render-modal.test.tsx
+@@ -0,0 +1,246 @@
++/**
++ * @jest-environment jsdom
++ */
++import { screen, waitFor } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { render } from '../../../../test-utils';
++import ActionRenderModal from '../action-render-modal';
++import type { ActionRenderModalProps } from '../action-render-modal';
++import type { PluginListRow } from '../../types';
++
++const mockCreateSuccessNotice = jest.fn();
++const mockCreateErrorNotice = jest.fn();
++
++jest.mock( '@wordpress/data', () => ( {
++	useDispatch: () => ( {
++		createSuccessNotice: mockCreateSuccessNotice,
++		createErrorNotice: mockCreateErrorNotice,
++	} ),
++	combineReducers: jest.fn( ( reducers ) => reducers ),
++	createReduxStore: jest.fn(),
++	register: jest.fn(),
++	createSelector: jest.fn(),
++} ) );
++
++jest.mock( '@wordpress/notices', () => ( {
++	store: 'notices-store',
++} ) );
++
++jest.mock( '../../hooks/use-sites-by-id', () => ( {
++	useSitesById: () => ( { sitesById: new Map() } ),
++} ) );
++
++const mockPlugin: PluginListRow = {
++	id: 'test-plugin',
++	slug: 'test-plugin',
++	name: 'TestPlugin',
++	sitesCount: 3,
++	sitesWithPluginActive: [ 1, 2 ],
++	sitesWithPluginInactive: [ 3 ],
++	sitesWithPluginUpdate: [ 1 ],
++	sitesWithPluginAutoupdated: [ 2 ],
++	sitesWithPluginNotAutoupdated: [ 1, 3 ],
++	isActive: 'some',
++	hasUpdate: 'some',
++	areAutoUpdatesAllowed: 'all',
++	areAutoUpdatesEnabled: 'some',
++	siteIds: [ 1, 2, 3 ],
++	isManaged: false,
++};
++
++function renderModal( overrides: Partial< ActionRenderModalProps > = {} ) {
++	const props: ActionRenderModalProps = {
++		items: [ mockPlugin ],
++		closeModal: jest.fn(),
++		onActionPerformed: jest.fn(),
++		actionId: 'activate',
++		extraActions: [],
++		onExecute: jest.fn().mockResolvedValue( { successCount: 0, errorCount: 0 } ),
++		...overrides,
++	};
++	return render( <ActionRenderModal { ...props } /> );
++}
++
++beforeEach( () => {
++	mockCreateSuccessNotice.mockClear();
++	mockCreateErrorNotice.mockClear();
++} );
++
++describe( 'getConfirmText', () => {
++	test( 'activate action shows plugin name and inactive site count', async () => {
++		renderModal( { actionId: 'activate' } );
++		await waitFor( () => {
++			expect(
++				screen.getByText( /activate the TestPlugin plugin on 1 site\./i )
++			).toBeInTheDocument();
++		} );
++	} );
++
++	test( 'deactivate action shows plugin name and active site count', async () => {
++		renderModal( { actionId: 'deactivate' } );
++		await waitFor( () => {
++			expect(
++				screen.getByText( /deactivate the TestPlugin plugin installed on 2 sites\./i )
++			).toBeInTheDocument();
++		} );
++	} );
++
++	test( 'update action shows plugin name and update site count', async () => {
++		renderModal( { actionId: 'update' } );
++		await waitFor( () => {
++			expect(
++				screen.getByText( /update the TestPlugin plugin installed on 1 site\./i )
++			).toBeInTheDocument();
++		} );
++	} );
++
++	test( 'enable-autoupdate action shows plugin name and not-autoupdated count', async () => {
++		renderModal( { actionId: 'enable-autoupdate' } );
++		await waitFor( () => {
++			expect(
++				screen.getByText(
++					/enable auto.updates for the TestPlugin plugin installed on 2 sites\./i
++				)
++			).toBeInTheDocument();
++		} );
++	} );
++
++	test( 'disable-autoupdate action shows plugin name and autoupdated count', async () => {
++		renderModal( { actionId: 'disable-autoupdate' } );
++		await waitFor( () => {
++			expect(
++				screen.getByText(
++					/disable auto.updates for the TestPlugin plugin installed on 1 site\./i
++				)
++			).toBeInTheDocument();
++		} );
++	} );
++
++	test( 'delete with deactivate and disable-autoupdate extra actions', async () => {
++		renderModal( {
++			actionId: 'delete',
++			extraActions: [ 'deactivate', 'disable-autoupdate' ],
++		} );
++		await waitFor( () => {
++			expect(
++				screen.getByText(
++					/deactivate, disable auto.updates, and remove the TestPlugin plugin/i
++				)
++			).toBeInTheDocument();
++		} );
++	} );
++
++	test( 'delete with deactivate extra action only', async () => {
++		renderModal( {
++			actionId: 'delete',
++			extraActions: [ 'deactivate' ],
++		} );
++		await waitFor( () => {
++			expect(
++				screen.getByText( /deactivate and remove the TestPlugin plugin/i )
++			).toBeInTheDocument();
++		} );
++	} );
++
++	test( 'delete with disable-autoupdate extra action only', async () => {
++		renderModal( {
++			actionId: 'delete',
++			extraActions: [ 'disable-autoupdate' ],
++		} );
++		await waitFor( () => {
++			expect(
++				screen.getByText( /disable auto.updates and remove the TestPlugin plugin/i )
++			).toBeInTheDocument();
++		} );
++	} );
++
++	test( 'delete with no extra actions', async () => {
++		renderModal( { actionId: 'delete', extraActions: [] } );
++		await waitFor( () => {
++			expect(
++				screen.getByText( /remove the TestPlugin plugin installed on/i )
++			).toBeInTheDocument();
++		} );
++	} );
++
++	test( 'unknown action shows fallback message', async () => {
++		renderModal( { actionId: 'unknown-action' } );
++		await waitFor( () => {
++			expect(
++				screen.getByText( 'You are about to perform this action.' )
++			).toBeInTheDocument();
++		} );
++	} );
++} );
++
++describe( 'buildSuccessPrefix', () => {
++	const cases: [ string, string, RegExp ][] = [
++		[ 'activate', 'Activate', /Activated TestPlugin/i ],
++		[ 'deactivate', 'Deactivate', /Deactivated TestPlugin/i ],
++		[ 'update', 'Update', /Updated TestPlugin/i ],
++		[ 'enable-autoupdate', 'Enable auto\u2011updates', /Enabled auto.updates for TestPlugin/i ],
++		[
++			'disable-autoupdate',
++			'Disable auto\u2011updates',
++			/Disabled auto.updates for TestPlugin/i,
++		],
++		[ 'delete', 'Delete', /Deleted TestPlugin/i ],
++	];
++
++	test.each( cases )(
++		'%s success notice includes plugin name',
++		async ( actionId, buttonLabel, expectedPattern ) => {
++			const onExecute = jest
++				.fn()
++				.mockResolvedValue( { successCount: 1, errorCount: 0 } );
++			renderModal( { actionId, onExecute } );
++
++			const user = userEvent.setup();
++			const confirmButton = await screen.findByRole( 'button', { name: buttonLabel } );
++			await user.click( confirmButton );
++
++			await waitFor( () => {
++				expect( mockCreateSuccessNotice ).toHaveBeenCalledTimes( 1 );
++				expect( mockCreateSuccessNotice.mock.calls[ 0 ][ 0 ] ).toMatch( expectedPattern );
++			} );
++		}
++	);
++} );
++
++describe( 'buildErrorPrefix', () => {
++	const cases: [ string, string, RegExp ][] = [
++		[ 'activate', 'Activate', /Failed to activate TestPlugin/i ],
++		[ 'deactivate', 'Deactivate', /Failed to deactivate TestPlugin/i ],
++		[ 'update', 'Update', /Failed to update TestPlugin/i ],
++		[
++			'enable-autoupdate',
++			'Enable auto\u2011updates',
++			/Failed to enable auto.updates for TestPlugin/i,
++		],
++		[
++			'disable-autoupdate',
++			'Disable auto\u2011updates',
++			/Failed to disable auto.updates for TestPlugin/i,
++		],
++		[ 'delete', 'Delete', /Failed to delete TestPlugin/i ],
++	];
++
++	test.each( cases )(
++		'%s error notice includes plugin name',
++		async ( actionId, buttonLabel, expectedPattern ) => {
++			const onExecute = jest
++				.fn()
++				.mockResolvedValue( { successCount: 0, errorCount: 1 } );
++			renderModal( { actionId, onExecute } );
++
++			const user = userEvent.setup();
++			const confirmButton = await screen.findByRole( 'button', { name: buttonLabel } );
++			await user.click( confirmButton );
++
++			await waitFor( () => {
++				expect( mockCreateErrorNotice ).toHaveBeenCalledTimes( 1 );
++				expect( mockCreateErrorNotice.mock.calls[ 0 ][ 0 ] ).toMatch( expectedPattern );
++			} );
++		}
++	);
++} );

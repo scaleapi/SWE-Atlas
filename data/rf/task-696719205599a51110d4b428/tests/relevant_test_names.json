@@ -1,0 +1,148 @@
+{
+  "tests": [
+    {
+      "name": "useMainMenuItems > should include an Agency Tier menu item"
+    },
+    {
+      "name": "useMainMenuItems > should have exactly one Agency Tier menu item, not duplicates"
+    },
+    {
+      "name": "useMainMenuItems > should not reference the tiers-revamp feature flag"
+    },
+    {
+      "name": "useMainMenuItems > should place Agency Tier near the top of the menu after Overview"
+    },
+    {
+      "name": "useMainMenuItems > should include Referrals when section is enabled"
+    },
+    {
+      "name": "useMainMenuItems > should include Migrations when section is enabled"
+    },
+    {
+      "name": "useMainMenuItems > should include Plugins when section is enabled"
+    },
+    {
+      "name": "useMainMenuItems > should include Learn when section is enabled"
+    },
+    {
+      "name": "useMainMenuItems > should include Settings when section is enabled"
+    },
+    {
+      "name": "useMainMenuItems > should include Team when section is enabled"
+    },
+    {
+      "name": "useMainMenuItems > should include WooPayments menu item"
+    },
+    {
+      "name": "useMainMenuItems > should include Marketplace menu item"
+    },
+    {
+      "name": "useMainMenuItems > should include Purchases menu item"
+    },
+    {
+      "name": "AgencyTierOverview > should render the updated page title"
+    },
+    {
+      "name": "AgencyTierOverview > should render AgencyTierOverviewContent"
+    },
+    {
+      "name": "AgencyTierOverview > should pass currentAgencyTierId from agency selector"
+    },
+    {
+      "name": "AgencyTierOverview > should pass totalInfluencedRevenue from agency selector"
+    },
+    {
+      "name": "AgencyTierOverview > should pass isEarlyAccess from agency selector"
+    },
+    {
+      "name": "AgencyTierOverview > should not render old V1 elements like benefit cards or tier badges"
+    },
+    {
+      "name": "AgencyTierOverview > should not use useDispatch or recordTracksEvent"
+    },
+    {
+      "name": "AgencyTierOverview > should render the MobileSidebarNavigation component"
+    },
+    {
+      "name": "AgencyTierOverview > should render the LayoutBody component"
+    },
+    {
+      "name": "agencyTierContext > should set context.primary with AgencyTierOverview"
+    },
+    {
+      "name": "agencyTierContext > should not conditionally render based on any feature flag"
+    },
+    {
+      "name": "agencyTierContext > should set context.secondary with MainSidebar"
+    },
+    {
+      "name": "agencyTierContext > should call next to continue the routing chain"
+    },
+    {
+      "name": "tiers-revamp feature flag removal from config files > should not contain tiers-revamp in a8c-for-agencies-development.json"
+    },
+    {
+      "name": "tiers-revamp feature flag removal from config files > should not contain tiers-revamp in a8c-for-agencies-horizon.json"
+    },
+    {
+      "name": "tiers-revamp feature flag removal from config files > should not contain tiers-revamp in a8c-for-agencies-production.json"
+    },
+    {
+      "name": "tiers-revamp feature flag removal from config files > should not contain tiers-revamp in a8c-for-agencies-stage.json"
+    },
+    {
+      "name": "AgencyTierOverviewV2 component removal > should no longer have the V2 overview component directory"
+    },
+    {
+      "name": "AgencyTierOverviewV2 component removal > should no longer have the V2 index.tsx file"
+    },
+    {
+      "name": "AgencyTierOverviewV2 component removal > should no longer have the V2 style.scss file"
+    },
+    {
+      "name": "tiers-revamp feature flag removal from source files > should not reference tiers-revamp in use-main-menu-items.tsx"
+    },
+    {
+      "name": "tiers-revamp feature flag removal from source files > should not reference tiers-revamp in controller.tsx"
+    },
+    {
+      "name": "tiers-revamp feature flag removal from source files > should not reference tiers-revamp in index.tsx"
+    },
+    {
+      "name": "tiers-revamp feature flag removal from source files > should not import isEnabled from calypso-config in use-main-menu-items.tsx"
+    },
+    {
+      "name": "tiers-revamp feature flag removal from source files > should not import isEnabled from calypso-config in controller.tsx"
+    },
+    {
+      "name": "tiers-revamp feature flag removal from source files > should not import isEnabled from calypso-config in index.tsx"
+    },
+    {
+      "name": "V1 stylesheet cleanup > should have replaced the old V1 SCSS with a minimal stylesheet"
+    },
+    {
+      "name": "V1 stylesheet cleanup > should not contain old V1 class selectors"
+    },
+    {
+      "name": "OverviewSidebarAgencyTier > should render AgencyTierProgressCard directly"
+    },
+    {
+      "name": "OverviewSidebarAgencyTier > should pass currentAgencyTierId to AgencyTierProgressCard"
+    },
+    {
+      "name": "OverviewSidebarAgencyTier > should pass influencedRevenue to AgencyTierProgressCard"
+    },
+    {
+      "name": "OverviewSidebarAgencyTier > should pass isEarlyAccess to AgencyTierProgressCard"
+    },
+    {
+      "name": "OverviewSidebarAgencyTier > should not render old V1 elements like FoldableCard or celebration modal"
+    },
+    {
+      "name": "OverviewSidebarAgencyTier > should not render the Explore Tiers and benefits button"
+    },
+    {
+      "name": "OverviewSidebarAgencyTier > should return null when agency tier info is not available"
+    }
+  ]
+}

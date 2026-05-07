@@ -1,0 +1,570 @@
+diff --git a/docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md b/docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md
+index 8db7f9e8026..749d91a202c 100644
+--- a/docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md
++++ b/docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md
+@@ -151,7 +151,6 @@ Experimental features might be changed or removed without prior notice.
+ | `pluginsFrontendSandbox`                      | Enables the plugins frontend sandbox                                                                                                                                                                                                                                              |
+ | `frontendSandboxMonitorOnly`                  | Enables monitor only in the plugin frontend sandbox (if enabled)                                                                                                                                                                                                                  |
+ | `pluginsDetailsRightPanel`                    | Enables right panel for the plugins details page                                                                                                                                                                                                                                  |
+-| `vizAndWidgetSplit`                           | Split panels between visualizations and widgets                                                                                                                                                                                                                                   |
+ | `awsDatasourcesTempCredentials`               | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                                                                                                                                                 |
+ | `mlExpressions`                               | Enable support for Machine Learning in server-side expressions                                                                                                                                                                                                                    |
+ | `metricsSummary`                              | Enables metrics summary queries in the Tempo data source                                                                                                                                                                                                                          |
+diff --git a/packages/grafana-data/src/types/featureToggles.gen.ts b/packages/grafana-data/src/types/featureToggles.gen.ts
+index daf9855739c..a0c8882dc55 100644
+--- a/packages/grafana-data/src/types/featureToggles.gen.ts
++++ b/packages/grafana-data/src/types/featureToggles.gen.ts
+@@ -80,7 +80,6 @@ export interface FeatureToggles {
+   pluginsDetailsRightPanel?: boolean;
+   sqlDatasourceDatabaseSelection?: boolean;
+   recordedQueriesMulti?: boolean;
+-  vizAndWidgetSplit?: boolean;
+   logsExploreTableVisualisation?: boolean;
+   awsDatasourcesTempCredentials?: boolean;
+   transformationsRedesign?: boolean;
+diff --git a/pkg/services/featuremgmt/registry.go b/pkg/services/featuremgmt/registry.go
+index f8ca672bb77..2c7381296bc 100644
+--- a/pkg/services/featuremgmt/registry.go
++++ b/pkg/services/featuremgmt/registry.go
+@@ -463,13 +463,6 @@ var (
+ 			Owner:          grafanaObservabilityMetricsSquad,
+ 			AllowSelfServe: false,
+ 		},
+-		{
+-			Name:         "vizAndWidgetSplit",
+-			Description:  "Split panels between visualizations and widgets",
+-			Stage:        FeatureStageExperimental,
+-			FrontendOnly: true,
+-			Owner:        grafanaDashboardsSquad,
+-		},
+ 		{
+ 			Name:         "logsExploreTableVisualisation",
+ 			Description:  "A table visualisation for logs in Explore",
+diff --git a/pkg/services/featuremgmt/toggles_gen.csv b/pkg/services/featuremgmt/toggles_gen.csv
+index 4ab0719d971..76db483e8a3 100644
+--- a/pkg/services/featuremgmt/toggles_gen.csv
++++ b/pkg/services/featuremgmt/toggles_gen.csv
+@@ -61,7 +61,6 @@ frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,
+ pluginsDetailsRightPanel,experimental,@grafana/plugins-platform-backend,false,false,true
+ sqlDatasourceDatabaseSelection,preview,@grafana/dataviz-squad,false,false,true
+ recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false
+-vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,true
+ logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
+ awsDatasourcesTempCredentials,experimental,@grafana/aws-datasources,false,false,false
+ transformationsRedesign,GA,@grafana/observability-metrics,false,false,true
+diff --git a/pkg/services/featuremgmt/toggles_gen.go b/pkg/services/featuremgmt/toggles_gen.go
+index 6f5e20a1ffd..ed2f55d395a 100644
+--- a/pkg/services/featuremgmt/toggles_gen.go
++++ b/pkg/services/featuremgmt/toggles_gen.go
+@@ -255,10 +255,6 @@ const (
+ 	// Enables writing multiple items from a single query within Recorded Queries
+ 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
+ 
+-	// FlagVizAndWidgetSplit
+-	// Split panels between visualizations and widgets
+-	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
+-
+ 	// FlagLogsExploreTableVisualisation
+ 	// A table visualisation for logs in Explore
+ 	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"
+diff --git a/pkg/services/featuremgmt/toggles_gen.json b/pkg/services/featuremgmt/toggles_gen.json
+index 4e986f7497a..af333a18e31 100644
+--- a/pkg/services/featuremgmt/toggles_gen.json
++++ b/pkg/services/featuremgmt/toggles_gen.json
+@@ -3297,7 +3297,8 @@
+       "metadata": {
+         "name": "vizAndWidgetSplit",
+         "resourceVersion": "1718727528075",
+-        "creationTimestamp": "2023-06-27T10:22:13Z"
++        "creationTimestamp": "2023-06-27T10:22:13Z",
++        "deletionTimestamp": "2024-10-30T14:21:33Z"
+       },
+       "spec": {
+         "description": "Split panels between visualizations and widgets",
+diff --git a/public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx b/public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx
+index 59c2519f872..d6b12cdcdd6 100644
+--- a/public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx
++++ b/public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx
+@@ -2,26 +2,16 @@ import { css } from '@emotion/css';
+ import { useCallback, useMemo, useState } from 'react';
+ 
+ import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
+-import { config } from '@grafana/runtime';
+ import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';
+-import { getAllPanelPluginMeta, getVizPluginMeta, getWidgetPluginMeta } from 'app/features/panel/state/util';
++import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
+ 
+ export interface Props {
+   onChange: (plugins: PanelPluginMeta[]) => void;
+   maxMenuHeight?: number;
+-  isWidget?: boolean;
+ }
+ 
+-export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight, isWidget = false }: Props): JSX.Element => {
+-  const getPluginMetaData = (): PanelPluginMeta[] => {
+-    if (config.featureToggles.vizAndWidgetSplit) {
+-      return isWidget ? getWidgetPluginMeta() : getVizPluginMeta();
+-    } else {
+-      return getAllPanelPluginMeta();
+-    }
+-  };
+-
+-  const plugins = useMemo<PanelPluginMeta[]>(getPluginMetaData, [isWidget]);
++export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Props): JSX.Element => {
++  const plugins = useMemo<PanelPluginMeta[]>(getAllPanelPluginMeta, []);
+   const options = useMemo(
+     () =>
+       plugins
+diff --git a/public/app/core/constants.ts b/public/app/core/constants.ts
+index 31b513373e2..66417d663af 100644
+--- a/public/app/core/constants.ts
++++ b/public/app/core/constants.ts
+@@ -17,5 +17,3 @@ export const EDIT_PANEL_ID = 23763571993;
+ export const DEFAULT_PER_PAGE_PAGINATION = 40;
+ 
+ export const LS_VISUALIZATION_SELECT_TAB_KEY = 'VisualizationSelectPane.ListMode';
+-
+-export const LS_WIDGET_SELECT_TAB_KEY = 'WidgetSelectPane.ListMode';
+diff --git a/public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.tsx b/public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.tsx
+index 88c3c1540b0..e2757499d8e 100644
+--- a/public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.tsx
++++ b/public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.tsx
+@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
+ import { reportInteraction } from '@grafana/runtime';
+ import { VizPanel } from '@grafana/scenes';
+ import { Button, CustomScrollbar, Field, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+-import { LS_VISUALIZATION_SELECT_TAB_KEY, LS_WIDGET_SELECT_TAB_KEY } from 'app/core/constants';
++import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
+ import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
+ import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
+ import { VizTypePicker } from 'app/features/panel/components/VizTypePicker/VizTypePicker';
+@@ -48,18 +48,12 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
+     setSearchQuery(value);
+   };
+ 
+-  const isWidgetEnabled = false;
+-  const tabKey = isWidgetEnabled ? LS_WIDGET_SELECT_TAB_KEY : LS_VISUALIZATION_SELECT_TAB_KEY;
+-  const defaultTab = isWidgetEnabled ? VisualizationSelectPaneTab.Widgets : VisualizationSelectPaneTab.Visualizations;
++  const tabKey = LS_VISUALIZATION_SELECT_TAB_KEY;
++  const defaultTab = VisualizationSelectPaneTab.Visualizations;
+   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
+ 
+   const supportedListModes = useMemo(
+-    () =>
+-      new Set([
+-        VisualizationSelectPaneTab.Widgets,
+-        VisualizationSelectPaneTab.Visualizations,
+-        VisualizationSelectPaneTab.Suggestions,
+-      ]),
++    () => new Set([VisualizationSelectPaneTab.Visualizations, VisualizationSelectPaneTab.Suggestions]),
+     []
+   );
+   const [listMode, setListMode] = useLocalStorage(tabKey, defaultTab);
+diff --git a/public/app/features/dashboard/components/AddPanelButton/AddPanelMenu.tsx b/public/app/features/dashboard/components/AddPanelButton/AddPanelMenu.tsx
+index 4ff03483ab4..8f066a7034c 100644
+--- a/public/app/features/dashboard/components/AddPanelButton/AddPanelMenu.tsx
++++ b/public/app/features/dashboard/components/AddPanelButton/AddPanelMenu.tsx
+@@ -1,7 +1,7 @@
+ import { useMemo } from 'react';
+ 
+ import { selectors } from '@grafana/e2e-selectors';
+-import { config, locationService } from '@grafana/runtime';
++import { locationService } from '@grafana/runtime';
+ import { Menu } from '@grafana/ui';
+ import { t } from 'app/core/internationalization';
+ import { DashboardModel } from 'app/features/dashboard/state';
+@@ -39,17 +39,6 @@ const AddPanelMenu = ({ dashboard }: Props) => {
+           dispatch(setInitialDatasource(undefined));
+         }}
+       />
+-      {config.featureToggles.vizAndWidgetSplit && (
+-        <Menu.Item
+-          key="add-widget"
+-          testId={selectors.pages.AddDashboard.itemButton('Add new widget menu item')}
+-          label={t('dashboard.add-menu.widget', 'Widget')}
+-          onClick={() => {
+-            DashboardInteractions.toolbarAddButtonClicked({ item: 'add_widget' });
+-            locationService.partial({ addWidget: true });
+-          }}
+-        />
+-      )}
+       <Menu.Item
+         key="add-row"
+         testId={selectors.pages.AddDashboard.itemButton('Add new row menu item')}
+diff --git a/public/app/features/dashboard/components/PanelEditor/VisualizationSelectPane.tsx b/public/app/features/dashboard/components/PanelEditor/VisualizationSelectPane.tsx
+index 2d6d2dcd6e8..cfe3a96f7f3 100644
+--- a/public/app/features/dashboard/components/PanelEditor/VisualizationSelectPane.tsx
++++ b/public/app/features/dashboard/components/PanelEditor/VisualizationSelectPane.tsx
+@@ -4,10 +4,9 @@ import { useLocalStorage } from 'react-use';
+ 
+ import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
+ import { selectors } from '@grafana/e2e-selectors';
+-import { config } from '@grafana/runtime';
+ import { Button, CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+ import { Field } from '@grafana/ui/src/components/Forms/Field';
+-import { LS_VISUALIZATION_SELECT_TAB_KEY, LS_WIDGET_SELECT_TAB_KEY } from 'app/core/constants';
++import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
+ import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
+ import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
+ import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
+@@ -30,12 +29,8 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
+   const plugin = useSelector(getPanelPluginWithFallback(panel.type));
+   const [searchQuery, setSearchQuery] = useState('');
+ 
+-  // Add support to show widgets in the visualization picker
+-  const isWidget = !!plugin.meta.skipDataQuery;
+-  const isWidgetEnabled = Boolean(isWidget && config.featureToggles.vizAndWidgetSplit);
+-
+-  const tabKey = isWidgetEnabled ? LS_WIDGET_SELECT_TAB_KEY : LS_VISUALIZATION_SELECT_TAB_KEY;
+-  const defaultTab = isWidgetEnabled ? VisualizationSelectPaneTab.Widgets : VisualizationSelectPaneTab.Visualizations;
++  const tabKey = LS_VISUALIZATION_SELECT_TAB_KEY;
++  const defaultTab = VisualizationSelectPaneTab.Visualizations;
+ 
+   const [listMode, setListMode] = useLocalStorage(tabKey, defaultTab);
+ 
+@@ -73,15 +68,6 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
+     },
+   ];
+ 
+-  const radioOptionsWidgetFlow: Array<SelectableValue<VisualizationSelectPaneTab>> = [
+-    { label: 'Widgets', value: VisualizationSelectPaneTab.Widgets },
+-    {
+-      label: 'Library panels',
+-      value: VisualizationSelectPaneTab.LibraryPanels,
+-      description: 'Reusable panels you can share between multiple dashboards.',
+-    },
+-  ];
+-
+   return (
+     <div className={styles.openWrapper}>
+       <div className={styles.formBox}>
+@@ -103,12 +89,7 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
+           />
+         </div>
+         <Field className={styles.customFieldMargin}>
+-          <RadioButtonGroup
+-            options={isWidgetEnabled ? radioOptionsWidgetFlow : radioOptions}
+-            value={listMode}
+-            onChange={setListMode}
+-            fullWidth
+-          />
++          <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
+         </Field>
+       </div>
+       <div className={styles.scrollWrapper}>
+@@ -117,20 +98,11 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
+             {listMode === VisualizationSelectPaneTab.Visualizations && (
+               <VizTypePicker pluginId={plugin.meta.id} onChange={onVizChange} searchQuery={searchQuery} />
+             )}
+-            {listMode === VisualizationSelectPaneTab.Widgets && (
+-              <VizTypePicker pluginId={plugin.meta.id} onChange={onVizChange} searchQuery={searchQuery} isWidget />
+-            )}
+-
+             {listMode === VisualizationSelectPaneTab.Suggestions && (
+               <VisualizationSuggestions onChange={onVizChange} searchQuery={searchQuery} panel={panel} data={data} />
+             )}
+             {listMode === VisualizationSelectPaneTab.LibraryPanels && (
+-              <PanelLibraryOptionsGroup
+-                searchQuery={searchQuery}
+-                panel={panel}
+-                key="Panel Library"
+-                isWidget={isWidget}
+-              />
++              <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
+             )}
+           </div>
+         </CustomScrollbar>
+diff --git a/public/app/features/dashboard/components/PanelEditor/types.ts b/public/app/features/dashboard/components/PanelEditor/types.ts
+index e95d7b1cc5f..c74a0800795 100644
+--- a/public/app/features/dashboard/components/PanelEditor/types.ts
++++ b/public/app/features/dashboard/components/PanelEditor/types.ts
+@@ -72,5 +72,4 @@ export enum VisualizationSelectPaneTab {
+   Visualizations,
+   LibraryPanels,
+   Suggestions,
+-  Widgets,
+ }
+diff --git a/public/app/features/dashboard/containers/DashboardPage.tsx b/public/app/features/dashboard/containers/DashboardPage.tsx
+index 7d82ebbda2b..a1ae9d5f019 100644
+--- a/public/app/features/dashboard/containers/DashboardPage.tsx
++++ b/public/app/features/dashboard/containers/DashboardPage.tsx
+@@ -26,7 +26,6 @@ import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
+ 
+ import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
+ import { findTemplateVarChanges } from '../../variables/utils';
+-import { AddWidgetModal } from '../components/AddWidgetModal/AddWidgetModal';
+ import { DashNav } from '../components/DashNav';
+ import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
+ import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
+@@ -494,7 +493,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
+             sectionNav={sectionNav}
+           />
+         )}
+-        {queryParams.addWidget && config.featureToggles.vizAndWidgetSplit && <AddWidgetModal />}
+       </>
+     );
+   }
+diff --git a/public/app/features/dashboard/dashgrid/DashboardEmpty.tsx b/public/app/features/dashboard/dashgrid/DashboardEmpty.tsx
+index e8065787e83..de9a7d13070 100644
+--- a/public/app/features/dashboard/dashgrid/DashboardEmpty.tsx
++++ b/public/app/features/dashboard/dashgrid/DashboardEmpty.tsx
+@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
+ 
+ import { GrafanaTheme2 } from '@grafana/data';
+ import { selectors } from '@grafana/e2e-selectors';
+-import { config, locationService } from '@grafana/runtime';
++import { locationService } from '@grafana/runtime';
+ import { Button, useStyles2, Text, Box, Stack } from '@grafana/ui';
+ import { Trans } from 'app/core/internationalization';
+ import { DashboardModel } from 'app/features/dashboard/state';
+@@ -83,32 +83,6 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
+             </Stack>
+           </Box>
+           <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
+-            {config.featureToggles.vizAndWidgetSplit && (
+-              <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
+-                <Stack direction="column" alignItems="center" gap={1}>
+-                  <Text element="h3" textAlignment="center" weight="medium">
+-                    <Trans i18nKey="dashboard.empty.add-widget-header">Add a widget</Trans>
+-                  </Text>
+-                  <Box marginBottom={2}>
+-                    <Text element="p" textAlignment="center" color="secondary">
+-                      <Trans i18nKey="dashboard.empty.add-widget-body">Create lists, markdowns and other widgets</Trans>
+-                    </Text>
+-                  </Box>
+-                  <Button
+-                    icon="plus"
+-                    fill="outline"
+-                    data-testid={selectors.pages.AddDashboard.itemButton('Create new widget button')}
+-                    onClick={() => {
+-                      DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_widget' });
+-                      locationService.partial({ addWidget: true });
+-                    }}
+-                    disabled={!canCreate}
+-                  >
+-                    <Trans i18nKey="dashboard.empty.add-widget-button">Add widget</Trans>
+-                  </Button>
+-                </Stack>
+-              </Box>
+-            )}
+             <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
+               <Stack direction="column" alignItems="center" gap={1}>
+                 <Text element="h3" textAlignment="center" weight="medium">
+diff --git a/public/app/features/library-panels/components/LibraryPanelsView/LibraryPanelsView.tsx b/public/app/features/library-panels/components/LibraryPanelsView/LibraryPanelsView.tsx
+index b8a64c6fd29..41ecd2ab349 100644
+--- a/public/app/features/library-panels/components/LibraryPanelsView/LibraryPanelsView.tsx
++++ b/public/app/features/library-panels/components/LibraryPanelsView/LibraryPanelsView.tsx
+@@ -21,7 +21,6 @@ interface LibraryPanelViewProps {
+   panelFilter?: string[];
+   folderFilter?: string[];
+   perPage?: number;
+-  isWidget?: boolean;
+ }
+ 
+ export const LibraryPanelsView = ({
+@@ -33,7 +32,6 @@ export const LibraryPanelsView = ({
+   showSecondaryActions,
+   currentPanelId: currentPanel,
+   perPage: propsPerPage = 40,
+-  isWidget,
+ }: LibraryPanelViewProps) => {
+   const styles = useStyles2(getPanelViewStyles);
+   const [{ libraryPanels, page, perPage, numberOfPages, loadingState, currentPanelId }, dispatch] = useReducer(
+@@ -56,7 +54,6 @@ export const LibraryPanelsView = ({
+           page,
+           perPage,
+           currentPanelId,
+-          isWidget,
+         })
+       ),
+     300,
+diff --git a/public/app/features/library-panels/components/LibraryPanelsView/actions.ts b/public/app/features/library-panels/components/LibraryPanelsView/actions.ts
+index 833150f3419..c425bee8711 100644
+--- a/public/app/features/library-panels/components/LibraryPanelsView/actions.ts
++++ b/public/app/features/library-panels/components/LibraryPanelsView/actions.ts
+@@ -3,11 +3,6 @@ import { Dispatch } from 'react';
+ import { from, merge, of, Subscription, timer } from 'rxjs';
+ import { catchError, finalize, mapTo, mergeMap, share, takeUntil } from 'rxjs/operators';
+ 
+-import { PanelPluginMeta } from '@grafana/data';
+-import { config } from '@grafana/runtime';
+-import { LibraryPanel } from '@grafana/schema';
+-import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
+-
+ import { deleteLibraryPanel as apiDeleteLibraryPanel, getLibraryPanels } from '../../state/api';
+ 
+ import { initialLibraryPanelsViewState, initSearch, searchCompleted } from './reducer';
+@@ -21,29 +16,11 @@ interface SearchArgs {
+   panelFilter?: string[];
+   folderFilterUIDs?: string[];
+   currentPanelId?: string;
+-  isWidget?: boolean;
+ }
+ 
+ export function searchForLibraryPanels(args: SearchArgs): DispatchResult {
+   // Functions to support filtering out library panels per plugin type that have skipDataQuery set to true
+ 
+-  const findPluginMeta = (pluginMeta: PanelPluginMeta, libraryPanel: LibraryPanel) =>
+-    pluginMeta.id === libraryPanel.type;
+-
+-  const filterLibraryPanels = (libraryPanels: LibraryPanel[], isWidget: boolean) => {
+-    const pluginMetaList = getAllPanelPluginMeta();
+-
+-    return libraryPanels.filter((libraryPanel) => {
+-      const matchingPluginMeta = pluginMetaList.find((pluginMeta) => findPluginMeta(pluginMeta, libraryPanel));
+-      // widget mode filter
+-      if (isWidget) {
+-        return !!matchingPluginMeta?.skipDataQuery;
+-      }
+-      // non-widget mode filter
+-      return !matchingPluginMeta?.skipDataQuery;
+-    });
+-  };
+-
+   return function (dispatch) {
+     const subscription = new Subscription();
+     const dataObservable = from(
+@@ -60,12 +37,6 @@ export function searchForLibraryPanels(args: SearchArgs): DispatchResult {
+       //filter out library panels per plugin type that have skipDataQuery set to true
+       mergeMap((libraryPanelsResult) => {
+         const { elements: libraryPanels } = libraryPanelsResult;
+-
+-        if (config.featureToggles.vizAndWidgetSplit && args.isWidget !== undefined) {
+-          const filteredLibraryPanels = filterLibraryPanels(libraryPanels, args.isWidget);
+-          return of({ ...libraryPanelsResult, elements: filteredLibraryPanels });
+-        }
+-
+         return of({ ...libraryPanelsResult, elements: libraryPanels });
+       }),
+       mergeMap(({ perPage, elements: libraryPanels, page, totalCount }) =>
+diff --git a/public/app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup.tsx b/public/app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup.tsx
+index 5978d723249..c84406b9d70 100644
+--- a/public/app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup.tsx
++++ b/public/app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup.tsx
+@@ -17,10 +17,9 @@ import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
+ interface Props {
+   panel: PanelModel;
+   searchQuery: string;
+-  isWidget?: boolean;
+ }
+ 
+-export const PanelLibraryOptionsGroup = ({ panel, searchQuery, isWidget = false }: Props) => {
++export const PanelLibraryOptionsGroup = ({ panel, searchQuery }: Props) => {
+   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
+   const [changeToPanel, setChangeToPanel] = useState<LibraryElementDTO | undefined>(undefined);
+   const [panelFilter, setPanelFilter] = useState<string[]>([]);
+@@ -54,7 +53,7 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery, isWidget = false
+         </VerticalGroup>
+       )}
+ 
+-      <PanelTypeFilter onChange={onPanelFilterChange} isWidget={isWidget} />
++      <PanelTypeFilter onChange={onPanelFilterChange} />
+ 
+       <div className={styles.libraryPanelsView}>
+         <LibraryPanelsView
+@@ -63,7 +62,6 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery, isWidget = false
+           panelFilter={panelFilter}
+           onClickCard={setChangeToPanel}
+           showSecondaryActions
+-          isWidget={isWidget}
+         />
+       </div>
+ 
+diff --git a/public/app/features/panel/components/VizTypePicker/VizTypePicker.tsx b/public/app/features/panel/components/VizTypePicker/VizTypePicker.tsx
+index 5954872f520..302126277c7 100644
+--- a/public/app/features/panel/components/VizTypePicker/VizTypePicker.tsx
++++ b/public/app/features/panel/components/VizTypePicker/VizTypePicker.tsx
+@@ -2,10 +2,9 @@ import { css } from '@emotion/css';
+ import { useMemo } from 'react';
+ 
+ import { GrafanaTheme2 } from '@grafana/data';
+-import { config } from '@grafana/runtime';
+ import { EmptySearchResult, useStyles2 } from '@grafana/ui';
+ 
+-import { filterPluginList, getAllPanelPluginMeta, getVizPluginMeta, getWidgetPluginMeta } from '../../state/util';
++import { filterPluginList, getAllPanelPluginMeta } from '../../state/util';
+ 
+ import { VizTypePickerPlugin } from './VizTypePickerPlugin';
+ import { VizTypeChangeDetails } from './types';
+@@ -14,18 +13,12 @@ export interface Props {
+   pluginId: string;
+   searchQuery: string;
+   onChange: (options: VizTypeChangeDetails) => void;
+-  isWidget?: boolean;
+   trackSearch?: (q: string, count: number) => void;
+ }
+ 
+-export function VizTypePicker({ pluginId, searchQuery, onChange, isWidget = false, trackSearch }: Props) {
++export function VizTypePicker({ pluginId, searchQuery, onChange, trackSearch }: Props) {
+   const styles = useStyles2(getStyles);
+-  const pluginsList = useMemo(() => {
+-    if (config.featureToggles.vizAndWidgetSplit) {
+-      return isWidget ? getWidgetPluginMeta() : getVizPluginMeta();
+-    }
+-    return getAllPanelPluginMeta();
+-  }, [isWidget]);
++  const pluginsList = useMemo(getAllPanelPluginMeta, []);
+ 
+   const filteredPluginTypes = useMemo(() => {
+     const result = filterPluginList(pluginsList, searchQuery, pluginId);
+diff --git a/public/app/features/panel/state/getAllSuggestions.ts b/public/app/features/panel/state/getAllSuggestions.ts
+index 873e2166da8..6b53f98c341 100644
+--- a/public/app/features/panel/state/getAllSuggestions.ts
++++ b/public/app/features/panel/state/getAllSuggestions.ts
+@@ -39,7 +39,7 @@ export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): P
+ 
+   const list = builder.getList();
+ 
+-  if (!config.featureToggles.vizAndWidgetSplit && builder.dataSummary.fieldCount === 0) {
++  if (builder.dataSummary.fieldCount === 0) {
+     for (const plugin of Object.values(config.panels)) {
+       if (!plugin.skipDataQuery || plugin.hideFromList) {
+         continue;
+diff --git a/public/locales/en-US/grafana.json b/public/locales/en-US/grafana.json
+index d7ed20e94f9..138865c1b4f 100644
+--- a/public/locales/en-US/grafana.json
++++ b/public/locales/en-US/grafana.json
+@@ -615,8 +615,7 @@
+       "import": "Import from library",
+       "paste-panel": "Paste panel",
+       "row": "Row",
+-      "visualization": "Visualization",
+-      "widget": "Widget"
++      "visualization": "Visualization"
+     },
+     "alert-rules-drawer": {
+       "redirect-link": "List in Grafana Alerting",
+@@ -629,9 +628,6 @@
+       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
+       "add-visualization-button": "Add visualization",
+       "add-visualization-header": "Start your new dashboard by adding a visualization",
+-      "add-widget-body": "Create lists, markdowns and other widgets",
+-      "add-widget-button": "Add widget",
+-      "add-widget-header": "Add a widget",
+       "import-a-dashboard-body": "Import dashboards from files or <1>grafana.com</1>.",
+       "import-a-dashboard-header": "Import a dashboard",
+       "import-dashboard-button": "Import dashboard"
+diff --git a/public/locales/pseudo-LOCALE/grafana.json b/public/locales/pseudo-LOCALE/grafana.json
+index df500db9e06..d048607a940 100644
+--- a/public/locales/pseudo-LOCALE/grafana.json
++++ b/public/locales/pseudo-LOCALE/grafana.json
+@@ -615,8 +615,7 @@
+       "import": "Ĩmpőřŧ ƒřőm ľįþřäřy",
+       "paste-panel": "Päşŧę päŉęľ",
+       "row": "Ŗőŵ",
+-      "visualization": "Vįşūäľįžäŧįőŉ",
+-      "widget": "Ŵįđģęŧ"
++      "visualization": "Vįşūäľįžäŧįőŉ"
+     },
+     "alert-rules-drawer": {
+       "redirect-link": "Ŀįşŧ įŉ Ğřäƒäŉä Åľęřŧįŉģ",
+@@ -629,9 +628,6 @@
+       "add-visualization-body": "Ŝęľęčŧ ä đäŧä şőūřčę äŉđ ŧĥęŉ qūęřy äŉđ vįşūäľįžę yőūř đäŧä ŵįŧĥ čĥäřŧş, şŧäŧş äŉđ ŧäþľęş őř čřęäŧę ľįşŧş, mäřĸđőŵŉş äŉđ őŧĥęř ŵįđģęŧş.",
+       "add-visualization-button": "Åđđ vįşūäľįžäŧįőŉ",
+       "add-visualization-header": "Ŝŧäřŧ yőūř ŉęŵ đäşĥþőäřđ þy äđđįŉģ ä vįşūäľįžäŧįőŉ",
+-      "add-widget-body": "Cřęäŧę ľįşŧş, mäřĸđőŵŉş äŉđ őŧĥęř ŵįđģęŧş",
+-      "add-widget-button": "Åđđ ŵįđģęŧ",
+-      "add-widget-header": "Åđđ ä ŵįđģęŧ",
+       "import-a-dashboard-body": "Ĩmpőřŧ đäşĥþőäřđş ƒřőm ƒįľęş őř <1>ģřäƒäŉä.čőm</1>.",
+       "import-a-dashboard-header": "Ĩmpőřŧ ä đäşĥþőäřđ",
+       "import-dashboard-button": "Ĩmpőřŧ đäşĥþőäřđ"

@@ -1,0 +1,401 @@
+diff --git a/js/compiler/compiler.go b/js/compiler/compiler.go
+index 1fed51109..105354034 100644
+--- a/js/compiler/compiler.go
++++ b/js/compiler/compiler.go
+@@ -16,6 +16,7 @@ import (
+ 
+ 	"github.com/go-sourcemap/sourcemap"
+ 	"github.com/grafana/sobek"
++	"github.com/grafana/sobek/ast"
+ 	"github.com/grafana/sobek/parser"
+ 	"github.com/sirupsen/logrus"
+ 
+@@ -159,102 +160,99 @@ type Options struct {
+ 	Strict            bool
+ }
+ 
+-// compilationState is helper struct to keep the state of a compilation
+-type compilationState struct {
++// parsingState is helper struct to keep the state of a compilation
++type parsingState struct {
+ 	// set when we couldn't load external source map so we can try parsing without loading it
+ 	couldntLoadSourceMap bool
+ 	// srcMap is the current full sourceMap that has been generated read so far
+-	srcMap      []byte
+-	srcMapError error
+-	wrapped     bool // whether the original source is wrapped in a function to make it a commonjs module
++	srcMap            []byte
++	srcMapError       error
++	wrapped           bool // whether the original source is wrapped in a function to make it a commonjs module
++	compatibilityMode lib.CompatibilityMode
++	logger            logrus.FieldLogger
++
++	loader func(string) ([]byte, error)
+ 
+ 	compiler *Compiler
+ }
+ 
+-// Compile the program in the given CompatibilityMode, wrapping it between pre and post code
+-// TODO isESM will be used once Sobek support ESM modules natively
+-func (c *Compiler) Compile(src, filename string, isESM bool) (*sobek.Program, string, error) {
+-	return c.compileImpl(src, filename, !isESM, c.Options.CompatibilityMode, nil)
++// Parse parses the provided source. It wraps as the same as CommonJS support.
++// The returned program can be compiled directly by Sobek.
++// Additionally, it returns the end code that has been parsed including any required transformations.
++func (c *Compiler) Parse(
++	src, filename string, wrap bool,
++) (prg *ast.Program, finalCode string, err error) {
++	state := &parsingState{
++		loader:            c.Options.SourceMapLoader,
++		wrapped:           wrap,
++		compatibilityMode: c.Options.CompatibilityMode,
++		logger:            c.logger,
++		compiler:          c,
++	}
++	return state.parseImpl(src, filename, wrap)
+ }
+ 
+ // sourceMapLoader is to be used with Sobek's WithSourceMapLoader
+ // it not only gets the file from disk in the simple case, but also returns it if the map was generated from babel
+ // additioanlly it fixes off by one error in commonjs dependencies due to having to wrap them in a function.
+-func (c *compilationState) sourceMapLoader(path string) ([]byte, error) {
++func (ps *parsingState) sourceMapLoader(path string) ([]byte, error) {
+ 	if path == sourceMapURLFromBabel {
+-		if c.wrapped {
+-			return c.increaseMappingsByOne(c.srcMap)
++		if ps.wrapped {
++			return ps.increaseMappingsByOne(ps.srcMap)
+ 		}
+-		return c.srcMap, nil
++		return ps.srcMap, nil
+ 	}
+-	c.srcMap, c.srcMapError = c.compiler.Options.SourceMapLoader(path)
+-	if c.srcMapError != nil {
+-		c.couldntLoadSourceMap = true
+-		return nil, c.srcMapError
++	ps.srcMap, ps.srcMapError = ps.loader(path)
++	if ps.srcMapError != nil {
++		ps.couldntLoadSourceMap = true
++		return nil, ps.srcMapError
+ 	}
+-	_, c.srcMapError = sourcemap.Parse(path, c.srcMap)
+-	if c.srcMapError != nil {
+-		c.couldntLoadSourceMap = true
+-		c.srcMap = nil
+-		return nil, c.srcMapError
++	_, ps.srcMapError = sourcemap.Parse(path, ps.srcMap)
++	if ps.srcMapError != nil {
++		ps.couldntLoadSourceMap = true
++		ps.srcMap = nil
++		return nil, ps.srcMapError
+ 	}
+-	if c.wrapped {
+-		return c.increaseMappingsByOne(c.srcMap)
++	if ps.wrapped {
++		return ps.increaseMappingsByOne(ps.srcMap)
+ 	}
+-	return c.srcMap, nil
++	return ps.srcMap, nil
+ }
+ 
+-func (c *Compiler) compileImpl(
+-	src, filename string, wrap bool, compatibilityMode lib.CompatibilityMode, srcMap []byte,
+-) (*sobek.Program, string, error) {
++func (ps *parsingState) parseImpl(src, filename string, wrap bool) (*ast.Program, string, error) {
+ 	code := src
+-	state := compilationState{srcMap: srcMap, compiler: c, wrapped: wrap}
+-	if wrap {
+-		conditionalNewLine := ""
+-		if index := strings.LastIndex(code, "//# sourceMappingURL="); index != -1 {
+-			// the lines in the sourcemap (if available) will be fixed by increaseMappingsByOne
+-			conditionalNewLine = "\n"
+-			newCode, err := state.updateInlineSourceMap(code, index)
+-			if err != nil {
+-				c.logger.Warnf("while compiling %q, couldn't update its inline sourcemap which might lead "+
+-					"to some line numbers being off: %s", filename, err)
+-			} else {
+-				code = newCode
+-			}
+-
+-			// if there is no sourcemap - bork only the first line of code, but leave the remaining ones.
+-		}
+-		code = "(function(module, exports){" + conditionalNewLine + code + "\n})\n"
++	if wrap { // the lines in the sourcemap (if available) will be fixed by increaseMappingsByOne
++		code = ps.wrap(code, filename)
++		ps.wrapped = true
+ 	}
+ 	opts := parser.WithDisableSourceMaps
+-	if c.Options.SourceMapLoader != nil {
+-		opts = parser.WithSourceMapLoader(state.sourceMapLoader)
++	if ps.loader != nil {
++		opts = parser.WithSourceMapLoader(ps.sourceMapLoader)
+ 	}
+-	ast, err := parser.ParseFile(nil, filename, code, 0, opts)
++	prg, err := parser.ParseFile(nil, filename, code, 0, opts)
+ 
+-	if state.couldntLoadSourceMap {
+-		state.couldntLoadSourceMap = false // reset
++	if ps.couldntLoadSourceMap {
++		ps.couldntLoadSourceMap = false // reset
+ 		// we probably don't want to abort scripts which have source maps but they can't be found,
+ 		// this also will be a breaking change, so if we couldn't we retry with it disabled
+-		c.logger.WithError(state.srcMapError).Warnf("Couldn't load source map for %s", filename)
+-		ast, err = parser.ParseFile(nil, filename, code, 0, parser.WithDisableSourceMaps)
++		ps.logger.WithError(ps.srcMapError).Warnf("Couldn't load source map for %s", filename)
++		prg, err = parser.ParseFile(nil, filename, code, 0, parser.WithDisableSourceMaps)
+ 	}
+ 
+ 	if err == nil {
+-		pgm, err := sobek.CompileAST(ast, c.Options.Strict)
+-		return pgm, code, err
++		return prg, code, nil
+ 	}
+ 
+-	if compatibilityMode == lib.CompatibilityModeExtended {
+-		code, state.srcMap, err = c.Transform(src, filename, state.srcMap)
++	if ps.compatibilityMode == lib.CompatibilityModeExtended {
++		code, ps.srcMap, err = ps.compiler.Transform(src, filename, ps.srcMap)
+ 		if err != nil {
+ 			return nil, code, err
+ 		}
+-		// the compatibility mode "decreases" here as we shouldn't transform twice
+-		var prg *sobek.Program
+-		prg, code, err = c.compileImpl(code, filename, wrap, lib.CompatibilityModeBase, state.srcMap)
++		ps.wrapped = false
++		ps.compatibilityMode = lib.CompatibilityModeBase
++		prg, code, err = ps.parseImpl(code, filename, wrap)
+ 		if err == nil && strings.Contains(src, "module.exports") {
+-			c.logger.Warningf(
++			ps.logger.Warningf(
+ 				"During the compilation of %q, it has been detected that the file combines ECMAScript modules (ESM) "+
+ 					"import/export syntax with commonJS module.exports. "+
+ 					"Mixing these two module systems is non-standard and will not be supported anymore in future releases. "+
+@@ -263,52 +261,41 @@ func (c *Compiler) compileImpl(
+ 		}
+ 		return prg, code, err
+ 	}
+-
+-	if compatibilityMode == lib.CompatibilityModeExperimentalEnhanced {
+-		code, state.srcMap, err = esbuildTransform(src, filename)
++	if ps.compatibilityMode == lib.CompatibilityModeExperimentalEnhanced {
++		code, ps.srcMap, err = esbuildTransform(src, filename)
+ 		if err != nil {
+-			return nil, code, err
++			return nil, "", err
+ 		}
+-		if c.Options.SourceMapLoader != nil {
++		if ps.loader != nil {
+ 			// This hack is required for the source map to work
+ 			code += "\n//# sourceMappingURL=" + sourceMapURLFromBabel
+ 		}
+-		return c.compileImpl(code, filename, wrap, lib.CompatibilityModeBase, state.srcMap)
++		ps.wrapped = false
++		ps.compatibilityMode = lib.CompatibilityModeBase
++		return ps.parseImpl(code, filename, wrap)
+ 	}
+-	return nil, code, err
++	return nil, "", err
+ }
+ 
+-type babel struct {
+-	vm        *sobek.Runtime
+-	this      sobek.Value
+-	transform sobek.Callable
+-	m         sync.Mutex
+-}
+-
+-func newBabel() (*babel, error) {
+-	onceBabelCode.Do(func() {
+-		globalBabelCode, errGlobalBabelCode = sobek.Compile("<internal/k6/compiler/lib/babel.min.js>", babelSrc, false)
+-	})
+-	if errGlobalBabelCode != nil {
+-		return nil, errGlobalBabelCode
+-	}
+-	vm := sobek.New()
+-	_, err := vm.RunProgram(globalBabelCode)
+-	if err != nil {
+-		return nil, err
+-	}
++func (ps *parsingState) wrap(code, filename string) string {
++	conditionalNewLine := ""
++	if index := strings.LastIndex(code, "//# sourceMappingURL="); index != -1 {
++		// the lines in the sourcemap (if available) will be fixed by increaseMappingsByOne
++		conditionalNewLine = "\n"
++		newCode, err := ps.updateInlineSourceMap(code, index)
++		if err != nil {
++			ps.logger.Warnf("while compiling %q, couldn't update its inline sourcemap which might lead "+
++				"to some line numbers being off: %s", filename, err)
++		} else {
++			code = newCode
++		}
+ 
+-	this := vm.Get("Babel")
+-	bObj := this.ToObject(vm)
+-	result := &babel{vm: vm, this: this}
+-	if err = vm.ExportTo(bObj.Get("transform"), &result.transform); err != nil {
+-		return nil, err
++		// if there is no sourcemap - bork only the first line of code, but leave the remaining ones.
+ 	}
+-
+-	return result, err
++	return "(function(module, exports){" + conditionalNewLine + code + "\n})\n"
+ }
+ 
+-func (c *compilationState) updateInlineSourceMap(code string, index int) (string, error) {
++func (ps *parsingState) updateInlineSourceMap(code string, index int) (string, error) {
+ 	nextnewline := strings.Index(code[index:], "\n")
+ 	if nextnewline == -1 {
+ 		nextnewline = len(code[index:])
+@@ -321,19 +308,19 @@ func (c *compilationState) updateInlineSourceMap(code string, index int) (string
+ 		if err != nil {
+ 			return code, err
+ 		}
+-		b, err = c.increaseMappingsByOne(b)
++		b, err = ps.increaseMappingsByOne(b)
+ 		if err != nil {
+ 			return code, err
+ 		}
+ 		encoded := base64.StdEncoding.EncodeToString(b)
+-		code = code[:index] + "//# sourcemappingurl=data:application/json;base64," + encoded + code[nextnewline:]
++		code = code[:index] + "//# sourceMappingURL=data:application/json;base64," + encoded + code[index+nextnewline:]
+ 	}
+ 	return code, nil
+ }
+ 
+ // increaseMappingsByOne increases the lines in the sourcemap by line so that it fixes the case where we need to wrap a
+ // required file in a function to support/emulate commonjs
+-func (c *compilationState) increaseMappingsByOne(sourceMap []byte) ([]byte, error) {
++func (ps *parsingState) increaseMappingsByOne(sourceMap []byte) ([]byte, error) {
+ 	var err error
+ 	m := make(map[string]interface{})
+ 	if err = json.Unmarshal(sourceMap, &m); err != nil {
+@@ -356,7 +343,7 @@ func (c *compilationState) increaseMappingsByOne(sourceMap []byte) ([]byte, erro
+ 	} else {
+ 		// we have mappings but it's not a string - this is some kind of error
+ 		// we still won't abort the test but just not load the sourcemap
+-		c.couldntLoadSourceMap = true
++		ps.couldntLoadSourceMap = true
+ 		return nil, errors.New(`missing "mappings" in sourcemap`)
+ 	}
+ 
+@@ -482,3 +469,33 @@ func verifySourceMapForBabel(srcMap []byte) error {
+ 	}
+ 	return nil
+ }
++
++type babel struct {
++	vm        *sobek.Runtime
++	this      sobek.Value
++	transform sobek.Callable
++	m         sync.Mutex
++}
++
++func newBabel() (*babel, error) {
++	onceBabelCode.Do(func() {
++		globalBabelCode, errGlobalBabelCode = sobek.Compile("<internal/k6/compiler/lib/babel.min.js>", babelSrc, false)
++	})
++	if errGlobalBabelCode != nil {
++		return nil, errGlobalBabelCode
++	}
++	vm := sobek.New()
++	_, err := vm.RunProgram(globalBabelCode)
++	if err != nil {
++		return nil, err
++	}
++
++	this := vm.Get("Babel")
++	bObj := this.ToObject(vm)
++	result := &babel{vm: vm, this: this}
++	if err = vm.ExportTo(bObj.Get("transform"), &result.transform); err != nil {
++		return nil, err
++	}
++
++	return result, err
++}
+diff --git a/js/modules/cjsmodule.go b/js/modules/cjsmodule.go
+index 495e0a9f6..4612f1368 100644
+--- a/js/modules/cjsmodule.go
++++ b/js/modules/cjsmodule.go
+@@ -65,9 +65,14 @@ func (c *cjsModuleInstance) exports() *sobek.Object {
+ // TODO: extract this to not make this package dependant on compilers.
+ // this is potentially a moot point after ESM when the compiler will likely get mostly dropped.
+ func cjsModuleFromString(fileURL *url.URL, data []byte, c *compiler.Compiler) (*cjsModule, error) {
+-	pgm, _, err := c.Compile(string(data), fileURL.String(), false)
++	astProgram, _, err := c.Parse(string(data), fileURL.String(), true)
+ 	if err != nil {
+ 		return nil, err
+ 	}
++	pgm, err := sobek.CompileAST(astProgram, true)
++	if err != nil {
++		return nil, err
++	}
++
+ 	return &cjsModule{prg: pgm, url: fileURL}, nil
+ }
+diff --git a/js/tc39/breaking_test_errors-experimental_enhanced.json b/js/tc39/breaking_test_errors-experimental_enhanced.json
+index 7cab7aff1..23f5b50bc 100644
+--- a/js/tc39/breaking_test_errors-experimental_enhanced.json
++++ b/js/tc39/breaking_test_errors-experimental_enhanced.json
+@@ -36,11 +36,17 @@
+   "test/language/expressions/assignment/fn-name-lhs-cover.js-strict:true": "test/language/expressions/assignment/fn-name-lhs-cover.js: Test262Error: descriptor value should be  <at omitted>",
+   "test/language/expressions/class/class-name-ident-await-escaped-module.js-strict:true": "test/language/expressions/class/class-name-ident-await-escaped-module.js: error is not an object (Test262: This statement should not be evaluated.)",
+   "test/language/expressions/class/class-name-ident-await-module.js-strict:true": "test/language/expressions/class/class-name-ident-await-module.js: error is not an object (Test262: This statement should not be evaluated.)",
++  "test/language/expressions/class/cpn-class-expr-accessors-computed-property-name-from-integer-separators.js-strict:true": "test/language/expressions/class/cpn-class-expr-accessors-computed-property-name-from-integer-separators.js: SyntaxError: test/language/expressions/class/cpn-class-expr-accessors-computed-property-name-from-integer-separators.js: Identifier directly after number (40:8)\n  38 | \n  39 | let C = class {\n> 40 |   get [1_2_3_4_5_6_7_8]() {\n     |         ^\n  41 |     return 1_2_3_4_5_6_7_8;\n  42 |   }\n  43 |  <at omitted>",
++  "test/language/expressions/class/cpn-class-expr-computed-property-name-from-integer-separators.js-strict:true": "test/language/expressions/class/cpn-class-expr-computed-property-name-from-integer-separators.js: SyntaxError: test/language/expressions/class/cpn-class-expr-computed-property-name-from-integer-separators.js: Identifier directly after number (40:4)\n  38 | \n  39 | let C = class {\n> 40 |   [1_2_3_4_5_6_7_8]() {\n     |     ^\n  41 |     return 1_2_3_4_5_6_7_8;\n  42 |   }\n  43 |   static [1_2_3_4_5_6_7_8]() { <at omitted>",
++  "test/language/expressions/class/cpn-class-expr-fields-computed-property-name-from-integer-separators.js-strict:true": "test/language/expressions/class/cpn-class-expr-fields-computed-property-name-from-integer-separators.js: SyntaxError: test/language/expressions/class/cpn-class-expr-fields-computed-property-name-from-integer-separators.js: Identifier directly after number (40:4)\n  38 | \n  39 | let C = class {\n> 40 |   [1_2_3_4_5_6_7_8] = 1_2_3_4_5_6_7_8;\n     |     ^\n  41 | \n  42 |   static [1_2_3_4_5_6_7_8] = 1_2_3_4_5_6_7_8;\n  43 | }; <at omitted>",
++  "test/language/expressions/class/cpn-class-expr-fields-methods-computed-property-name-from-integer-separators.js-strict:true": "test/language/expressions/class/cpn-class-expr-fields-methods-computed-property-name-from-integer-separators.js: SyntaxError: test/language/expressions/class/cpn-class-expr-fields-methods-computed-property-name-from-integer-separators.js: Identifier directly after number (40:4)\n  38 | \n  39 | let C = class {\n> 40 |   [1_2_3_4_5_6_7_8] = () => {\n     |     ^\n  41 |     return 1_2_3_4_5_6_7_8;\n  42 |   };\n  43 |  <at omitted>",
+   "test/language/expressions/class/elements/class-name-static-initializer-default-export.js-strict:true": "test/language/expressions/class/elements/class-name-static-initializer-default-export.js: Test262Error: Expected SameValue(«class_name_static_initializer_default_export_default», «default») to be true <at omitted>",
+   "test/language/expressions/class/elements/private-getter-is-not-a-own-property.js-strict:true": "test/language/expressions/class/elements/private-getter-is-not-a-own-property.js: TypeError: Object has no member '__lookupGetter__' <at omitted>",
+   "test/language/expressions/class/elements/private-setter-is-not-a-own-property.js-strict:true": "test/language/expressions/class/elements/private-setter-is-not-a-own-property.js: TypeError: Object has no member '__lookupSetter__' <at omitted>",
+-  "test/language/expressions/optional-chaining/iteration-statement-for-await-of.js-strict:true": "test/language/expressions/optional-chaining/iteration-statement-for-await-of.js: test/language/expressions/optional-chaining/iteration-statement-for-await-of.js: Line 19:7 Unexpected token await (and 9 more errors)",
++  "test/language/expressions/object/cpn-obj-lit-computed-property-name-from-integer-separators.js-strict:true": "test/language/expressions/object/cpn-obj-lit-computed-property-name-from-integer-separators.js: SyntaxError: test/language/expressions/object/cpn-obj-lit-computed-property-name-from-integer-separators.js: Identifier directly after number (29:4)\n  27 | \n  28 | let o = {\n> 29 |   [1_2_3_4_5_6_7_8]: 1_2_3_4_5_6_7_8\n     |     ^\n  30 | };\n  31 | \n  32 | assert.sameValue( <at omitted>",
++  "test/language/expressions/optional-chaining/iteration-statement-for-await-of.js-strict:true": "test/language/expressions/optional-chaining/iteration-statement-for-await-of.js: SyntaxError: test/language/expressions/optional-chaining/iteration-statement-for-await-of.js: Unexpected token, expected ( (31:6)\n  29 | async function checkAssertions() {\n  30 |   let count = 0;\n> 31 |   for await (const num of obj?.iterable) {\n     |       ^\n  32 |     count += num;\n  33 |   }\n  34 |   assert.sameValue(3, count); <at omitted>",
+   "test/language/expressions/optional-chaining/member-expression.js-strict:true": "test/language/expressions/optional-chaining/member-expression.js: SyntaxError: Async generators are not supported yet <at omitted>",
++  "test/language/literals/numeric/non-octal-decimal-integer.js-strict:false": "test/language/literals/numeric/non-octal-decimal-integer.js: SyntaxError: test/language/literals/numeric/non-octal-decimal-integer.js: Invalid number (28:17)\n  26 | // NonOctalDecimalIntegerLiteral ::\n  27 | //   0 NonOctalDigit\n> 28 | assert.sameValue(08, 8, '08');\n     |                  ^\n  29 | assert.sameValue(09, 9, '09');\n  30 | \n  31 | // NonOctalDecimalIntegerLiteral :: <at omitted>",
+   "test/language/literals/regexp/S7.8.5_A1.1_T2.js-strict:true": "test/language/literals/regexp/S7.8.5_A1.1_T2.js: Test262Error: Code unit: d800 Expected SameValue(«\\ud800», «�») to be true <at omitted>",
+   "test/language/literals/regexp/S7.8.5_A1.4_T2.js-strict:true": "test/language/literals/regexp/S7.8.5_A1.4_T2.js: Test262Error: Code unit: d800 Expected SameValue(«\\\\\\ud800», «\\�») to be true <at omitted>",
+   "test/language/literals/regexp/S7.8.5_A2.1_T2.js-strict:true": "test/language/literals/regexp/S7.8.5_A2.1_T2.js: Test262Error: Code unit: d800 Expected SameValue(«nnnn\\ud800», «nnnn�») to be true <at omitted>",
+@@ -103,11 +109,9 @@
+   "test/language/module-code/instn-named-bndng-dflt-gen-anon.js-strict:true": "test/language/module-code/instn-named-bndng-dflt-gen-anon.js: Test262Error: correct name is assigned Expected SameValue(«instn_named_bndng_dflt_gen_anon_default», «default») to be true <at omitted>",
+   "test/language/module-code/instn-named-bndng-dflt-named.js-strict:true": "test/language/module-code/instn-named-bndng-dflt-named.js: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all <at omitted>",
+   "test/language/module-code/instn-named-bndng-dflt-star.js-strict:true": "test/language/module-code/instn-named-bndng-dflt-star.js: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all <at omitted>",
+-  "test/language/module-code/instn-named-bndng-fun.js-strict:true": "test/language/module-code/instn-named-bndng-fun.js: Test262Error: binding rejects assignment Expected a TypeError to be thrown but no exception was thrown at all <at omitted>",
+-  "test/language/module-code/instn-named-bndng-gen.js-strict:true": "test/language/module-code/instn-named-bndng-gen.js: Test262Error: binding rejects assignment Expected a TypeError to be thrown but no exception was thrown at all <at omitted>",
+   "test/language/module-code/instn-named-bndng-let.js-strict:true": "test/language/module-code/instn-named-bndng-let.js: Test262Error: binding is created but not initialized Expected a ReferenceError to be thrown but no exception was thrown at all <at omitted>",
+-  "test/language/module-code/instn-named-bndng-trlng-comma.js-strict:true": "test/language/module-code/instn-named-bndng-trlng-comma.js: Test262Error: binding rejects assignment Expected a TypeError to be thrown but no exception was thrown at all <at omitted>",
+-  "test/language/module-code/instn-named-bndng-var.js-strict:true": "test/language/module-code/instn-named-bndng-var.js: Test262Error: binding rejects assignment Expected a TypeError to be thrown but no exception was thrown at all <at omitted>",
++  "test/language/module-code/instn-named-bndng-trlng-comma.js-strict:true": "test/language/module-code/instn-named-bndng-trlng-comma.js: Test262Error: binding is initialized to `undefined` prior to module evaulation Expected SameValue(«23», «undefined») to be true <at omitted>",
++  "test/language/module-code/instn-named-bndng-var.js-strict:true": "test/language/module-code/instn-named-bndng-var.js: Test262Error: binding is initialized to `undefined` prior to module evaulation Expected SameValue(«23», «undefined») to be true <at omitted>",
+   "test/language/module-code/instn-named-err-ambiguous-as.js-strict:true": "test/language/module-code/instn-named-err-ambiguous-as.js: Expected error: <nil>",
+   "test/language/module-code/instn-named-err-ambiguous.js-strict:true": "test/language/module-code/instn-named-err-ambiguous.js: Expected error: <nil>",
+   "test/language/module-code/instn-named-err-dflt-thru-star-as.js-strict:true": "test/language/module-code/instn-named-err-dflt-thru-star-as.js: Expected error: <nil>",
+@@ -129,9 +133,8 @@
+   "test/language/module-code/instn-star-iee-cycle.js-strict:true": "test/language/module-code/instn-star-iee-cycle.js: TypeError: Cannot read property 'b' of undefined <at omitted>",
+   "test/language/module-code/namespace/Symbol.toStringTag.js-strict:true": "test/language/module-code/namespace/Symbol.toStringTag.js: Test262Error: Expected SameValue(«undefined», «Module») to be true <at omitted>",
+   "test/language/module-code/namespace/internals/define-own-property.js-strict:true": "test/language/module-code/namespace/internals/define-own-property.js: Test262Error: Reflect.defineProperty: local2 Expected SameValue(«true», «false») to be true <at omitted>",
+-  "test/language/module-code/namespace/internals/delete-exported-init.js-strict:true": "test/language/module-code/namespace/internals/delete-exported-init.js: Test262Error: delete: local1 Expected a TypeError to be thrown but no exception was thrown at all <at omitted>",
+-  "test/language/module-code/namespace/internals/delete-exported-uninit.js-strict:true": "test/language/module-code/namespace/internals/delete-exported-uninit.js: Test262Error: delete: local1 Expected a TypeError to be thrown but no exception was thrown at all <at omitted>",
+-  "test/language/module-code/namespace/internals/delete-non-exported.js-strict:true": "test/language/module-code/namespace/internals/delete-non-exported.js: Test262Error: delete: default <at omitted>",
++  "test/language/module-code/namespace/internals/delete-exported-uninit.js-strict:true": "test/language/module-code/namespace/internals/delete-exported-uninit.js: Test262Error: binding unmodified: default Expected a ReferenceError to be thrown but no exception was thrown at all <at omitted>",
++  "test/language/module-code/namespace/internals/delete-non-exported.js-strict:true": "test/language/module-code/namespace/internals/delete-non-exported.js: TypeError: Cannot delete property 'default' of [object Object] <at omitted>",
+   "test/language/module-code/namespace/internals/enumerate-binding-uninit.js-strict:true": "test/language/module-code/namespace/internals/enumerate-binding-uninit.js: Test262Error: Expected a ReferenceError but got a Test262Error <at omitted>",
+   "test/language/module-code/namespace/internals/get-own-property-str-found-init.js-strict:true": "test/language/module-code/namespace/internals/get-own-property-str-found-init.js: Test262Error: Expected SameValue(«undefined», «201») to be true <at omitted>",
+   "test/language/module-code/namespace/internals/get-own-property-str-found-uninit.js-strict:true": "test/language/module-code/namespace/internals/get-own-property-str-found-uninit.js: Test262Error: hasOwnProperty: local1 Expected a ReferenceError to be thrown but no exception was thrown at all <at omitted>",
+@@ -149,12 +152,16 @@
+   "test/language/module-code/namespace/internals/own-property-keys-binding-types.js-strict:true": "test/language/module-code/namespace/internals/own-property-keys-binding-types.js: Test262Error: Expected SameValue(«8», «10») to be true <at omitted>",
+   "test/language/module-code/namespace/internals/own-property-keys-sort.js-strict:true": "test/language/module-code/namespace/internals/own-property-keys-sort.js: Test262Error: Expected SameValue(«17», «16») to be true <at omitted>",
+   "test/language/module-code/namespace/internals/set-prototype-of.js-strict:true": "test/language/module-code/namespace/internals/set-prototype-of.js: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all <at omitted>",
+-  "test/language/module-code/namespace/internals/set.js-strict:true": "test/language/module-code/namespace/internals/set.js: Test262Error: AssignmentExpression: local1 Expected a TypeError to be thrown but no exception was thrown at all <at omitted>",
++  "test/language/module-code/namespace/internals/set.js-strict:true": "test/language/module-code/namespace/internals/set.js: Test262Error: Reflect.set: local2 Expected SameValue(«true», «false») to be true <at omitted>",
+   "test/language/module-code/parse-err-hoist-lex-fun.js-strict:true": "test/language/module-code/parse-err-hoist-lex-fun.js: error is not an object (Test262: This statement should not be evaluated.)",
+   "test/language/module-code/parse-err-return.js-strict:true": "test/language/module-code/parse-err-return.js: error is not an object (Test262: This statement should not be evaluated.)",
+   "test/language/reserved-words/await-module.js-strict:true": "test/language/reserved-words/await-module.js: error is not an object (Test262: This statement should not be evaluated.)",
+   "test/language/statements/class/class-name-ident-await-escaped-module.js-strict:true": "test/language/statements/class/class-name-ident-await-escaped-module.js: error is not an object (Test262: This statement should not be evaluated.)",
+   "test/language/statements/class/class-name-ident-await-module.js-strict:true": "test/language/statements/class/class-name-ident-await-module.js: error is not an object (Test262: This statement should not be evaluated.)",
++  "test/language/statements/class/cpn-class-decl-accessors-computed-property-name-from-integer-separators.js-strict:true": "test/language/statements/class/cpn-class-decl-accessors-computed-property-name-from-integer-separators.js: SyntaxError: test/language/statements/class/cpn-class-decl-accessors-computed-property-name-from-integer-separators.js: Identifier directly after number (40:8)\n  38 | \n  39 | class C {\n> 40 |   get [1_2_3_4_5_6_7_8]() {\n     |         ^\n  41 |     return 1_2_3_4_5_6_7_8;\n  42 |   }\n  43 |  <at omitted>",
++  "test/language/statements/class/cpn-class-decl-computed-property-name-from-integer-separators.js-strict:true": "test/language/statements/class/cpn-class-decl-computed-property-name-from-integer-separators.js: SyntaxError: test/language/statements/class/cpn-class-decl-computed-property-name-from-integer-separators.js: Identifier directly after number (40:4)\n  38 | \n  39 | class C {\n> 40 |   [1_2_3_4_5_6_7_8]() {\n     |     ^\n  41 |     return 1_2_3_4_5_6_7_8;\n  42 |   }\n  43 |   static [1_2_3_4_5_6_7_8]() { <at omitted>",
++  "test/language/statements/class/cpn-class-decl-fields-computed-property-name-from-integer-separators.js-strict:true": "test/language/statements/class/cpn-class-decl-fields-computed-property-name-from-integer-separators.js: SyntaxError: test/language/statements/class/cpn-class-decl-fields-computed-property-name-from-integer-separators.js: Identifier directly after number (40:4)\n  38 | \n  39 | let C = class {\n> 40 |   [1_2_3_4_5_6_7_8] = 1_2_3_4_5_6_7_8;\n     |     ^\n  41 | \n  42 |   static [1_2_3_4_5_6_7_8] = 1_2_3_4_5_6_7_8;\n  43 | }; <at omitted>",
++  "test/language/statements/class/cpn-class-decl-fields-methods-computed-property-name-from-integer-separators.js-strict:true": "test/language/statements/class/cpn-class-decl-fields-methods-computed-property-name-from-integer-separators.js: SyntaxError: test/language/statements/class/cpn-class-decl-fields-methods-computed-property-name-from-integer-separators.js: Identifier directly after number (40:4)\n  38 | \n  39 | let C = class {\n> 40 |   [1_2_3_4_5_6_7_8] = () => {\n     |     ^\n  41 |     return 1_2_3_4_5_6_7_8;\n  42 |   };\n  43 |  <at omitted>",
+   "test/language/statements/class/elements/private-getter-is-not-a-own-property.js-strict:true": "test/language/statements/class/elements/private-getter-is-not-a-own-property.js: TypeError: Object has no member '__lookupGetter__' <at omitted>",
+   "test/language/statements/class/elements/private-setter-is-not-a-own-property.js-strict:true": "test/language/statements/class/elements/private-setter-is-not-a-own-property.js: TypeError: Object has no member '__lookupSetter__' <at omitted>",
+   "test/language/statements/labeled/value-await-module-escaped.js-strict:true": "test/language/statements/labeled/value-await-module-escaped.js: error is not an object (Test262: This statement should not be evaluated.)",

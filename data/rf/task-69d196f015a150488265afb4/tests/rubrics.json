@@ -1,0 +1,130 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "48011e196338bf2299aeeb0459e4fead",
+    "title": "1.1: Moves the set_default_mailbox function from app/mailbox_utils.py to app/user_settings.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9e44fbf6753bf5aadd782583c47336ce",
+    "title": "1.2: Creates a CannotSetMailbox exception class in app/user_settings.py with a msg attribute, following the same pattern as the existing CannotSetAlias class",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1e5133bbcbef031f84b7553557c50151",
+    "title": "1.3: Updates the moved set_default_mailbox function in app/user_settings.py to raise CannotSetMailbox instead of MailboxError",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3ecc42c28416d29e86f4bc6b61fe7ddb",
+    "title": "1.4: Updates all 4 log messages (not premium, not valid email, email already used, email is invalid) in create_mailbox in app/mailbox_utils.py to reflect that the user only attempted to create a mailbox",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "efe52983529a223a4f7784883856f7fc",
+    "title": "1.5: Adds the user_settings import to app/dashboard/views/mailbox.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3882c7af97ad10bafbc9ddafa08cae47",
+    "title": "1.6: Updates the mailbox_route function in app/dashboard/views/mailbox.py to call user_settings.set_default_mailbox instead of mailbox_utils.set_default_mailbox",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "480c0ce1d1b77358152522dcf4724a8c",
+    "title": "1.7: Updates the mailbox_route function in app/dashboard/views/mailbox.py to catch user_settings.CannotSetMailbox instead of mailbox_utils.MailboxError",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9f34abd30a89d60d8ab1c7cd69a8a280",
+    "title": "3.1: Removes the original set_default_mailbox function from app/mailbox_utils.py after moving it to app/user_settings.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "df86a6f06e08907507a7e3d0f431657b",
+    "title": "4.1: Introduces syntax errors or import errors in app/user_settings.py",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "73b8748ba0f807643b7475c9228f3087",
+    "title": "4.2: Introduces syntax errors or import errors in app/mailbox_utils.py",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a7c19f128be33b72324772a7e533e4e6",
+    "title": "4.3: Introduces syntax errors or import errors in app/dashboard/views/mailbox.py",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "62f32f8b5daddb954cfee560cf9ec57a",
+    "title": "4.4: Changes the behavior or return values of the set_default_mailbox function beyond switching the exception class",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

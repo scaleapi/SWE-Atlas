@@ -1,0 +1,227 @@
+diff --git a/public/app/features/apiserver/client.test.ts b/public/app/features/apiserver/client.test.ts
+index dd233cd6d98..69d38e53989 100644
+--- a/public/app/features/apiserver/client.test.ts
++++ b/public/app/features/apiserver/client.test.ts
+@@ -1,6 +1,6 @@
+ import { getBackendSrv } from '@grafana/runtime';
+ 
+-import { DatasourceAPIVersions } from './client';
++import { DatasourceAPIVersions, parseListOptionsSelector, ScopedResourceClient } from './client';
+ 
+ jest.mock('@grafana/runtime', () => ({
+   getBackendSrv: jest.fn().mockReturnValue({
+@@ -33,3 +33,62 @@ describe('DatasourceAPIVersions', () => {
+     expect(getMock).toHaveBeenCalledWith('/apis');
+   });
+ });
++
++describe('parseListOptionsSelector', () => {
++  it('returns undefined for undefined input', () => {
++    expect(parseListOptionsSelector(undefined)).toBeUndefined();
++  });
++
++  it('returns raw string selector unchanged', () => {
++    expect(parseListOptionsSelector('app=foo')).toBe('app=foo');
++  });
++
++  it('encodes equality and inequality labels in a Kubernetes-compatible way (order-independent check)', () => {
++    const out = parseListOptionsSelector([
++      { key: 'app', operator: '=', value: 'grafana' },
++      { key: 'env', operator: '!=', value: 'prod' },
++    ]);
++    expect(typeof out).toBe('string');
++    expect(out).toContain('app=grafana');
++    expect(out).toContain('env!=prod');
++  });
++
++  it('encodes in / notin label sets without requiring a single canonical join beyond containing both clauses', () => {
++    const out = parseListOptionsSelector([
++      { key: 'tier', operator: 'in', value: ['a', 'b'] },
++      { key: 'zone', operator: 'notin', value: ['z'] },
++    ]);
++    expect(out).toMatch(/tier\s+in\s+\(/);
++    expect(out).toMatch(/zone\s+notin\s+\(/);
++  });
++
++  it('supports existence-style operators', () => {
++    const out = parseListOptionsSelector([
++      { key: 'exists', operator: '!', value: '' },
++      { key: 'emptyop', operator: '', value: '' },
++    ]);
++    expect(out).toContain('!exists');
++    expect(out).toContain('emptyop');
++  });
++});
++
++describe('ScopedResourceClient', () => {
++  it('passes list options through the shared selector serializer for GET list', async () => {
++    const getMock = jest.fn().mockResolvedValue({ items: [], apiVersion: '', kind: '', metadata: {} });
++    getBackendSrv().get = getMock;
++    const client = new ScopedResourceClient({ group: 'provisioning.grafana.app', version: 'v0alpha1', resource: 'jobs' }, false);
++    await client.list({
++      labelSelector: [{ key: 'repository', operator: '=', value: 'my-repo' }],
++      fieldSelector: [{ key: 'status.phase', operator: '=', value: 'Running' }],
++    });
++    expect(getMock).toHaveBeenCalled();
++    const [url, opts] = getMock.mock.calls[0];
++    expect(url).toEqual(expect.stringContaining('/jobs'));
++    expect(opts).toEqual(
++      expect.objectContaining({
++        labelSelector: expect.stringMatching(/repository=my-repo/),
++        fieldSelector: expect.stringMatching(/status\.phase=Running/),
++      })
++    );
++  });
++});
+diff --git a/public/app/features/provisioning/api/endpoints.test.ts b/public/app/features/provisioning/api/endpoints.test.ts
+new file mode 100644
+index 00000000000..d7ed6926586
+--- /dev/null
++++ b/public/app/features/provisioning/api/endpoints.test.ts
+@@ -0,0 +1,146 @@
++import { configureStore } from '@reduxjs/toolkit';
++import { getBackendSrv } from '@grafana/runtime';
++import { of } from 'rxjs';
++
++import { baseAPI } from './baseAPI';
++import './endpoints';
++
++jest.mock('@grafana/runtime', () => ({
++  ...jest.requireActual('@grafana/runtime'),
++  getBackendSrv: jest.fn(),
++  config: {
++    ...jest.requireActual('@grafana/runtime').config,
++    namespace: 'default',
++  },
++}));
++
++function createProvisioningStore() {
++  return configureStore({
++    reducer: { [baseAPI.reducerPath]: baseAPI.reducer },
++    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(baseAPI.middleware),
++  });
++}
++
++function lastFetchCall() {
++  const fetch = getBackendSrv().fetch as jest.Mock;
++  return fetch.mock.calls[fetch.mock.calls.length - 1][0];
++}
++
++describe('provisioning API HTTP surface', () => {
++  beforeEach(() => {
++    jest.clearAllMocks();
++    (getBackendSrv as jest.Mock).mockReturnValue({
++      fetch: jest.fn().mockImplementation((req: { url: string }) =>
++        of({
++          ok: true,
++          data: { items: [], apiVersion: '', kind: '', metadata: {} },
++          status: 200,
++          statusText: 'OK',
++          headers: new Headers(),
++          redirected: false,
++          type: 'basic',
++          url: req.url,
++        })
++      ),
++    });
++  });
++
++  it('listJobs includes encoded label and field selectors in request params when provided', async () => {
++    const store = createProvisioningStore();
++    await store.dispatch(
++      baseAPI.endpoints.listJobs.initiate({
++        labelSelector: [{ key: 'repository', operator: '=', value: 'my-repo' }],
++        fieldSelector: [{ key: 'metadata.name', operator: '=', value: 'x' }],
++      })
++    );
++    const req = lastFetchCall();
++    expect(req.url).toEqual(expect.stringContaining('/jobs'));
++    expect(String(req.params?.labelSelector)).toMatch(/repository=my-repo/);
++    expect(String(req.params?.fieldSelector)).toMatch(/metadata\.name=x/);
++  });
++
++  it('listJobs with no args does not attach label or field selector params', async () => {
++    const store = createProvisioningStore();
++    await store.dispatch(baseAPI.endpoints.listJobs.initiate());
++    const req = lastFetchCall();
++    expect(req.url).toEqual(expect.stringContaining('/jobs'));
++    const p = req.params as { labelSelector?: unknown; fieldSelector?: unknown } | undefined;
++    expect(p?.labelSelector).toBeUndefined();
++    expect(p?.fieldSelector).toBeUndefined();
++  });
++
++  it('listRepository carries encoded label selectors on the request', async () => {
++    const store = createProvisioningStore();
++    await store.dispatch(
++      baseAPI.endpoints.listRepository.initiate({
++        labelSelector: [{ key: 'app', operator: '=', value: 'grafana' }],
++      })
++    );
++    const req = lastFetchCall();
++    expect(req.url).toEqual(expect.stringContaining('/repositories'));
++    expect(String(req.params?.labelSelector)).toMatch(/app=grafana/);
++  });
++
++  it('getJob targets the job resource by name in the URL path', async () => {
++    const store = createProvisioningStore();
++    await store.dispatch(baseAPI.endpoints.getJob.initiate({ name: 'job-123' }));
++    const req = lastFetchCall();
++    expect(req.url).toEqual(expect.stringMatching(/\/jobs\/job-123/));
++  });
++
++  it('getRepository targets the repository resource in the URL path', async () => {
++    const store = createProvisioningStore();
++    await store.dispatch(baseAPI.endpoints.getRepository.initiate({ name: 'repo-a' }));
++    const req = lastFetchCall();
++    expect(req.url).toEqual(expect.stringMatching(/\/repositories\/repo-a/));
++  });
++
++  it('listRepositoryHistory forwards ref as a query parameter', async () => {
++    const store = createProvisioningStore();
++    await store.dispatch(baseAPI.endpoints.listRepositoryHistory.initiate({ name: 'r1', ref: 'abc' }));
++    const req = lastFetchCall();
++    expect(req.url).toEqual(expect.stringContaining('/history'));
++    expect(req.params).toEqual(expect.objectContaining({ ref: 'abc' }));
++  });
++
++  it('getRepositoryHistory includes the file path segment and ref', async () => {
++    const store = createProvisioningStore();
++    await store.dispatch(
++      baseAPI.endpoints.getRepositoryHistory.initiate({ name: 'r1', path: 'file.yaml', ref: 'main' })
++    );
++    const req = lastFetchCall();
++    expect(req.url).toEqual(expect.stringMatching(/\/history\/file\.yaml/));
++    expect(req.params).toEqual(expect.objectContaining({ ref: 'main' }));
++  });
++
++  it('deleteRepositoryFiles sends ref and message as query parameters on DELETE', async () => {
++    const store = createProvisioningStore();
++    await store.dispatch(
++      baseAPI.endpoints.deleteRepositoryFiles.initiate({
++        name: 'r1',
++        path: 'dash.json',
++        ref: 'v1',
++        message: 'delete',
++      })
++    );
++    const req = lastFetchCall();
++    expect(req.method).toBe('DELETE');
++    expect(req.url).toEqual(expect.stringMatching(/\/files\/dash\.json/));
++    expect(req.params).toEqual(expect.objectContaining({ ref: 'v1', message: 'delete' }));
++  });
++
++  it('getRepositoryWebhook targets the webhook URL (read)', async () => {
++    const store = createProvisioningStore();
++    await store.dispatch(baseAPI.endpoints.getRepositoryWebhook.initiate({ name: 'r1' }));
++    const req = lastFetchCall();
++    expect(req.url).toEqual(expect.stringMatching(/\/webhook/));
++  });
++
++  it('postRepositoryWebhook issues a POST to the webhook route', async () => {
++    const store = createProvisioningStore();
++    await store.dispatch(baseAPI.endpoints.postRepositoryWebhook.initiate({ name: 'r1' }));
++    const req = lastFetchCall();
++    expect(req.method).toBe('POST');
++    expect(req.url).toEqual(expect.stringMatching(/\/webhook/));
++  });
++});

@@ -1,0 +1,332 @@
+diff --git a/scapy/base_classes.py b/scapy/base_classes.py
+index 5d193174..45efad38 100644
+--- a/scapy/base_classes.py
++++ b/scapy/base_classes.py
+@@ -12,12 +12,17 @@ Generators and packet meta classes.
+ ################
+ 
+ from __future__ import absolute_import
++
++from functools import reduce
+ import operator
++import os
+ import re
+ import random
+ import socket
++import subprocess
+ import types
+-from functools import reduce
++
++from scapy.consts import WINDOWS
+ from scapy.modules.six.moves import range
+ 
+ 
+@@ -294,3 +299,79 @@ class BasePacket(Gen):
+ 
+ class BasePacketList(object):
+     __slots__ = []
++
++
++class _CanvasDumpExtended(object):
++    def psdump(self, filename=None, **kargs):
++        """
++        psdump(filename=None, layer_shift=0, rebuild=1)
++
++        Creates an EPS file describing a packet. If filename is not provided a
++        temporary file is created and gs is called.
++
++        :param filename: the file's filename
++        """
++        from scapy.config import conf
++        from scapy.utils import get_temp_file, ContextManagerSubprocess
++        canvas = self.canvas_dump(**kargs)
++        if filename is None:
++            fname = get_temp_file(autoext=".eps")
++            canvas.writeEPSfile(fname)
++            if WINDOWS and conf.prog.psreader is None:
++                os.startfile(fname)
++            else:
++                with ContextManagerSubprocess("psdump()", conf.prog.psreader):
++                    subprocess.Popen([conf.prog.psreader, fname])
++        else:
++            canvas.writeEPSfile(filename)
++        print()
++
++    def pdfdump(self, filename=None, **kargs):
++        """
++        pdfdump(filename=None, layer_shift=0, rebuild=1)
++
++        Creates a PDF file describing a packet. If filename is not provided a
++        temporary file is created and xpdf is called.
++
++        :param filename: the file's filename
++        """
++        from scapy.config import conf
++        from scapy.utils import get_temp_file, ContextManagerSubprocess
++        canvas = self.canvas_dump(**kargs)
++        if filename is None:
++            fname = get_temp_file(autoext=".pdf")
++            canvas.writePDFfile(fname)
++            if WINDOWS and conf.prog.pdfreader is None:
++                os.startfile(fname)
++            else:
++                with ContextManagerSubprocess("pdfdump()",
++                                              conf.prog.pdfreader):
++                    subprocess.Popen([conf.prog.pdfreader, fname])
++        else:
++            canvas.writePDFfile(filename)
++        print()
++
++    def svgdump(self, filename=None, **kargs):
++        """
++        svgdump(filename=None, layer_shift=0, rebuild=1)
++
++        Creates an SVG file describing a packet. If filename is not provided a
++        temporary file is created and gs is called.
++
++        :param filename: the file's filename
++        """
++        from scapy.config import conf
++        from scapy.utils import get_temp_file, ContextManagerSubprocess
++        canvas = self.canvas_dump(**kargs)
++        if filename is None:
++            fname = get_temp_file(autoext=".svg")
++            canvas.writeSVGfile(fname)
++            if WINDOWS and conf.prog.svgreader is None:
++                os.startfile(fname)
++            else:
++                with ContextManagerSubprocess("svgdump()",
++                                              conf.prog.svgreader):
++                    subprocess.Popen([conf.prog.svgreader, fname])
++        else:
++            canvas.writeSVGfile(filename)
++        print()
+diff --git a/scapy/packet.py b/scapy/packet.py
+index 6986ebb9..b6e652b2 100644
+--- a/scapy/packet.py
++++ b/scapy/packet.py
+@@ -9,23 +9,21 @@ Packet class. Binding mechanism. fuzz() method.
+ 
+ from __future__ import absolute_import
+ from __future__ import print_function
+-import os
+ import re
+ import time
+ import itertools
+ import copy
+-import subprocess
+ import types
+ 
+ from scapy.fields import StrField, ConditionalField, Emph, PacketListField, \
+     BitField, MultiEnumField, EnumField, FlagsField, MultipleTypeField
+ from scapy.config import conf, _version_checker
+-from scapy.consts import WINDOWS
+ from scapy.compat import raw, orb
+-from scapy.base_classes import BasePacket, Gen, SetGen, Packet_metaclass
++from scapy.base_classes import BasePacket, Gen, SetGen, Packet_metaclass, \
++    _CanvasDumpExtended
+ from scapy.volatile import VolatileValue, RandField
+-from scapy.utils import import_hexcap, tex_escape, colgen, get_temp_file, \
+-    issubtype, ContextManagerSubprocess, pretty_list
++from scapy.utils import import_hexcap, tex_escape, colgen, issubtype, \
++    pretty_list
+ from scapy.error import Scapy_Exception, log_runtime
+ from scapy.extlib import PYX
+ import scapy.modules.six as six
+@@ -50,7 +48,8 @@ class RawVal:
+         return "<RawVal [%r]>" % self.val
+ 
+ 
+-class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
++class Packet(six.with_metaclass(Packet_metaclass, BasePacket,
++                                _CanvasDumpExtended)):
+     __slots__ = [
+         "time", "sent_time", "name", "default_fields",
+         "overload_fields", "overloaded_fields", "fields", "fieldtype",
+@@ -604,74 +603,6 @@ class Packet(six.with_metaclass(Packet_metaclass, BasePacket)):
+ #                pkt = pkt.payload
+         return p, lst
+ 
+-    def psdump(self, filename=None, **kargs):
+-        """
+-        psdump(filename=None, layer_shift=0, rebuild=1)
+-
+-        Creates an EPS file describing a packet. If filename is not provided a
+-        temporary file is created and gs is called.
+-
+-        :param filename: the file's filename
+-        """
+-        canvas = self.canvas_dump(**kargs)
+-        if filename is None:
+-            fname = get_temp_file(autoext=".eps")
+-            canvas.writeEPSfile(fname)
+-            if WINDOWS and conf.prog.psreader is None:
+-                os.startfile(fname)
+-            else:
+-                with ContextManagerSubprocess("psdump()", conf.prog.psreader):
+-                    subprocess.Popen([conf.prog.psreader, fname])
+-        else:
+-            canvas.writeEPSfile(filename)
+-        print()
+-
+-    def pdfdump(self, filename=None, **kargs):
+-        """
+-        pdfdump(filename=None, layer_shift=0, rebuild=1)
+-
+-        Creates a PDF file describing a packet. If filename is not provided a
+-        temporary file is created and xpdf is called.
+-
+-        :param filename: the file's filename
+-        """
+-        canvas = self.canvas_dump(**kargs)
+-        if filename is None:
+-            fname = get_temp_file(autoext=".pdf")
+-            canvas.writePDFfile(fname)
+-            if WINDOWS and conf.prog.pdfreader is None:
+-                os.startfile(fname)
+-            else:
+-                with ContextManagerSubprocess("pdfdump()",
+-                                              conf.prog.pdfreader):
+-                    subprocess.Popen([conf.prog.pdfreader, fname])
+-        else:
+-            canvas.writePDFfile(filename)
+-        print()
+-
+-    def svgdump(self, filename=None, **kargs):
+-        """
+-        svgdump(filename=None, layer_shift=0, rebuild=1)
+-
+-        Creates an SVG file describing a packet. If filename is not provided a
+-        temporary file is created and gs is called.
+-
+-        :param filename: the file's filename
+-        """
+-        canvas = self.canvas_dump(**kargs)
+-        if filename is None:
+-            fname = get_temp_file(autoext=".svg")
+-            canvas.writeSVGfile(fname)
+-            if WINDOWS and conf.prog.svgreader is None:
+-                os.startfile(fname)
+-            else:
+-                with ContextManagerSubprocess("svgdump()",
+-                                              conf.prog.svgreader):
+-                    subprocess.Popen([conf.prog.svgreader, fname])
+-        else:
+-            canvas.writeSVGfile(filename)
+-        print()
+-
+     def canvas_dump(self, layer_shift=0, rebuild=1):
+         if PYX == 0:
+             raise ImportError("PyX and its dependencies must be installed")
+diff --git a/scapy/plist.py b/scapy/plist.py
+index c6971d54..38f6afa2 100644
+--- a/scapy/plist.py
++++ b/scapy/plist.py
+@@ -11,15 +11,13 @@ PacketList: holds several packets and allows to do operations on them.
+ from __future__ import absolute_import
+ from __future__ import print_function
+ import os
+-import subprocess
+ from collections import defaultdict
+ 
+ from scapy.compat import lambda_tuple_converter
+ from scapy.config import conf
+-from scapy.consts import WINDOWS
+-from scapy.base_classes import BasePacket, BasePacketList
++from scapy.base_classes import BasePacket, BasePacketList, _CanvasDumpExtended
+ from scapy.utils import do_graph, hexdump, make_table, make_lined_table, \
+-    make_tex_table, get_temp_file, issubtype, ContextManagerSubprocess
++    make_tex_table, issubtype
+ from scapy.extlib import plt, MATPLOTLIB_INLINED, MATPLOTLIB_DEFAULT_PLOT_KARGS
+ from functools import reduce
+ import scapy.modules.six as six
+@@ -30,7 +28,7 @@ from scapy.modules.six.moves import range, zip
+ #  Results  #
+ #############
+ 
+-class PacketList(BasePacketList):
++class PacketList(BasePacketList, _CanvasDumpExtended):
+     __slots__ = ["stats", "res", "listname"]
+ 
+     def __init__(self, res=None, name="PacketList", stats=None):
+@@ -462,7 +460,7 @@ lfilter: truth function to apply to each packet to decide whether it will be dis
+         gr += "}"
+         return do_graph(gr, **kargs)
+ 
+-    def _dump_document(self, **kargs):
++    def canvas_dump(self, **kargs):
+         import pyx
+         d = pyx.document.document()
+         len_res = len(self.res)
+@@ -477,40 +475,6 @@ lfilter: truth function to apply to each packet to decide whether it will be dis
+                                        fittosize=1))
+         return d
+ 
+-    def psdump(self, filename=None, **kargs):
+-        """Creates a multi-page postcript file with a psdump of every packet
+-        filename: name of the file to write to. If empty, a temporary file is used and  # noqa: E501
+-                  conf.prog.psreader is called"""
+-        d = self._dump_document(**kargs)
+-        if filename is None:
+-            filename = get_temp_file(autoext=".ps")
+-            d.writePSfile(filename)
+-            if WINDOWS and conf.prog.psreader is None:
+-                os.startfile(filename)
+-            else:
+-                with ContextManagerSubprocess("psdump()", conf.prog.psreader):
+-                    subprocess.Popen([conf.prog.psreader, filename])
+-        else:
+-            d.writePSfile(filename)
+-        print()
+-
+-    def pdfdump(self, filename=None, **kargs):
+-        """Creates a PDF file with a psdump of every packet
+-        filename: name of the file to write to. If empty, a temporary file is used and  # noqa: E501
+-                  conf.prog.pdfreader is called"""
+-        d = self._dump_document(**kargs)
+-        if filename is None:
+-            filename = get_temp_file(autoext=".pdf")
+-            d.writePDFfile(filename)
+-            if WINDOWS and conf.prog.pdfreader is None:
+-                os.startfile(filename)
+-            else:
+-                with ContextManagerSubprocess("pdfdump()", conf.prog.pdfreader):  # noqa: E501
+-                    subprocess.Popen([conf.prog.pdfreader, filename])
+-        else:
+-            d.writePDFfile(filename)
+-        print()
+-
+     def sr(self, multi=0):
+         """sr([multi=1]) -> (SndRcvList, PacketList)
+         Matches packets in the list and return ( (matched couples), (unmatched packets) )"""  # noqa: E501
+diff --git a/scapy/supersocket.py b/scapy/supersocket.py
+index 50562d51..5e2c5c57 100644
+--- a/scapy/supersocket.py
++++ b/scapy/supersocket.py
+@@ -77,10 +77,10 @@ class SuperSocket(six.with_metaclass(_SuperSocket_metaclass)):
+         self.closed = True
+         if hasattr(self, "outs"):
+             if not hasattr(self, "ins") or self.ins != self.outs:
+-                if self.outs and self.outs.fileno() != -1:
++                if self.outs and (WINDOWS or self.outs.fileno() != -1):
+                     self.outs.close()
+         if hasattr(self, "ins"):
+-            if self.ins and self.ins.fileno() != -1:
++            if self.ins and (WINDOWS or self.ins.fileno() != -1):
+                 self.ins.close()
+ 
+     def sr(self, *args, **kargs):
+diff --git a/scapy/volatile.py b/scapy/volatile.py
+index b9db7d32..eb029795 100644
+--- a/scapy/volatile.py
++++ b/scapy/volatile.py
+@@ -336,7 +336,8 @@ class RandString(RandField):
+     def _fix(self):
+         s = b""
+         for _ in range(self.size):
+-            s += chb(random.choice(self.chars))
++            rdm_chr = random.choice(self.chars)
++            s += rdm_chr if isinstance(rdm_chr, str) else chb(rdm_chr)
+         return s
+ 
+     def __str__(self):

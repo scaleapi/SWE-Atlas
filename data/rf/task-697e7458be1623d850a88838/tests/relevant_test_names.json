@@ -1,0 +1,49 @@
+{
+  "tests": [
+    {
+      "name": "ServiceEnumerator raises exception when socket closes during scan"
+    },
+    {
+      "name": "ServiceEnumerator negative and positive response properties only include entries with responses"
+    },
+    {
+      "name": "ServiceEnumerator retry on None produces more debug output than no-retry baseline"
+    },
+    {
+      "name": "ServiceEnumerator retry on busy NRC 0x21 produces more debug output than no-retry baseline"
+    },
+    {
+      "name": "OBD get_supported handles non-iterable PID fields without crashing"
+    },
+    {
+      "name": "OBD get_supported returns deduplicated PID values"
+    },
+    {
+      "name": "obdscanner exposes get_can_socket, get_isotp_socket, and run_scan"
+    },
+    {
+      "name": "get_can_socket, get_isotp_socket, run_scan have correct parameter counts"
+    },
+    {
+      "name": "get_can_socket returns a socket for native backend"
+    },
+    {
+      "name": "get_can_socket with python-can backend and no extra args"
+    },
+    {
+      "name": "get_can_socket with python-can backend parses extra args"
+    },
+    {
+      "name": "get_isotp_socket wraps CAN socket into ISOTP socket with padding"
+    },
+    {
+      "name": "run_scan creates scanner and runs scan"
+    },
+    {
+      "name": "main() cleans up sockets in finally block even on failure"
+    },
+    {
+      "name": "main() runs full flow with mocked sockets"
+    }
+  ]
+}

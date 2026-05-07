@@ -1,0 +1,154 @@
+{
+  "tests": [
+    {
+      "name": "TestElementHandleBaseOptionsParse"
+    },
+    {
+      "name": "TestElementHandleBasePointerOptionsParse"
+    },
+    {
+      "name": "TestElementHandleClickOptionsParse"
+    },
+    {
+      "name": "TestElementHandleDblclickOptionsParse"
+    },
+    {
+      "name": "TestElementHandleHoverOptionsParse"
+    },
+    {
+      "name": "TestElementHandlePressOptionsParse"
+    },
+    {
+      "name": "TestElementHandleScreenshotOptionsParse"
+    },
+    {
+      "name": "TestElementHandleSetCheckedOptionsParse"
+    },
+    {
+      "name": "TestElementHandleTapOptionsParse"
+    },
+    {
+      "name": "TestElementHandleTypeOptionsParse"
+    },
+    {
+      "name": "TestElementHandleWaitForElementStateOptionsParse"
+    },
+    {
+      "name": "TestExportArgNullishHandling"
+    },
+    {
+      "name": "TestExportArgsNullishHandling"
+    },
+    {
+      "name": "TestExportToNullishHandling"
+    },
+    {
+      "name": "TestFilesParseNullishHandling"
+    },
+    {
+      "name": "TestFrameBaseOptionsParse"
+    },
+    {
+      "name": "TestFrameGotoOptionsParse"
+    },
+    {
+      "name": "TestFrameSetContentOptionsParse"
+    },
+    {
+      "name": "TestFrameTapOptionsParse"
+    },
+    {
+      "name": "TestFrameWaitForFunctionOptionsParse"
+    },
+    {
+      "name": "TestFrameWaitForLoadStateOptionsParse"
+    },
+    {
+      "name": "TestFrameWaitForNavigationOptionsParse"
+    },
+    {
+      "name": "TestFrameWaitForSelectorOptionsParse"
+    },
+    {
+      "name": "TestFrameWaitForURLOptionsParse"
+    },
+    {
+      "name": "TestMergeWithNullishHandling"
+    },
+    {
+      "name": "TestMouseClickOptionsParse"
+    },
+    {
+      "name": "TestMouseDblClickOptionsParse"
+    },
+    {
+      "name": "TestMouseDownUpOptionsParse"
+    },
+    {
+      "name": "TestMouseMoveOptionsParse"
+    },
+    {
+      "name": "TestPageEmulateMediaOptionsParse"
+    },
+    {
+      "name": "TestPageReloadOptionsParse"
+    },
+    {
+      "name": "TestPageScreenshotOptionsParse"
+    },
+    {
+      "name": "TestParseContinueOptionsNullishHandling"
+    },
+    {
+      "name": "TestParseFulfillOptionsNullishHandling"
+    },
+    {
+      "name": "TestParseGetByBaseOptionsNullishHandling"
+    },
+    {
+      "name": "TestParseGetByBaseOptionsWithDoubleQuote"
+    },
+    {
+      "name": "TestParseGetByBaseOptionsWithRegex"
+    },
+    {
+      "name": "TestParseGetByBaseOptionsWithValidOptions"
+    },
+    {
+      "name": "TestParseGetByRoleOptionsNullishHandling"
+    },
+    {
+      "name": "TestParseGetByRoleOptionsWithValidOptions"
+    },
+    {
+      "name": "TestParseHeadersNullishHandling"
+    },
+    {
+      "name": "TestParseStrictNullishHandling"
+    },
+    {
+      "name": "TestParseWaitForEventOptionsInvalidPredicate"
+    },
+    {
+      "name": "TestParseWaitForEventOptionsNullishHandling"
+    },
+    {
+      "name": "TestParseWaitForEventOptionsUnknownOption"
+    },
+    {
+      "name": "TestParseWaitForEventOptionsWithObject"
+    },
+    {
+      "name": "TestParseWaitForEventOptionsWithPredicate"
+    },
+    {
+      "name": "TestParseWaitForResponseOptionsNullishHandling"
+    },
+    {
+      "name": "TestSizeParseNullishHandling"
+    },
+    {
+      "name": "TestSobekEmptyStringNullishHandling"
+    }
+  ]
+}

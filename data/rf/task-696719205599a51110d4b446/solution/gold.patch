@@ -1,0 +1,509 @@
+diff --git a/cmd/run.go b/cmd/run.go
+index cd69ed043..2c640513c 100644
+--- a/cmd/run.go
++++ b/cmd/run.go
+@@ -147,17 +147,28 @@ func (c *cmdRun) run(cmd *cobra.Command, args []string) (err error) {
+ 		return err
+ 	}
+ 
+-	executionState := execScheduler.GetState()
+-	metricsEngine, err := engine.NewMetricsEngine(executionState.Test)
++	metricsEngine, err := engine.NewMetricsEngine(testRunState.Registry, logger)
+ 	if err != nil {
+ 		return err
+ 	}
+-	if !testRunState.RuntimeOptions.NoSummary.Bool || !testRunState.RuntimeOptions.NoThresholds.Bool {
++
++	// We'll need to pipe metrics to the MetricsEngine and process them if any
++	// of these are enabled: thresholds, end-of-test summary
++	shouldProcessMetrics := (!testRunState.RuntimeOptions.NoSummary.Bool ||
++		!testRunState.RuntimeOptions.NoThresholds.Bool)
++	var metricsIngester *engine.OutputIngester
++	if shouldProcessMetrics {
++		err = metricsEngine.InitSubMetricsAndThresholds(conf.Options, testRunState.RuntimeOptions.NoThresholds.Bool)
++		if err != nil {
++			return err
++		}
+ 		// We'll need to pipe metrics to the MetricsEngine if either the
+ 		// thresholds or the end-of-test summary are enabled.
+-		outputs = append(outputs, metricsEngine.CreateIngester())
++		metricsIngester = metricsEngine.CreateIngester()
++		outputs = append(outputs, metricsIngester)
+ 	}
+ 
++	executionState := execScheduler.GetState()
+ 	if !testRunState.RuntimeOptions.NoSummary.Bool {
+ 		defer func() {
+ 			logger.Debug("Generating the end-of-test summary...")
+@@ -208,7 +219,9 @@ func (c *cmdRun) run(cmd *cobra.Command, args []string) (err error) {
+ 	}()
+ 
+ 	if !testRunState.RuntimeOptions.NoThresholds.Bool {
+-		finalizeThresholds := metricsEngine.StartThresholdCalculations(runAbort, executionState.GetCurrentTestRunDuration)
++		finalizeThresholds := metricsEngine.StartThresholdCalculations(
++			metricsIngester, runAbort, executionState.GetCurrentTestRunDuration,
++		)
+ 		handleFinalThresholdCalculation := func() {
+ 			// This gets called after the Samples channel has been closed and
+ 			// the OutputManager has flushed all of the cached samples to
+@@ -283,7 +296,7 @@ func (c *cmdRun) run(cmd *cobra.Command, args []string) (err error) {
+ 	}
+ 
+ 	printExecutionDescription(
+-		c.gs, "local", args[0], "", conf, execScheduler.GetState().ExecutionTuple, executionPlan, outputs,
++		c.gs, "local", args[0], "", conf, executionState.ExecutionTuple, executionPlan, outputs,
+ 	)
+ 
+ 	// Trap Interrupts, SIGINTs and SIGTERMs.
+diff --git a/execution/scheduler.go b/execution/scheduler.go
+index 8a5f18bef..5469e452d 100644
+--- a/execution/scheduler.go
++++ b/execution/scheduler.go
+@@ -377,7 +377,7 @@ func (e *Scheduler) runExecutor(
+ // and emission of the `vus` and `vus_max` metrics.
+ func (e *Scheduler) Init(
+ 	runCtx context.Context, samplesOut chan<- metrics.SampleContainer,
+-) (stopVUEmission func(), err error) {
++) (stopVUEmission func(), initErr error) {
+ 	logger := e.state.Test.Logger.WithField("phase", "execution-scheduler-init")
+ 
+ 	execSchedRunCtx, execSchedRunCancel := context.WithCancel(runCtx)
+@@ -390,11 +390,11 @@ func (e *Scheduler) Init(
+ 
+ 	defer func() {
+ 		if interruptErr := GetCancelReasonIfTestAborted(runCtx); interruptErr != nil {
+-			logger.Debugf("The test run was interrupted, returning '%s' instead of '%s'", interruptErr, err)
++			logger.Debugf("The test run was interrupted, returning '%s' instead of '%s'", interruptErr, initErr)
+ 			e.state.SetExecutionStatus(lib.ExecutionStatusInterrupted)
+-			err = interruptErr
++			initErr = interruptErr
+ 		}
+-		if err != nil {
++		if initErr != nil {
+ 			stopVUEmission()
+ 		}
+ 	}()
+@@ -406,14 +406,14 @@ func (e *Scheduler) Init(
+ // out channel.
+ //
+ //nolint:funlen
+-func (e *Scheduler) Run(globalCtx, runCtx context.Context, samplesOut chan<- metrics.SampleContainer) (err error) {
++func (e *Scheduler) Run(globalCtx, runCtx context.Context, samplesOut chan<- metrics.SampleContainer) (runErr error) {
+ 	logger := e.state.Test.Logger.WithField("phase", "execution-scheduler-run")
+ 
+ 	defer func() {
+ 		if interruptErr := GetCancelReasonIfTestAborted(runCtx); interruptErr != nil {
+-			logger.Debugf("The test run was interrupted, returning '%s' instead of '%s'", interruptErr, err)
++			logger.Debugf("The test run was interrupted, returning '%s' instead of '%s'", interruptErr, runErr)
+ 			e.state.SetExecutionStatus(lib.ExecutionStatusInterrupted)
+-			err = interruptErr
++			runErr = interruptErr
+ 		}
+ 	}()
+ 
+diff --git a/metrics/engine/engine.go b/metrics/engine/engine.go
+index 8aa81c11f..55f0b87fd 100644
+--- a/metrics/engine/engine.go
++++ b/metrics/engine/engine.go
+@@ -15,7 +15,6 @@ import (
+ 	"go.k6.io/k6/errext/exitcodes"
+ 	"go.k6.io/k6/lib"
+ 	"go.k6.io/k6/metrics"
+-	"go.k6.io/k6/output"
+ 	"gopkg.in/guregu/null.v3"
+ )
+ 
+@@ -25,13 +24,11 @@ const thresholdsRate = 2 * time.Second
+ // aggregated metric sample values. They are used to generate the end-of-test
+ // summary and to evaluate the test thresholds.
+ type MetricsEngine struct {
+-	logger         logrus.FieldLogger
+-	test           *lib.TestRunState
+-	outputIngester *outputIngester
++	registry *metrics.Registry
++	logger   logrus.FieldLogger
+ 
+ 	// These can be both top-level metrics or sub-metrics
+-	metricsWithThresholds []*metrics.Metric
+-
++	metricsWithThresholds   []*metrics.Metric
+ 	breachedThresholdsCount uint32
+ 
+ 	// TODO: completely refactor:
+@@ -44,39 +41,31 @@ type MetricsEngine struct {
+ }
+ 
+ // NewMetricsEngine creates a new metrics Engine with the given parameters.
+-func NewMetricsEngine(runState *lib.TestRunState) (*MetricsEngine, error) {
++func NewMetricsEngine(registry *metrics.Registry, logger logrus.FieldLogger) (*MetricsEngine, error) {
+ 	me := &MetricsEngine{
+-		test:            runState,
+-		logger:          runState.Logger.WithField("component", "metrics-engine"),
++		registry:        registry,
++		logger:          logger.WithField("component", "metrics-engine"),
+ 		ObservedMetrics: make(map[string]*metrics.Metric),
+ 	}
+ 
+-	if !(me.test.RuntimeOptions.NoSummary.Bool && me.test.RuntimeOptions.NoThresholds.Bool) {
+-		err := me.initSubMetricsAndThresholds()
+-		if err != nil {
+-			return nil, err
+-		}
+-	}
+-
+ 	return me, nil
+ }
+ 
+ // CreateIngester returns a pseudo-Output that uses the given metric samples to
+ // update the engine's inner state.
+-func (me *MetricsEngine) CreateIngester() output.Output {
+-	me.outputIngester = &outputIngester{
++func (me *MetricsEngine) CreateIngester() *OutputIngester {
++	return &OutputIngester{
+ 		logger:        me.logger.WithField("component", "metrics-engine-ingester"),
+ 		metricsEngine: me,
+ 		cardinality:   newCardinalityControl(),
+ 	}
+-	return me.outputIngester
+ }
+ 
+ func (me *MetricsEngine) getThresholdMetricOrSubmetric(name string) (*metrics.Metric, error) {
+ 	// TODO: replace with strings.Cut after Go 1.18
+ 	nameParts := strings.SplitN(name, "{", 2)
+ 
+-	metric := me.test.Registry.Get(nameParts[0])
++	metric := me.registry.Get(nameParts[0])
+ 	if metric == nil {
+ 		return nil, fmt.Errorf("metric '%s' does not exist in the script", nameParts[0])
+ 	}
+@@ -125,11 +114,14 @@ func (me *MetricsEngine) markObserved(metric *metrics.Metric) {
+ 	}
+ }
+ 
+-func (me *MetricsEngine) initSubMetricsAndThresholds() error {
+-	for metricName, thresholds := range me.test.Options.Thresholds {
++// InitSubMetricsAndThresholds parses the thresholds from the test Options and
++// initializes both the thresholds themselves, as well as any submetrics that
++// were referenced in them.
++func (me *MetricsEngine) InitSubMetricsAndThresholds(options lib.Options, onlyLogErrors bool) error {
++	for metricName, thresholds := range options.Thresholds {
+ 		metric, err := me.getThresholdMetricOrSubmetric(metricName)
+ 
+-		if me.test.RuntimeOptions.NoThresholds.Bool {
++		if onlyLogErrors {
+ 			if err != nil {
+ 				me.logger.WithError(err).Warnf("Invalid metric '%s' in threshold definitions", metricName)
+ 			}
+@@ -154,7 +146,7 @@ func (me *MetricsEngine) initSubMetricsAndThresholds() error {
+ 
+ 	// TODO: refactor out of here when https://github.com/grafana/k6/issues/1321
+ 	// lands and there is a better way to enable a metric with tag
+-	if me.test.Options.SystemTags.Has(metrics.TagExpectedResponse) {
++	if options.SystemTags.Has(metrics.TagExpectedResponse) {
+ 		_, err := me.getThresholdMetricOrSubmetric("http_req_duration{expected_response:true}")
+ 		if err != nil {
+ 			return err // shouldn't happen, but ¯\_(ツ)_/¯
+@@ -167,10 +159,10 @@ func (me *MetricsEngine) initSubMetricsAndThresholds() error {
+ // StartThresholdCalculations spins up a new goroutine to crunch thresholds and
+ // returns a callback that will stop the goroutine and finalizes calculations.
+ func (me *MetricsEngine) StartThresholdCalculations(
++	ingester *OutputIngester,
+ 	abortRun func(error),
+ 	getCurrentTestRunDuration func() time.Duration,
+-) (finalize func() (breached []string),
+-) {
++) (finalize func() (breached []string)) {
+ 	if len(me.metricsWithThresholds) == 0 {
+ 		return nil // no thresholds were defined
+ 	}
+@@ -205,9 +197,9 @@ func (me *MetricsEngine) StartThresholdCalculations(
+ 	}()
+ 
+ 	return func() []string {
+-		if me.outputIngester != nil {
++		if ingester != nil {
+ 			// Stop the ingester so we don't get any more metrics
+-			err := me.outputIngester.Stop()
++			err := ingester.Stop()
+ 			if err != nil {
+ 				me.logger.WithError(err).Warnf("There was a problem stopping the output ingester.")
+ 			}
+diff --git a/metrics/engine/ingester.go b/metrics/engine/ingester.go
+index 62ffee829..496b6a6ea 100644
+--- a/metrics/engine/ingester.go
++++ b/metrics/engine/ingester.go
+@@ -13,16 +13,16 @@ const (
+ 	timeSeriesFirstLimit = 100_000
+ )
+ 
+-var _ output.Output = &outputIngester{}
++var _ output.Output = &OutputIngester{}
+ 
+ // IngesterDescription is a short description for ingester.
+ // This variable is used from a function in cmd/ui file for matching this output
+ // and print a special text.
+ const IngesterDescription = "Internal Metrics Ingester"
+ 
+-// outputIngester implements the output.Output interface and can be used to
++// OutputIngester implements the output.Output interface and can be used to
+ // "feed" the MetricsEngine data from a `k6 run` test run.
+-type outputIngester struct {
++type OutputIngester struct {
+ 	output.SampleBuffer
+ 	logger logrus.FieldLogger
+ 
+@@ -32,12 +32,12 @@ type outputIngester struct {
+ }
+ 
+ // Description returns a human-readable description of the output.
+-func (oi *outputIngester) Description() string {
++func (oi *OutputIngester) Description() string {
+ 	return IngesterDescription
+ }
+ 
+ // Start the engine by initializing a new output.PeriodicFlusher
+-func (oi *outputIngester) Start() error {
++func (oi *OutputIngester) Start() error {
+ 	oi.logger.Debug("Starting...")
+ 
+ 	pf, err := output.NewPeriodicFlusher(collectRate, oi.flushMetrics)
+@@ -51,7 +51,7 @@ func (oi *outputIngester) Start() error {
+ }
+ 
+ // Stop flushes any remaining metrics and stops the goroutine.
+-func (oi *outputIngester) Stop() error {
++func (oi *OutputIngester) Stop() error {
+ 	oi.logger.Debug("Stopping...")
+ 	defer oi.logger.Debug("Stopped!")
+ 	oi.periodicFlusher.Stop()
+@@ -59,7 +59,7 @@ func (oi *outputIngester) Stop() error {
+ }
+ 
+ // flushMetrics Writes samples to the MetricsEngine
+-func (oi *outputIngester) flushMetrics() {
++func (oi *OutputIngester) flushMetrics() {
+ 	sampleContainers := oi.GetBufferedSamples()
+ 	if len(sampleContainers) == 0 {
+ 		return
+diff --git a/metrics/sample.go b/metrics/sample.go
+index 81c1a942a..3d1e87382 100644
+--- a/metrics/sample.go
++++ b/metrics/sample.go
+@@ -140,11 +140,11 @@ func PushIfNotDone(ctx context.Context, output chan<- SampleContainer, sample Sa
+ // the summary output and then returns a map of the corresponding resolvers.
+ func GetResolversForTrendColumns(trendColumns []string) (map[string]func(s *TrendSink) float64, error) {
+ 	staticResolvers := map[string]func(s *TrendSink) float64{
+-		"avg":   func(s *TrendSink) float64 { return s.Avg },
+-		"min":   func(s *TrendSink) float64 { return s.Min },
++		"avg":   func(s *TrendSink) float64 { return s.Avg() },
++		"min":   func(s *TrendSink) float64 { return s.Min() },
+ 		"med":   func(s *TrendSink) float64 { return s.P(0.5) },
+-		"max":   func(s *TrendSink) float64 { return s.Max },
+-		"count": func(s *TrendSink) float64 { return float64(s.Count) },
++		"max":   func(s *TrendSink) float64 { return s.Max() },
++		"count": func(s *TrendSink) float64 { return float64(s.Count()) },
+ 	}
+ 	dynamicResolver := func(percentile float64) func(s *TrendSink) float64 {
+ 		return func(s *TrendSink) float64 {
+diff --git a/metrics/sink.go b/metrics/sink.go
+index e238dae78..046a6bfee 100644
+--- a/metrics/sink.go
++++ b/metrics/sink.go
+@@ -1,7 +1,6 @@
+ package metrics
+ 
+ import (
+-	"errors"
+ 	"fmt"
+ 	"math"
+ 	"sort"
+@@ -11,9 +10,8 @@ import (
+ var (
+ 	_ Sink = &CounterSink{}
+ 	_ Sink = &GaugeSink{}
+-	_ Sink = &TrendSink{}
++	_ Sink = NewTrendSink()
+ 	_ Sink = &RateSink{}
+-	_ Sink = &DummySink{}
+ )
+ 
+ type Sink interface {
+@@ -32,7 +30,7 @@ func NewSink(mt MetricType) Sink {
+ 	case Gauge:
+ 		sink = &GaugeSink{}
+ 	case Trend:
+-		sink = &TrendSink{}
++		sink = NewTrendSink()
+ 	case Rate:
+ 		sink = &RateSink{}
+ 	default:
+@@ -90,67 +88,101 @@ func (g *GaugeSink) Format(t time.Duration) map[string]float64 {
+ 	return map[string]float64{"value": g.Value}
+ }
+ 
++// NewTrendSink makes a Trend sink with the OpenHistogram circllhist histogram.
++func NewTrendSink() *TrendSink {
++	return &TrendSink{}
++}
++
+ type TrendSink struct {
+-	Values []float64
++	values []float64
+ 	sorted bool
+ 
+-	Count    uint64
+-	Min, Max float64
+-	Sum, Avg float64
++	count    uint64
++	min, max float64
++	// TODO: unexport after this dependency is removed:
++	// https://github.com/grafana/xk6-output-prometheus-remote/blob/v0.2.1/pkg/remotewrite/remotewrite.go#L173
++	Sum float64
+ }
+ 
+ // IsEmpty indicates whether the TrendSink is empty.
+-func (t *TrendSink) IsEmpty() bool { return t.Count == 0 }
++func (t *TrendSink) IsEmpty() bool { return t.count == 0 }
+ 
+ func (t *TrendSink) Add(s Sample) {
+-	if t.Count == 0 {
+-		t.Max, t.Min = s.Value, s.Value
++	if t.count == 0 {
++		t.max, t.min = s.Value, s.Value
+ 	} else {
+-		if s.Value > t.Max {
+-			t.Max = s.Value
++		if s.Value > t.max {
++			t.max = s.Value
+ 		}
+-		if s.Value < t.Min {
+-			t.Min = s.Value
++		if s.Value < t.min {
++			t.min = s.Value
+ 		}
+ 	}
+ 
+-	t.Values = append(t.Values, s.Value)
++	t.values = append(t.values, s.Value)
+ 	t.sorted = false
+-	t.Count += 1
++	t.count++
+ 	t.Sum += s.Value
+-	t.Avg = t.Sum / float64(t.Count)
+ }
+ 
+ // P calculates the given percentile from sink values.
+ func (t *TrendSink) P(pct float64) float64 {
+-	switch t.Count {
++	switch t.count {
+ 	case 0:
+ 		return 0
+ 	case 1:
+-		return t.Values[0]
++		return t.values[0]
+ 	default:
+ 		if !t.sorted {
+-			sort.Float64s(t.Values)
++			sort.Float64s(t.values)
+ 			t.sorted = true
+ 		}
+ 
+ 		// If percentile falls on a value in Values slice, we return that value.
+ 		// If percentile does not fall on a value in Values slice, we calculate (linear interpolation)
+ 		// the value that would fall at percentile, given the values above and below that percentile.
+-		i := pct * (float64(t.Count) - 1.0)
+-		j := t.Values[int(math.Floor(i))]
+-		k := t.Values[int(math.Ceil(i))]
++		i := pct * (float64(t.count) - 1.0)
++		j := t.values[int(math.Floor(i))]
++		k := t.values[int(math.Ceil(i))]
+ 		f := i - math.Floor(i)
+ 		return j + (k-j)*f
+ 	}
+ }
+ 
++// Min returns the minimum value.
++func (t *TrendSink) Min() float64 {
++	return t.min
++}
++
++// Max returns the maximum value.
++func (t *TrendSink) Max() float64 {
++	return t.max
++}
++
++// Count returns the number of recorded values.
++func (t *TrendSink) Count() uint64 {
++	return t.count
++}
++
++// Avg returns the average (i.e. mean) value.
++func (t *TrendSink) Avg() float64 {
++	if t.count > 0 {
++		return t.Sum / float64(t.count)
++	}
++	return 0
++}
++
++// Total returns the total (i.e. "sum") value for all measurements.
++func (t *TrendSink) Total() float64 {
++	return t.Sum
++}
++
+ func (t *TrendSink) Format(tt time.Duration) map[string]float64 {
+ 	// TODO: respect the summaryTrendStats for REST API
+ 	return map[string]float64{
+-		"min":   t.Min,
+-		"max":   t.Max,
+-		"avg":   t.Avg,
++		"min":   t.Min(),
++		"max":   t.Max(),
++		"avg":   t.Avg(),
+ 		"med":   t.P(0.5),
+ 		"p(90)": t.P(0.90),
+ 		"p(95)": t.P(0.95),
+@@ -180,16 +212,3 @@ func (r RateSink) Format(t time.Duration) map[string]float64 {
+ 
+ 	return map[string]float64{"rate": rate}
+ }
+-
+-type DummySink map[string]float64
+-
+-// IsEmpty indicates whether the DummySink is empty.
+-func (d DummySink) IsEmpty() bool { return len(d) == 0 }
+-
+-func (d DummySink) Add(s Sample) {
+-	panic(errors.New("you can't add samples to a dummy sink"))
+-}
+-
+-func (d DummySink) Format(t time.Duration) map[string]float64 {
+-	return map[string]float64(d)
+-}
+diff --git a/metrics/thresholds.go b/metrics/thresholds.go
+index a83a59994..44badb4a1 100644
+--- a/metrics/thresholds.go
++++ b/metrics/thresholds.go
+@@ -185,9 +185,9 @@ func (ts *Thresholds) Run(sink Sink, duration time.Duration) (bool, error) {
+ 	case *GaugeSink:
+ 		ts.sinked["value"] = sinkImpl.Value
+ 	case *TrendSink:
+-		ts.sinked["min"] = sinkImpl.Min
+-		ts.sinked["max"] = sinkImpl.Max
+-		ts.sinked["avg"] = sinkImpl.Avg
++		ts.sinked["min"] = sinkImpl.Min()
++		ts.sinked["max"] = sinkImpl.Max()
++		ts.sinked["avg"] = sinkImpl.Avg()
+ 		ts.sinked["med"] = sinkImpl.P(0.5)
+ 
+ 		// Parse the percentile thresholds and insert them in
+@@ -206,10 +206,6 @@ func (ts *Thresholds) Run(sink Sink, duration time.Duration) (bool, error) {
+ 		if sinkImpl.Total > 0 {
+ 			ts.sinked["rate"] = float64(sinkImpl.Trues) / float64(sinkImpl.Total)
+ 		}
+-	case DummySink:
+-		for k, v := range sinkImpl {
+-			ts.sinked[k] = v
+-		}
+ 	default:
+ 		return false, fmt.Errorf("unable to run Thresholds; reason: unknown sink type")
+ 	}

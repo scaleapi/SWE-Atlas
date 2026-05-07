@@ -1,0 +1,61 @@
+{
+  "tests": [
+    {
+      "name": "AutoConnection version field test"
+    },
+    {
+      "name": "ModulePIB reserved_21b field test"
+    },
+    {
+      "name": "ForceRejoinReq RFU2 field test"
+    },
+    {
+      "name": "ProfinetDCP Identify Request with name_of_station"
+    },
+    {
+      "name": "ProfinetDCP Set Request name_of_station parsing"
+    },
+    {
+      "name": "ProfinetDCP name_of_station field uses MultipleTypeField"
+    },
+    {
+      "name": "Build VQP"
+    },
+    {
+      "name": "Dissect VQP"
+    },
+    {
+      "name": "VQP ResMACAddress with MultipleTypeField"
+    },
+    {
+      "name": "VQP StrLenField default path"
+    },
+    {
+      "name": "VQP FieldLenField auto-computes length"
+    },
+    {
+      "name": "VQP bind_bottom_up dissect by sport"
+    },
+    {
+      "name": "VQP bind_bottom_up dissect by dport"
+    },
+    {
+      "name": "VQP build with bind_layers default ports"
+    },
+    {
+      "name": "Packet with fields_desc resolution"
+    },
+    {
+      "name": "Packet_metaclass __getattr__ for field access"
+    },
+    {
+      "name": "Packet_metaclass duplicate field warning"
+    },
+    {
+      "name": "Field_metaclass basic test"
+    },
+    {
+      "name": "Test UTscapy exits on Windows without libpcap"
+    }
+  ]
+}

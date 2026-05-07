@@ -1,0 +1,122 @@
+[
+  {
+    "id": "e8a21f6b5b9c4c7d8a9f0e1d2c3b4a5f",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b3ed1628920abd5295d443f79b04eea2",
+    "title": "1.1: Removes string quotes from all 5 scapy.fields.Field type annotations across Packet_metaclass.__new__ (current_fld, resolved_fld, final_fld), Packet_metaclass.__getattr__, and Field_metaclass.__new__ in scapy/base_classes.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c4f2a39b8e7d6c5b4a3f2e1d0c9b8a7f",
+    "title": "1.2: Renames the AutoConnection.CSPECversion field to AutoConnection.version in scapy/contrib/homeplugav.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2",
+    "title": "1.3: Renames the ModulePIB.reserved_21 field to ModulePIB.reserved_21b in scapy/contrib/homeplugav.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d5e3b40c9f8e7d6a5b4c3d2e1f0a9b8c",
+    "title": "1.4: Renames the second duplicate ForceRejoinReq.RFU field to ForceRejoinReq.RFU2 in scapy/contrib/loraphy2wan.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e6f4c51d0a9b8c7d6e5f4a3b2c1d0e9f",
+    "title": "1.5: Consolidates the duplicate ProfinetDCP.name_of_station conditional fields into a single field in scapy/contrib/pnio_dcp.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6",
+    "title": "1.6: Consolidates the duplicate VQPEntry data conditional fields into a single multi-type field in scapy/contrib/vqp.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    "title": "1.7: Corrects the VQPEntry.datatom typo to VQPEntry.data in scapy/contrib/vqp.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6",
+    "title": "1.8: Updates the VQPEntry FieldLenField to auto-compute length with length_of='data' and fmt='H' in scapy/contrib/vqp.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6",
+    "title": "1.9: Removes the custom VQPEntry.post_build() method in scapy/contrib/vqp.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b9c7f84a3d2e1f0a9b8c7d6e5f4a3b2c",
+    "title": "1.10: Corrects the UDP-to-VQP layer bindings so single-direction ports dissect without adding default fields when building in scapy/contrib/vqp.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c0d8a95b4e3f2a1b0c9d8e7f6a5b4c3d",
+    "title": "1.11: Adds a graceful failure with a print statement and SystemExit when running root tests on Windows without libpcap in scapy/tools/UTscapy.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d1e9b06c5f4a3b2c1d0e9f8a7b6c5d4e",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e2f0c17d6a5b4c3d2e1f0a9b8c7d6e5f",
+    "title": "4.1: Removes the ProfinetDCP.name_of_station or VQPEntry.data fields entirely instead of consolidating them",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f3a1d28e7b6c5d4e3f2a1b0c9d8e7f6a",
+    "title": "4.2: Omits the WINDOWS platform check for the libpcap requirement in scapy/tools/UTscapy.py, applying the exit globally",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

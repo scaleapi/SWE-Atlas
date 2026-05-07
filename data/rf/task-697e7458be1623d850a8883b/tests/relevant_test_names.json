@@ -1,0 +1,58 @@
+{
+  "tests": [
+    {
+      "name": "Check EcuState basic functionality"
+    },
+    {
+      "name": "More complex tests"
+    },
+    {
+      "name": "Even more complex tests"
+    },
+    {
+      "name": "Copy tests"
+    },
+    {
+      "name": "Move tests"
+    },
+    {
+      "name": "equal tests"
+    },
+    {
+      "name": "hash tests"
+    },
+    {
+      "name": "command tests"
+    },
+    {
+      "name": "less than tests"
+    },
+    {
+      "name": "less than tests 2"
+    },
+    {
+      "name": "less than tests 3"
+    },
+    {
+      "name": "less than tests 4"
+    },
+    {
+      "name": "less than tests 5"
+    },
+    {
+      "name": "contains test"
+    },
+    {
+      "name": "EcuState reset tests"
+    },
+    {
+      "name": "EcuState reset clears all attributes"
+    },
+    {
+      "name": "EcuState reset allows new attributes after reset"
+    },
+    {
+      "name": "Ecu reset test"
+    }
+  ]
+}

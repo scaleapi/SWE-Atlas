@@ -1,0 +1,154 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "bc88426569b1b2b34f3b8138354bcffc",
+    "title": "1.1: Consolidates all 3 separate log buffer state-tracking fields (buf_free, lsn, and lsn_lock) in the log_t struct in storage/innobase/include/log0log.h into fewer combined fields",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a1695315c1aa6e9500ca86c3ef82f895",
+    "title": "1.2: Removes the custom spin-lock acquisition function (lock_lsn) from the log buffer allocation path in storage/innobase/mtr/mtr0mtr.cc",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ea5fe9f82cf39a8655c1a3914548b9ec",
+    "title": "1.3: Introduces at least one new LSN accessor in log_t (storage/innobase/include/log0log.h) that provides approximate or non-exclusive-locking LSN reads for callers not requiring exact current LSN",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d9d801f62a4712ad7e683a10462ba6a1",
+    "title": "1.4: Updates buf_page_check_lsn in storage/innobase/buf/buf0buf.cc to compare against the durable (flushed) LSN instead of the exact current LSN",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "377805355ca167789c700dbc5bba91f9",
+    "title": "1.5: Sets the innodb_log_spin_wait_delay comment to 'Deprecated parameter with no effect' via PLUGIN_VAR_DEPRECATED in storage/innobase/handler/ha_innodb.cc",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4e583195e3d41f67a61537e063007350",
+    "title": "1.6: Simplifies the append_prepare allocation function in storage/innobase/mtr/mtr0mtr.cc by eliminating the spin vs non-spin code path branching",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "eca6a30e5537198785c8f6239506ecd1",
+    "title": "1.7: Simplifies the mini-transaction finish path in storage/innobase/mtr/mtr0mtr.cc by removing the spin-related template parameter from finish_writer",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "37e0a592cef25cacb578e443283f87ec",
+    "title": "1.8: Updates all 5 LSN callers (af_needed_for_redo, page_cleaner_flush_pages_recommendation, log_make_checkpoint, buf_flush_sync_batch, and buf_pool_t::print_flush_info) in storage/innobase/buf/buf0flu.cc to use appropriate-precision accessors instead of the exact get_lsn()",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e3adfb3e86152e23ec84791e5bb2524b",
+    "title": "1.9: Removes the innodb_log_spin_wait_delay update callback function from storage/innobase/handler/ha_innodb.cc so the deprecated parameter has no runtime effect",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "be6f29c1e6570da0c1b613d5a72c4b1f",
+    "title": "1.10: Updates all 3 recovery code functions (parse, set_recovered, and recv_recovery_from_checkpoint_start) in storage/innobase/log/log0recv.cc to use the durable (flushed) LSN instead of the exact current LSN",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7aae095bd6022bb3e2b6d68c5186a378",
+    "title": "1.11: Updates srv_prepare_to_delete_redo_log_file in storage/innobase/srv/srv0start.cc to use the durable (flushed) LSN instead of the exact current LSN for log file management at startup",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0937828da65a2ad96fc9c7e24905b092",
+    "title": "3.1: Removes the mtr_t::spin_wait_delay static member from storage/innobase/include/mtr0mtr.h since the spin wait infrastructure is no longer used",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "655726416234319e6a712eb7f5489264",
+    "title": "3.2: Removes all 3 obsolete spin-lock helpers (lsn_delay, lsn_lock_bts, and LOCK_TSET macro) from storage/innobase/mtr/mtr0mtr.cc",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ead46a36440ffac915b8f3647e13c862",
+    "title": "3.3: Removes both the buf_free_LOCK constant and buf_free_ok() method from log_t in storage/innobase/include/log0log.h",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "917e7f1a405ad5067bb5c241175f22a0",
+    "title": "4.1: Removes the innodb_log_spin_wait_delay system variable entirely instead of deprecating it",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "418b2b2a706eba7882b6264dc8a9ecf0",
+    "title": "4.2: Removes or breaks existing InnoDB functionality (such as DML operations, checkpoint, SHOW ENGINE INNODB STATUS, or status variable reporting)",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

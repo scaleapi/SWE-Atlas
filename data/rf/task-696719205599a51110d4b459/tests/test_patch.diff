@@ -1,0 +1,438 @@
+diff --git a/apps/investigations/pkg/apis/investigations/v0alpha1/investigations_test.go b/apps/investigations/pkg/apis/investigations/v0alpha1/investigations_test.go
+new file mode 100644
+index 00000000000..40655f16c4b
+--- /dev/null
++++ b/apps/investigations/pkg/apis/investigations/v0alpha1/investigations_test.go
+@@ -0,0 +1,432 @@
++package v0alpha1
++
++import (
++	"encoding/json"
++	"os"
++	"reflect"
++	"strings"
++	"testing"
++)
++
++// --- Status Removal: Struct-level checks ---
++
++func TestInvestigationHasNoStatusField(t *testing.T) {
++	typ := reflect.TypeOf(Investigation{})
++	for i := 0; i < typ.NumField(); i++ {
++		if strings.EqualFold(typ.Field(i).Name, "Status") {
++			t.Fatal("Investigation struct should not have a Status field")
++		}
++	}
++}
++
++func TestInvestigationIndexHasNoStatusField(t *testing.T) {
++	typ := reflect.TypeOf(InvestigationIndex{})
++	for i := 0; i < typ.NumField(); i++ {
++		if strings.EqualFold(typ.Field(i).Name, "Status") {
++			t.Fatal("InvestigationIndex struct should not have a Status field")
++		}
++	}
++}
++
++// --- Status Removal: Subresource behavior ---
++
++func TestInvestigationGetSubresourcesReturnsEmpty(t *testing.T) {
++	inv := &Investigation{}
++	subs := inv.GetSubresources()
++	if len(subs) != 0 {
++		t.Fatalf("expected empty subresources map, got %d entries: %v", len(subs), subs)
++	}
++}
++
++func TestInvestigationIndexGetSubresourcesReturnsEmpty(t *testing.T) {
++	idx := &InvestigationIndex{}
++	subs := idx.GetSubresources()
++	if len(subs) != 0 {
++		t.Fatalf("expected empty subresources map, got %d entries: %v", len(subs), subs)
++	}
++}
++
++func TestInvestigationGetSubresourceStatusNotFound(t *testing.T) {
++	inv := &Investigation{}
++	val, ok := inv.GetSubresource("status")
++	if ok {
++		t.Fatalf("expected status subresource to not exist, got %v", val)
++	}
++}
++
++func TestInvestigationIndexGetSubresourceStatusNotFound(t *testing.T) {
++	idx := &InvestigationIndex{}
++	val, ok := idx.GetSubresource("status")
++	if ok {
++		t.Fatalf("expected status subresource to not exist, got %v", val)
++	}
++}
++
++func TestInvestigationSetSubresourceStatusReturnsError(t *testing.T) {
++	inv := &Investigation{}
++	err := inv.SetSubresource("status", nil)
++	if err == nil {
++		t.Fatal("expected error when setting non-existent status subresource")
++	}
++}
++
++func TestInvestigationIndexSetSubresourceStatusReturnsError(t *testing.T) {
++	idx := &InvestigationIndex{}
++	err := idx.SetSubresource("status", nil)
++	if err == nil {
++		t.Fatal("expected error when setting non-existent status subresource")
++	}
++}
++
++// --- Status Removal: DeepCopy still works ---
++
++func TestInvestigationDeepCopyPreservesSpec(t *testing.T) {
++	inv := &Investigation{}
++	inv.Spec.Title = "test-investigation"
++	cpy := inv.DeepCopy()
++	if cpy.Spec.Title != "test-investigation" {
++		t.Fatalf("expected deep copy to preserve spec title, got %q", cpy.Spec.Title)
++	}
++}
++
++func TestInvestigationIndexDeepCopyPreservesSpec(t *testing.T) {
++	idx := &InvestigationIndex{}
++	idx.Spec.Title = "test-index"
++	cpy := idx.DeepCopy()
++	if cpy.Spec.Title != "test-index" {
++		t.Fatalf("expected deep copy to preserve spec title, got %q", cpy.Spec.Title)
++	}
++}
++
++// --- Status Removal: JSON serialization ---
++
++func TestInvestigationJSONRoundTripHasNoStatus(t *testing.T) {
++	inv := &Investigation{}
++	inv.Spec.Title = "roundtrip-test"
++	data, err := json.Marshal(inv)
++	if err != nil {
++		t.Fatalf("marshal failed: %v", err)
++	}
++	var raw map[string]interface{}
++	if err := json.Unmarshal(data, &raw); err != nil {
++		t.Fatalf("unmarshal to map failed: %v", err)
++	}
++	if _, exists := raw["status"]; exists {
++		t.Fatal("serialized Investigation should not contain a 'status' key")
++	}
++}
++
++func TestInvestigationIndexJSONRoundTripHasNoStatus(t *testing.T) {
++	idx := &InvestigationIndex{}
++	idx.Spec.Title = "roundtrip-test"
++	data, err := json.Marshal(idx)
++	if err != nil {
++		t.Fatalf("marshal failed: %v", err)
++	}
++	var raw map[string]interface{}
++	if err := json.Unmarshal(data, &raw); err != nil {
++		t.Fatalf("unmarshal to map failed: %v", err)
++	}
++	if _, exists := raw["status"]; exists {
++		t.Fatal("serialized InvestigationIndex should not contain a 'status' key")
++	}
++}
++
++// --- Status Removal: Client has no UpdateStatus ---
++
++func TestInvestigationClientHasNoUpdateStatusMethod(t *testing.T) {
++	typ := reflect.TypeOf(&InvestigationClient{})
++	for i := 0; i < typ.NumMethod(); i++ {
++		if typ.Method(i).Name == "UpdateStatus" {
++			t.Fatal("InvestigationClient should not have an UpdateStatus method")
++		}
++	}
++}
++
++func TestInvestigationIndexClientHasNoUpdateStatusMethod(t *testing.T) {
++	typ := reflect.TypeOf(&InvestigationIndexClient{})
++	for i := 0; i < typ.NumMethod(); i++ {
++		if typ.Method(i).Name == "UpdateStatus" {
++			t.Fatal("InvestigationIndexClient should not have an UpdateStatus method")
++		}
++	}
++}
++
++// --- Status Removal: Client does not import metav1 ---
++
++func TestInvestigationClientFileHasNoMetav1Import(t *testing.T) {
++	data, err := os.ReadFile("investigation_client_gen.go")
++	if err != nil {
++		t.Fatalf("could not read file: %v", err)
++	}
++	if strings.Contains(string(data), `metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"`) {
++		t.Fatal("investigation_client_gen.go should not import metav1 (only needed for status)")
++	}
++}
++
++func TestInvestigationIndexClientFileHasNoMetav1Import(t *testing.T) {
++	data, err := os.ReadFile("investigationindex_client_gen.go")
++	if err != nil {
++		t.Fatalf("could not read file: %v", err)
++	}
++	if strings.Contains(string(data), `metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"`) {
++		t.Fatal("investigationindex_client_gen.go should not import metav1 (only needed for status)")
++	}
++}
++
++// --- Status Removal: Status type file deleted ---
++
++func TestInvestigationStatusFileDoesNotExist(t *testing.T) {
++	_, err := os.Stat("investigation_status_gen.go")
++	if err == nil {
++		t.Fatal("investigation_status_gen.go should not exist (status types removed)")
++	}
++}
++
++// --- Status Removal: Object gen files have no Status deep copy ---
++
++func TestInvestigationObjectFileHasNoStatusDeepCopy(t *testing.T) {
++	data, err := os.ReadFile("investigation_object_gen.go")
++	if err != nil {
++		t.Fatalf("could not read file: %v", err)
++	}
++	content := string(data)
++	if strings.Contains(content, "InvestigationStatus") {
++		t.Fatal("investigation_object_gen.go should not reference InvestigationStatus")
++	}
++}
++
++func TestInvestigationIndexObjectFileHasNoStatusDeepCopy(t *testing.T) {
++	data, err := os.ReadFile("investigationindex_object_gen.go")
++	if err != nil {
++		t.Fatalf("could not read file: %v", err)
++	}
++	content := string(data)
++	if strings.Contains(content, "InvestigationIndexStatus") {
++		t.Fatal("investigationindex_object_gen.go should not reference InvestigationIndexStatus")
++	}
++}
++
++// --- Makefile modernization ---
++
++func TestMakefileDoesNotUseOldManifestKinds(t *testing.T) {
++	data, err := os.ReadFile("../../../../Makefile")
++	if err != nil {
++		t.Fatalf("could not read Makefile: %v", err)
++	}
++	content := string(data)
++	if strings.Contains(content, "--useoldmanifestkinds") {
++		t.Fatal("Makefile should not use the deprecated --useoldmanifestkinds flag")
++	}
++}
++
++func TestMakefileDisablesOperatorState(t *testing.T) {
++	data, err := os.ReadFile("../../../../Makefile")
++	if err != nil {
++		t.Fatalf("could not read Makefile: %v", err)
++	}
++	content := string(data)
++	if !strings.Contains(content, "genoperatorstate=false") {
++		t.Fatal("Makefile should disable operator state generation")
++	}
++}
++
++func TestEmbeddedInvestigationSchemaHasNoStatusProperty(t *testing.T) {
++	data, err := os.ReadFile("../../investigations_manifest.go")
++	if err != nil {
++		t.Fatalf("could not read investigations_manifest.go: %v", err)
++	}
++	content := string(data)
++	if strings.Contains(content, `"status":{"$ref"`) {
++		t.Fatal("embedded Investigation schema should not contain a status property reference")
++	}
++}
++
++func TestEmbeddedInvestigationIndexSchemaHasNoStatusProperty(t *testing.T) {
++	data, err := os.ReadFile("../../investigations_manifest.go")
++	if err != nil {
++		t.Fatalf("could not read investigations_manifest.go: %v", err)
++	}
++	content := string(data)
++	if strings.Contains(content, `"operatorStates"`) {
++		t.Fatal("embedded schemas should not contain operatorStates field definitions")
++	}
++}
++
++func TestEmbeddedSchemasHaveNoOperatorStateDefinition(t *testing.T) {
++	data, err := os.ReadFile("../../investigations_manifest.go")
++	if err != nil {
++		t.Fatalf("could not read investigations_manifest.go: %v", err)
++	}
++	content := string(data)
++	if strings.Contains(content, `"OperatorState"`) {
++		t.Fatal("embedded schemas should not contain OperatorState type definitions")
++	}
++}
++
++// --- CUE manifest modernization ---
++
++func TestCUEManifestHasVersionsBlock(t *testing.T) {
++	data, err := os.ReadFile("../../../../kinds/manifest.cue")
++	if err != nil {
++		t.Fatalf("could not read manifest.cue: %v", err)
++	}
++	content := string(data)
++	if !strings.Contains(content, "versions:") && !strings.Contains(content, "versions: {") {
++		t.Fatal("manifest.cue should have a versions block")
++	}
++}
++
++func TestCUEManifestHasCodegenConfig(t *testing.T) {
++	data, err := os.ReadFile("../../../../kinds/manifest.cue")
++	if err != nil {
++		t.Fatalf("could not read manifest.cue: %v", err)
++	}
++	content := string(data)
++	if !strings.Contains(content, "codegen:") && !strings.Contains(content, "codegen: {") {
++		t.Fatal("manifest.cue should have codegen configuration in the versions block")
++	}
++}
++
++func TestCUEManifestHasKindsInVersionBlock(t *testing.T) {
++	data, err := os.ReadFile("../../../../kinds/manifest.cue")
++	if err != nil {
++		t.Fatalf("could not read manifest.cue: %v", err)
++	}
++	content := string(data)
++	if !strings.Contains(content, "versions:") {
++		t.Fatal("manifest.cue should have a versions block")
++	}
++	if !strings.Contains(content, "kinds:") && !strings.Contains(content, "kinds: [") {
++		t.Fatal("manifest.cue should have a kinds list inside the versions block")
++	}
++}
++
++// --- CUE kind definitions simplified ---
++
++func TestCUEKindDefinitionsAreSimplified(t *testing.T) {
++	for _, file := range []string{"investigation.cue", "investigationindex.cue"} {
++		data, err := os.ReadFile("../../../../kinds/" + file)
++		if err != nil {
++			t.Fatalf("could not read %s: %v", file, err)
++		}
++		content := string(data)
++		if strings.Contains(content, "\tgroup:") || strings.Contains(content, " group:") {
++			t.Errorf("%s should not contain group metadata (should be in manifest)", file)
++		}
++		if strings.Contains(content, "apiResource:") {
++			t.Errorf("%s should not contain apiResource (should be in manifest)", file)
++		}
++		if strings.Contains(content, "\tcurrent:") || strings.Contains(content, " current:") {
++			t.Errorf("%s should not contain current version field", file)
++		}
++	}
++}
++
++func TestCUEKindDefinitionsDoNotHaveCodegenConfig(t *testing.T) {
++	for _, file := range []string{"investigation.cue", "investigationindex.cue"} {
++		data, err := os.ReadFile("../../../../kinds/" + file)
++		if err != nil {
++			t.Fatalf("could not read %s: %v", file, err)
++		}
++		content := string(data)
++		if strings.Contains(content, "codegen:") {
++			t.Errorf("%s should not contain codegen config (should be in manifest)", file)
++		}
++	}
++}
++
++func TestCUEKindDefinitionsDoNotHaveNestedVersions(t *testing.T) {
++	for _, file := range []string{"investigation.cue", "investigationindex.cue"} {
++		data, err := os.ReadFile("../../../../kinds/" + file)
++		if err != nil {
++			t.Fatalf("could not read %s: %v", file, err)
++		}
++		content := string(data)
++		if strings.Contains(content, `"v0alpha1":`) {
++			t.Errorf("%s should not have nested version blocks (versions managed in manifest)", file)
++		}
++	}
++}
++
++func TestCUEKindDefinitionsHaveSchemaAtTopLevel(t *testing.T) {
++	for _, file := range []string{"investigation.cue", "investigationindex.cue"} {
++		data, err := os.ReadFile("../../../../kinds/" + file)
++		if err != nil {
++			t.Fatalf("could not read %s: %v", file, err)
++		}
++		content := string(data)
++		if !strings.Contains(content, "schema:") {
++			t.Errorf("%s should contain a schema block", file)
++		}
++		if !strings.Contains(content, "spec:") {
++			t.Errorf("%s should contain a spec block within the schema", file)
++		}
++	}
++}
++
++func TestCUEKindDefinitionsPreserveSchemaFields(t *testing.T) {
++	data, err := os.ReadFile("../../../../kinds/investigation.cue")
++	if err != nil {
++		t.Fatalf("could not read investigation.cue: %v", err)
++	}
++	content := string(data)
++	expectedFields := []string{"title:", "createdByProfile:", "hasCustomName:", "isFavorite:",
++		"overviewNote:", "collectables:", "viewMode:"}
++	for _, field := range expectedFields {
++		if !strings.Contains(content, field) {
++			t.Errorf("investigation.cue should preserve schema field %q", field)
++		}
++	}
++}
++
++func TestCUEKindDefinitionsPreserveIndexSchemaFields(t *testing.T) {
++	data, err := os.ReadFile("../../../../kinds/investigationindex.cue")
++	if err != nil {
++		t.Fatalf("could not read investigationindex.cue: %v", err)
++	}
++	content := string(data)
++	expectedFields := []string{"title:", "owner:", "investigationSummaries:"}
++	for _, field := range expectedFields {
++		if !strings.Contains(content, field) {
++			t.Errorf("investigationindex.cue should preserve schema field %q", field)
++		}
++	}
++}
++
++// --- CUE kind identifiers are version-aware ---
++
++func TestCUEKindIdentifiersAreVersionAware(t *testing.T) {
++	tests := []struct {
++		file     string
++		kindName string
++	}{
++		{"investigation.cue", "investigation"},
++		{"investigationindex.cue", "investigationindex"},
++	}
++	for _, tc := range tests {
++		data, err := os.ReadFile("../../../../kinds/" + tc.file)
++		if err != nil {
++			t.Fatalf("could not read %s: %v", tc.file, err)
++		}
++		lower := strings.ToLower(string(data))
++		pattern := tc.kindName + "v0alpha1"
++		if !strings.Contains(lower, pattern) {
++			t.Errorf("%s should contain a version-aware identifier (e.g., %sv0alpha1)", tc.file, tc.kindName)
++		}
++	}
++}
++
++func TestCUEManifestReferencesVersionAwareKinds(t *testing.T) {
++	data, err := os.ReadFile("../../../../kinds/manifest.cue")
++	if err != nil {
++		t.Fatalf("could not read manifest.cue: %v", err)
++	}
++	lower := strings.ToLower(string(data))
++	if !strings.Contains(lower, "investigationv0alpha1") {
++		t.Fatal("manifest.cue should reference a version-aware Investigation kind identifier")
++	}
++	if !strings.Contains(lower, "investigationindexv0alpha1") {
++		t.Fatal("manifest.cue should reference a version-aware InvestigationIndex kind identifier")
++	}
++}

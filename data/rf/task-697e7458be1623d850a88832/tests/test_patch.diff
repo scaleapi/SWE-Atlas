@@ -1,0 +1,362 @@
+diff --git a/internal/cmd/runtime_options_test.go b/internal/cmd/runtime_options_test.go
+index fe9b21eb4..055022a21 100644
+--- a/internal/cmd/runtime_options_test.go
++++ b/internal/cmd/runtime_options_test.go
+@@ -418,3 +418,357 @@ func TestRuntimeOptions(t *testing.T) {
+ 		})
+ 	}
+ }
++
++// TestRuntimeOptionsFromFlags tests the runtimeOptionsFromFlags function directly
++// to ensure proper flag parsing and default value handling.
++func TestRuntimeOptionsFromFlags(t *testing.T) {
++	t.Parallel()
++
++	testCases := []struct {
++		name      string
++		useSysEnv bool
++		cliFlags  []string
++		check     func(t *testing.T, opts lib.RuntimeOptions)
++	}{
++		{
++			name:      "default values with sys env enabled",
++			useSysEnv: true,
++			cliFlags:  []string{},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewBool(true, false), opts.IncludeSystemEnvVars)
++				assert.Equal(t, null.NewString("extended", false), opts.CompatibilityMode)
++				assert.Equal(t, null.NewString("none", false), opts.TracesOutput)
++				assert.NotNil(t, opts.Env)
++			},
++		},
++		{
++			name:      "default values with sys env disabled",
++			useSysEnv: false,
++			cliFlags:  []string{},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewBool(false, false), opts.IncludeSystemEnvVars)
++				assert.Equal(t, null.NewString("extended", false), opts.CompatibilityMode)
++			},
++		},
++		{
++			name:      "test type flag",
++			useSysEnv: false,
++			cliFlags:  []string{"--type", "js"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewString("js", true), opts.TestType)
++			},
++		},
++		{
++			name:      "compatibility mode base",
++			useSysEnv: false,
++			cliFlags:  []string{"--compatibility-mode", "base"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewString("base", true), opts.CompatibilityMode)
++			},
++		},
++		{
++			name:      "no-thresholds flag",
++			useSysEnv: false,
++			cliFlags:  []string{"--no-thresholds"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewBool(true, true), opts.NoThresholds)
++			},
++		},
++		{
++			name:      "no-summary flag",
++			useSysEnv: false,
++			cliFlags:  []string{"--no-summary"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewBool(true, true), opts.NoSummary)
++			},
++		},
++		{
++			name:      "summary-export flag",
++			useSysEnv: false,
++			cliFlags:  []string{"--summary-export", "output.json"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewString("output.json", true), opts.SummaryExport)
++			},
++		},
++		{
++			name:      "traces-output flag",
++			useSysEnv: false,
++			cliFlags:  []string{"--traces-output", "otel=localhost:4317"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewString("otel=localhost:4317", true), opts.TracesOutput)
++			},
++		},
++		{
++			name:      "multiple flags combined",
++			useSysEnv: true,
++			cliFlags:  []string{"--no-thresholds", "--no-summary", "--compatibility-mode", "base"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewBool(true, true), opts.NoThresholds)
++				assert.Equal(t, null.NewBool(true, true), opts.NoSummary)
++				assert.Equal(t, null.NewString("base", true), opts.CompatibilityMode)
++			},
++		},
++	}
++
++	for _, tc := range testCases {
++		tc := tc
++		t.Run(tc.name, func(t *testing.T) {
++			t.Parallel()
++			flags := runtimeOptionFlagSet(tc.useSysEnv)
++			require.NoError(t, flags.Parse(tc.cliFlags))
++			opts := runtimeOptionsFromFlags(flags)
++			tc.check(t, opts)
++		})
++	}
++}
++
++// TestPopulateRuntimeOptionsFromEnv tests the populateRuntimeOptionsFromEnv function
++// to ensure environment variables are properly applied to runtime options.
++func TestPopulateRuntimeOptionsFromEnv(t *testing.T) {
++	t.Parallel()
++
++	testCases := []struct {
++		name      string
++		baseOpts  lib.RuntimeOptions
++		env       map[string]string
++		expectErr bool
++		check     func(t *testing.T, opts lib.RuntimeOptions)
++	}{
++		{
++			name: "K6_TYPE from env",
++			baseOpts: lib.RuntimeOptions{
++				Env: make(map[string]string),
++			},
++			env: map[string]string{"K6_TYPE": "archive"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewString("archive", true), opts.TestType)
++			},
++		},
++		{
++			name: "K6_TYPE not overwritten when already set",
++			baseOpts: lib.RuntimeOptions{
++				TestType: null.NewString("js", true),
++				Env:      make(map[string]string),
++			},
++			env: map[string]string{"K6_TYPE": "archive"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewString("js", true), opts.TestType)
++			},
++		},
++		{
++			name: "K6_COMPATIBILITY_MODE from env",
++			baseOpts: lib.RuntimeOptions{
++				Env: make(map[string]string),
++			},
++			env: map[string]string{"K6_COMPATIBILITY_MODE": "base"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewString("base", true), opts.CompatibilityMode)
++			},
++		},
++		{
++			name: "K6_INCLUDE_SYSTEM_ENV_VARS true",
++			baseOpts: lib.RuntimeOptions{
++				Env: make(map[string]string),
++			},
++			env: map[string]string{"K6_INCLUDE_SYSTEM_ENV_VARS": "true"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewBool(true, true), opts.IncludeSystemEnvVars)
++			},
++		},
++		{
++			name: "K6_INCLUDE_SYSTEM_ENV_VARS invalid",
++			baseOpts: lib.RuntimeOptions{
++				Env: make(map[string]string),
++			},
++			env:       map[string]string{"K6_INCLUDE_SYSTEM_ENV_VARS": "notabool"},
++			expectErr: true,
++		},
++		{
++			name: "K6_NO_THRESHOLDS from env",
++			baseOpts: lib.RuntimeOptions{
++				Env: make(map[string]string),
++			},
++			env: map[string]string{"K6_NO_THRESHOLDS": "true"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewBool(true, true), opts.NoThresholds)
++			},
++		},
++		{
++			name: "K6_NO_SUMMARY from env",
++			baseOpts: lib.RuntimeOptions{
++				Env: make(map[string]string),
++			},
++			env: map[string]string{"K6_NO_SUMMARY": "1"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewBool(true, true), opts.NoSummary)
++			},
++		},
++		{
++			name: "K6_SUMMARY_EXPORT from env",
++			baseOpts: lib.RuntimeOptions{
++				Env: make(map[string]string),
++			},
++			env: map[string]string{"K6_SUMMARY_EXPORT": "report.json"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewString("report.json", true), opts.SummaryExport)
++			},
++		},
++		{
++			name: "SSLKEYLOGFILE from env",
++			baseOpts: lib.RuntimeOptions{
++				Env: make(map[string]string),
++			},
++			env: map[string]string{"SSLKEYLOGFILE": "/tmp/keys.log"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewString("/tmp/keys.log", true), opts.KeyWriter)
++			},
++		},
++		{
++			name: "K6_TRACES_OUTPUT from env",
++			baseOpts: lib.RuntimeOptions{
++				Env: make(map[string]string),
++			},
++			env: map[string]string{"K6_TRACES_OUTPUT": "otel"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, null.NewString("otel", true), opts.TracesOutput)
++			},
++		},
++		{
++			name: "system env vars included when enabled",
++			baseOpts: lib.RuntimeOptions{
++				IncludeSystemEnvVars: null.NewBool(true, true),
++				Env:                  make(map[string]string),
++			},
++			env: map[string]string{"MY_VAR": "my_value"},
++			check: func(t *testing.T, opts lib.RuntimeOptions) {
++				assert.Equal(t, "my_value", opts.Env["MY_VAR"])
++			},
++		},
++	}
++
++	for _, tc := range testCases {
++		tc := tc
++		t.Run(tc.name, func(t *testing.T) {
++			t.Parallel()
++			opts, err := populateRuntimeOptionsFromEnv(tc.baseOpts, tc.env)
++			if tc.expectErr {
++				require.Error(t, err)
++				return
++			}
++			require.NoError(t, err)
++			if tc.check != nil {
++				tc.check(t, opts)
++			}
++		})
++	}
++}
++
++// TestSaveBoolFromEnv tests the saveBoolFromEnv helper function
++func TestSaveBoolFromEnv(t *testing.T) {
++	t.Parallel()
++
++	testCases := []struct {
++		name        string
++		env         map[string]string
++		varName     string
++		placeholder null.Bool
++		expectErr   bool
++		expected    null.Bool
++	}{
++		{
++			name:        "var not present",
++			env:         map[string]string{},
++			varName:     "K6_TEST",
++			placeholder: null.Bool{},
++			expected:    null.Bool{},
++		},
++		{
++			name:        "var present true",
++			env:         map[string]string{"K6_TEST": "true"},
++			varName:     "K6_TEST",
++			placeholder: null.Bool{},
++			expected:    null.NewBool(true, true),
++		},
++		{
++			name:        "var present false",
++			env:         map[string]string{"K6_TEST": "false"},
++			varName:     "K6_TEST",
++			placeholder: null.Bool{},
++			expected:    null.NewBool(false, true),
++		},
++		{
++			name:        "var present 1",
++			env:         map[string]string{"K6_TEST": "1"},
++			varName:     "K6_TEST",
++			placeholder: null.Bool{},
++			expected:    null.NewBool(true, true),
++		},
++		{
++			name:        "var present 0",
++			env:         map[string]string{"K6_TEST": "0"},
++			varName:     "K6_TEST",
++			placeholder: null.Bool{},
++			expected:    null.NewBool(false, true),
++		},
++		{
++			name:        "invalid bool value",
++			env:         map[string]string{"K6_TEST": "invalid"},
++			varName:     "K6_TEST",
++			placeholder: null.Bool{},
++			expectErr:   true,
++		},
++		{
++			name:        "already set placeholder not overwritten",
++			env:         map[string]string{"K6_TEST": "true"},
++			varName:     "K6_TEST",
++			placeholder: null.NewBool(false, true),
++			expected:    null.NewBool(false, true),
++		},
++	}
++
++	for _, tc := range testCases {
++		tc := tc
++		t.Run(tc.name, func(t *testing.T) {
++			t.Parallel()
++			placeholder := tc.placeholder
++			err := saveBoolFromEnv(tc.env, tc.varName, &placeholder)
++			if tc.expectErr {
++				require.Error(t, err)
++				return
++			}
++			require.NoError(t, err)
++			assert.Equal(t, tc.expected, placeholder)
++		})
++	}
++}
++
++// TestGetRuntimeOptionsIntegration tests the full getRuntimeOptions flow
++// with various combinations of flags and environment variables.
++func TestGetRuntimeOptionsIntegration(t *testing.T) {
++	t.Parallel()
++
++	t.Run("env vars combined with flags", func(t *testing.T) {
++		t.Parallel()
++		flags := runtimeOptionFlagSet(true)
++		require.NoError(t, flags.Parse([]string{"--env", "CLI_VAR=cli_value"}))
++		env := map[string]string{
++			"SYS_VAR":                    "sys_value",
++			"K6_COMPATIBILITY_MODE":      "extended",
++			"K6_INCLUDE_SYSTEM_ENV_VARS": "true",
++		}
++		opts, err := getRuntimeOptions(flags, env)
++		require.NoError(t, err)
++		assert.Equal(t, "cli_value", opts.Env["CLI_VAR"])
++		assert.Equal(t, "sys_value", opts.Env["SYS_VAR"])
++	})
++
++	t.Run("cli flag overrides env var", func(t *testing.T) {
++		t.Parallel()
++		flags := runtimeOptionFlagSet(false)
++		require.NoError(t, flags.Parse([]string{"--compatibility-mode", "base"}))
++		env := map[string]string{"K6_COMPATIBILITY_MODE": "extended"}
++		opts, err := getRuntimeOptions(flags, env)
++		require.NoError(t, err)
++		assert.Equal(t, null.NewString("base", true), opts.CompatibilityMode)
++	})
++}

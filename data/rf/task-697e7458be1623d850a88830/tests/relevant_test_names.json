@@ -1,0 +1,37 @@
+{
+  "tests": [
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/custom_detectors/TestFromData_CancelledContext"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/custom_detectors/TestFromData_ConcurrentResultsComplete"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/custom_detectors/TestFromData_MultipleMatchesVerified"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/custom_detectors/TestFromData_MultipleMatches_NoVerify"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/custom_detectors/TestFromData_MultipleRegexPatterns"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/custom_detectors/TestFromData_NoMatches"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/custom_detectors/TestFromData_ResultRawContent"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/custom_detectors/TestFromData_VerifyHeadersForwarded"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/custom_detectors/TestFromData_VerifyMultipleEndpoints"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/custom_detectors/TestFromData_VerifyWebhookNon200"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/custom_detectors/TestFromData_VerifyWebhookSuccess"
+    }
+  ]
+}

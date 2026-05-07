@@ -1,0 +1,82 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2cae1cbf5fdbdbf31c40bffa24b591c3",
+    "title": "1.1: Extracts CLI flag-related logic from getRuntimeOptions into a separate reusable helper",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b09b04a9404f5d640f27fa4b005e2ba8",
+    "title": "1.2: Extracts environment variable processing logic from getRuntimeOptions into a separate reusable helper",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "47ebca1d178f5997487a9a2bf03c2fac",
+    "title": "1.3: Refactors getRuntimeOptions to delegate to the extracted helpers",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "fa15adcd5076a095db5fa0a9c8adea91",
+    "title": "4.1: Removes or alters existing runtime option handling (such as dropping support for K6_COMPATIBILITY_MODE or changing how SSLKEYLOGFILE is processed)",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b47778332b6918e49a75f523e1215258",
+    "title": "4.2: Changes the function signature of getRuntimeOptions (such as altering parameters, return type, or renaming the function)",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3c854f4ee9f46a5705eb982c1894415c",
+    "title": "4.3: Reverses CLI flag precedence over environment variables",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

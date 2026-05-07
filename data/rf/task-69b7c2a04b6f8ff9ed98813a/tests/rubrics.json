@@ -1,0 +1,186 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a7106c4ee79f6f48ea2b86f990c9edde",
+    "title": "1.1: Applies forced inlining to page cache hot-path functions in cache.c",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b9f12e61ab0bddfa13cdb564ff67d2a9",
+    "title": "1.2: Applies forced inlining to buffer utility functions",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "01c8a5f7826da712dd410b1698417c9d",
+    "title": "1.3: Applies forced inlining to reference counting helpers",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3cc4999aeb9f21b15c56bb72687a0b0f",
+    "title": "1.4: Applies forced inlining to plugin data parser functions",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "70c154c685e4c0baf5969bd5c0cbdd04",
+    "title": "1.5: Removes inline qualifier from variadic (va_list) functions instead of force-inlining them",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c277c03276d66b3c1d5201edfc6bdd91",
+    "title": "1.6: Introduces a STRCNT_CMD enum type in src/streaming/stream-sender-internals.h",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c2acebe4607af2b98859730e439336bf",
+    "title": "1.7: Updates stream_connector_requeue to accept a STRCNT_CMD command parameter",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "528b5b86a45ceef842381e2a69fd4c06",
+    "title": "1.8: Declares stream_sender_on_disconnect as a public function callable from outside the sender module",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "df4f6e0916521152534dfa81b2d4dd50",
+    "title": "1.9: Consolidates shared cleanup logic so connect, disconnect paths call common code",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5b5ae7322a91cc31a37d57aa1bb36f79",
+    "title": "1.10: Ensures the stream thread delegates sender removal to the connector instead of doing it inline",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f64f59dab07a8659ce9665591a9ba01b",
+    "title": "1.11: Ensures the connector thread processes removal operations in addition to connections",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "14f36722a2f04cdacb75e9c4e5565594",
+    "title": "1.12: Fixes the receiver so it does not disconnect when the sender encounters a socket error",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0150bd48b89d0b5af27aeffcdb2e9f1c",
+    "title": "1.13: Centralizes receiver exit reason setting inside the remove function",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a26c32b2c59bfea35330cef7cd698a74",
+    "title": "1.14: Updates receiver_set_exit_reason to return the stored reason value",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "53da16fb8928fd157a67bc2f363e8b9a",
+    "title": "1.15: Moves the ML pulse statistics call outside the spinlock in the prediction path",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b772649855493fff7a57f22a0858b84f",
+    "title": "3.1: Removes redundant receiver_set_exit_reason calls before stream_receiver_remove",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d1c081d669d6990e7abd44f95f5717c8",
+    "title": "4.1: Introduces compilation errors in modified source files",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a4871d61f9bae9080d00a5a8cf44bcec",
+    "title": "4.2: Modifies test files despite the explicit constraint",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5da230994e4f202f93a6fa1010d53c5a",
+    "title": "4.3: Removes existing public API functions that are used by other modules",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

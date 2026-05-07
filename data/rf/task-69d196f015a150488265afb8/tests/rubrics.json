@@ -1,0 +1,138 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "98459126873bef452746e0e5893d890e",
+    "title": "1.1: Refactors Dot11Elt.dispatch_hook() to use generic registered_ies lookup with delegation to Dot11EltVendorSpecific.dispatch_hook in scapy/layers/dot11.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d705bd793827941d4e9af984a632e71b",
+    "title": "1.2: Adds Dot11EltVendorSpecific.dispatch_hook classmethod that routes Microsoft OUI (0x0050f2) elements by type in scapy/layers/dot11.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d859c66741a063c78fe227e300e03994",
+    "title": "1.3: Changes Dot11EltMicrosoftWPA to inherit from Dot11EltVendorSpecific instead of Dot11Elt in scapy/layers/dot11.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e29ae6e4420555ef83ea8322418ca5aa",
+    "title": "1.4: Replaces all 3 duplicated cipher suite field definitions (group_cipher_suite, nb_pairwise_cipher_suites, pairwise_cipher_suites) in Dot11EltMicrosoftWPA with shared ones in scapy/layers/dot11.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9c9e99ca9cd6cd83f1aaf61eede113dc",
+    "title": "1.5: Replaces all 2 duplicated AKM field definitions (nb_akm_suites, akm_suites) in Dot11EltMicrosoftWPA with shared ones in scapy/layers/dot11.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e8471596913bd4030bf18dc0f23e22b5",
+    "title": "1.6: Guards register_variant() to skip registration when the element ID is already in registered_ies in scapy/layers/dot11.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "be2743ef136a8e7ad35f258f8fdfaa34",
+    "title": "1.7: Fixes Dot11EltRSN pmkids conditional threshold from '>= 18' to '>= 2' in scapy/layers/dot11.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5495692e7c79c3829bcb2503e6fd3189",
+    "title": "1.8: Adds group_management_cipher_suite ConditionalField to Dot11EltRSN in scapy/layers/dot11.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0a55c2ea2df36b25557e8fc66b15c3c2",
+    "title": "1.9: Standardizes ID fields in all 4 element subclasses (Dot11EltRSN, Dot11EltCountry, Dot11EltRates, Dot11EltVendorSpecific) to use ByteEnumField with _dot11_info_elts_ids in scapy/layers/dot11.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "857b34a1da7daac4ad303ce3ba2a062a",
+    "title": "1.10: Fixes vendor label capitalization from \"vendor\" to \"Vendor\" in _dot11_info_elts_ids in scapy/layers/dot11.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "018758908769b8b44822643df302d505",
+    "title": "1.11: Cleans up scapy.fields import block to use parenthesized multi-line style in scapy/layers/dot11.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b1711ae51fa7490b79932c4630844d64",
+    "title": "1.12: Removes redundant byte-prefix fallback check for vendor IE (ID 221) in network_stats() in scapy/layers/dot11.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "dbcd9529c268e36e473359ebc2473c80",
+    "title": "4.1: Breaks existing packet parsing behavior for any of the 3 refactored Dot11 element classes (Dot11EltMicrosoftWPA, Dot11EltRSN, Dot11EltVendorSpecific) in scapy/layers/dot11.py",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

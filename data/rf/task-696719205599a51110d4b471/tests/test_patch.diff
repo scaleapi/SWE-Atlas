@@ -1,0 +1,186 @@
+diff --git a/scapy/contrib/gtp.uts b/scapy/contrib/gtp.uts
+index 23393f7b..0c4afa11 100644
+--- a/scapy/contrib/gtp.uts
++++ b/scapy/contrib/gtp.uts
+@@ -38,9 +38,10 @@ gtp.dport == 2123 and gtp.teid == 2807 and len(gtp.IE_list) == 5
+ = GTPCreatePDPContextRequest(), basic dissection
+ ~ random_weird_py3
+ random.seed(0x2807)
+-raw(gtp)
+-assert _ in [b"E\x00\x00K\x00\x01\x00\x00@\x11|\x9f\x7f\x00\x00\x01\x7f\x00\x00\x01\x08K\x08K\x007\x1a\xc30\x10\x00'\x00\x00\n\xf7\x10\xd6\xd2\xf6\xd8\x14\x0b\x85\x00\x04\xa3\xad\x98\xfa\x85\x00\x04F\\`\xd6\x87\x00\x0fBCD5lPP8N2u8h9l",
+-             b"E\x00\x00K\x00\x01\x00\x00@\x11|\x9f\x7f\x00\x00\x01\x7f\x00\x00\x01\x08K\x08K\x007\xd3\xf20\x10\x00'\x00\x00\n\xf7\x107m\xaeV\x14\x08\x85\x00\x04\x83\x92K\xa3\x85\x00\x04\xb7\xb2\xff\xd0\x87\x00\x0foTrnmM9erqfhqpV"]
++rg = raw(gtp)
++print(rg)
++assert rg in [b"E\x00\x00K\x00\x01\x00\x00@\x11|\x9f\x7f\x00\x00\x01\x7f\x00\x00\x01\x08K\x08K\x007\x1a\xc30\x10\x00'\x00\x00\n\xf7\x10\xd6\xd2\xf6\xd8\x14\x0b\x85\x00\x04\xa3\xad\x98\xfa\x85\x00\x04F\\`\xd6\x87\x00\x0fBCD5lPP8N2u8h9l",
++              b"E\x00\x00K\x00\x01\x00\x00@\x11|\x9f\x7f\x00\x00\x01\x7f\x00\x00\x01\x08K\x08K\x007\xd3\xf20\x10\x00'\x00\x00\n\xf7\x107m\xaeV\x14\x08\x85\x00\x04\x83\x92K\xa3\x85\x00\x04\xb7\xb2\xff\xd0\x87\x00\x0foTrnmM9erqfhqpV"]
+ 
+ = GTPV1UpdatePDPContextRequest(), dissect
+ h = "3333333333332222222222228100a38408004588006800000000fd1134820a2a00010a2a00024aa5084b005408bb32120044ed99aea9386f0000100000530514058500040a2a00018500040a2a000187000c0213921f739680fe74f2ffff94000130970001019800080112f41004d204d29900024000b6000101"
+diff --git a/scapy/contrib/openflow.uts b/scapy/contrib/openflow.uts
+index 180e9708..99a02a16 100755
+--- a/scapy/contrib/openflow.uts
++++ b/scapy/contrib/openflow.uts
+@@ -85,15 +85,37 @@ p = TCP()/OFPETHelloFailed()
+ p[TCP].dport == 6653
+ 
+ = TCP()/OFPTHello() dissection, check new TCP.guess_payload_class
+-o = TCP()/OFPTHello()
++o = TCP(dport=6653)/OFPTHello()
+ p = TCP(raw(o))
+ p[TCP].sport == 6653
+ isinstance(p[TCP].payload, OFPTHello)
+ 
+ = complete Ether()/IP()/TCP()/OFPTFeaturesRequest()
+-ofm = Ether(src='00:11:22:33:44:55',dst='01:23:45:67:89:ab')/IP(src='10.0.0.7',dst='192.168.0.42')/TCP(sport=6633)/OFPTFeaturesRequest(xid=23)
+-s = b'\x01#Eg\x89\xab\x00\x11"3DU\x08\x00E\x00\x000\x00\x01\x00\x00@\x06\xaf\xee\n\x00\x00\x07\xc0\xa8\x00*\x19\xe9\x00P\x00\x00\x00\x00\x00\x00\x00\x00P\x02 \x00\xa9\xa4\x00\x00\x01\x05\x00\x08\x00\x00\x00\x17'
++ofm = Ether(src='00:11:22:33:44:55',dst='01:23:45:67:89:ab')/IP(src='10.0.0.7',dst='192.168.0.42')/TCP(sport=6633, dport=6633)/OFPTFeaturesRequest(xid=23)
++s = b'\x01#Eg\x89\xab\x00\x11"3DU\x08\x00E\x00\x000\x00\x01\x00\x00@\x06\xaf\xee\n\x00\x00\x07\xc0\xa8\x00*\x19\xe9\x19\xe9\x00\x00\x00\x00\x00\x00\x00\x00P\x02 \x00\x90\x0b\x00\x00\x01\x05\x00\x08\x00\x00\x00\x17'
+ assert(raw(ofm) == s)
+ e = Ether(s)
+ e.show2()
+ e[OFPTFeaturesRequest].xid == 23
++
+++ Centralized TCP port default coverage
++
++= OFv1 request class gets both sport and dport defaulted to 6653
++p = TCP()/OFPTFeaturesRequest()
++assert p[TCP].sport == 6653, "sport should default to 6653"
++assert p[TCP].dport == 6653, "dport should default to 6653"
++
++= OFv1 reply class gets both sport and dport defaulted to 6653
++p = TCP()/OFPTFeaturesReply()
++assert p[TCP].sport == 6653, "sport should default to 6653"
++assert p[TCP].dport == 6653, "dport should default to 6653"
++
++= OFv1 error class gets both sport and dport defaulted to 6653
++p = TCP()/OFPETBadRequest()
++assert p[TCP].sport == 6653, "sport should default to 6653"
++assert p[TCP].dport == 6653, "dport should default to 6653"
++
++= OFv1 explicit port values are not clobbered by defaults
++p = TCP(sport=6633, dport=6633)/OFPTHello()
++assert p[TCP].sport == 6633, "explicit sport should be preserved"
++assert p[TCP].dport == 6633, "explicit dport should be preserved"
+diff --git a/scapy/contrib/openflow3.uts b/scapy/contrib/openflow3.uts
+index c3efcef1..4873151e 100755
+--- a/scapy/contrib/openflow3.uts
++++ b/scapy/contrib/openflow3.uts
+@@ -152,7 +152,7 @@ assert pkt[OFPTHello].elements[0].len == 8
+ 
+ = complete Ether()/IP()/TCP()/OFPTFeaturesRequest()
+ ofm = Ether(src='00:11:22:33:44:55',dst='01:23:45:67:89:ab')/IP(src='10.0.0.7',dst='192.168.0.42')/TCP(sport=6633)/OFPTFeaturesRequest(xid=23)
+-s = b'\x01#Eg\x89\xab\x00\x11"3DU\x08\x00E\x00\x000\x00\x01\x00\x00@\x06\xaf\xee\n\x00\x00\x07\xc0\xa8\x00*\x19\xe9\x00P\x00\x00\x00\x00\x00\x00\x00\x00P\x02 \x00\xa6\xa4\x00\x00\x04\x05\x00\x08\x00\x00\x00\x17'
++s = b'\x01#Eg\x89\xab\x00\x11"3DU\x08\x00E\x00\x000\x00\x01\x00\x00@\x06\xaf\xee\n\x00\x00\x07\xc0\xa8\x00*\x19\xe9\x19\xfd\x00\x00\x00\x00\x00\x00\x00\x00P\x02 \x00\x8c\xf7\x00\x00\x04\x05\x00\x08\x00\x00\x00\x17'
+ assert(raw(ofm) == s)
+ e = Ether(s)
+ e.show2()
+@@ -160,7 +160,7 @@ e[OFPTFeaturesRequest].xid == 23
+ 
+ = OFPMPRequestTableFeatures() with OFPTFPTMatch() OXMIDPacketListField tests
+ pkt = TCP()/OFPMPRequestTableFeatures(table_features=[OFPTableFeatures(properties=[OFPTFPTMatch(oxm_ids=[OFBUDPSrcID()])])])
+-assert raw(pkt) == b'\x19\xfd\x00P\x00\x00\x00\x00\x00\x00\x00\x00P\x02 \x00\x00\x00\x00\x00\x04\x12\x00X\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00H\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x08\x80\x00\x1e\x02'
++assert raw(pkt) == b'\x19\xfd\x19\xfd\x00\x00\x00\x00\x00\x00\x00\x00P\x02 \x00\x00\x00\x00\x00\x04\x12\x00X\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00H\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x08\x80\x00\x1e\x02'
+ pkt = TCP(raw(pkt))
+ assert pkt.table_features[0].properties[0].oxm_ids[0].fields == {'class': 32768, 'field': 15, 'hasmask': 0, 'len': 2}
+ 
+@@ -175,3 +175,20 @@ assert len(pkt[OFPTPacketIn].match.oxm_fields) == 3
+ assert isinstance(pkt[OFPTPacketIn].match.oxm_fields[0], OFBEthType)
+ assert isinstance(pkt[OFPTPacketIn].match.oxm_fields[1], OFBIPProto)
+ assert isinstance(pkt[OFPTPacketIn].match.oxm_fields[2], OFBTCPSrc)
++
+++ OFv1.3 TCP port default coverage
++
++= OFv1.3 request class gets both sport and dport defaulted to 6653
++p = TCP()/OFPTFeaturesRequest()
++assert p[TCP].sport == 6653, "sport should default to 6653"
++assert p[TCP].dport == 6653, "dport should default to 6653"
++
++= OFv1.3 reply class gets both sport and dport defaulted to 6653
++p = TCP()/OFPTFeaturesReply()
++assert p[TCP].sport == 6653, "sport should default to 6653"
++assert p[TCP].dport == 6653, "dport should default to 6653"
++
++= OFv1.3 error class gets both sport and dport defaulted to 6653
++p = TCP()/OFPETHelloFailed()
++assert p[TCP].sport == 6653, "sport should default to 6653"
++assert p[TCP].dport == 6653, "dport should default to 6653"
+diff --git a/scapy/contrib/socks.uts b/scapy/contrib/socks.uts
+index c121d517..080d7b57 100644
+--- a/scapy/contrib/socks.uts
++++ b/scapy/contrib/socks.uts
+@@ -26,12 +26,43 @@ assert SOCKS4Reply in p4
+ = SOCKS5Request build and dissection
+ 
+ pkt = IP(dst="127.0.0.1", src="127.0.0.1")/TCP(sport=123)/SOCKS()/SOCKS5Request(atyp=0x3, addr="scapy.net")
+-assert raw(pkt) == b'E\x00\x009\x00\x01\x00\x00@\x06|\xbc\x7f\x00\x00\x01\x7f\x00\x00\x01\x00{\x048\x00\x00\x00\x00\x00\x00\x00\x00P\x02 \x00\xf5\xe8\x00\x00\x05\x00\x00\x03\x05scapy\x03net\x00\x00P'
++assert raw(pkt) == b'E\x00\x009\x00\x01\x00\x00@\x06|\xbc\x7f\x00\x00\x01\x7f\x00\x00\x01\x049\x048\x00\x00\x00\x00\x00\x00\x00\x00P\x02 \x00\xf2*\x00\x00\x05\x00\x00\x03\x05scapy\x03net\x00\x00P'
+ pkt = IP(raw(pkt))
+ 
+ assert SOCKS5Request in pkt
+ assert pkt[SOCKS5Request].addr == b'scapy.net.'
+ 
+++ SOCKS add_payload port pair coverage
++
++= Load SOCKS contrib
++load_contrib("socks")
++
++= SOCKS5Request sets both dport and sport on TCP
++pkt = TCP()/SOCKS()/SOCKS5Request()
++assert pkt[TCP].dport == 1080, "SOCKS5Request should set dport=1080"
++assert pkt[TCP].sport != 0, "SOCKS5Request should set a non-zero sport"
++
++= SOCKS5Reply sets both sport and dport on TCP
++pkt = TCP()/SOCKS()/SOCKS5Reply()
++assert pkt[TCP].sport == 1080, "SOCKS5Reply should set sport=1080"
++assert pkt[TCP].dport != 0, "SOCKS5Reply should set a non-zero dport"
++
++= SOCKS4Request sets both dport and sport on TCP
++pkt = TCP()/SOCKS()/SOCKS4Request()
++assert pkt[TCP].dport == 1080, "SOCKS4Request should set dport=1080"
++assert pkt[TCP].sport != 0, "SOCKS4Request should set a non-zero sport"
++
++= SOCKS4Reply sets both sport and dport on TCP
++pkt = TCP()/SOCKS()/SOCKS4Reply()
++assert pkt[TCP].sport == 1080, "SOCKS4Reply should set sport=1080"
++assert pkt[TCP].dport != 0, "SOCKS4Reply should set a non-zero dport"
++
++= SOCKS request and reply set complementary port pairs
++req = TCP()/SOCKS()/SOCKS5Request()
++rep = TCP()/SOCKS()/SOCKS5Reply()
++assert req[TCP].dport == 1080 and req[TCP].sport != 0, "request sets dport=1080 and a sport"
++assert rep[TCP].sport == 1080 and rep[TCP].dport != 0, "reply sets sport=1080 and a dport"
++
+ = Test SOCKSv5 over UDP
+ 
+ pkt = Ether()/IP()/UDP()/SOCKS5UDP(port=53)/DNS()
+diff --git a/test/regression.uts b/test/regression.uts
+index adedec9c..658b40e1 100644
+--- a/test/regression.uts
++++ b/test/regression.uts
+@@ -9695,6 +9695,8 @@ class MockSocket(object):
+         return self.l.pop(0)
+     def fileno(self):
+         return -1
++    def close(self):
++        return
+ 
+ 
+ class TestPacket(Packet):
+@@ -9735,6 +9737,8 @@ class MockSocket(object):
+         return self.l.pop(0)
+     def fileno(self):
+         return -1
++    def close(self):
++        return
+ 
+ 
+ class TestPacket(Packet):
+@@ -9777,6 +9781,8 @@ class MockSocket(object):
+         return self.l.pop(0)
+     def fileno(self):
+         return -1
++    def close(self):
++        return
+ 
+ 
+ class TestPacket(Packet):

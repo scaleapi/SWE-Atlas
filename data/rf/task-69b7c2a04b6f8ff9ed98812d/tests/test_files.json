@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "name": "mysql-test/suite/innodb/r/innochecksum_flags_and_skip.result"
+    },
+    {
+      "name": "mysql-test/suite/innodb/t/innochecksum_flags_and_skip.opt"
+    },
+    {
+      "name": "mysql-test/suite/innodb/t/innochecksum_flags_and_skip.test"
+    },
+    {
+      "name": "mysql-test/suite/innodb_zip/r/innochecksum_2.result"
+    },
+    {
+      "name": "mysql-test/suite/innodb_zip/t/innochecksum_2.opt"
+    },
+    {
+      "name": "mysql-test/suite/innodb_zip/t/innochecksum_2.test"
+    },
+    {
+      "name": "mysql-test/suite/innodb_zip/t/innochecksum_3.test"
+    }
+  ]
+}

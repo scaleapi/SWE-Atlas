@@ -1,0 +1,9 @@
+I need to simplifiy the setup code of the IAM app specially when running standalone. For this I want to implemente the following changes:
+
+- For storage we are now using the UniStore, for both embedded and standalone. This applies to all resource registrations in UpdateAPIGroupInfo and UpdateResourcePermissionsAPIGroup. However, if a legacy store is available, we wrap it with dual write. Instead of using a single boolean to toggle dual write for all resources, each resource should be able to independently determine whether its legacy store is available. Add legacy store tracking fields to the builder struct in models.go (userLegacyStore, saLegacyStore, legacyTeamStore, teamBindingLegacyStore, ssoLegacyStore) and update the registration logic in register.go.
+
+- Remove the noopStorage workaround in NewAPIService since it's no longer needed - the UniStore will be used directly when running standalone without dual write.
+
+The idea is to prevent panics when we forget to instantiate a dummy NoopStorageBackend in the NewApiService constructor for new apis.
+
+I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.

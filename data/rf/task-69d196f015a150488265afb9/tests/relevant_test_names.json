@@ -1,0 +1,52 @@
+{
+  "tests": [
+    {
+      "name": "parseListOptionsSelector > encodes equality and inequality labels in a Kubernetes-compatible way (order-independent check)"
+    },
+    {
+      "name": "parseListOptionsSelector > encodes in / notin label sets without requiring a single canonical join beyond containing both clauses"
+    },
+    {
+      "name": "parseListOptionsSelector > returns raw string selector unchanged"
+    },
+    {
+      "name": "parseListOptionsSelector > returns undefined for undefined input"
+    },
+    {
+      "name": "parseListOptionsSelector > supports existence-style operators"
+    },
+    {
+      "name": "provisioning API HTTP surface > deleteRepositoryFiles sends ref and message as query parameters on DELETE"
+    },
+    {
+      "name": "provisioning API HTTP surface > getJob targets the job resource by name in the URL path"
+    },
+    {
+      "name": "provisioning API HTTP surface > getRepository targets the repository resource in the URL path"
+    },
+    {
+      "name": "provisioning API HTTP surface > getRepositoryHistory includes the file path segment and ref"
+    },
+    {
+      "name": "provisioning API HTTP surface > getRepositoryWebhook targets the webhook URL (read)"
+    },
+    {
+      "name": "provisioning API HTTP surface > listJobs includes encoded label and field selectors in request params when provided"
+    },
+    {
+      "name": "provisioning API HTTP surface > listJobs with no args does not attach label or field selector params"
+    },
+    {
+      "name": "provisioning API HTTP surface > listRepository carries encoded label selectors on the request"
+    },
+    {
+      "name": "provisioning API HTTP surface > listRepositoryHistory forwards ref as a query parameter"
+    },
+    {
+      "name": "provisioning API HTTP surface > postRepositoryWebhook issues a POST to the webhook route"
+    },
+    {
+      "name": "ScopedResourceClient > passes list options through the shared selector serializer for GET list"
+    }
+  ]
+}

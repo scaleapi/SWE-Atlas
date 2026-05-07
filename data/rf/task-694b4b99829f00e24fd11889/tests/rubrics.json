@@ -1,0 +1,146 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4b9365bc0ec40e2e3566549345f5bfb3",
+    "title": "1.1: Makes incFilesProcessed() conditional on successful processing in pkg/handlers/ar.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "518f15f0cb177bb8278bd4b5181f898d",
+    "title": "1.2: Makes incFilesProcessed() conditional on successful processing in pkg/handlers/archive.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "27fe224fb89ab2550ebe9631dd1bc68c",
+    "title": "1.3: Makes incFilesProcessed() conditional on successful processing in pkg/handlers/default.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "88c1f325fd45cf9b1fe770b94747fccd",
+    "title": "1.4: Makes incFilesProcessed() conditional on successful processing in pkg/handlers/rpm.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f9e3bbd0f157925a2121e10f8268ff75",
+    "title": "1.5: Decouples panic recovery from the shared err variable in pkg/handlers/ar.go by ensuring the panic handler does not reassign the outer err variable",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7ecdec7db14bb83547944e29952745d9",
+    "title": "1.6: Decouples panic recovery from the shared err variable in pkg/handlers/archive.go by ensuring the panic handler does not reassign the outer err variable",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "cd6a322995f085081b3a1124fb773ae4",
+    "title": "1.7: Decouples panic recovery from the shared err variable in pkg/handlers/rpm.go by ensuring the panic handler does not reassign the outer err variable",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "11a59ecd299aac1493db548e1490dc7b",
+    "title": "1.8: Retains a measureLatencyAndHandleErrors(start, err) call in the HandleFile goroutine of all four handler files (pkg/handlers/ar.go, pkg/handlers/archive.go, pkg/handlers/default.go, pkg/handlers/rpm.go)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b12f9c2094f356c595e348da484b1ef4",
+    "title": "3.1: Removes the unnecessary context timeout from pkg/handlers/ar.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6e8a0eeff386e208f9044a8a8f489656",
+    "title": "3.2: Removes the unnecessary context timeout from pkg/handlers/rpm.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f88c0585cc27d534c430ac8e4bb2e155",
+    "title": "4.1: Removes the panic recovery defer block from pkg/handlers/ar.go",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6cde62ef09428bb8ae5ad580651e85be",
+    "title": "4.2: Removes the panic recovery defer block from pkg/handlers/archive.go",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4cad69915e0174ef8e219ad688bcc1e9",
+    "title": "4.3: Removes the panic recovery defer block from pkg/handlers/rpm.go",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c9bb2a3d960f40de2645e58d59bc79b7",
+    "title": "4.4: Modifies test files or testing logic in any of the handler packages",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

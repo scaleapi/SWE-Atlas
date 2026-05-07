@@ -1,0 +1,19 @@
+{
+  "tests": [
+    {
+      "name": "DetectFileextSignatureParseTest01"
+    },
+    {
+      "name": "DetectFileextSignatureParseTest02"
+    },
+    {
+      "name": "DetectFileextSignatureParseTest03"
+    },
+    {
+      "name": "DetectFileextSignatureParseTest04"
+    },
+    {
+      "name": "DetectFileextSignatureParseTest05"
+    }
+  ]
+}

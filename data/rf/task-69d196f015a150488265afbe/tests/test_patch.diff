@@ -1,0 +1,126 @@
+diff --git a/client/landing/stepper/declarative-flow/internals/components/checklist-card/test/index.tsx b/client/landing/stepper/declarative-flow/internals/components/checklist-card/test/index.tsx
+new file mode 100644
+index 00000000000..0e11798e0f7
+--- /dev/null
++++ b/client/landing/stepper/declarative-flow/internals/components/checklist-card/test/index.tsx
+@@ -0,0 +1,49 @@
++/**
++ * @jest-environment jsdom
++ */
++import { render } from '@testing-library/react';
++import React from 'react';
++import { ChecklistCard, type ChecklistCardItem } from '../';
++
++describe( 'ChecklistCard', () => {
++	const items: ChecklistCardItem[] = [
++		{ icon: <svg data-testid="icon-a" />, text: 'First benefit' },
++		{ icon: <svg data-testid="icon-b" />, text: 'Second benefit' },
++		{ icon: <svg data-testid="icon-c" />, text: 'Third benefit' },
++	];
++
++	it( 'renders the title', () => {
++		const { getByText } = render(
++			<ChecklistCard title="Test Title" items={ items } />
++		);
++		expect( getByText( 'Test Title' ) ).toBeVisible();
++	} );
++
++	it( 'renders all provided item texts', () => {
++		const { getByText } = render(
++			<ChecklistCard title="Title" items={ items } />
++		);
++		expect( getByText( 'First benefit' ) ).toBeVisible();
++		expect( getByText( 'Second benefit' ) ).toBeVisible();
++		expect( getByText( 'Third benefit' ) ).toBeVisible();
++	} );
++
++	it( 'renders with a single item', () => {
++		const singleItem: ChecklistCardItem[] = [
++			{ icon: <svg />, text: 'Only item' },
++		];
++		const { getByText } = render(
++			<ChecklistCard title="Single" items={ singleItem } />
++		);
++		expect( getByText( 'Single' ) ).toBeVisible();
++		expect( getByText( 'Only item' ) ).toBeVisible();
++	} );
++
++	it( 'renders with an empty items array', () => {
++		const { getByText, queryByText } = render(
++			<ChecklistCard title="No Items" items={ [] } />
++		);
++		expect( getByText( 'No Items' ) ).toBeVisible();
++		expect( queryByText( 'First benefit' ) ).not.toBeInTheDocument();
++	} );
++} );
+diff --git a/client/landing/stepper/declarative-flow/internals/steps-repository/site-migration-application-password-authorization/test/authorization-benefits.tsx b/client/landing/stepper/declarative-flow/internals/steps-repository/site-migration-application-password-authorization/test/authorization-benefits.tsx
+new file mode 100644
+index 00000000000..d5bbb9dd2d7
+--- /dev/null
++++ b/client/landing/stepper/declarative-flow/internals/steps-repository/site-migration-application-password-authorization/test/authorization-benefits.tsx
+@@ -0,0 +1,65 @@
++/**
++ * @jest-environment jsdom
++ */
++import { render } from '@testing-library/react';
++import React from 'react';
++import Authorization from '../components/authorization';
++
++jest.mock( 'i18n-calypso', () => ( {
++	useTranslate: () => ( key: string ) => key,
++	localize: ( Component: React.ComponentType ) => Component,
++	translate: ( key: string ) => key,
++	withRtl: ( Component: React.ComponentType ) => Component,
++} ) );
++
++jest.mock( '@automattic/number-formatters', () => ( {
++	formatNumber: () => '99.999%',
++} ) );
++
++describe( 'Authorization benefits section', () => {
++	it( 'renders the benefits heading', () => {
++		const { getByText } = render(
++			<Authorization
++				onShareCredentialsClick={ jest.fn() }
++				onAuthorizationClick={ jest.fn() }
++			/>
++		);
++		expect( getByText( "Here's what else you're getting" ) ).toBeVisible();
++	} );
++
++	it( 'renders the uninterrupted service benefit', () => {
++		const { getByText } = render(
++			<Authorization
++				onShareCredentialsClick={ jest.fn() }
++				onAuthorizationClick={ jest.fn() }
++			/>
++		);
++		expect(
++			getByText( 'Uninterrupted service throughout the entire migration experience.' )
++		).toBeVisible();
++	} );
++
++	it( 'renders the reliability benefit', () => {
++		const { getByText } = render(
++			<Authorization
++				onShareCredentialsClick={ jest.fn() }
++				onAuthorizationClick={ jest.fn() }
++			/>
++		);
++		expect(
++			getByText( /uptime and unmetered traffic/ )
++		).toBeVisible();
++	} );
++
++	it( 'renders the security benefit', () => {
++		const { getByText } = render(
++			<Authorization
++				onShareCredentialsClick={ jest.fn() }
++				onAuthorizationClick={ jest.fn() }
++			/>
++		);
++		expect(
++			getByText( 'Round-the-clock security monitoring and DDoS protection.' )
++		).toBeVisible();
++	} );
++} );

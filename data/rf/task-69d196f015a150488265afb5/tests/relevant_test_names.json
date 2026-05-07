@@ -1,0 +1,118 @@
+{
+  "tests": [
+    {
+      "name": "fetchSitePlans returns a normalized array of plans"
+    },
+    {
+      "name": "fetchSitePlans calls the correct API endpoint with siteId"
+    },
+    {
+      "name": "fetchSitePlans passes coupon_code as a query parameter when coupon is provided"
+    },
+    {
+      "name": "fetchSitePlans does not include coupon_code when coupon is undefined"
+    },
+    {
+      "name": "fetchSitePlans returns an empty array when API returns an empty object"
+    },
+    {
+      "name": "fetchSitePlans normalizes string numeric fields to numbers"
+    },
+    {
+      "name": "fetchSitePlans normalizes cost_overrides numeric fields"
+    },
+    {
+      "name": "fetchSitePlans preserves non-numeric cost_override fields"
+    },
+    {
+      "name": "fetchSitePlans normalizes optional interval field when present"
+    },
+    {
+      "name": "fetchSitePlans does not add interval when it is not present in the source"
+    },
+    {
+      "name": "fetchSitePlans normalizes optional introductory offer fields when present"
+    },
+    {
+      "name": "fetchSitePlans does not add introductory offer fields when not present"
+    },
+    {
+      "name": "fetchSitePlans normalizes optional id field when present"
+    },
+    {
+      "name": "fetchSitePlans preserves null id as null"
+    },
+    {
+      "name": "fetchSitePlans does not add id field when it is not present"
+    },
+    {
+      "name": "fetchSitePlans propagates API errors"
+    },
+    {
+      "name": "fetchSitePlans handles multiple plans from different product IDs"
+    },
+    {
+      "name": "fetchSitePlans preserves already-numeric fields as numbers"
+    },
+    {
+      "name": "fetchSitePlans handles plans with empty cost_overrides array"
+    },
+    {
+      "name": "fetchSitePlans handles plans with multiple cost_overrides"
+    },
+    {
+      "name": "fetchSitePlans does not include coupon_code when coupon is empty string"
+    },
+    {
+      "name": "sitePlansQuery returns query options with correct queryKey for siteId only"
+    },
+    {
+      "name": "sitePlansQuery returns query options with correct queryKey including coupon"
+    },
+    {
+      "name": "sitePlansQuery queryFn calls fetchSitePlans with siteId and coupon"
+    },
+    {
+      "name": "sitePlansQuery queryFn calls fetchSitePlans without coupon when none provided"
+    },
+    {
+      "name": "sitePlansQuery uses different queryKeys for different coupons on same site"
+    },
+    {
+      "name": "siteCurrentPlanQuery returns the plan with current_plan set to true"
+    },
+    {
+      "name": "siteCurrentPlanQuery throws when no current plan is found"
+    },
+    {
+      "name": "siteCurrentPlanQuery throws when plans array is empty"
+    },
+    {
+      "name": "siteCurrentPlanQuery has correct queryKey structure"
+    },
+    {
+      "name": "siteCurrentPlanQuery returns the first matching current plan when multiple have current_plan"
+    },
+    {
+      "name": "siteCurrentPlanQuery passes siteId to fetchSitePlans"
+    },
+    {
+      "name": "sitePlanBySlugQuery returns the plan matching the given slug"
+    },
+    {
+      "name": "sitePlanBySlugQuery throws when no plan with the given slug is found"
+    },
+    {
+      "name": "sitePlanBySlugQuery throws when plans array is empty"
+    },
+    {
+      "name": "sitePlanBySlugQuery has correct queryKey structure with slug"
+    },
+    {
+      "name": "sitePlanBySlugQuery passes siteId to fetchSitePlans"
+    },
+    {
+      "name": "sitePlanBySlugQuery returns the first match when multiple plans share the same slug"
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "tests": [
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestHeaderInfo_StructFields"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestScanner_V1_DefaultEndpoint"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestScanner_V1_FromData_MultipleMatches"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestScanner_V1_FromData_NoMatch"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestScanner_V1_FromData_NoVerify"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestScanner_V1_Keywords"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestScanner_V1_Type"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestScanner_V1_Version"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestSetHeaderInfo_Empty"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestSetHeaderInfo_OnlyScopes"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestSetUserResponse_AllFields"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestSetUserResponse_EmptyStringsNotSet"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestSetUserResponse_RequiredFieldsOnly"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestUserRes_JSONUnmarshal"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestUserRes_StructFields"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestVerifyGithub_EmptyResponse"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestVerifyGithub_EnterpriseUser"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestVerifyGithub_Forbidden"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestVerifyGithub_InvalidJSON"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestVerifyGithub_NoHeaders"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestVerifyGithub_OrganizationType"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestVerifyGithub_ServerError"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestVerifyGithub_Success"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v1/TestVerifyGithub_Unauthorized"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v2/TestScanner_DefaultEndpoint"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v2/TestScanner_EmbedV1Scanner"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v2/TestScanner_Keywords"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v2/TestScanner_Type"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v2/TestScanner_UsesV1SetUserResponse"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v2/TestScanner_UsesV1VerifyGithub"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v2/TestScanner_V2_FromData_GithubPatToken"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v2/TestScanner_V2_FromData_MultiplePatterns"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v2/TestScanner_V2_FromData_NoMatch"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v2/TestScanner_V2_FromData_NoVerify"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/github/v2/TestScanner_Version"
+    }
+  ]
+}

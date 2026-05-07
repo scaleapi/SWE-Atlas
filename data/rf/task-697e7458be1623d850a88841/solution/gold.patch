@@ -1,0 +1,365 @@
+diff --git a/pkg/tui/common/utils.go b/pkg/tui/common/utils.go
+index a61c052ef283..2d7e15d3f1c8 100644
+--- a/pkg/tui/common/utils.go
++++ b/pkg/tui/common/utils.go
+@@ -4,6 +4,7 @@ import (
+ 	"strings"
+ 
+ 	"github.com/muesli/reflow/truncate"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/tui/components/textinputs"
+ )
+ 
+ // TruncateString is a convenient wrapper around truncate.TruncateString.
+@@ -14,11 +15,11 @@ func TruncateString(s string, max int) string {
+ 	return truncate.StringWithTail(s, uint(max), "…")
+ }
+ 
+-func SummarizeSource(keys []string, inputs map[string]string, labels map[string]string) string {
++func SummarizeSource(keys []string, inputs map[string]textinputs.Input, labels map[string]string) string {
+ 	summary := strings.Builder{}
+ 	for _, key := range keys {
+-		if inputs[key] != "" {
+-			summary.WriteString("\t" + labels[key] + ": " + inputs[key] + "\n")
++		if inputs[key].Value != "" {
++			summary.WriteString("\t" + labels[key] + ": " + inputs[key].Value + "\n")
+ 		}
+ 	}
+ 
+diff --git a/pkg/tui/components/textinputs/textinputs.go b/pkg/tui/components/textinputs/textinputs.go
+index d0e68c6ba30f..e60f230852d8 100644
+--- a/pkg/tui/components/textinputs/textinputs.go
++++ b/pkg/tui/components/textinputs/textinputs.go
+@@ -47,11 +47,22 @@ type InputConfig struct {
+ 	Placeholder string
+ }
+ 
+-func (m Model) GetInputs() map[string]string {
+-	inputs := make(map[string]string)
++type Input struct {
++	Value     string
++	IsDefault bool
++}
++
++func (m Model) GetInputs() map[string]Input {
++	inputs := make(map[string]Input)
+ 
+ 	for i, input := range m.inputs {
+-		inputs[m.configs[i].Key] = input.Value()
++		isDefault := false
++		value := input.Value()
++		if value == "" && m.configs[i].Required {
++			isDefault = true
++			value = input.Placeholder
++		}
++		inputs[m.configs[i].Key] = Input{Value: value, IsDefault: isDefault}
+ 	}
+ 
+ 	return inputs
+diff --git a/pkg/tui/pages/source_configure/trufflehog_configure.go b/pkg/tui/pages/source_configure/trufflehog_configure.go
+index 4d17efd8613d..a603e1c24e66 100644
+--- a/pkg/tui/pages/source_configure/trufflehog_configure.go
++++ b/pkg/tui/pages/source_configure/trufflehog_configure.go
+@@ -1,6 +1,7 @@
+ package source_configure
+ 
+ import (
++	"runtime"
+ 	"strconv"
+ 	"strings"
+ 
+@@ -49,7 +50,7 @@ func GetTrufflehogConfiguration() truffleCmdModel {
+ 		Key:         "concurrency",
+ 		Required:    false,
+ 		Help:        "Number of concurrent workers.",
+-		Placeholder: "1",
++		Placeholder: strconv.Itoa(runtime.NumCPU()),
+ 	}
+ 
+ 	return truffleCmdModel{textinputs.New([]textinputs.InputConfig{jsonOutput, verification, verifiedResults, excludeDetectors, concurrency}).SetSkip(true)}
+@@ -59,25 +60,25 @@ func (m truffleCmdModel) Cmd() string {
+ 	var command []string
+ 	inputs := m.GetInputs()
+ 
+-	if isTrue(inputs["json"]) {
++	if isTrue(inputs["json"].Value) {
+ 		command = append(command, "--json")
+ 	}
+ 
+-	if isTrue(inputs["no-verification"]) {
++	if isTrue(inputs["no-verification"].Value) {
+ 		command = append(command, "--no-verification")
+ 	}
+ 
+-	if isTrue(inputs["only-verified"]) {
++	if isTrue(inputs["only-verified"].Value) {
+ 		command = append(command, "--only-verified")
+ 	}
+ 
+-	if inputs["exclude_detectors"] != "" {
+-		cmd := "--exclude-detectors=" + strings.ReplaceAll(inputs["exclude_detectors"], " ", "")
++	if inputs["exclude_detectors"].Value != "" {
++		cmd := "--exclude-detectors=" + strings.ReplaceAll(inputs["exclude_detectors"].Value, " ", "")
+ 		command = append(command, cmd)
+ 	}
+ 
+-	if inputs["concurrency"] != "" {
+-		command = append(command, "--concurrency="+inputs["concurrency"])
++	if inputs["concurrency"].Value != "" {
++		command = append(command, "--concurrency="+inputs["concurrency"].Value)
+ 	}
+ 
+ 	return strings.Join(command, " ")
+@@ -90,8 +91,8 @@ func (m truffleCmdModel) Summary() string {
+ 	inputs := m.GetInputs()
+ 	labels := m.GetLabels()
+ 	for _, key := range keys {
+-		if inputs[key] != "" {
+-			summary.WriteString("\t" + labels[key] + ": " + inputs[key] + "\n")
++		if inputs[key].Value != "" {
++			summary.WriteString("\t" + labels[key] + ": " + inputs[key].Value + "\n")
+ 		}
+ 	}
+ 
+diff --git a/pkg/tui/pages/source_select/source_select.go b/pkg/tui/pages/source_select/source_select.go
+index 94bd8b285b77..37cc77489b8d 100644
+--- a/pkg/tui/pages/source_select/source_select.go
++++ b/pkg/tui/pages/source_select/source_select.go
+@@ -73,6 +73,7 @@ func New(c common.Common) *SourceSelect {
+ 		OssItem("GCS (Google Cloud Storage)", "Scan a Google Cloud Storage instance."),
+ 		// Enterprise sources.
+ 		EnterpriseItem("Artifactory", "Scan JFrog Artifactory packages."),
++		EnterpriseItem("Azure Repos", "Scan Microsoft Azure repositories."),
+ 		EnterpriseItem("BitBucket", "Scan Atlassian's Git-based source code repository hosting service."),
+ 		EnterpriseItem("Buildkite", "Scan Buildkite, a CI/CD platform."),
+ 		EnterpriseItem("Confluence", "Scan Atlassian's web-based wiki and knowledge base."),
+diff --git a/pkg/tui/sources/circleci/circleci.go b/pkg/tui/sources/circleci/circleci.go
+index cd57a21d2a59..db8b7bfd4b6a 100644
+--- a/pkg/tui/sources/circleci/circleci.go
++++ b/pkg/tui/sources/circleci/circleci.go
+@@ -27,10 +27,7 @@ func (m circleCiCmdModel) Cmd() string {
+ 	command = append(command, "trufflehog", "circleci")
+ 
+ 	inputs := m.GetInputs()
+-
+-	if inputs["token"] != "" {
+-		command = append(command, "--token="+inputs["token"])
+-	}
++	command = append(command, "--token="+inputs["token"].Value)
+ 
+ 	return strings.Join(command, " ")
+ }
+diff --git a/pkg/tui/sources/docker/docker.go b/pkg/tui/sources/docker/docker.go
+index 942459aa82d8..32b407afba30 100644
+--- a/pkg/tui/sources/docker/docker.go
++++ b/pkg/tui/sources/docker/docker.go
+@@ -29,7 +29,8 @@ func (m dockerCmdModel) Cmd() string {
+ 	command = append(command, "trufflehog", "docker")
+ 
+ 	inputs := m.GetInputs()
+-	vals := inputs["images"]
++	vals := inputs["images"].Value
++
+ 	if vals != "" {
+ 		images := strings.Fields(vals)
+ 		for _, image := range images {
+diff --git a/pkg/tui/sources/filesystem/filesystem.go b/pkg/tui/sources/filesystem/filesystem.go
+index 68b98c8c51cb..e501518f23ab 100644
+--- a/pkg/tui/sources/filesystem/filesystem.go
++++ b/pkg/tui/sources/filesystem/filesystem.go
+@@ -28,10 +28,7 @@ func (m fsModel) Cmd() string {
+ 	command = append(command, "trufflehog", "filesystem")
+ 
+ 	inputs := m.GetInputs()
+-
+-	if inputs["path"] != "" {
+-		command = append(command, inputs["path"])
+-	}
++	command = append(command, inputs["path"].Value)
+ 
+ 	return strings.Join(command, " ")
+ }
+diff --git a/pkg/tui/sources/gcs/gcs.go b/pkg/tui/sources/gcs/gcs.go
+index 0342a120e8e7..fa78510d12af 100644
+--- a/pkg/tui/sources/gcs/gcs.go
++++ b/pkg/tui/sources/gcs/gcs.go
+@@ -14,9 +14,9 @@ type gcsCmdModel struct {
+ func GetFields() gcsCmdModel {
+ 	projectId := textinputs.InputConfig{
+ 		Label:       "Project ID",
+-		Key:         "project_id",
++		Key:         "project-id",
+ 		Required:    true,
+-		Placeholder: "my-project",
++		Placeholder: "trufflehog-testing",
+ 	}
+ 
+ 	return gcsCmdModel{textinputs.New([]textinputs.InputConfig{projectId})}
+@@ -27,9 +27,8 @@ func (m gcsCmdModel) Cmd() string {
+ 	command = append(command, "trufflehog", "gcs")
+ 
+ 	inputs := m.GetInputs()
+-	if inputs["project_id"] != "" {
+-		command = append(command, "--project_id="+inputs["project_id"])
+-	}
++
++	command = append(command, "--project-id="+inputs["project-id"].Value)
+ 
+ 	command = append(command, "--cloud-environment")
+ 	return strings.Join(command, " ")
+@@ -39,6 +38,6 @@ func (m gcsCmdModel) Summary() string {
+ 	inputs := m.GetInputs()
+ 	labels := m.GetLabels()
+ 
+-	keys := []string{"project_id"}
++	keys := []string{"project-id"}
+ 	return common.SummarizeSource(keys, inputs, labels)
+ }
+diff --git a/pkg/tui/sources/git/git.go b/pkg/tui/sources/git/git.go
+index 882c7c1cb1b1..54e137461672 100644
+--- a/pkg/tui/sources/git/git.go
++++ b/pkg/tui/sources/git/git.go
+@@ -15,8 +15,9 @@ func GetFields() gitCmdModel {
+ 	uri := textinputs.InputConfig{
+ 		Label:       "Git URI",
+ 		Key:         "uri",
++		Help:        "file:// for local git repos",
+ 		Required:    true,
+-		Placeholder: "git@github.com:trufflesecurity/trufflehog.git.",
++		Placeholder: "git@github.com:trufflesecurity/trufflehog.git",
+ 	}
+ 
+ 	return gitCmdModel{textinputs.New([]textinputs.InputConfig{uri})}
+@@ -28,9 +29,7 @@ func (m gitCmdModel) Cmd() string {
+ 
+ 	inputs := m.GetInputs()
+ 
+-	if inputs["uri"] != "" {
+-		command = append(command, inputs["uri"])
+-	}
++	command = append(command, inputs["uri"].Value)
+ 
+ 	return strings.Join(command, " ")
+ }
+diff --git a/pkg/tui/sources/github/github.go b/pkg/tui/sources/github/github.go
+index 2ee09c6a3955..13b841ddea39 100644
+--- a/pkg/tui/sources/github/github.go
++++ b/pkg/tui/sources/github/github.go
+@@ -19,7 +19,7 @@ func GetFields() githubCmdModel {
+ 	org := textinputs.InputConfig{
+ 		Label:       "Organization",
+ 		Key:         "org",
+-		Required:    false,
++		Required:    true,
+ 		Help:        "GitHub organization to scan.",
+ 		Placeholder: "trufflesecurity",
+ 	}
+@@ -27,7 +27,7 @@ func GetFields() githubCmdModel {
+ 	repo := textinputs.InputConfig{
+ 		Label:       "Repository",
+ 		Key:         "repo",
+-		Required:    false,
++		Required:    true,
+ 		Help:        "GitHub repo to scan.",
+ 		Placeholder: "https://github.com/trufflesecurity/test_keys",
+ 	}
+@@ -35,25 +35,39 @@ func GetFields() githubCmdModel {
+ 	return githubCmdModel{textinputs.New([]textinputs.InputConfig{org, repo})}
+ }
+ 
++// Handle default values since GitHub flags are OR operations
++func (m githubCmdModel) GetSpecialInputs() map[string]textinputs.Input {
++	inputs := m.GetInputs()
++	if inputs["org"].IsDefault != inputs["repo"].IsDefault {
++		if inputs["org"].IsDefault {
++			delete(inputs, "org")
++		}
++		if inputs["repo"].IsDefault {
++			delete(inputs, "repo")
++		}
++	}
++
++	return inputs
++}
++
+ func (m githubCmdModel) Cmd() string {
+ 	var command []string
+ 	command = append(command, "trufflehog", "github")
++	inputs := m.GetSpecialInputs()
+ 
+-	inputs := m.GetInputs()
+-
+-	if inputs["org"] != "" {
+-		command = append(command, "--org="+inputs["org"])
++	if inputs["org"].Value != "" {
++		command = append(command, "--org="+inputs["org"].Value)
+ 	}
+ 
+-	if inputs["repo"] != "" {
+-		command = append(command, "--repo="+inputs["repo"])
++	if inputs["repo"].Value != "" {
++		command = append(command, "--repo="+inputs["repo"].Value)
+ 	}
+ 
+ 	return strings.Join(command, " ")
+ }
+ 
+ func (m githubCmdModel) Summary() string {
+-	inputs := m.GetInputs()
++	inputs := m.GetSpecialInputs()
+ 	labels := m.GetLabels()
+ 
+ 	keys := []string{"org", "repo"}
+diff --git a/pkg/tui/sources/gitlab/gitlab.go b/pkg/tui/sources/gitlab/gitlab.go
+index f272fc8df6d7..a35664051b6b 100644
+--- a/pkg/tui/sources/gitlab/gitlab.go
++++ b/pkg/tui/sources/gitlab/gitlab.go
+@@ -29,9 +29,7 @@ func (m gitlabCmdModel) Cmd() string {
+ 
+ 	inputs := m.GetInputs()
+ 
+-	if inputs["token"] != "" {
+-		command = append(command, "--token="+inputs["token"])
+-	}
++	command = append(command, "--token="+inputs["token"].Value)
+ 
+ 	return strings.Join(command, " ")
+ }
+diff --git a/pkg/tui/sources/s3/s3.go b/pkg/tui/sources/s3/s3.go
+index 42433e331a30..dadb43784631 100644
+--- a/pkg/tui/sources/s3/s3.go
++++ b/pkg/tui/sources/s3/s3.go
+@@ -16,7 +16,7 @@ func GetFields() s3CmdModel {
+ 		Label:       "S3 bucket name(s)",
+ 		Key:         "buckets",
+ 		Required:    true,
+-		Placeholder: "my-bucket-name",
++		Placeholder: "truffletestbucket",
+ 		Help:        "Buckets to scan. Separate by space if multiple.",
+ 	}
+ 
+@@ -28,7 +28,7 @@ func (m s3CmdModel) Cmd() string {
+ 	command = append(command, "trufflehog", "s3")
+ 
+ 	inputs := m.GetInputs()
+-	vals := inputs["buckets"]
++	vals := inputs["buckets"].Value
+ 	if vals != "" {
+ 		buckets := strings.Fields(vals)
+ 		for _, bucket := range buckets {
+diff --git a/pkg/tui/sources/syslog/syslog.go b/pkg/tui/sources/syslog/syslog.go
+index c220d398d09e..26a1b0d96774 100644
+--- a/pkg/tui/sources/syslog/syslog.go
++++ b/pkg/tui/sources/syslog/syslog.go
+@@ -64,10 +64,8 @@ func (m syslogCmdModel) Cmd() string {
+ 	syslogKeys := [5]string{"address", "protocol", "cert", "key", "format"}
+ 
+ 	for _, key := range syslogKeys {
+-		if inputs[key] != "" {
+-			flag := "--" + key + "=" + inputs[key]
+-			command = append(command, flag)
+-		}
++		flag := "--" + key + "=" + inputs[key].Value
++		command = append(command, flag)
+ 	}
+ 
+ 	return strings.Join(command, " ")

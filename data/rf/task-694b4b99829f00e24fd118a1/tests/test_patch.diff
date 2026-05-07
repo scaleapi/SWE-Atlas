@@ -1,0 +1,546 @@
+diff --git a/test/benchmark/dissection_and_build.py b/test/benchmark/dissection_and_build.py
+new file mode 100644
+index 00000000..b46b42e2
+--- /dev/null
++++ b/test/benchmark/dissection_and_build.py
+@@ -0,0 +1,36 @@
++# This file is part of Scapy
++# See http://www.secdev.org/projects/scapy for more information
++# Copyright (C) Guillaume Valadon
++# This program is published under a GPLv2 license
++
++import time
++
++from scapy.all import *
++from scapy.modules.six.moves import range
++
++if WINDOWS:
++    route_add_loopback()
++
++N = 10000
++raw_packet = b'E\x00\x00(\x00\x01\x00\x00@\x11|\xc2\x7f\x00\x00\x01\x7f\x00\x00\x01\x005\x005\x00\x14\x00Z\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
++
++start = time.time()
++for i in range(N):
++    p = IP() / UDP() / DNS()
++    assert raw(p) == raw_packet
++print("Build - %.2fs" % (time.time() - start))
++
++start = time.time()
++for i in range(N):
++    p = IP(raw_packet)
++    assert DNS in p
++print("Dissect - %.2fs" % (time.time() - start))
++
++start = time.time()
++for i in range(N):
++    p = IP() / UDP() / DNS()
++    s = raw(p)
++    assert s == raw_packet
++    p = IP(s)
++    assert DNS in p
++print("Build & dissect - %.2fs" % (time.time() - start))
+diff --git a/test/regression.uts b/test/regression.uts
+index d6141deb..6088691a 100644
+--- a/test/regression.uts
++++ b/test/regression.uts
+@@ -3379,8 +3379,8 @@ assert ICMPv6NIQueryIPv4 in p and p.data == b"freebsd"
+ ~ not_pypy random_weird_py3
+ random.seed(0x2807)
+ p = IPv6()/ICMPv6NIQueryIPv4(data="freebsd")
+-h_py2 = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00:\xe10S7\x9d\x91\x84\xc9'
+-h_py3 = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00:\xa8\x19uE\x01\xcf\xe3\x04'
++h_py2 = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00:y\xb2V<\x7f\x87\x14\xde'
++h_py3 = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00:\x88\xccb\x19~\x9e\xe3a'
+ assert p.hashret() in [h_py2, h_py3]
+ 
+ 
+@@ -8953,6 +8953,9 @@ class MockSocket(object):
+         if len(self.l) == 0:
+             raise socket.error(100, 'EOF')
+         return self.l.pop(0)
++    def fileno(self):
++        return -1
++
+ 
+ class TestPacket(Packet):
+     name = 'TestPacket'
+@@ -8990,6 +8993,9 @@ class MockSocket(object):
+         if len(self.l) == 0:
+             raise socket.error(100, 'EOF')
+         return self.l.pop(0)
++    def fileno(self):
++        return -1
++
+ 
+ class TestPacket(Packet):
+     name = 'TestPacket'
+@@ -9029,6 +9035,9 @@ class MockSocket(object):
+         if len(self.l) == 0:
+             raise socket.error(100, 'EOF')
+         return self.l.pop(0)
++    def fileno(self):
++        return -1
++
+ 
+ class TestPacket(Packet):
+     name = 'TestPacket'
+diff --git a/test/test_random_cleanups.py b/test/test_random_cleanups.py
+new file mode 100644
+index 00000000..388bcdac
+--- /dev/null
++++ b/test/test_random_cleanups.py
+@@ -0,0 +1,453 @@
++"""
++Tests for random cleanups refactor:
++- Dump method deduplication (shared mixin for Packet and PacketList)
++- RandString Python 2/3 compatibility
++- SuperSocket close on Windows
++"""
++import io
++import unittest
++from unittest.mock import MagicMock, patch
++
++
++class TestDumpMethodSharedBase(unittest.TestCase):
++    """Verify dump methods are consolidated into a shared base."""
++
++    def test_packet_has_psdump(self):
++        from scapy.packet import Packet
++        self.assertTrue(hasattr(Packet, 'psdump'))
++        self.assertTrue(callable(getattr(Packet, 'psdump')))
++
++    def test_packet_has_pdfdump(self):
++        from scapy.packet import Packet
++        self.assertTrue(hasattr(Packet, 'pdfdump'))
++        self.assertTrue(callable(getattr(Packet, 'pdfdump')))
++
++    def test_packet_has_svgdump(self):
++        from scapy.packet import Packet
++        self.assertTrue(hasattr(Packet, 'svgdump'))
++        self.assertTrue(callable(getattr(Packet, 'svgdump')))
++
++    def test_packetlist_has_psdump(self):
++        from scapy.plist import PacketList
++        self.assertTrue(hasattr(PacketList, 'psdump'))
++        self.assertTrue(callable(getattr(PacketList, 'psdump')))
++
++    def test_packetlist_has_pdfdump(self):
++        from scapy.plist import PacketList
++        self.assertTrue(hasattr(PacketList, 'pdfdump'))
++        self.assertTrue(callable(getattr(PacketList, 'pdfdump')))
++
++    def test_packetlist_has_svgdump(self):
++        from scapy.plist import PacketList
++        self.assertTrue(hasattr(PacketList, 'svgdump'))
++        self.assertTrue(callable(getattr(PacketList, 'svgdump')))
++
++    def test_psdump_comes_from_shared_base(self):
++        from scapy.packet import Packet
++        from scapy.plist import PacketList
++        owner_packet = None
++        owner_plist = None
++        for cls in Packet.__mro__:
++            if 'psdump' in cls.__dict__:
++                owner_packet = cls
++                break
++        for cls in PacketList.__mro__:
++            if 'psdump' in cls.__dict__:
++                owner_plist = cls
++                break
++        self.assertIsNotNone(owner_packet)
++        self.assertIsNotNone(owner_plist)
++        self.assertIs(owner_packet, owner_plist,
++                      "psdump should come from the same shared base class")
++
++    def test_pdfdump_comes_from_shared_base(self):
++        from scapy.packet import Packet
++        from scapy.plist import PacketList
++        owner_packet = None
++        owner_plist = None
++        for cls in Packet.__mro__:
++            if 'pdfdump' in cls.__dict__:
++                owner_packet = cls
++                break
++        for cls in PacketList.__mro__:
++            if 'pdfdump' in cls.__dict__:
++                owner_plist = cls
++                break
++        self.assertIs(owner_packet, owner_plist,
++                      "pdfdump should come from the same shared base class")
++
++    def test_svgdump_comes_from_shared_base(self):
++        from scapy.packet import Packet
++        from scapy.plist import PacketList
++        owner_packet = None
++        owner_plist = None
++        for cls in Packet.__mro__:
++            if 'svgdump' in cls.__dict__:
++                owner_packet = cls
++                break
++        for cls in PacketList.__mro__:
++            if 'svgdump' in cls.__dict__:
++                owner_plist = cls
++                break
++        self.assertIs(owner_packet, owner_plist,
++                      "svgdump should come from the same shared base class")
++
++    def test_psdump_not_defined_directly_on_packet(self):
++        from scapy.packet import Packet
++        self.assertNotIn('psdump', Packet.__dict__,
++                         "psdump should be inherited, not defined directly on Packet")
++
++    def test_pdfdump_not_defined_directly_on_packet(self):
++        from scapy.packet import Packet
++        self.assertNotIn('pdfdump', Packet.__dict__,
++                         "pdfdump should be inherited, not defined directly on Packet")
++
++    def test_svgdump_not_defined_directly_on_packet(self):
++        from scapy.packet import Packet
++        self.assertNotIn('svgdump', Packet.__dict__,
++                         "svgdump should be inherited, not defined directly on Packet")
++
++    def test_psdump_not_defined_directly_on_packetlist(self):
++        from scapy.plist import PacketList
++        self.assertNotIn('psdump', PacketList.__dict__,
++                         "psdump should be inherited, not defined directly on PacketList")
++
++    def test_pdfdump_not_defined_directly_on_packetlist(self):
++        from scapy.plist import PacketList
++        self.assertNotIn('pdfdump', PacketList.__dict__,
++                         "pdfdump should be inherited, not defined directly on PacketList")
++
++
++class TestDumpMethodBehavior(unittest.TestCase):
++    """Verify dump methods work correctly through both Packet and PacketList."""
++
++    @staticmethod
++    def _find_canvas_method(cls):
++        """Discover the canvas generation method regardless of naming convention.
++
++        Valid solutions may name it canvas_dump, _get_canvas_dump, etc.
++        We find it by looking for a callable on the class that is related to
++        canvas/document generation but is not one of the public dump methods.
++        """
++        dump_methods = {'psdump', 'pdfdump', 'svgdump'}
++        candidates = ('canvas_dump', '_get_canvas_dump', '_canvas_dump',
++                       '_make_canvas', '_dump_document', '_generate_canvas')
++        for name in candidates:
++            if hasattr(cls, name) and name not in dump_methods:
++                return name
++        for name in sorted(dir(cls)):
++            if name in dump_methods or name.startswith('__'):
++                continue
++            if ('canvas' in name.lower() or 'dump' in name.lower()):
++                attr = getattr(cls, name, None)
++                if callable(attr):
++                    return name
++        return None
++
++    def test_packet_psdump_writes_eps_to_given_filename(self):
++        from scapy.packet import Packet
++        pkt = Packet()
++        method = self._find_canvas_method(type(pkt))
++        self.assertIsNotNone(method, "No canvas generation method found on Packet")
++        mock_canvas = MagicMock()
++        with patch.object(type(pkt), method, return_value=mock_canvas):
++            pkt.psdump(filename='/tmp/specific.eps')
++        mock_canvas.writeEPSfile.assert_called_with('/tmp/specific.eps')
++
++    def test_packet_pdfdump_writes_pdf_to_given_filename(self):
++        from scapy.packet import Packet
++        pkt = Packet()
++        method = self._find_canvas_method(type(pkt))
++        self.assertIsNotNone(method, "No canvas generation method found on Packet")
++        mock_canvas = MagicMock()
++        with patch.object(type(pkt), method, return_value=mock_canvas):
++            pkt.pdfdump(filename='/tmp/specific.pdf')
++        mock_canvas.writePDFfile.assert_called_with('/tmp/specific.pdf')
++
++    def test_packet_svgdump_writes_svg_to_given_filename(self):
++        from scapy.packet import Packet
++        pkt = Packet()
++        method = self._find_canvas_method(type(pkt))
++        self.assertIsNotNone(method, "No canvas generation method found on Packet")
++        mock_canvas = MagicMock()
++        with patch.object(type(pkt), method, return_value=mock_canvas):
++            pkt.svgdump(filename='/tmp/specific.svg')
++        mock_canvas.writeSVGfile.assert_called_with('/tmp/specific.svg')
++
++    def test_packet_and_packetlist_share_psdump(self):
++        from scapy.packet import Packet
++        from scapy.plist import PacketList
++        self.assertIs(
++            Packet.psdump, PacketList.psdump,
++            "Packet and PacketList psdump should be the exact same function"
++        )
++
++    def test_packet_and_packetlist_share_pdfdump(self):
++        from scapy.packet import Packet
++        from scapy.plist import PacketList
++        self.assertIs(
++            Packet.pdfdump, PacketList.pdfdump,
++            "Packet and PacketList pdfdump should be the exact same function"
++        )
++
++    def test_packet_and_packetlist_share_svgdump(self):
++        from scapy.packet import Packet
++        from scapy.plist import PacketList
++        self.assertIs(
++            Packet.svgdump, PacketList.svgdump,
++            "Packet and PacketList svgdump should be the exact same function"
++        )
++
++    def test_psdump_delegates_to_canvas_generation(self):
++        from scapy.packet import Packet
++        pkt = Packet()
++        method = self._find_canvas_method(type(pkt))
++        self.assertIsNotNone(method, "No canvas generation method found on Packet")
++        mock_canvas = MagicMock()
++        with patch.object(type(pkt), method, return_value=mock_canvas) as mock_cd:
++            pkt.psdump(filename='/tmp/out.eps')
++        mock_cd.assert_called_once()
++
++    def test_pdfdump_delegates_to_canvas_generation(self):
++        from scapy.packet import Packet
++        pkt = Packet()
++        method = self._find_canvas_method(type(pkt))
++        self.assertIsNotNone(method, "No canvas generation method found on Packet")
++        mock_canvas = MagicMock()
++        with patch.object(type(pkt), method, return_value=mock_canvas) as mock_cd:
++            pkt.pdfdump(filename='/tmp/out.pdf')
++        mock_cd.assert_called_once()
++
++    def test_svgdump_delegates_to_canvas_generation(self):
++        from scapy.packet import Packet
++        pkt = Packet()
++        method = self._find_canvas_method(type(pkt))
++        self.assertIsNotNone(method, "No canvas generation method found on Packet")
++        mock_canvas = MagicMock()
++        with patch.object(type(pkt), method, return_value=mock_canvas) as mock_cd:
++            pkt.svgdump(filename='/tmp/out.svg')
++        mock_cd.assert_called_once()
++
++
++class TestDumpMethodTempFileBranch(unittest.TestCase):
++    """Verify dump methods handle the filename=None branch correctly.
++
++    When no filename is provided, the dump methods should:
++    1. Generate a temporary file with the appropriate extension
++    2. Write the output to the temp file
++    3. Launch an appropriate viewer (os.startfile on Windows, subprocess on others)
++    """
++
++    @staticmethod
++    def _find_canvas_method(cls):
++        dump_methods = {'psdump', 'pdfdump', 'svgdump'}
++        candidates = ('canvas_dump', '_get_canvas_dump', '_canvas_dump',
++                       '_make_canvas', '_dump_document', '_generate_canvas')
++        for name in candidates:
++            if hasattr(cls, name) and name not in dump_methods:
++                return name
++        for name in sorted(dir(cls)):
++            if name in dump_methods or name.startswith('__'):
++                continue
++            if ('canvas' in name.lower() or 'dump' in name.lower()):
++                attr = getattr(cls, name, None)
++                if callable(attr):
++                    return name
++        return None
++
++    @staticmethod
++    def _find_mixin_module(pkt_type, method_name):
++        for cls in pkt_type.__mro__:
++            if method_name in cls.__dict__:
++                return cls.__module__
++        return pkt_type.__module__
++
++    def _build_patches(self, pkt, canvas_method, dump_method_name,
++                       reader_attr, windows_val):
++        """Build a dict of patch context managers that work regardless of
++        whether the mixin uses module-level or local imports."""
++        import sys
++        mock_canvas = MagicMock()
++        mock_conf = MagicMock()
++        setattr(mock_conf.prog, reader_attr,
++                '/usr/bin/viewer' if not windows_val else None)
++
++        mixin_mod = self._find_mixin_module(type(pkt), dump_method_name)
++
++        p = {}
++        p['canvas'] = patch.object(type(pkt), canvas_method,
++                                   return_value=mock_canvas)
++        p['get_temp_file'] = patch('scapy.utils.get_temp_file',
++                                   return_value='/tmp/fakefile')
++        p['conf'] = patch('scapy.config.conf', mock_conf)
++        p['consts_win'] = patch('scapy.consts.WINDOWS', windows_val)
++        p['ctx_mgr'] = patch('scapy.utils.ContextManagerSubprocess')
++        p['stdout'] = patch('sys.stdout', new_callable=io.StringIO)
++        p['subproc'] = patch('subprocess.Popen')
++
++        mod = sys.modules.get(mixin_mod)
++        if mod and hasattr(mod, 'WINDOWS'):
++            p['mod_win'] = patch.object(mod, 'WINDOWS', windows_val)
++        if mod and hasattr(mod, 'subprocess'):
++            p['mod_subproc'] = patch.object(mod, 'subprocess')
++
++        if windows_val:
++            if mod and hasattr(mod, 'os'):
++                p['startfile'] = patch.object(mod.os, 'startfile',
++                                              create=True)
++            else:
++                import os as _os
++                p['startfile'] = patch.object(_os, 'startfile', create=True)
++
++        return p, mock_canvas
++
++    def _run_dump_no_filename(self, dump_method_name, write_method_name,
++                              reader_attr, windows_val):
++        from scapy.packet import Packet
++        pkt = Packet()
++        canvas_method = self._find_canvas_method(type(pkt))
++        self.assertIsNotNone(canvas_method)
++
++        patches, mock_canvas = self._build_patches(
++            pkt, canvas_method, dump_method_name, reader_attr, windows_val)
++
++        ctx = {}
++        try:
++            for key, p in patches.items():
++                ctx[key] = p.start()
++            getattr(pkt, dump_method_name)()
++        finally:
++            for p in patches.values():
++                p.stop()
++
++        getattr(mock_canvas, write_method_name).assert_called()
++        return mock_canvas, ctx
++
++    def test_psdump_no_filename_writes_to_temp(self):
++        mock_canvas, _ = self._run_dump_no_filename(
++            'psdump', 'writeEPSfile', 'psreader', False)
++        mock_canvas.writeEPSfile.assert_called_with('/tmp/fakefile')
++
++    def test_pdfdump_no_filename_writes_to_temp(self):
++        mock_canvas, _ = self._run_dump_no_filename(
++            'pdfdump', 'writePDFfile', 'pdfreader', False)
++        mock_canvas.writePDFfile.assert_called_with('/tmp/fakefile')
++
++    def test_svgdump_no_filename_writes_to_temp(self):
++        mock_canvas, _ = self._run_dump_no_filename(
++            'svgdump', 'writeSVGfile', 'svgreader', False)
++        mock_canvas.writeSVGfile.assert_called_with('/tmp/fakefile')
++
++    def _assert_viewer_launched(self, ctx):
++        if 'mod_subproc' in ctx:
++            ctx['mod_subproc'].Popen.assert_called()
++        else:
++            ctx['subproc'].assert_called()
++
++    def test_psdump_no_filename_launches_viewer(self):
++        _, ctx = self._run_dump_no_filename(
++            'psdump', 'writeEPSfile', 'psreader', False)
++        self._assert_viewer_launched(ctx)
++
++    def test_pdfdump_no_filename_launches_viewer(self):
++        _, ctx = self._run_dump_no_filename(
++            'pdfdump', 'writePDFfile', 'pdfreader', False)
++        self._assert_viewer_launched(ctx)
++
++    def test_svgdump_no_filename_launches_viewer(self):
++        _, ctx = self._run_dump_no_filename(
++            'svgdump', 'writeSVGfile', 'svgreader', False)
++        self._assert_viewer_launched(ctx)
++
++    def test_psdump_no_filename_windows_startfile(self):
++        _, ctx = self._run_dump_no_filename(
++            'psdump', 'writeEPSfile', 'psreader', True)
++        ctx['startfile'].assert_called_with('/tmp/fakefile')
++
++    def test_pdfdump_no_filename_windows_startfile(self):
++        _, ctx = self._run_dump_no_filename(
++            'pdfdump', 'writePDFfile', 'pdfreader', True)
++        ctx['startfile'].assert_called_with('/tmp/fakefile')
++
++    def test_svgdump_no_filename_windows_startfile(self):
++        _, ctx = self._run_dump_no_filename(
++            'svgdump', 'writeSVGfile', 'svgreader', True)
++        ctx['startfile'].assert_called_with('/tmp/fakefile')
++
++
++class TestRandStringCompat(unittest.TestCase):
++    """Verify RandString handles both string and int character types."""
++
++    def test_randstring_produces_bytes(self):
++        from scapy.volatile import RandString
++        rs = RandString(size=10)
++        result = rs._fix()
++        self.assertIsInstance(result, bytes)
++        self.assertEqual(len(result), 10)
++
++    def test_randstring_respects_charset(self):
++        from scapy.volatile import RandString
++        rs = RandString(size=10, chars=b"ABCDEF")
++        result = rs._fix()
++        self.assertIsInstance(result, bytes)
++        self.assertEqual(len(result), 10)
++        for byte_val in result:
++            self.assertIn(chr(byte_val) if isinstance(byte_val, int) else byte_val,
++                          "ABCDEF")
++
++    def test_randstring_consistent_length(self):
++        from scapy.volatile import RandString
++        rs = RandString(size=5)
++        for _ in range(10):
++            result = rs._fix()
++            self.assertEqual(len(result), 5)
++
++
++class TestSuperSocketClose(unittest.TestCase):
++    """Verify socket close handles Windows correctly."""
++
++    def test_close_on_windows_with_invalid_fd(self):
++        from scapy.supersocket import SuperSocket
++        mock_sock = MagicMock()
++        mock_sock.fileno.return_value = -1
++        ss = SuperSocket.__new__(SuperSocket)
++        ss.closed = False
++        ss.ins = mock_sock
++        ss.outs = mock_sock
++        with patch('scapy.supersocket.WINDOWS', True):
++            ss.close()
++        mock_sock.close.assert_called()
++
++    def test_close_skips_invalid_fd_on_non_windows(self):
++        from scapy.supersocket import SuperSocket
++        mock_outs = MagicMock()
++        mock_outs.fileno.return_value = -1
++        mock_ins = MagicMock()
++        mock_ins.fileno.return_value = -1
++        ss = SuperSocket.__new__(SuperSocket)
++        ss.closed = False
++        ss.ins = mock_ins
++        ss.outs = mock_outs
++        with patch('scapy.supersocket.WINDOWS', False):
++            ss.close()
++        mock_outs.close.assert_not_called()
++        mock_ins.close.assert_not_called()
++
++    def test_close_works_with_valid_fd_on_non_windows(self):
++        from scapy.supersocket import SuperSocket
++        mock_outs = MagicMock()
++        mock_outs.fileno.return_value = 5
++        mock_ins = MagicMock()
++        mock_ins.fileno.return_value = 6
++        ss = SuperSocket.__new__(SuperSocket)
++        ss.closed = False
++        ss.ins = mock_ins
++        ss.outs = mock_outs
++        with patch('scapy.supersocket.WINDOWS', False):
++            ss.close()
++        mock_outs.close.assert_called_once()
++        mock_ins.close.assert_called_once()
++
++
++if __name__ == '__main__':
++    unittest.main()

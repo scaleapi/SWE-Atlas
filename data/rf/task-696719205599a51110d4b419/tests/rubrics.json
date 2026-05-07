@@ -1,0 +1,106 @@
+[
+  {
+    "id": "8f14e45fceea167a5a36dedd4bea2543",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c9f0f895fb98ab9159f51fd0297e236d",
+    "title": "1.1: Creates a Chunker function in the pkg/sources package",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d3d9446802a44259755d38e6d163e820",
+    "title": "1.2: Defines the Chunker function to accept a *Chunk parameter and return chan *Chunk",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c20ad4d76fe97759aa27a0c99bff6710",
+    "title": "1.3: Defines ChunkSize and PeekSize constants in the pkg/sources package",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "aab3238922bcc25a6f606eb525ffdc56",
+    "title": "1.4: Integrates the Chunker function into the engine's chunk processing pipeline",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9bf31c7ff062936a96d3c8bd1f8f2ff3",
+    "title": "1.5: Simplifies the filesystem source to send complete data instead of chunking locally",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c74d97b01eae257e44aa9d5bade97baf",
+    "title": "1.6: Simplifies the S3 source to send complete data instead of chunking locally",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "70efdf2ec9b086079795c442636b55fb",
+    "title": "1.7: Updates the git source to reference ChunkSize and PeekSize constants from their new location in pkg/sources",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "37693cfc748049e45d87b8c7d8b9aacd",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1ff1de774005f8da13f42943881c655f",
+    "title": "3.1: Removes the old chunking code from pkg/common (such as pkg/common/chunker.go)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "02e74f10e0327ad868d138f2b4fdd6f0",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6ea9ab1baa0efb9e19094440c317e21b",
+    "title": "4.1: Changes ChunkSize or PeekSize constant values from their original values (10*1024 and 3*1024 respectively)",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c16a5320fa475530d9583c34fd356ef5",
+    "title": "4.2: Removes or breaks the existing detector processing logic in the engine (such as decoder iteration, keyword matching, or result handling in detectorWorker)",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

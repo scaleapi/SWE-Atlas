@@ -1,0 +1,615 @@
+diff --git a/api/v1/group_routes_test.go b/api/v1/group_routes_test.go
+index 69fec5dd2..88a082d25 100644
+--- a/api/v1/group_routes_test.go
++++ b/api/v1/group_routes_test.go
+@@ -37,6 +37,7 @@ func getTestRunState(tb testing.TB, options lib.Options, runner lib.Runner) *lib
+ 		TestPreInitState: piState,
+ 		Options:          options,
+ 		Runner:           runner,
++		GroupSummary:     lib.NewGroupSummary(piState.Logger),
+ 		RunTags:          piState.Registry.RootTagSet().WithTagsFromMap(options.RunTags),
+ 	}
+ }
+@@ -64,6 +65,30 @@ func getControlSurface(tb testing.TB, testState *lib.TestRunState) *ControlSurfa
+ func TestGetGroups(t *testing.T) {
+ 	t.Parallel()
+ 
++	cs := getControlSurface(t, getTestRunState(t, lib.Options{}, &minirunner.MiniRunner{}))
++	require.NoError(t, cs.RunState.GroupSummary.Start())
++	cs.RunState.GroupSummary.AddMetricSamples([]metrics.SampleContainer{
++		metrics.Sample{
++			TimeSeries: metrics.TimeSeries{
++				Metric: cs.RunState.BuiltinMetrics.GroupDuration,
++				Tags:   cs.RunState.Registry.RootTagSet().With("group", "::group 1"),
++			},
++		},
++		metrics.Sample{
++			TimeSeries: metrics.TimeSeries{
++				Metric: cs.RunState.BuiltinMetrics.GroupDuration,
++				Tags:   cs.RunState.Registry.RootTagSet().With("group", ""),
++			},
++		},
++		metrics.Sample{
++			TimeSeries: metrics.TimeSeries{
++				Metric: cs.RunState.BuiltinMetrics.GroupDuration,
++				Tags:   cs.RunState.Registry.RootTagSet().With("group", "::group 1::group 2"),
++			},
++		},
++	})
++	require.NoError(t, cs.RunState.GroupSummary.Stop())
++
+ 	g0, err := lib.NewGroup("", nil)
+ 	assert.NoError(t, err)
+ 	g1, err := g0.Group("group 1")
+@@ -71,8 +96,6 @@ func TestGetGroups(t *testing.T) {
+ 	g2, err := g1.Group("group 2")
+ 	assert.NoError(t, err)
+ 
+-	cs := getControlSurface(t, getTestRunState(t, lib.Options{}, &minirunner.MiniRunner{Group: g0}))
+-
+ 	t.Run("list", func(t *testing.T) {
+ 		t.Parallel()
+ 
+diff --git a/js/initcontext_test.go b/js/initcontext_test.go
+index 871f0c393..f89ed46b2 100644
+--- a/js/initcontext_test.go
++++ b/js/initcontext_test.go
+@@ -342,9 +342,6 @@ func TestRequestWithBinaryFile(t *testing.T) {
+ 	bi, err := b.Instantiate(context.Background(), 0)
+ 	require.NoError(t, err)
+ 
+-	root, err := lib.NewGroup("", nil)
+-	require.NoError(t, err)
+-
+ 	logger := logrus.New()
+ 	logger.Level = logrus.DebugLevel
+ 	logger.Out = io.Discard
+@@ -354,7 +351,6 @@ func TestRequestWithBinaryFile(t *testing.T) {
+ 	bi.moduleVUImpl.state = &lib.State{
+ 		Options: lib.Options{},
+ 		Logger:  logger,
+-		Group:   root,
+ 		Transport: &http.Transport{
+ 			DialContext: (netext.NewDialer(
+ 				net.Dialer{
+@@ -488,9 +484,6 @@ func TestRequestWithMultipleBinaryFiles(t *testing.T) {
+ 	bi, err := b.Instantiate(context.Background(), 0)
+ 	require.NoError(t, err)
+ 
+-	root, err := lib.NewGroup("", nil)
+-	require.NoError(t, err)
+-
+ 	logger := logrus.New()
+ 	logger.Level = logrus.DebugLevel
+ 	logger.Out = io.Discard
+@@ -500,7 +493,6 @@ func TestRequestWithMultipleBinaryFiles(t *testing.T) {
+ 	bi.moduleVUImpl.state = &lib.State{
+ 		Options: lib.Options{},
+ 		Logger:  logger,
+-		Group:   root,
+ 		Transport: &http.Transport{
+ 			DialContext: (netext.NewDialer(
+ 				net.Dialer{
+diff --git a/js/modules/k6/grpc/params_test.go b/js/modules/k6/grpc/params_test.go
+index c43c6d91f..7d3d8eb37 100644
+--- a/js/modules/k6/grpc/params_test.go
++++ b/js/modules/k6/grpc/params_test.go
+@@ -148,15 +148,12 @@ func newParamsTestRuntime(t *testing.T, paramsJSON string) (*modulestest.Runtime
+ 
+ 	testRuntime := modulestest.NewRuntime(t)
+ 	registry := metrics.NewRegistry()
+-	root, err := lib.NewGroup("", nil)
+-	require.NoError(t, err)
+ 
+ 	logger := logrus.New()
+ 	logger.SetLevel(logrus.InfoLevel)
+ 	logger.Out = io.Discard
+ 
+ 	state := &lib.State{
+-		Group: root,
+ 		Options: lib.Options{
+ 			SystemTags: metrics.NewSystemTagSet(
+ 				metrics.TagName,
+@@ -171,7 +168,7 @@ func newParamsTestRuntime(t *testing.T, paramsJSON string) (*modulestest.Runtime
+ 
+ 	testRuntime.MoveToVUContext(state)
+ 
+-	_, err = testRuntime.VU.Runtime().RunString(`let params = ` + paramsJSON + `;`)
++	_, err := testRuntime.VU.Runtime().RunString(`let params = ` + paramsJSON + `;`)
+ 	require.NoError(t, err)
+ 
+ 	params := testRuntime.VU.Runtime().Get("params")
+diff --git a/js/modules/k6/grpc/teststate_test.go b/js/modules/k6/grpc/teststate_test.go
+index 0340e9391..24ba46cfe 100644
+--- a/js/modules/k6/grpc/teststate_test.go
++++ b/js/modules/k6/grpc/teststate_test.go
+@@ -142,13 +142,8 @@ func newTestState(t *testing.T) testState {
+ // ToVUContext moves the test state to the VU context.
+ func (ts *testState) ToVUContext() {
+ 	registry := metrics.NewRegistry()
+-	root, err := lib.NewGroup("", nil)
+-	if err != nil {
+-		panic(err)
+-	}
+ 
+ 	state := &lib.State{
+-		Group:     root,
+ 		Dialer:    ts.httpBin.Dialer,
+ 		TLSConfig: ts.httpBin.TLSClientConfig,
+ 		Samples:   ts.samples,
+diff --git a/js/modules/k6/http/request_test.go b/js/modules/k6/http/request_test.go
+index 400c96170..d9da44a10 100644
+--- a/js/modules/k6/http/request_test.go
++++ b/js/modules/k6/http/request_test.go
+@@ -128,8 +128,6 @@ type httpTestCase struct {
+ func newTestCase(t testing.TB) *httpTestCase {
+ 	tb := httpmultibin.NewHTTPMultiBin(t)
+ 
+-	root, err := lib.NewGroup("", nil)
+-	require.NoError(t, err)
+ 	registry := metrics.NewRegistry()
+ 
+ 	logger := logrus.New()
+@@ -152,13 +150,12 @@ func newTestCase(t testing.TB) *httpTestCase {
+ 	state := &lib.State{
+ 		Options:    options,
+ 		Logger:     logger,
+-		Group:      root,
+ 		TLSConfig:  tb.TLSClientConfig,
+ 		Transport:  tb.HTTPTransport,
+ 		BufferPool: lib.NewBufferPool(),
+ 		Samples:    samples,
+ 		Tags: lib.NewVUStateTags(registry.RootTagSet().WithTagsFromMap(map[string]string{
+-			"group": root.Path,
++			"group": lib.RootGroupPath,
+ 		})),
+ 		BuiltinMetrics: metrics.RegisterBuiltinMetrics(registry),
+ 	}
+diff --git a/js/modules/k6/http/response_test.go b/js/modules/k6/http/response_test.go
+index 440387b67..e28128c04 100644
+--- a/js/modules/k6/http/response_test.go
++++ b/js/modules/k6/http/response_test.go
+@@ -9,6 +9,7 @@ import (
+ 
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
++	"go.k6.io/k6/lib"
+ 	"go.k6.io/k6/metrics"
+ )
+ 
+@@ -109,7 +110,6 @@ func TestResponse(t *testing.T) {
+ 	samples := ts.samples
+ 	rt := ts.runtime.VU.Runtime()
+ 	state := ts.runtime.VU.State()
+-	root := state.Group
+ 	sr := tb.Replacer.Replace
+ 
+ 	tb.Mux.HandleFunc("/myforms/get", myFormHandler)
+@@ -147,17 +147,14 @@ func TestResponse(t *testing.T) {
+ 		})
+ 
+ 		t.Run("group", func(t *testing.T) {
+-			g, err := root.Group("my group")
++			groupName, err := lib.NewGroupPath(lib.RootGroupPath, "my group")
+ 			require.NoError(t, err)
+-			old := state.Group
+-			state.Group = g
+ 			state.Tags.Modify(func(tagsAndMeta *metrics.TagsAndMeta) {
+-				tagsAndMeta.SetTag("group", g.Path)
++				tagsAndMeta.SetTag("group", groupName)
+ 			})
+ 			defer func() {
+-				state.Group = old
+ 				state.Tags.Modify(func(tagsAndMeta *metrics.TagsAndMeta) {
+-					tagsAndMeta.SetTag("group", old.Path)
++					tagsAndMeta.SetTag("group", "")
+ 				})
+ 			}()
+ 
+diff --git a/js/modules/k6/k6_test.go b/js/modules/k6/k6_test.go
+index 744329010..dda4805ad 100644
+--- a/js/modules/k6/k6_test.go
++++ b/js/modules/k6/k6_test.go
+@@ -92,20 +92,16 @@ func TestGroup(t *testing.T) {
+ 		t.Parallel()
+ 		tc := testCaseRuntime(t)
+ 		state := tc.testRuntime.VU.State()
+-		root := state.Group
+ 		require.NoError(t, tc.testRuntime.VU.Runtime().Set("fn", func() {
+ 			groupTag, ok := state.Tags.GetCurrentValues().Tags.Get("group")
+ 			require.True(t, ok)
+ 			assert.Equal(t, groupTag, "::my group")
+-			assert.Equal(t, state.Group.Name, "my group")
+-			assert.Equal(t, state.Group.Parent, root)
+ 		}))
+ 		_, err := tc.testRuntime.RunOnEventLoop(`k6.group("my group", fn)`)
+ 		assert.NoError(t, err)
+-		assert.Equal(t, state.Group, root)
+ 		groupTag, ok := state.Tags.GetCurrentValues().Tags.Get("group")
+ 		require.True(t, ok)
+-		assert.Equal(t, groupTag, root.Name)
++		assert.Equal(t, groupTag, "")
+ 	})
+ 
+ 	t.Run("Invalid", func(t *testing.T) {
+@@ -349,29 +345,6 @@ func TestCheckTypes(t *testing.T) {
+ 	}
+ }
+ 
+-func TestCheckContextExpiry(t *testing.T) {
+-	t.Parallel()
+-
+-	tc := testCaseRuntime(t)
+-
+-	v, err := tc.testRuntime.RunOnEventLoop(`value = k6.check(null, { "check": true })`)
+-	require.NoError(t, err)
+-	assert.Equal(t, true, v.Export())
+-
+-	check, _ := tc.testRuntime.VU.State().Group.Check("check")
+-	assert.Equal(t, int64(1), check.Passes)
+-	assert.Equal(t, int64(0), check.Fails)
+-
+-	tc.testRuntime.CancelContext()
+-
+-	v, err = tc.testRuntime.RunOnEventLoop(`k6.check(null, { "check": true })`)
+-	require.NoError(t, err)
+-	assert.Equal(t, true, v.Export())
+-
+-	assert.Equal(t, int64(1), check.Passes)
+-	assert.Equal(t, int64(0), check.Fails)
+-}
+-
+ func TestCheckTags(t *testing.T) {
+ 	t.Parallel()
+ 	tc := testCaseRuntime(t)
+@@ -408,16 +381,13 @@ func testCaseRuntime(t testing.TB) *testCase {
+ 	require.NoError(t, testRuntime.VU.RuntimeField.Set("k6", m.Exports().Named))
+ 
+ 	registry := metrics.NewRegistry()
+-	root, err := lib.NewGroup("", nil)
+-	assert.NoError(t, err)
+ 	samples := make(chan metrics.SampleContainer, 1000)
+ 	state := &lib.State{
+-		Group: root,
+ 		Options: lib.Options{
+ 			SystemTags: &metrics.DefaultSystemTagSet,
+ 		},
+ 		Samples:        samples,
+-		Tags:           lib.NewVUStateTags(registry.RootTagSet().WithTagsFromMap(map[string]string{"group": root.Path})),
++		Tags:           lib.NewVUStateTags(registry.RootTagSet().WithTagsFromMap(map[string]string{"group": lib.RootGroupPath})),
+ 		BuiltinMetrics: metrics.RegisterBuiltinMetrics(registry),
+ 	}
+ 	testRuntime.MoveToVUContext(state)
+diff --git a/js/modules/k6/ws/ws_test.go b/js/modules/k6/ws/ws_test.go
+index 7239b2ee1..c81425be7 100644
+--- a/js/modules/k6/ws/ws_test.go
++++ b/js/modules/k6/ws/ws_test.go
+@@ -85,11 +85,8 @@ func newTestState(t testing.TB) testState {
+ 	testRuntime := modulestest.NewRuntime(t)
+ 	samples := make(chan metrics.SampleContainer, 1000)
+ 
+-	root, err := lib.NewGroup("", nil)
+-	require.NoError(t, err)
+ 	registry := metrics.NewRegistry()
+ 	state := &lib.State{
+-		Group:  root,
+ 		Dialer: tb.Dialer,
+ 		Options: lib.Options{
+ 			SystemTags: metrics.NewSystemTagSet(
+diff --git a/js/runner_test.go b/js/runner_test.go
+index b491282a0..305dada40 100644
+--- a/js/runner_test.go
++++ b/js/runner_test.go
+@@ -89,24 +89,6 @@ func TestRunnerNew(t *testing.T) {
+ 	})
+ }
+ 
+-func TestRunnerGetDefaultGroup(t *testing.T) {
+-	t.Parallel()
+-	r1, err := getSimpleRunner(t, "/script.js", `exports.default = function() {};`)
+-	require.NoError(t, err)
+-	assert.NotNil(t, r1.GetDefaultGroup())
+-
+-	registry := metrics.NewRegistry()
+-	builtinMetrics := metrics.RegisterBuiltinMetrics(registry)
+-	r2, err := NewFromArchive(
+-		&lib.TestPreInitState{
+-			Logger:         testutils.NewLogger(t),
+-			BuiltinMetrics: builtinMetrics,
+-			Registry:       registry,
+-		}, r1.MakeArchive())
+-	require.NoError(t, err)
+-	assert.NotNil(t, r2.GetDefaultGroup())
+-}
+-
+ func TestRunnerOptions(t *testing.T) {
+ 	t.Parallel()
+ 	r1, err := getSimpleRunner(t, "/script.js", `exports.default = function() {};`)
+@@ -398,8 +380,6 @@ func TestDataIsolation(t *testing.T) {
+ 	require.NoError(t, err)
+ 	defer stopOutputs(nil)
+ 
+-	require.Empty(t, runner.defaultGroup.Groups)
+-
+ 	stopEmission, err := execScheduler.Init(runCtx, samples)
+ 	require.NoError(t, err)
+ 
+@@ -416,8 +396,6 @@ func TestDataIsolation(t *testing.T) {
+ 		require.NoError(t, err)
+ 		waitForMetricsFlushed()
+ 	}
+-	require.Contains(t, runner.defaultGroup.Groups, "setup")
+-	require.Contains(t, runner.defaultGroup.Groups, "teardown")
+ 	var count int
+ 	for _, s := range mockOutput.Samples {
+ 		if s.Metric.Name == "mycounter" {
+@@ -672,7 +650,6 @@ func TestVURunContext(t *testing.T) {
+ 				assert.Equal(t, null.IntFrom(10), state.Options.VUs)
+ 				assert.Equal(t, null.BoolFrom(true), state.Options.Throw)
+ 				assert.NotNil(t, state.Logger)
+-				assert.Equal(t, r.GetDefaultGroup(), state.Group)
+ 				assert.Equal(t, vu.Transport, state.Transport)
+ 			}))
+ 
+@@ -774,74 +751,6 @@ func TestVURunInterruptDoesntPanic(t *testing.T) {
+ 	}
+ }
+ 
+-func TestVUIntegrationGroups(t *testing.T) {
+-	t.Parallel()
+-	r1, err := getSimpleRunner(t, "/script.js", `
+-		var group = require("k6").group;
+-		exports.default = function() {
+-			fnOuter();
+-			group("my group", function() {
+-				fnInner();
+-				group("nested group", function() {
+-					fnNested();
+-				})
+-			});
+-		}
+-		`)
+-	require.NoError(t, err)
+-
+-	registry := metrics.NewRegistry()
+-	builtinMetrics := metrics.RegisterBuiltinMetrics(registry)
+-	r2, err := NewFromArchive(
+-		&lib.TestPreInitState{
+-			Logger:         testutils.NewLogger(t),
+-			BuiltinMetrics: builtinMetrics,
+-			Registry:       registry,
+-		}, r1.MakeArchive())
+-	require.NoError(t, err)
+-
+-	testdata := map[string]*Runner{"Source": r1, "Archive": r2}
+-	for name, r := range testdata {
+-		r := r
+-		t.Run(name, func(t *testing.T) {
+-			t.Parallel()
+-			ctx, cancel := context.WithCancel(context.Background())
+-			defer cancel()
+-
+-			vu, err := r.newVU(ctx, 1, 1, make(chan metrics.SampleContainer, 100))
+-			require.NoError(t, err)
+-
+-			fnOuterCalled := false
+-			fnInnerCalled := false
+-			fnNestedCalled := false
+-			require.NoError(t, vu.Runtime.Set("fnOuter", func() {
+-				fnOuterCalled = true
+-				assert.Equal(t, r.GetDefaultGroup(), vu.state.Group)
+-			}))
+-			require.NoError(t, vu.Runtime.Set("fnInner", func() {
+-				fnInnerCalled = true
+-				g := vu.state.Group
+-				assert.Equal(t, "my group", g.Name)
+-				assert.Equal(t, r.GetDefaultGroup(), g.Parent)
+-			}))
+-			require.NoError(t, vu.Runtime.Set("fnNested", func() {
+-				fnNestedCalled = true
+-				g := vu.state.Group
+-				assert.Equal(t, "nested group", g.Name)
+-				assert.Equal(t, "my group", g.Parent.Name)
+-				assert.Equal(t, r.GetDefaultGroup(), g.Parent.Parent)
+-			}))
+-
+-			activeVU := vu.Activate(&lib.VUActivationParams{RunContext: ctx})
+-			err = activeVU.RunOnce()
+-			require.NoError(t, err)
+-			assert.True(t, fnOuterCalled, "fnOuter() not called")
+-			assert.True(t, fnInnerCalled, "fnInner() not called")
+-			assert.True(t, fnNestedCalled, "fnNested() not called")
+-		})
+-	}
+-}
+-
+ func TestVUIntegrationMetrics(t *testing.T) {
+ 	t.Parallel()
+ 	testdata := make(map[string]*Runner, 2)
+diff --git a/lib/group_summary_test.go b/lib/group_summary_test.go
+new file mode 100644
+index 000000000..66c3b6769
+--- /dev/null
++++ b/lib/group_summary_test.go
+@@ -0,0 +1,181 @@
++package lib
++
++import (
++	"reflect"
++	"testing"
++
++	"github.com/sirupsen/logrus"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++
++	"go.k6.io/k6/metrics"
++)
++
++func TestRootGroupPathConstant(t *testing.T) {
++	t.Parallel()
++	assert.Equal(t, "", RootGroupPath, "RootGroupPath should be an empty string")
++}
++
++func TestNewGroupPath_RootToChild(t *testing.T) {
++	t.Parallel()
++	path, err := NewGroupPath(RootGroupPath, "my group")
++	require.NoError(t, err)
++	assert.Equal(t, "::my group", path)
++}
++
++func TestNewGroupPath_Nested(t *testing.T) {
++	t.Parallel()
++	first, err := NewGroupPath(RootGroupPath, "outer")
++	require.NoError(t, err)
++	second, err := NewGroupPath(first, "inner")
++	require.NoError(t, err)
++	assert.Equal(t, "::outer::inner", second)
++}
++
++func TestNewGroupPath_RejectsGroupSeparator(t *testing.T) {
++	t.Parallel()
++	_, err := NewGroupPath(RootGroupPath, "bad::name")
++	assert.ErrorIs(t, err, ErrNameContainsGroupSeparator)
++}
++
++func TestNewGroupPath_RootToRoot(t *testing.T) {
++	t.Parallel()
++	path, err := NewGroupPath(RootGroupPath, RootGroupPath)
++	require.NoError(t, err)
++	assert.Equal(t, RootGroupPath, path)
++}
++
++func TestGroupSummaryImplementsOutputInterface(t *testing.T) {
++	t.Parallel()
++	outputType := reflect.TypeOf((*interface {
++		Description() string
++		Start() error
++		Stop() error
++		AddMetricSamples([]metrics.SampleContainer)
++	})(nil)).Elem()
++
++	gsType := reflect.TypeOf(&GroupSummary{})
++	assert.True(t, gsType.Implements(outputType),
++		"GroupSummary should implement the output.Output interface")
++}
++
++func TestGroupSummaryBuildsGroupHierarchy(t *testing.T) {
++	t.Parallel()
++	logger := logrus.New()
++	logger.SetLevel(logrus.WarnLevel)
++
++	gs := NewGroupSummary(logger)
++	require.NoError(t, gs.Start())
++
++	registry := metrics.NewRegistry()
++	groupDuration := registry.MustNewMetric("group_duration", metrics.Trend, metrics.Time)
++
++	gs.AddMetricSamples([]metrics.SampleContainer{
++		metrics.Sample{
++			TimeSeries: metrics.TimeSeries{
++				Metric: groupDuration,
++				Tags:   registry.RootTagSet().With("group", "::outer"),
++			},
++		},
++		metrics.Sample{
++			TimeSeries: metrics.TimeSeries{
++				Metric: groupDuration,
++				Tags:   registry.RootTagSet().With("group", "::outer::inner"),
++			},
++		},
++	})
++
++	require.NoError(t, gs.Stop())
++
++	root := gs.Group()
++	require.NotNil(t, root)
++	assert.Equal(t, RootGroupPath, root.Path, "root group should have the root path")
++
++	outerGroup, exists := root.Groups["outer"]
++	require.True(t, exists, "outer group should exist")
++	assert.Equal(t, "outer", outerGroup.Name)
++
++	innerGroup, exists := outerGroup.Groups["inner"]
++	require.True(t, exists, "inner group should exist under outer")
++	assert.Equal(t, "inner", innerGroup.Name)
++}
++
++func TestGroupSummaryTracksCheckPassFail(t *testing.T) {
++	t.Parallel()
++	logger := logrus.New()
++	logger.SetLevel(logrus.WarnLevel)
++
++	gs := NewGroupSummary(logger)
++	require.NoError(t, gs.Start())
++
++	registry := metrics.NewRegistry()
++	checks := registry.MustNewMetric("checks", metrics.Rate)
++
++	gs.AddMetricSamples([]metrics.SampleContainer{
++		metrics.Sample{
++			TimeSeries: metrics.TimeSeries{
++				Metric: checks,
++				Tags:   registry.RootTagSet().With("group", "::mygroup").With("check", "status is 200"),
++			},
++			Value: 1,
++		},
++		metrics.Sample{
++			TimeSeries: metrics.TimeSeries{
++				Metric: checks,
++				Tags:   registry.RootTagSet().With("group", "::mygroup").With("check", "status is 200"),
++			},
++			Value: 0,
++		},
++		metrics.Sample{
++			TimeSeries: metrics.TimeSeries{
++				Metric: checks,
++				Tags:   registry.RootTagSet().With("group", "::mygroup").With("check", "status is 200"),
++			},
++			Value: 1,
++		},
++	})
++
++	require.NoError(t, gs.Stop())
++
++	root := gs.Group()
++	myGroup, exists := root.Groups["mygroup"]
++	require.True(t, exists, "mygroup should exist")
++
++	check, exists := myGroup.Checks["status is 200"]
++	require.True(t, exists, "check 'status is 200' should exist")
++	assert.Equal(t, int64(2), check.Passes, "should have 2 passes")
++	assert.Equal(t, int64(1), check.Fails, "should have 1 fail")
++}
++
++func TestVUStateDoesNotHaveGroupField(t *testing.T) {
++	t.Parallel()
++	rt := reflect.TypeOf(State{})
++	_, found := rt.FieldByName("Group")
++	assert.False(t, found,
++		"State struct should not have a Group field after refactoring")
++}
++
++func TestRunnerInterfaceDoesNotHaveGetDefaultGroup(t *testing.T) {
++	t.Parallel()
++	rt := reflect.TypeOf((*Runner)(nil)).Elem()
++	_, found := rt.MethodByName("GetDefaultGroup")
++	assert.False(t, found,
++		"Runner interface should not have GetDefaultGroup method after refactoring")
++}
++
++func TestTestRunStateHasGroupSummaryField(t *testing.T) {
++	t.Parallel()
++	rt := reflect.TypeOf(TestRunState{})
++	field, found := rt.FieldByName("GroupSummary")
++	require.True(t, found, "TestRunState should have a GroupSummary field")
++	assert.Equal(t, reflect.Ptr, field.Type.Kind(),
++		"GroupSummary field should be a pointer type")
++}
++
++func TestGroupSummaryDescription(t *testing.T) {
++	t.Parallel()
++	logger := logrus.New()
++	gs := NewGroupSummary(logger)
++	desc := gs.Description()
++	assert.NotEmpty(t, desc, "GroupSummary.Description() should return a non-empty string")
++}

@@ -1,0 +1,25 @@
+[metadata]
+author_name = "ScaleAI"
+author_email = "unknown"
+difficulty = "medium"
+category = "refactoring"
+tags = ["refactoring", "master-validator", "rubric-graded", "Go"]
+
+[verifier]
+timeout_sec = 7200
+
+[verifier.env]
+EVAL_API_KEY = "${OPENAI_API_KEY}"
+EVAL_BASE_URL = "${OPENAI_API_BASE}"
+EVAL_MODEL = "${EVAL_MODEL:-anthropic/claude-opus-4-5-20251101}"
+
+[agent]
+timeout_sec = 3600
+
+[environment]
+docker_image = "ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_grafana_k6_696719205599a51110d4b435_1.0@sha256:ce0fb3fea9285081836ce4f4882714817261fbbcb7c94431911df43fcae199e5"
+build_timeout_sec = 1800
+allow_internet = true
+cpus = 16
+memory_mb = 16384
+storage_mb = 20480

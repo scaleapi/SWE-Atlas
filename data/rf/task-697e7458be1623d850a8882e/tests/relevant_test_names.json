@@ -1,0 +1,49 @@
+{
+  "tests": [
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/s3/TestNewClient_Unauthenticated"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/s3/TestNewClient_AccessKey"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/s3/TestNewClient_SessionToken"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/s3/TestNewClient_CloudEnvironment"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/s3/TestNewClient_InvalidCredential"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/s3/TestNewClient_WithRoleArn"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/s3/TestNewClient_DifferentRegions"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/s3/TestNewClient_WithRoleArnDifferentRegion"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/s3/TestChunks_NoRoles_InvalidCredentials"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/s3/TestChunks_NoRoles_Unauthenticated"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/s3/TestChunks_WithRoles_NilCredentials"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/s3/TestChunks_WithRoles_CloudEnv"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/s3/TestChunks_MultipleRoles"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/s3/TestScanBuckets_SkipsBucketOnRegionalClientError"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/s3/TestScanBuckets_SkipsRegionalFailureThenContinues"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "name": "test/contrib/homeplugav.uts"
+    },
+    {
+      "name": "test/contrib/loraphy2wan.uts"
+    },
+    {
+      "name": "test/contrib/pnio_dcp.uts"
+    },
+    {
+      "name": "test/contrib/vqp.uts"
+    },
+    {
+      "name": "test/test_base_classes.uts"
+    },
+    {
+      "name": "test/test_tools_utscapy.uts"
+    }
+  ]
+}

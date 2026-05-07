@@ -1,0 +1,1809 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9f7e1a7bd..86d227c19 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1441,6 +1441,8 @@ set(RRD_PLUGIN_FILES
+         src/database/rrd-database-mode.c
+         src/database/rrdhost-state-id.c
+         src/database/rrdhost-state-id.h
++        src/database/rrdhost-system-info.c
++        src/database/rrdhost-system-info.h
+ )
+ 
+ if(ENABLE_DBENGINE)
+diff --git a/src/aclk/aclk.c b/src/aclk/aclk.c
+index f2dc8d91a..32370a360 100644
+--- a/src/aclk/aclk.c
++++ b/src/aclk/aclk.c
+@@ -858,7 +858,7 @@ void aclk_host_state_update(RRDHOST *host, int cmd, int queryable)
+ 
+             node_instance_creation_t node_instance_creation = {
+                 .claim_id = claim_id_is_set(claim_id) ? claim_id.str : NULL,
+-                .hops = host->system_info->hops,
++                .hops = rrdhost_system_info_hops(host->system_info),
+                 .hostname = rrdhost_hostname(host),
+                 .machine_guid = host->machine_guid};
+ 
+@@ -868,7 +868,8 @@ void aclk_host_state_update(RRDHOST *host, int cmd, int queryable)
+             create_query->data.bin_payload.topic = ACLK_TOPICID_CREATE_NODE;
+             create_query->data.bin_payload.msg_name = "CreateNodeInstance";
+             nd_log(NDLS_DAEMON, NDLP_DEBUG,
+-                   "Registering host=%s, hops=%d", host->machine_guid, host->system_info->hops);
++                   "Registering host=%s, hops=%d", host->machine_guid,
++                   rrdhost_system_info_hops(host->system_info));
+ 
+             aclk_execute_query(create_query);
+             return;
+@@ -877,7 +878,7 @@ void aclk_host_state_update(RRDHOST *host, int cmd, int queryable)
+ 
+     aclk_query_t query = aclk_query_new(NODE_STATE_UPDATE);
+     node_instance_connection_t node_state_update = {
+-        .hops = host->system_info->hops,
++        .hops = rrdhost_system_info_hops(host->system_info),
+         .live = cmd,
+         .queryable = queryable,
+         .session_id = aclk_session_newarch
+@@ -893,7 +894,9 @@ void aclk_host_state_update(RRDHOST *host, int cmd, int queryable)
+ 
+     nd_log(NDLS_DAEMON, NDLP_DEBUG,
+            "Queuing status update for node=%s, live=%d, hops=%d, queryable=%d",
+-           (char*)node_state_update.node_id, cmd, host->system_info->hops, queryable);
++           (char*)node_state_update.node_id, cmd,
++           rrdhost_system_info_hops(host->system_info), queryable);
++
+     freez((void*)node_state_update.node_id);
+     query->data.bin_payload.msg_name = "UpdateNodeInstanceConnection";
+     query->data.bin_payload.topic = ACLK_TOPICID_NODE_CONN;
+@@ -1063,7 +1066,9 @@ char *aclk_state(void)
+                 buffer_sprintf(wb, "\n\tNode ID: %s\n", node_id_str);
+             }
+ 
+-            buffer_sprintf(wb, "\tStreaming Hops: %d\n\tRelationship: %s", host->system_info->hops, host == localhost ? "self" : "child");
++            buffer_sprintf(wb, "\tStreaming Hops: %d\n\tRelationship: %s",
++                           rrdhost_system_info_hops(host->system_info),
++                           host == localhost ? "self" : "child");
+ 
+             if (host != localhost)
+                 buffer_sprintf(wb, "\n\tStreaming Connection Live: %s", host->receiver ? "true" : "false");
+@@ -1197,7 +1202,7 @@ char *aclk_state_json(void)
+             json_object_object_add(nodeinstance, "node-id", tmp);
+         }
+ 
+-        tmp = json_object_new_int(host->system_info->hops);
++        tmp = json_object_new_int(rrdhost_system_info_hops(host->system_info));
+         json_object_object_add(nodeinstance, "streaming-hops", tmp);
+ 
+         tmp = json_object_new_string(host == localhost ? "self" : "child");
+diff --git a/src/aclk/aclk_rx_msgs.c b/src/aclk/aclk_rx_msgs.c
+index 36bd3599d..bc319fad4 100644
+--- a/src/aclk/aclk_rx_msgs.c
++++ b/src/aclk/aclk_rx_msgs.c
+@@ -286,7 +286,7 @@ int create_node_instance_result(const char *msg, size_t msg_len)
+             node_state_update.hops = 0;
+         } else {
+             node_state_update.live = (!rrdhost_flag_check(host, RRDHOST_FLAG_ORPHAN));
+-            node_state_update.hops = host->system_info->hops;
++            node_state_update.hops = rrdhost_system_info_hops(host->system_info);
+         }
+         node_state_update.capabilities = aclk_get_node_instance_capas(host);
+     }
+diff --git a/src/daemon/analytics.c b/src/daemon/analytics.c
+index a263aff69..55ea62895 100644
+--- a/src/daemon/analytics.c
++++ b/src/daemon/analytics.c
+@@ -356,17 +356,16 @@ void analytics_alarms_notifications(void)
+     buffer_free(b);
+ }
+ 
+-static void analytics_get_install_type(struct rrdhost_system_info *system_info)
+-{
+-    if (system_info->install_type == NULL) {
+-        analytics_set_data_str(&analytics_data.netdata_install_type, "unknown");
+-    } else {
+-        analytics_set_data_str(&analytics_data.netdata_install_type, system_info->install_type);
+-    }
++static void analytics_get_install_type(struct rrdhost_system_info *system_info) {
++    const char *install_type = rrdhost_system_info_install_type(system_info);
++    if(!install_type)
++        install_type = "unknown";
+ 
+-    if (system_info->prebuilt_dist != NULL) {
+-        analytics_set_data_str(&analytics_data.netdata_prebuilt_distro, system_info->prebuilt_dist);
+-    }
++    analytics_set_data_str(&analytics_data.netdata_install_type, install_type);
++
++    const char *prebuilt_dist = rrdhost_system_info_prebuilt_dist(system_info);
++    if(prebuilt_dist)
++        analytics_set_data_str(&analytics_data.netdata_prebuilt_distro, prebuilt_dist);
+ }
+ 
+ /*
+diff --git a/src/daemon/analytics.h b/src/daemon/analytics.h
+index b1d3c1386..43e1ce463 100644
+--- a/src/daemon/analytics.h
++++ b/src/daemon/analytics.h
+@@ -4,6 +4,7 @@
+ #define NETDATA_ANALYTICS_H 1
+ 
+ #include "daemon/common.h"
++#include "database/rrdhost-system-info.h"
+ 
+ /* Max number of seconds before the first META analytics is sent */
+ #define ANALYTICS_INIT_SLEEP_SEC 120
+@@ -76,7 +77,6 @@ struct analytics_data {
+     bool exporting_enabled;
+ };
+ 
+-struct rrdhost_system_info;
+ void set_late_analytics_variables(struct rrdhost_system_info *system_info);
+ void analytics_free_data(void);
+ void analytics_log_shell(void);
+diff --git a/src/daemon/buildinfo.c b/src/daemon/buildinfo.c
+index 4866c182b..efcb5ee63 100644
+--- a/src/daemon/buildinfo.c
++++ b/src/daemon/buildinfo.c
+@@ -1,5 +1,6 @@
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ 
++#define RRDHOST_SYSTEM_INFO_INTERNALS
+ #include <stdio.h>
+ #include "./config.h"
+ #include "common.h"
+@@ -1260,7 +1261,6 @@ __attribute__((constructor)) void initialize_build_info(void) {
+ // ----------------------------------------------------------------------------
+ // system info
+ 
+-int get_system_info(struct rrdhost_system_info *system_info);
+ static void populate_system_info(void) {
+     static bool populated = false;
+     static SPINLOCK spinlock = SPINLOCK_INITIALIZER;
+@@ -1288,8 +1288,8 @@ static void populate_system_info(void) {
+             netdata_main_spawn_server_init(NULL, 0, NULL);
+         }
+ 
+-        system_info = callocz(1, sizeof(struct rrdhost_system_info));
+-        get_system_info(system_info);
++        system_info = rrdhost_system_info_create();
++        rrdhost_system_info_detect(system_info);
+         free_system_info = true;
+ 
+         if(started_spawn_server)
+@@ -1349,11 +1349,11 @@ char *get_value_from_key(char *buffer, char *key) {
+     return s;
+ }
+ 
+-void get_install_type(char **install_type, char **prebuilt_arch __maybe_unused, char **prebuilt_dist __maybe_unused) {
++void get_install_type_internal(char **install_type, char **prebuilt_arch __maybe_unused, char **prebuilt_dist __maybe_unused) {
+ #ifndef OS_WINDOWS
+     char *install_type_filename;
+ 
+-    int install_type_filename_len = (strlen(netdata_configured_user_config_dir) + strlen(".install-type") + 3);
++    unsigned long install_type_filename_len = (strlen(netdata_configured_user_config_dir) + strlen(".install-type") + 3);
+     install_type_filename = mallocz(sizeof(char) * install_type_filename_len);
+     snprintfz(install_type_filename, install_type_filename_len - 1, "%s/%s", netdata_configured_user_config_dir, ".install-type");
+ 
+@@ -1378,6 +1378,10 @@ void get_install_type(char **install_type, char **prebuilt_arch __maybe_unused,
+ #endif
+ }
+ 
++void get_install_type(struct rrdhost_system_info *system_info) {
++    get_install_type_internal(&system_info->install_type, &system_info->prebuilt_arch, &system_info->prebuilt_dist);
++}
++
+ static struct {
+     SPINLOCK spinlock;
+     bool populated;
+@@ -1392,7 +1396,7 @@ static void populate_packaging_info() {
+         if(!BUILD_PACKAGING_INFO.populated) {
+             BUILD_PACKAGING_INFO.populated = true;
+ 
+-            get_install_type(&BUILD_PACKAGING_INFO.install_type, &BUILD_PACKAGING_INFO.prebuilt_arch, &BUILD_PACKAGING_INFO.prebuilt_distro);
++            get_install_type_internal(&BUILD_PACKAGING_INFO.install_type, &BUILD_PACKAGING_INFO.prebuilt_arch, &BUILD_PACKAGING_INFO.prebuilt_distro);
+ 
+             if(!BUILD_PACKAGING_INFO.install_type)
+                 BUILD_PACKAGING_INFO.install_type = "unknown";
+diff --git a/src/daemon/buildinfo.h b/src/daemon/buildinfo.h
+index 1bb1c9760..cc12e0232 100644
+--- a/src/daemon/buildinfo.h
++++ b/src/daemon/buildinfo.h
+@@ -9,7 +9,7 @@ void print_build_info_json(void);
+ 
+ char *get_value_from_key(char *buffer, char *key);
+ 
+-void get_install_type(char **install_type, char **prebuilt_arch, char **prebuilt_dist);
++void get_install_type(struct rrdhost_system_info *system_info);
+ 
+ void build_info_to_json_object(BUFFER *b);
+ 
+diff --git a/src/daemon/main.c b/src/daemon/main.c
+index d777cb914..5ba3da7d6 100644
+--- a/src/daemon/main.c
++++ b/src/daemon/main.c
+@@ -179,56 +179,6 @@ int help(int exitcode) {
+     return exitcode;
+ }
+ 
+-// coverity[ +tainted_string_sanitize_content : arg-0 ]
+-static inline void coverity_remove_taint(char *s)
+-{
+-    (void)s;
+-}
+-
+-int get_system_info(struct rrdhost_system_info *system_info) {
+-#if !defined(OS_WINDOWS)
+-    char *script;
+-    script = mallocz(sizeof(char) * (strlen(netdata_configured_primary_plugins_dir) + strlen("system-info.sh") + 2));
+-    sprintf(script, "%s/%s", netdata_configured_primary_plugins_dir, "system-info.sh");
+-    if (unlikely(access(script, R_OK) != 0)) {
+-        netdata_log_error("System info script %s not found.",script);
+-        freez(script);
+-        return 1;
+-    }
+-
+-    POPEN_INSTANCE *instance = spawn_popen_run(script);
+-    if(instance) {
+-        char line[200 + 1];
+-        // Removed the double strlens, if the Coverity tainted string warning reappears I'll revert.
+-        // One time init code, but I'm curious about the warning...
+-        while (fgets(line, 200, spawn_popen_stdout(instance)) != NULL) {
+-            char *value=line;
+-            while (*value && *value != '=') value++;
+-            if (*value=='=') {
+-                *value='\0';
+-                value++;
+-                char *end = value;
+-                while (*end && *end != '\n') end++;
+-                *end = '\0';    // Overwrite newline if present
+-                coverity_remove_taint(line);    // I/O is controlled result of system_info.sh - not tainted
+-                coverity_remove_taint(value);
+-
+-                if(unlikely(rrdhost_set_system_info_variable(system_info, line, value))) {
+-                    netdata_log_error("Unexpected environment variable %s=%s", line, value);
+-                } else {
+-                    nd_setenv(line, value, 1);
+-                }
+-            }
+-        }
+-        spawn_popen_wait(instance);
+-    }
+-    freez(script);
+-#else
+-    netdata_windows_get_system_info(system_info);
+-#endif
+-    return 0;
+-}
+-
+ /* Any config setting that can be accessed without a default value i.e. configget(...,...,NULL) *MUST*
+    be set in this procedure to be called in all the relevant code paths.
+ */
+@@ -963,9 +913,8 @@ int netdata_main(int argc, char **argv) {
+     delta_startup_time("collecting system info");
+ 
+     netdata_anonymous_statistics_enabled=-1;
+-    struct rrdhost_system_info *system_info = callocz(1, sizeof(struct rrdhost_system_info));
+-    __atomic_sub_fetch(&netdata_buffers_statistics.rrdhost_allocations_size, sizeof(struct rrdhost_system_info), __ATOMIC_RELAXED);
+-    get_system_info(system_info);
++    struct rrdhost_system_info *system_info = rrdhost_system_info_create();
++    rrdhost_system_info_detect(system_info);
+ 
+     const char *guid = registry_get_this_machine_guid();
+ #ifdef ENABLE_SENTRY
+@@ -974,8 +923,7 @@ int netdata_main(int argc, char **argv) {
+     UNUSED(guid);
+ #endif
+ 
+-    system_info->hops = 0;
+-    get_install_type(&system_info->install_type, &system_info->prebuilt_arch, &system_info->prebuilt_dist);
++    get_install_type(system_info);
+ 
+     delta_startup_time("initialize RRD structures");
+ 
+diff --git a/src/database/contexts/api_v2_contexts.c b/src/database/contexts/api_v2_contexts.c
+index d3c39bb17..8ea31e653 100644
+--- a/src/database/contexts/api_v2_contexts.c
++++ b/src/database/contexts/api_v2_contexts.c
+@@ -372,32 +372,7 @@ static void rrdcontext_to_json_v2_rrdhost(BUFFER *wb, RRDHOST *host, struct rrdc
+             buffer_json_member_add_string(wb, "v", rrdhost_program_version(host));
+ 
+             host_labels2json(host, wb, "labels");
+-
+-            if (host->system_info) {
+-                buffer_json_member_add_object(wb, "hw");
+-                {
+-                    buffer_json_member_add_string_or_empty(wb, "architecture", host->system_info->architecture);
+-                    buffer_json_member_add_string_or_empty(wb, "cpu_frequency", host->system_info->host_cpu_freq);
+-                    buffer_json_member_add_string_or_empty(wb, "cpus", host->system_info->host_cores);
+-                    buffer_json_member_add_string_or_empty(wb, "memory", host->system_info->host_ram_total);
+-                    buffer_json_member_add_string_or_empty(wb, "disk_space", host->system_info->host_disk_space);
+-                    buffer_json_member_add_string_or_empty(wb, "virtualization", host->system_info->virtualization);
+-                    buffer_json_member_add_string_or_empty(wb, "container", host->system_info->container);
+-                }
+-                buffer_json_object_close(wb);
+-
+-                buffer_json_member_add_object(wb, "os");
+-                {
+-                    buffer_json_member_add_string_or_empty(wb, "id", host->system_info->host_os_id);
+-                    buffer_json_member_add_string_or_empty(wb, "nm", host->system_info->host_os_name);
+-                    buffer_json_member_add_string_or_empty(wb, "v", host->system_info->host_os_version);
+-                    buffer_json_member_add_object(wb, "kernel");
+-                    buffer_json_member_add_string_or_empty(wb, "nm", host->system_info->kernel_name);
+-                    buffer_json_member_add_string_or_empty(wb, "v", host->system_info->kernel_version);
+-                    buffer_json_object_close(wb);
+-                }
+-                buffer_json_object_close(wb);
+-            }
++            rrdhost_system_info_to_json_v2(wb, host->system_info);
+ 
+             // created      - the node is created but never connected to cloud
+             // unreachable  - not currently connected
+diff --git a/src/database/rrd.h b/src/database/rrd.h
+index 82f72170f..e04de0351 100644
+--- a/src/database/rrd.h
++++ b/src/database/rrd.h
+@@ -13,6 +13,7 @@ extern "C" {
+ #include "streaming/stream-sender-commit.h"
+ #include "rrdhost-state-id.h"
+ #include "health/health-alert-log.h"
++#include "rrdhost-system-info.h"
+ 
+ // non-existing structs instead of voids
+ // to enable type checking at compile time
+@@ -27,8 +28,6 @@ typedef struct rrdset RRDSET;
+ typedef struct rrdcalc RRDCALC;
+ typedef struct alarm_entry ALARM_ENTRY;
+ 
+-typedef struct rrdlabels RRDLABELS;
+-
+ typedef struct rrdvar_acquired RRDVAR_ACQUIRED;
+ typedef struct rrdcalc_acquired RRDCALC_ACQUIRED;
+ 
+@@ -1015,47 +1014,6 @@ typedef enum __attribute__ ((__packed__)) {
+ // ----------------------------------------------------------------------------
+ // RRD HOST
+ 
+-struct rrdhost_system_info {
+-    char *cloud_provider_type;
+-    char *cloud_instance_type;
+-    char *cloud_instance_region;
+-
+-    char *host_os_name;
+-    char *host_os_id;
+-    char *host_os_id_like;
+-    char *host_os_version;
+-    char *host_os_version_id;
+-    char *host_os_detection;
+-    char *host_cores;
+-    char *host_cpu_freq;
+-    char *host_cpu_model;
+-    char *host_ram_total;
+-    char *host_disk_space;
+-    char *container_os_name;
+-    char *container_os_id;
+-    char *container_os_id_like;
+-    char *container_os_version;
+-    char *container_os_version_id;
+-    char *container_os_detection;
+-    char *kernel_name;
+-    char *kernel_version;
+-    char *architecture;
+-    char *virtualization;
+-    char *virt_detection;
+-    char *container;
+-    char *container_detection;
+-    char *is_k8s_node;
+-    int16_t hops;
+-    bool ml_capable;
+-    bool ml_enabled;
+-    char *install_type;
+-    char *prebuilt_arch;
+-    char *prebuilt_dist;
+-    int mc_version;
+-};
+-
+-struct rrdhost_system_info *rrdhost_labels_to_system_info(RRDLABELS *labels);
+-
+ struct stream_thread;
+ 
+ struct rrdhost {
+@@ -1365,8 +1323,6 @@ RRDHOST *rrdhost_find_or_create(
+     struct rrdhost_system_info *system_info,
+     bool is_archived);
+ 
+-int rrdhost_set_system_info_variable(struct rrdhost_system_info *system_info, char *name, char *value);
+-
+ // ----------------------------------------------------------------------------
+ // RRDSET functions
+ 
+@@ -1426,7 +1382,6 @@ RRDSET *rrdset_create_localhost(
+ 
+ void rrdhost_free_all(void);
+ 
+-void rrdhost_system_info_free(struct rrdhost_system_info *system_info);
+ void rrdhost_free___while_having_rrd_wrlock(RRDHOST *host, bool force);
+ 
+ bool rrdhost_should_be_removed(RRDHOST *host, RRDHOST *protected_host, time_t now_s);
+diff --git a/src/database/rrdfunctions.c b/src/database/rrdfunctions.c
+index ed6e583bd..5b0de179d 100644
+--- a/src/database/rrdfunctions.c
++++ b/src/database/rrdfunctions.c
+@@ -296,7 +296,7 @@ int rrd_functions_find_by_name(RRDHOST *host, BUFFER *wb, const char *name, size
+                            rrd_collector_running(rdcf->collector) ? "yes" : "no",
+                            host->stream.rcv.status.tid, host->stream.snd.status.tid,
+                            state_id, rdcf->rrdhost_state_id,
+-                           host->system_info->hops
++                           rrdhost_system_info_hops(host->system_info)
+                            );
+ 
+                     dictionary_acquired_item_release(host->functions, *item);
+diff --git a/src/database/rrdhost-system-info.c b/src/database/rrdhost-system-info.c
+new file mode 100644
+index 000000000..30e8e2015
+--- /dev/null
++++ b/src/database/rrdhost-system-info.c
+@@ -0,0 +1,499 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++
++#define RRDHOST_SYSTEM_INFO_INTERNALS
++#include "rrdhost-system-info.h"
++#include "daemon/common.h"
++#include "aclk/schema-wrappers/node_info.h"
++
++// coverity[ +tainted_string_sanitize_content : arg-0 ]
++static inline void coverity_remove_taint(char *s __maybe_unused) { }
++
++// ----------------------------------------------------------------------------
++// RRDHOST - set system info from environment variables
++// system_info fields must be heap allocated or NULL
++int rrdhost_system_info_set_by_name(struct rrdhost_system_info *system_info, char *name, char *value) {
++    int res = 0;
++
++    if (!strcmp(name, "NETDATA_PROTOCOL_VERSION"))
++        return res;
++
++    else if(!strcmp(name, "NETDATA_INSTANCE_CLOUD_TYPE")){
++        freez(system_info->cloud_provider_type);
++        system_info->cloud_provider_type = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_INSTANCE_CLOUD_INSTANCE_TYPE")){
++        freez(system_info->cloud_instance_type);
++        system_info->cloud_instance_type = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_INSTANCE_CLOUD_INSTANCE_REGION")){
++        freez(system_info->cloud_instance_region);
++        system_info->cloud_instance_region = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_CONTAINER_OS_NAME")){
++        freez(system_info->container_os_name);
++        system_info->container_os_name = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_CONTAINER_OS_ID")){
++        freez(system_info->container_os_id);
++        system_info->container_os_id = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_CONTAINER_OS_ID_LIKE")){
++        freez(system_info->container_os_id_like);
++        system_info->container_os_id_like = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_CONTAINER_OS_VERSION")){
++        freez(system_info->container_os_version);
++        system_info->container_os_version = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_CONTAINER_OS_VERSION_ID")){
++        freez(system_info->container_os_version_id);
++        system_info->container_os_version_id = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_CONTAINER_OS_DETECTION")){
++        freez(system_info->container_os_detection);
++        system_info->container_os_detection = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_HOST_OS_NAME")){
++        freez(system_info->host_os_name);
++        system_info->host_os_name = strdupz(value);
++        json_fix_string(system_info->host_os_name);
++    }
++    else if(!strcmp(name, "NETDATA_HOST_OS_ID")){
++        freez(system_info->host_os_id);
++        system_info->host_os_id = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_HOST_OS_ID_LIKE")){
++        freez(system_info->host_os_id_like);
++        system_info->host_os_id_like = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_HOST_OS_VERSION")){
++        freez(system_info->host_os_version);
++        system_info->host_os_version = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_HOST_OS_VERSION_ID")){
++        freez(system_info->host_os_version_id);
++        system_info->host_os_version_id = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_HOST_OS_DETECTION")){
++        freez(system_info->host_os_detection);
++        system_info->host_os_detection = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_SYSTEM_KERNEL_NAME")){
++        freez(system_info->kernel_name);
++        system_info->kernel_name = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_SYSTEM_CPU_LOGICAL_CPU_COUNT")){
++        freez(system_info->host_cores);
++        system_info->host_cores = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_SYSTEM_CPU_FREQ")){
++        freez(system_info->host_cpu_freq);
++        system_info->host_cpu_freq = strdupz(value);
++    }
++    else if (!strcmp(name, "NETDATA_SYSTEM_CPU_MODEL")){
++        freez(system_info->host_cpu_model);
++        system_info->host_cpu_model = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_SYSTEM_TOTAL_RAM")){
++        freez(system_info->host_ram_total);
++        system_info->host_ram_total = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_SYSTEM_TOTAL_DISK_SIZE")){
++        freez(system_info->host_disk_space);
++        system_info->host_disk_space = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_SYSTEM_KERNEL_VERSION")){
++        freez(system_info->kernel_version);
++        system_info->kernel_version = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_SYSTEM_ARCHITECTURE")){
++        freez(system_info->architecture);
++        system_info->architecture = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_SYSTEM_VIRTUALIZATION")){
++        freez(system_info->virtualization);
++        system_info->virtualization = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_SYSTEM_VIRT_DETECTION")){
++        freez(system_info->virt_detection);
++        system_info->virt_detection = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_SYSTEM_CONTAINER")){
++        freez(system_info->container);
++        system_info->container = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_SYSTEM_CONTAINER_DETECTION")){
++        freez(system_info->container_detection);
++        system_info->container_detection = strdupz(value);
++    }
++    else if(!strcmp(name, "NETDATA_HOST_IS_K8S_NODE")){
++        freez(system_info->is_k8s_node);
++        system_info->is_k8s_node = strdupz(value);
++    }
++    else if (!strcmp(name, "NETDATA_SYSTEM_CPU_VENDOR"))
++        return res;
++    else if (!strcmp(name, "NETDATA_SYSTEM_CPU_DETECTION"))
++        return res;
++    else if (!strcmp(name, "NETDATA_SYSTEM_RAM_DETECTION"))
++        return res;
++    else if (!strcmp(name, "NETDATA_SYSTEM_DISK_DETECTION"))
++        return res;
++    else if (!strcmp(name, "NETDATA_CONTAINER_IS_OFFICIAL_IMAGE"))
++        return res;
++    else {
++        res = 1;
++    }
++
++    return res;
++}
++
++struct rrdhost_system_info *rrdhost_system_info_from_host_labels(RRDLABELS *labels) {
++    struct rrdhost_system_info *info = rrdhost_system_info_create();
++    info->hops = 1;
++
++    rrdlabels_get_value_strdup_or_null(labels, &info->cloud_provider_type, "_cloud_provider_type");
++    rrdlabels_get_value_strdup_or_null(labels, &info->cloud_instance_type, "_cloud_instance_type");
++    rrdlabels_get_value_strdup_or_null(labels, &info->cloud_instance_region, "_cloud_instance_region");
++    rrdlabels_get_value_strdup_or_null(labels, &info->host_os_name, "_os_name");
++    rrdlabels_get_value_strdup_or_null(labels, &info->host_os_version, "_os_version");
++    rrdlabels_get_value_strdup_or_null(labels, &info->kernel_version, "_kernel_version");
++    rrdlabels_get_value_strdup_or_null(labels, &info->host_cores, "_system_cores");
++    rrdlabels_get_value_strdup_or_null(labels, &info->host_cpu_freq, "_system_cpu_freq");
++    rrdlabels_get_value_strdup_or_null(labels, &info->host_cpu_model, "_system_cpu_model");
++    rrdlabels_get_value_strdup_or_null(labels, &info->host_ram_total, "_system_ram_total");
++    rrdlabels_get_value_strdup_or_null(labels, &info->host_disk_space, "_system_disk_space");
++    rrdlabels_get_value_strdup_or_null(labels, &info->architecture, "_architecture");
++    rrdlabels_get_value_strdup_or_null(labels, &info->virtualization, "_virtualization");
++    rrdlabels_get_value_strdup_or_null(labels, &info->container, "_container");
++    rrdlabels_get_value_strdup_or_null(labels, &info->container_detection, "_container_detection");
++    rrdlabels_get_value_strdup_or_null(labels, &info->virt_detection, "_virt_detection");
++    rrdlabels_get_value_strdup_or_null(labels, &info->is_k8s_node, "_is_k8s_node");
++    rrdlabels_get_value_strdup_or_null(labels, &info->install_type, "_install_type");
++    rrdlabels_get_value_strdup_or_null(labels, &info->prebuilt_arch, "_prebuilt_arch");
++    rrdlabels_get_value_strdup_or_null(labels, &info->prebuilt_dist, "_prebuilt_dist");
++
++    return info;
++}
++
++void rrdhost_system_info_to_rrdlabels(struct rrdhost_system_info *system_info, RRDLABELS *labels) {
++    if (system_info->cloud_provider_type)
++        rrdlabels_add(labels, "_cloud_provider_type", system_info->cloud_provider_type, RRDLABEL_SRC_AUTO);
++
++    if (system_info->cloud_instance_type)
++        rrdlabels_add(labels, "_cloud_instance_type", system_info->cloud_instance_type, RRDLABEL_SRC_AUTO);
++
++    if (system_info->cloud_instance_region)
++        rrdlabels_add(labels, "_cloud_instance_region", system_info->cloud_instance_region, RRDLABEL_SRC_AUTO);
++
++    if (system_info->host_os_name)
++        rrdlabels_add(labels, "_os_name", system_info->host_os_name, RRDLABEL_SRC_AUTO);
++
++    if (system_info->host_os_version)
++        rrdlabels_add(labels, "_os_version", system_info->host_os_version, RRDLABEL_SRC_AUTO);
++
++    if (system_info->kernel_version)
++        rrdlabels_add(labels, "_kernel_version", system_info->kernel_version, RRDLABEL_SRC_AUTO);
++
++    if (system_info->host_cores)
++        rrdlabels_add(labels, "_system_cores", system_info->host_cores, RRDLABEL_SRC_AUTO);
++
++    if (system_info->host_cpu_freq)
++        rrdlabels_add(labels, "_system_cpu_freq", system_info->host_cpu_freq, RRDLABEL_SRC_AUTO);
++
++    if (system_info->host_cpu_model)
++        rrdlabels_add(labels, "_system_cpu_model", system_info->host_cpu_model, RRDLABEL_SRC_AUTO);
++
++    if (system_info->host_ram_total)
++        rrdlabels_add(labels, "_system_ram_total", system_info->host_ram_total, RRDLABEL_SRC_AUTO);
++
++    if (system_info->host_disk_space)
++        rrdlabels_add(labels, "_system_disk_space", system_info->host_disk_space, RRDLABEL_SRC_AUTO);
++
++    if (system_info->architecture)
++        rrdlabels_add(labels, "_architecture", system_info->architecture, RRDLABEL_SRC_AUTO);
++
++    if (system_info->virtualization)
++        rrdlabels_add(labels, "_virtualization", system_info->virtualization, RRDLABEL_SRC_AUTO);
++
++    if (system_info->container)
++        rrdlabels_add(labels, "_container", system_info->container, RRDLABEL_SRC_AUTO);
++
++    if (system_info->container_detection)
++        rrdlabels_add(labels, "_container_detection", system_info->container_detection, RRDLABEL_SRC_AUTO);
++
++    if (system_info->virt_detection)
++        rrdlabels_add(labels, "_virt_detection", system_info->virt_detection, RRDLABEL_SRC_AUTO);
++
++    if (system_info->is_k8s_node)
++        rrdlabels_add(labels, "_is_k8s_node", system_info->is_k8s_node, RRDLABEL_SRC_AUTO);
++
++    if (system_info->install_type)
++        rrdlabels_add(labels, "_install_type", system_info->install_type, RRDLABEL_SRC_AUTO);
++
++    if (system_info->prebuilt_arch)
++        rrdlabels_add(labels, "_prebuilt_arch", system_info->prebuilt_arch, RRDLABEL_SRC_AUTO);
++
++    if (system_info->prebuilt_dist)
++        rrdlabels_add(labels, "_prebuilt_dist", system_info->prebuilt_dist, RRDLABEL_SRC_AUTO);
++}
++
++int rrdhost_system_info_detect(struct rrdhost_system_info *system_info) {
++#if !defined(OS_WINDOWS)
++    char *script;
++    script = mallocz(sizeof(char) * (strlen(netdata_configured_primary_plugins_dir) + strlen("system-info.sh") + 2));
++    sprintf(script, "%s/%s", netdata_configured_primary_plugins_dir, "system-info.sh");
++    if (unlikely(access(script, R_OK) != 0)) {
++        netdata_log_error("System info script %s not found.",script);
++        freez(script);
++        return 1;
++    }
++
++    POPEN_INSTANCE *instance = spawn_popen_run(script);
++    if(instance) {
++        char line[200 + 1];
++        // Removed the double strlens, if the Coverity tainted string warning reappears I'll revert.
++        // One time init code, but I'm curious about the warning...
++        while (fgets(line, 200, spawn_popen_stdout(instance)) != NULL) {
++            char *value=line;
++            while (*value && *value != '=') value++;
++            if (*value=='=') {
++                *value='\0';
++                value++;
++                char *end = value;
++                while (*end && *end != '\n') end++;
++                *end = '\0';    // Overwrite newline if present
++                coverity_remove_taint(line);    // I/O is controlled result of system_info.sh - not tainted
++                coverity_remove_taint(value);
++
++                if(unlikely(rrdhost_system_info_set_by_name(system_info, line, value))) {
++                    netdata_log_error("Unexpected environment variable %s=%s", line, value);
++                } else {
++                    nd_setenv(line, value, 1);
++                }
++            }
++        }
++        spawn_popen_wait(instance);
++    }
++    freez(script);
++#else
++    netdata_windows_get_system_info(system_info);
++#endif
++    return 0;
++}
++
++void rrdhost_system_info_free(struct rrdhost_system_info *system_info) {
++    if(likely(system_info)) {
++        __atomic_sub_fetch(&netdata_buffers_statistics.rrdhost_allocations_size, sizeof(struct rrdhost_system_info), __ATOMIC_RELAXED);
++
++        freez(system_info->cloud_provider_type);
++        freez(system_info->cloud_instance_type);
++        freez(system_info->cloud_instance_region);
++        freez(system_info->host_os_name);
++        freez(system_info->host_os_id);
++        freez(system_info->host_os_id_like);
++        freez(system_info->host_os_version);
++        freez(system_info->host_os_version_id);
++        freez(system_info->host_os_detection);
++        freez(system_info->host_cores);
++        freez(system_info->host_cpu_freq);
++        freez(system_info->host_cpu_model);
++        freez(system_info->host_ram_total);
++        freez(system_info->host_disk_space);
++        freez(system_info->container_os_name);
++        freez(system_info->container_os_id);
++        freez(system_info->container_os_id_like);
++        freez(system_info->container_os_version);
++        freez(system_info->container_os_version_id);
++        freez(system_info->container_os_detection);
++        freez(system_info->kernel_name);
++        freez(system_info->kernel_version);
++        freez(system_info->architecture);
++        freez(system_info->virtualization);
++        freez(system_info->virt_detection);
++        freez(system_info->container);
++        freez(system_info->container_detection);
++        freez(system_info->is_k8s_node);
++        freez(system_info->install_type);
++        freez(system_info->prebuilt_arch);
++        freez(system_info->prebuilt_dist);
++        freez(system_info);
++    }
++}
++
++struct rrdhost_system_info *rrdhost_system_info_create(void) {
++    struct rrdhost_system_info *system_info = callocz(1, sizeof(struct rrdhost_system_info));
++    __atomic_sub_fetch(&netdata_buffers_statistics.rrdhost_allocations_size, sizeof(struct rrdhost_system_info), __ATOMIC_RELAXED);
++    return system_info;
++}
++
++const char *rrdhost_system_info_install_type(struct rrdhost_system_info *si) {
++    return si->install_type;
++}
++
++const char *rrdhost_system_info_prebuilt_dist(struct rrdhost_system_info *si) {
++    return si->prebuilt_dist;
++}
++
++int16_t rrdhost_system_info_hops(struct rrdhost_system_info *si) {
++    if(!si) return 0;
++    return si->hops;
++}
++
++void rrdhost_system_info_hops_set(struct rrdhost_system_info *si, int16_t hops) {
++    si->hops = hops;
++}
++
++void rrdhost_system_info_to_json_v1(BUFFER *wb, struct rrdhost_system_info *system_info) {
++    if(!system_info) return;
++    
++    buffer_json_member_add_string_or_empty(wb, "os_name", system_info->host_os_name);
++    buffer_json_member_add_string_or_empty(wb, "os_id", system_info->host_os_id);
++    buffer_json_member_add_string_or_empty(wb, "os_id_like", system_info->host_os_id_like);
++    buffer_json_member_add_string_or_empty(wb, "os_version", system_info->host_os_version);
++    buffer_json_member_add_string_or_empty(wb, "os_version_id", system_info->host_os_version_id);
++    buffer_json_member_add_string_or_empty(wb, "os_detection", system_info->host_os_detection);
++    buffer_json_member_add_string_or_empty(wb, "cores_total", system_info->host_cores);
++    buffer_json_member_add_string_or_empty(wb, "total_disk_space", system_info->host_disk_space);
++    buffer_json_member_add_string_or_empty(wb, "cpu_freq", system_info->host_cpu_freq);
++    buffer_json_member_add_string_or_empty(wb, "ram_total", system_info->host_ram_total);
++    
++    buffer_json_member_add_string_or_omit(wb, "container_os_name", system_info->container_os_name);
++    buffer_json_member_add_string_or_omit(wb, "container_os_id", system_info->container_os_id);
++    buffer_json_member_add_string_or_omit(wb, "container_os_id_like", system_info->container_os_id_like);
++    buffer_json_member_add_string_or_omit(wb, "container_os_version", system_info->container_os_version);
++    buffer_json_member_add_string_or_omit(wb, "container_os_version_id", system_info->container_os_version_id);
++    buffer_json_member_add_string_or_omit(wb, "container_os_detection", system_info->container_os_detection);
++    buffer_json_member_add_string_or_omit(wb, "is_k8s_node", system_info->is_k8s_node);
++
++    buffer_json_member_add_string_or_empty(wb, "kernel_name", system_info->kernel_name);
++    buffer_json_member_add_string_or_empty(wb, "kernel_version", system_info->kernel_version);
++    buffer_json_member_add_string_or_empty(wb, "architecture", system_info->architecture);
++    buffer_json_member_add_string_or_empty(wb, "virtualization", system_info->virtualization);
++    buffer_json_member_add_string_or_empty(wb, "virt_detection", system_info->virt_detection);
++    buffer_json_member_add_string_or_empty(wb, "container", system_info->container);
++    buffer_json_member_add_string_or_empty(wb, "container_detection", system_info->container_detection);
++
++    buffer_json_member_add_string_or_omit(wb, "cloud_provider_type", system_info->cloud_provider_type);
++    buffer_json_member_add_string_or_omit(wb, "cloud_instance_type", system_info->cloud_instance_type);
++    buffer_json_member_add_string_or_omit(wb, "cloud_instance_region", system_info->cloud_instance_region);
++}
++
++void rrdhost_system_info_to_json_v2(BUFFER *wb, struct rrdhost_system_info *system_info) {
++    if(!system_info) return;
++
++    buffer_json_member_add_object(wb, "hw");
++    {
++        buffer_json_member_add_string_or_empty(wb, "architecture", system_info->architecture);
++        buffer_json_member_add_string_or_empty(wb, "cpu_frequency", system_info->host_cpu_freq);
++        buffer_json_member_add_string_or_empty(wb, "cpus", system_info->host_cores);
++        buffer_json_member_add_string_or_empty(wb, "memory", system_info->host_ram_total);
++        buffer_json_member_add_string_or_empty(wb, "disk_space", system_info->host_disk_space);
++        buffer_json_member_add_string_or_empty(wb, "virtualization", system_info->virtualization);
++        buffer_json_member_add_string_or_empty(wb, "container", system_info->container);
++    }
++    buffer_json_object_close(wb);
++    
++    buffer_json_member_add_object(wb, "os");
++    {
++        buffer_json_member_add_string_or_empty(wb, "id", system_info->host_os_id);
++        buffer_json_member_add_string_or_empty(wb, "nm", system_info->host_os_name);
++        buffer_json_member_add_string_or_empty(wb, "v", system_info->host_os_version);
++        buffer_json_member_add_object(wb, "kernel");
++        buffer_json_member_add_string_or_empty(wb, "nm", system_info->kernel_name);
++        buffer_json_member_add_string_or_empty(wb, "v", system_info->kernel_version);
++        buffer_json_object_close(wb);
++    }
++    buffer_json_object_close(wb);
++}
++
++void rrdhost_system_info_ml_capable_set(struct rrdhost_system_info *system_info, bool capable) {
++    system_info->ml_capable = capable;
++}
++
++void rrdhost_system_info_ml_enabled_set(struct rrdhost_system_info *system_info, bool enabled) {
++    system_info->ml_enabled = enabled;
++}
++
++void rrdhost_system_info_mc_version_set(struct rrdhost_system_info *system_info, int version) {
++    system_info->mc_version = version;
++}
++
++int rrdhost_system_info_foreach(struct rrdhost_system_info *system_info, add_host_sysinfo_key_value_t cb, nd_uuid_t *uuid) {
++    int ret = 0;
++
++    ret += cb("NETDATA_CONTAINER_OS_NAME", system_info->container_os_name, uuid);
++    ret += cb("NETDATA_CONTAINER_OS_ID", system_info->container_os_id, uuid);
++    ret += cb("NETDATA_CONTAINER_OS_ID_LIKE", system_info->container_os_id_like, uuid);
++    ret += cb("NETDATA_CONTAINER_OS_VERSION", system_info->container_os_version, uuid);
++    ret += cb("NETDATA_CONTAINER_OS_VERSION_ID", system_info->container_os_version_id, uuid);
++    ret += cb("NETDATA_CONTAINER_OS_DETECTION", system_info->host_os_detection, uuid);
++    ret += cb("NETDATA_HOST_OS_NAME", system_info->host_os_name, uuid);
++    ret += cb("NETDATA_HOST_OS_ID", system_info->host_os_id, uuid);
++    ret += cb("NETDATA_HOST_OS_ID_LIKE", system_info->host_os_id_like, uuid);
++    ret += cb("NETDATA_HOST_OS_VERSION", system_info->host_os_version, uuid);
++    ret += cb("NETDATA_HOST_OS_VERSION_ID", system_info->host_os_version_id, uuid);
++    ret += cb("NETDATA_HOST_OS_DETECTION", system_info->host_os_detection, uuid);
++    ret += cb("NETDATA_SYSTEM_KERNEL_NAME", system_info->kernel_name, uuid);
++    ret += cb("NETDATA_SYSTEM_CPU_LOGICAL_CPU_COUNT", system_info->host_cores, uuid);
++    ret += cb("NETDATA_SYSTEM_CPU_FREQ", system_info->host_cpu_freq, uuid);
++    ret += cb("NETDATA_SYSTEM_TOTAL_RAM", system_info->host_ram_total, uuid);
++    ret += cb("NETDATA_SYSTEM_TOTAL_DISK_SIZE", system_info->host_disk_space, uuid);
++    ret += cb("NETDATA_SYSTEM_KERNEL_VERSION", system_info->kernel_version, uuid);
++    ret += cb("NETDATA_SYSTEM_ARCHITECTURE", system_info->architecture, uuid);
++    ret += cb("NETDATA_SYSTEM_VIRTUALIZATION", system_info->virtualization, uuid);
++    ret += cb("NETDATA_SYSTEM_VIRT_DETECTION", system_info->virt_detection, uuid);
++    ret += cb("NETDATA_SYSTEM_CONTAINER", system_info->container, uuid);
++    ret += cb("NETDATA_SYSTEM_CONTAINER_DETECTION", system_info->container_detection, uuid);
++    ret += cb("NETDATA_HOST_IS_K8S_NODE", system_info->is_k8s_node, uuid);
++
++    return ret;
++}
++
++void rrdhost_system_info_to_url_encode_stream(BUFFER *wb, struct rrdhost_system_info *system_info) {
++    buffer_sprintf(wb, "&ml_capable=%d", system_info->ml_capable ? 1 : 0);
++    buffer_sprintf(wb, "&ml_enabled=%d", system_info->ml_enabled ? 1 : 0);
++    buffer_sprintf(wb, "&mc_version=%d", system_info->mc_version);
++    buffer_key_value_urlencode(wb, "&NETDATA_INSTANCE_CLOUD_TYPE", system_info->cloud_provider_type);
++    buffer_key_value_urlencode(wb, "&NETDATA_INSTANCE_CLOUD_INSTANCE_TYPE", system_info->cloud_instance_type);
++    buffer_key_value_urlencode(wb, "&NETDATA_INSTANCE_CLOUD_INSTANCE_REGION", system_info->cloud_instance_region);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_OS_NAME", system_info->host_os_name);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_OS_ID", system_info->host_os_id);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_OS_ID_LIKE", system_info->host_os_id_like);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_OS_VERSION", system_info->host_os_version);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_OS_VERSION_ID", system_info->host_os_version_id);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_OS_DETECTION", system_info->host_os_detection);
++    buffer_key_value_urlencode(wb, "&NETDATA_HOST_IS_K8S_NODE", system_info->is_k8s_node);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_KERNEL_NAME", system_info->kernel_name);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_KERNEL_VERSION", system_info->kernel_version);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_ARCHITECTURE", system_info->architecture);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_VIRTUALIZATION", system_info->virtualization);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_VIRT_DETECTION", system_info->virt_detection);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_CONTAINER", system_info->container);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_CONTAINER_DETECTION", system_info->container_detection);
++    buffer_key_value_urlencode(wb, "&NETDATA_CONTAINER_OS_NAME", system_info->container_os_name);
++    buffer_key_value_urlencode(wb, "&NETDATA_CONTAINER_OS_ID", system_info->container_os_id);
++    buffer_key_value_urlencode(wb, "&NETDATA_CONTAINER_OS_ID_LIKE", system_info->container_os_id_like);
++    buffer_key_value_urlencode(wb, "&NETDATA_CONTAINER_OS_VERSION", system_info->container_os_version);
++    buffer_key_value_urlencode(wb, "&NETDATA_CONTAINER_OS_VERSION_ID", system_info->container_os_version_id);
++    buffer_key_value_urlencode(wb, "&NETDATA_CONTAINER_OS_DETECTION", system_info->container_os_detection);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_CPU_LOGICAL_CPU_COUNT", system_info->host_cores);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_CPU_FREQ", system_info->host_cpu_freq);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_TOTAL_RAM", system_info->host_ram_total);
++    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_TOTAL_DISK_SIZE", system_info->host_disk_space);
++}
++
++void rrdhost_system_info_to_node_info(struct rrdhost_system_info *system_info, struct update_node_info *node_info) {
++    node_info->data.os_name = system_info->host_os_name;
++    node_info->data.os_version = system_info->host_os_version;
++    node_info->data.kernel_name = system_info->kernel_name;
++    node_info->data.kernel_version = system_info->kernel_version;
++    node_info->data.architecture = system_info->architecture;
++    node_info->data.cpus = system_info->host_cores ? str2uint32_t(system_info->host_cores, NULL) : 0;
++    node_info->data.cpu_frequency = system_info->host_cpu_freq ? system_info->host_cpu_freq : "0";
++    node_info->data.memory = system_info->host_ram_total ? system_info->host_ram_total : "0";
++    node_info->data.disk_space = system_info->host_disk_space ? system_info->host_disk_space : "0";
++    node_info->data.virtualization_type = system_info->virtualization ? system_info->virtualization : "unknown";
++    node_info->data.container_type = system_info->container ? system_info->container : "unknown";
++    node_info->data.ml_info.ml_capable = system_info->ml_capable;
++    node_info->data.ml_info.ml_enabled = system_info->ml_enabled;
++}
+diff --git a/src/database/rrdhost-system-info.h b/src/database/rrdhost-system-info.h
+new file mode 100644
+index 000000000..7b60dce19
+--- /dev/null
++++ b/src/database/rrdhost-system-info.h
+@@ -0,0 +1,99 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++
++#ifndef NETDATA_RRDHOST_SYSTEM_INFO_H
++#define NETDATA_RRDHOST_SYSTEM_INFO_H
++
++#include "libnetdata/libnetdata.h"
++#include "rrdlabels.h"
++
++#ifdef RRDHOST_SYSTEM_INFO_INTERNALS
++struct rrdhost_system_info {
++    char *cloud_provider_type;
++    char *cloud_instance_type;
++    char *cloud_instance_region;
++
++    char *host_os_name;
++    char *host_os_id;
++    char *host_os_id_like;
++    char *host_os_version;
++    char *host_os_version_id;
++    char *host_os_detection;
++    char *host_cores;
++    char *host_cpu_freq;
++    char *host_cpu_model;
++    char *host_ram_total;
++    char *host_disk_space;
++    char *container_os_name;
++    char *container_os_id;
++    char *container_os_id_like;
++    char *container_os_version;
++    char *container_os_version_id;
++    char *container_os_detection;
++    char *kernel_name;
++    char *kernel_version;
++    char *architecture;
++    char *virtualization;
++    char *virt_detection;
++    char *container;
++    char *container_detection;
++    char *is_k8s_node;
++    int16_t hops;
++    bool ml_capable;
++    bool ml_enabled;
++    char *install_type;
++    char *prebuilt_arch;
++    char *prebuilt_dist;
++    int mc_version;
++};
++#else
++struct rrdhost_system_info;
++#endif
++
++// --------------------------------------------------------------------------------------------------------------------
++// allocation and free
++
++struct rrdhost_system_info *rrdhost_system_info_create(void);
++void rrdhost_system_info_free(struct rrdhost_system_info *system_info);
++
++// --------------------------------------------------------------------------------------------------------------------
++// importing fields
++
++// detect system info on current system
++int rrdhost_system_info_detect(struct rrdhost_system_info *system_info);
++
++// import from host rrdlabels
++struct rrdhost_system_info *rrdhost_system_info_from_host_labels(RRDLABELS *labels);
++
++// --------------------------------------------------------------------------------------------------------------------
++// setting individual fields
++
++void rrdhost_system_info_hops_set(struct rrdhost_system_info *si, int16_t hops);
++void rrdhost_system_info_ml_capable_set(struct rrdhost_system_info *system_info, bool capable);
++void rrdhost_system_info_ml_enabled_set(struct rrdhost_system_info *system_info, bool enabled);
++void rrdhost_system_info_mc_version_set(struct rrdhost_system_info *system_info, int version);
++
++int rrdhost_system_info_set_by_name(struct rrdhost_system_info *system_info, char *name, char *value);
++
++// --------------------------------------------------------------------------------------------------------------------
++// reading individual fields
++
++const char *rrdhost_system_info_install_type(struct rrdhost_system_info *si);
++const char *rrdhost_system_info_prebuilt_dist(struct rrdhost_system_info *si);
++int16_t rrdhost_system_info_hops(struct rrdhost_system_info *si);
++
++// --------------------------------------------------------------------------------------------------------------------
++// exporting in various forms
++
++void rrdhost_system_info_to_rrdlabels(struct rrdhost_system_info *system_info, RRDLABELS *labels);
++
++void rrdhost_system_info_to_json_v1(BUFFER *wb, struct rrdhost_system_info *system_info);
++void rrdhost_system_info_to_json_v2(BUFFER *wb, struct rrdhost_system_info *system_info);
++void rrdhost_system_info_to_url_encode_stream(BUFFER *wb, struct rrdhost_system_info *system_info);
++
++typedef int (*add_host_sysinfo_key_value_t)(const char *name, const char *value, nd_uuid_t *uuid);
++int rrdhost_system_info_foreach(struct rrdhost_system_info *system_info, add_host_sysinfo_key_value_t cb, nd_uuid_t *uuid);
++
++struct update_node_info;
++void rrdhost_system_info_to_node_info(struct rrdhost_system_info *system_info, struct update_node_info *node_info);
++
++#endif //NETDATA_RRDHOST_SYSTEM_INFO_H
+diff --git a/src/database/rrdhost.c b/src/database/rrdhost.c
+index 26bcad9cd..c99e1f4e4 100644
+--- a/src/database/rrdhost.c
++++ b/src/database/rrdhost.c
+@@ -428,9 +428,9 @@ static RRDHOST *rrdhost_create(
+     //
+ 
+     if (is_localhost && host->system_info) {
+-        host->system_info->ml_capable = ml_capable();
+-        host->system_info->ml_enabled = ml_enabled(host);
+-        host->system_info->mc_version = metric_correlations_version;
++        rrdhost_system_info_ml_capable_set(host->system_info, ml_capable());
++        rrdhost_system_info_ml_enabled_set(host->system_info, ml_enabled(host));
++        rrdhost_system_info_mc_version_set(host->system_info, metric_correlations_version);
+     }
+ 
+     // ------------------------------------------------------------------------
+@@ -670,8 +670,10 @@ RRDHOST *rrdhost_find_or_create(
+     RRDHOST *host = rrdhost_find_by_guid(guid);
+     if (unlikely(host && host->rrd_memory_mode != mode && rrdhost_flag_check(host, RRDHOST_FLAG_ARCHIVED))) {
+ 
+-        if (likely(!archived && rrdhost_flag_check(host, RRDHOST_FLAG_PENDING_CONTEXT_LOAD)))
++        if (likely(!archived && rrdhost_flag_check(host, RRDHOST_FLAG_PENDING_CONTEXT_LOAD))) {
++            rrdhost_system_info_free(system_info);
+             return host;
++        }
+ 
+         /* If a legacy memory mode instantiates all dbengine state must be discarded to avoid inconsistencies */
+         nd_log(NDLS_DAEMON, NDLP_INFO,
+@@ -740,6 +742,9 @@ RRDHOST *rrdhost_find_or_create(
+                 , system_info);
+     }
+ 
++    if(!host)
++        rrdhost_system_info_free(system_info);
++
+     return host;
+ }
+ 
+@@ -872,45 +877,6 @@ int rrd_init(const char *hostname, struct rrdhost_system_info *system_info, bool
+ // ----------------------------------------------------------------------------
+ // RRDHOST - free
+ 
+-void rrdhost_system_info_free(struct rrdhost_system_info *system_info) {
+-    if(likely(system_info)) {
+-        __atomic_sub_fetch(&netdata_buffers_statistics.rrdhost_allocations_size, sizeof(struct rrdhost_system_info), __ATOMIC_RELAXED);
+-
+-        freez(system_info->cloud_provider_type);
+-        freez(system_info->cloud_instance_type);
+-        freez(system_info->cloud_instance_region);
+-        freez(system_info->host_os_name);
+-        freez(system_info->host_os_id);
+-        freez(system_info->host_os_id_like);
+-        freez(system_info->host_os_version);
+-        freez(system_info->host_os_version_id);
+-        freez(system_info->host_os_detection);
+-        freez(system_info->host_cores);
+-        freez(system_info->host_cpu_freq);
+-        freez(system_info->host_cpu_model);
+-        freez(system_info->host_ram_total);
+-        freez(system_info->host_disk_space);
+-        freez(system_info->container_os_name);
+-        freez(system_info->container_os_id);
+-        freez(system_info->container_os_id_like);
+-        freez(system_info->container_os_version);
+-        freez(system_info->container_os_version_id);
+-        freez(system_info->container_os_detection);
+-        freez(system_info->kernel_name);
+-        freez(system_info->kernel_version);
+-        freez(system_info->architecture);
+-        freez(system_info->virtualization);
+-        freez(system_info->virt_detection);
+-        freez(system_info->container);
+-        freez(system_info->container_detection);
+-        freez(system_info->is_k8s_node);
+-        freez(system_info->install_type);
+-        freez(system_info->prebuilt_arch);
+-        freez(system_info->prebuilt_dist);
+-        freez(system_info);
+-    }
+-}
+-
+ void rrdhost_free___while_having_rrd_wrlock(RRDHOST *host, bool force) {
+     if(!host) return;
+ 
+@@ -1026,117 +992,6 @@ void rrd_finalize_collection_for_all_hosts(void) {
+     dfe_done(host);
+ }
+ 
+-struct rrdhost_system_info *rrdhost_labels_to_system_info(RRDLABELS *labels) {
+-    struct rrdhost_system_info *info = callocz(1, sizeof(struct rrdhost_system_info));
+-    info->hops = 1;
+-
+-    rrdlabels_get_value_strdup_or_null(labels, &info->cloud_provider_type, "_cloud_provider_type");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->cloud_instance_type, "_cloud_instance_type");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->cloud_instance_region, "_cloud_instance_region");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->host_os_name, "_os_name");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->host_os_version, "_os_version");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->kernel_version, "_kernel_version");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->host_cores, "_system_cores");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->host_cpu_freq, "_system_cpu_freq");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->host_cpu_model, "_system_cpu_model");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->host_ram_total, "_system_ram_total");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->host_disk_space, "_system_disk_space");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->architecture, "_architecture");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->virtualization, "_virtualization");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->container, "_container");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->container_detection, "_container_detection");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->virt_detection, "_virt_detection");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->is_k8s_node, "_is_k8s_node");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->install_type, "_install_type");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->prebuilt_arch, "_prebuilt_arch");
+-    rrdlabels_get_value_strdup_or_null(labels, &info->prebuilt_dist, "_prebuilt_dist");
+-
+-    return info;
+-}
+-
+-static void rrdhost_load_auto_labels(void) {
+-    RRDLABELS *labels = localhost->rrdlabels;
+-
+-    if (localhost->system_info->cloud_provider_type)
+-        rrdlabels_add(labels, "_cloud_provider_type", localhost->system_info->cloud_provider_type, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->cloud_instance_type)
+-        rrdlabels_add(labels, "_cloud_instance_type", localhost->system_info->cloud_instance_type, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->cloud_instance_region)
+-        rrdlabels_add(labels, "_cloud_instance_region", localhost->system_info->cloud_instance_region, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->host_os_name)
+-        rrdlabels_add(labels, "_os_name", localhost->system_info->host_os_name, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->host_os_version)
+-        rrdlabels_add(labels, "_os_version", localhost->system_info->host_os_version, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->kernel_version)
+-        rrdlabels_add(labels, "_kernel_version", localhost->system_info->kernel_version, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->host_cores)
+-        rrdlabels_add(labels, "_system_cores", localhost->system_info->host_cores, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->host_cpu_freq)
+-        rrdlabels_add(labels, "_system_cpu_freq", localhost->system_info->host_cpu_freq, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->host_cpu_model)
+-        rrdlabels_add(labels, "_system_cpu_model", localhost->system_info->host_cpu_model, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->host_ram_total)
+-        rrdlabels_add(labels, "_system_ram_total", localhost->system_info->host_ram_total, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->host_disk_space)
+-        rrdlabels_add(labels, "_system_disk_space", localhost->system_info->host_disk_space, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->architecture)
+-        rrdlabels_add(labels, "_architecture", localhost->system_info->architecture, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->virtualization)
+-        rrdlabels_add(labels, "_virtualization", localhost->system_info->virtualization, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->container)
+-        rrdlabels_add(labels, "_container", localhost->system_info->container, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->container_detection)
+-        rrdlabels_add(labels, "_container_detection", localhost->system_info->container_detection, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->virt_detection)
+-        rrdlabels_add(labels, "_virt_detection", localhost->system_info->virt_detection, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->is_k8s_node)
+-        rrdlabels_add(labels, "_is_k8s_node", localhost->system_info->is_k8s_node, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->install_type)
+-        rrdlabels_add(labels, "_install_type", localhost->system_info->install_type, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->prebuilt_arch)
+-        rrdlabels_add(labels, "_prebuilt_arch", localhost->system_info->prebuilt_arch, RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->system_info->prebuilt_dist)
+-        rrdlabels_add(labels, "_prebuilt_dist", localhost->system_info->prebuilt_dist, RRDLABEL_SRC_AUTO);
+-
+-    add_aclk_host_labels();
+-
+-    // The source should be CONF, but when it is set, these labels are exported by default ('send configured labels' in exporting.conf).
+-    // Their export seems to break exporting to Graphite, see https://github.com/netdata/netdata/issues/14084.
+-
+-    int is_ephemeral = appconfig_get_boolean(&netdata_config, CONFIG_SECTION_GLOBAL, "is ephemeral node", CONFIG_BOOLEAN_NO);
+-    rrdlabels_add(labels, "_is_ephemeral", is_ephemeral ? "true" : "false", RRDLABEL_SRC_AUTO);
+-
+-    int has_unstable_connection = appconfig_get_boolean(&netdata_config, CONFIG_SECTION_GLOBAL, "has unstable connection", CONFIG_BOOLEAN_NO);
+-    rrdlabels_add(labels, "_has_unstable_connection", has_unstable_connection ? "true" : "false", RRDLABEL_SRC_AUTO);
+-
+-    rrdlabels_add(labels, "_is_parent", (stream_receivers_currently_connected() > 0) ? "true" : "false", RRDLABEL_SRC_AUTO);
+-
+-    rrdlabels_add(labels, "_hostname", string2str(localhost->hostname), RRDLABEL_SRC_AUTO);
+-    rrdlabels_add(labels, "_os", string2str(localhost->os), RRDLABEL_SRC_AUTO);
+-
+-    if (localhost->stream.snd.destination)
+-        rrdlabels_add(labels, "_streams_to", string2str(localhost->stream.snd.destination), RRDLABEL_SRC_AUTO);
+-}
+-
+ void rrdhost_set_is_parent_label(void) {
+     uint32_t count = stream_receivers_currently_connected();
+ 
+@@ -1194,6 +1049,30 @@ static void rrdhost_load_kubernetes_labels(void) {
+                label_script);
+ }
+ 
++static void rrdhost_load_auto_labels(void) {
++    RRDLABELS *labels = localhost->rrdlabels;
++
++    rrdhost_system_info_to_rrdlabels(localhost->system_info, labels);
++    add_aclk_host_labels();
++
++    // The source should be CONF, but when it is set, these labels are exported by default ('send configured labels' in exporting.conf).
++    // Their export seems to break exporting to Graphite, see https://github.com/netdata/netdata/issues/14084.
++
++    int is_ephemeral = appconfig_get_boolean(&netdata_config, CONFIG_SECTION_GLOBAL, "is ephemeral node", CONFIG_BOOLEAN_NO);
++    rrdlabels_add(labels, "_is_ephemeral", is_ephemeral ? "true" : "false", RRDLABEL_SRC_AUTO);
++
++    int has_unstable_connection = appconfig_get_boolean(&netdata_config, CONFIG_SECTION_GLOBAL, "has unstable connection", CONFIG_BOOLEAN_NO);
++    rrdlabels_add(labels, "_has_unstable_connection", has_unstable_connection ? "true" : "false", RRDLABEL_SRC_AUTO);
++
++    rrdlabels_add(labels, "_is_parent", (stream_receivers_currently_connected() > 0) ? "true" : "false", RRDLABEL_SRC_AUTO);
++
++    rrdlabels_add(labels, "_hostname", string2str(localhost->hostname), RRDLABEL_SRC_AUTO);
++    rrdlabels_add(labels, "_os", string2str(localhost->os), RRDLABEL_SRC_AUTO);
++
++    if (localhost->stream.snd.destination)
++        rrdlabels_add(labels, "_streams_to", string2str(localhost->stream.snd.destination), RRDLABEL_SRC_AUTO);
++}
++
+ void reload_host_labels(void) {
+     if(!localhost->rrdlabels)
+         localhost->rrdlabels = rrdlabels_create();
+@@ -1227,144 +1106,6 @@ void rrdhost_finalize_collection(RRDHOST *host) {
+     rrdset_foreach_done(st);
+ }
+ 
+-// ----------------------------------------------------------------------------
+-// RRDHOST - set system info from environment variables
+-// system_info fields must be heap allocated or NULL
+-int rrdhost_set_system_info_variable(struct rrdhost_system_info *system_info, char *name, char *value) {
+-    int res = 0;
+-
+-    if (!strcmp(name, "NETDATA_PROTOCOL_VERSION"))
+-        return res;
+-    else if(!strcmp(name, "NETDATA_INSTANCE_CLOUD_TYPE")){
+-        freez(system_info->cloud_provider_type);
+-        system_info->cloud_provider_type = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_INSTANCE_CLOUD_INSTANCE_TYPE")){
+-        freez(system_info->cloud_instance_type);
+-        system_info->cloud_instance_type = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_INSTANCE_CLOUD_INSTANCE_REGION")){
+-        freez(system_info->cloud_instance_region);
+-        system_info->cloud_instance_region = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_CONTAINER_OS_NAME")){
+-        freez(system_info->container_os_name);
+-        system_info->container_os_name = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_CONTAINER_OS_ID")){
+-        freez(system_info->container_os_id);
+-        system_info->container_os_id = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_CONTAINER_OS_ID_LIKE")){
+-        freez(system_info->container_os_id_like);
+-        system_info->container_os_id_like = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_CONTAINER_OS_VERSION")){
+-        freez(system_info->container_os_version);
+-        system_info->container_os_version = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_CONTAINER_OS_VERSION_ID")){
+-        freez(system_info->container_os_version_id);
+-        system_info->container_os_version_id = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_CONTAINER_OS_DETECTION")){
+-        freez(system_info->container_os_detection);
+-        system_info->container_os_detection = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_HOST_OS_NAME")){
+-        freez(system_info->host_os_name);
+-        system_info->host_os_name = strdupz(value);
+-        json_fix_string(system_info->host_os_name);
+-    }
+-    else if(!strcmp(name, "NETDATA_HOST_OS_ID")){
+-        freez(system_info->host_os_id);
+-        system_info->host_os_id = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_HOST_OS_ID_LIKE")){
+-        freez(system_info->host_os_id_like);
+-        system_info->host_os_id_like = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_HOST_OS_VERSION")){
+-        freez(system_info->host_os_version);
+-        system_info->host_os_version = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_HOST_OS_VERSION_ID")){
+-        freez(system_info->host_os_version_id);
+-        system_info->host_os_version_id = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_HOST_OS_DETECTION")){
+-        freez(system_info->host_os_detection);
+-        system_info->host_os_detection = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_SYSTEM_KERNEL_NAME")){
+-        freez(system_info->kernel_name);
+-        system_info->kernel_name = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_SYSTEM_CPU_LOGICAL_CPU_COUNT")){
+-        freez(system_info->host_cores);
+-        system_info->host_cores = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_SYSTEM_CPU_FREQ")){
+-        freez(system_info->host_cpu_freq);
+-        system_info->host_cpu_freq = strdupz(value);
+-    }
+-    else if (!strcmp(name, "NETDATA_SYSTEM_CPU_MODEL")){
+-        freez(system_info->host_cpu_model);
+-        system_info->host_cpu_model = strdupz(value);
+-    } 
+-    else if(!strcmp(name, "NETDATA_SYSTEM_TOTAL_RAM")){
+-        freez(system_info->host_ram_total);
+-        system_info->host_ram_total = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_SYSTEM_TOTAL_DISK_SIZE")){
+-        freez(system_info->host_disk_space);
+-        system_info->host_disk_space = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_SYSTEM_KERNEL_VERSION")){
+-        freez(system_info->kernel_version);
+-        system_info->kernel_version = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_SYSTEM_ARCHITECTURE")){
+-        freez(system_info->architecture);
+-        system_info->architecture = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_SYSTEM_VIRTUALIZATION")){
+-        freez(system_info->virtualization);
+-        system_info->virtualization = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_SYSTEM_VIRT_DETECTION")){
+-        freez(system_info->virt_detection);
+-        system_info->virt_detection = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_SYSTEM_CONTAINER")){
+-        freez(system_info->container);
+-        system_info->container = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_SYSTEM_CONTAINER_DETECTION")){
+-        freez(system_info->container_detection);
+-        system_info->container_detection = strdupz(value);
+-    }
+-    else if(!strcmp(name, "NETDATA_HOST_IS_K8S_NODE")){
+-        freez(system_info->is_k8s_node);
+-        system_info->is_k8s_node = strdupz(value);
+-    }
+-    else if (!strcmp(name, "NETDATA_SYSTEM_CPU_VENDOR"))
+-        return res;
+-    else if (!strcmp(name, "NETDATA_SYSTEM_CPU_DETECTION"))
+-        return res;
+-    else if (!strcmp(name, "NETDATA_SYSTEM_RAM_DETECTION"))
+-        return res;
+-    else if (!strcmp(name, "NETDATA_SYSTEM_DISK_DETECTION"))
+-        return res;
+-    else if (!strcmp(name, "NETDATA_CONTAINER_IS_OFFICIAL_IMAGE"))
+-        return res;
+-    else {
+-        res = 1;
+-    }
+-
+-    return res;
+-}
+-
+ bool rrdhost_matches_window(RRDHOST *host, time_t after, time_t before, time_t now) {
+     time_t first_time_s, last_time_s;
+     rrdhost_retention(host, now, rrdhost_is_online(host), &first_time_s, &last_time_s);
+diff --git a/src/database/rrdlabels.h b/src/database/rrdlabels.h
+index da8ec5be1..d9637cc91 100644
+--- a/src/database/rrdlabels.h
++++ b/src/database/rrdlabels.h
+@@ -3,7 +3,7 @@
+ #ifndef NETDATA_RRDLABELS_H
+ #define NETDATA_RRDLABELS_H
+ 
+-#include "rrd.h"
++#include "libnetdata/libnetdata.h"
+ 
+ struct pattern_array_item {
+     Word_t size;
+@@ -30,6 +30,9 @@ typedef enum __attribute__ ((__packed__)) rrdlabel_source {
+ 
+ #define RRDLABEL_FLAG_INTERNAL (RRDLABEL_FLAG_OLD | RRDLABEL_FLAG_NEW | RRDLABEL_FLAG_DONT_DELETE)
+ 
++struct rrdlabels;
++typedef struct rrdlabels RRDLABELS;
++
+ RRDLABELS *rrdlabels_create(void);
+ void rrdlabels_destroy(RRDLABELS *labels_dict);
+ void rrdlabels_add(RRDLABELS *labels, const char *name, const char *value, RRDLABEL_SRC ls);
+diff --git a/src/database/sqlite/sqlite_aclk.c b/src/database/sqlite/sqlite_aclk.c
+index ea5ecdc89..647abd628 100644
+--- a/src/database/sqlite/sqlite_aclk.c
++++ b/src/database/sqlite/sqlite_aclk.c
+@@ -113,10 +113,9 @@ static int create_host_callback(void *data, int argc, char **argv, char **column
+             return 0;
+     }
+ 
+-    struct rrdhost_system_info *system_info = callocz(1, sizeof(struct rrdhost_system_info));
+-    __atomic_sub_fetch(&netdata_buffers_statistics.rrdhost_allocations_size, sizeof(struct rrdhost_system_info), __ATOMIC_RELAXED);
++    struct rrdhost_system_info *system_info = rrdhost_system_info_create();
+ 
+-    system_info->hops = (int16_t)str2i((const char *) argv[IDX_HOPS]);
++    rrdhost_system_info_hops_set(system_info, (int16_t)str2i((const char *) argv[IDX_HOPS]));
+ 
+     sql_build_host_system_info((nd_uuid_t *)argv[IDX_HOST_ID], system_info);
+ 
+diff --git a/src/database/sqlite/sqlite_aclk_node.c b/src/database/sqlite/sqlite_aclk_node.c
+index cfe902e8a..06491e822 100644
+--- a/src/database/sqlite/sqlite_aclk_node.c
++++ b/src/database/sqlite/sqlite_aclk_node.c
+@@ -70,30 +70,16 @@ static void build_node_info(RRDHOST *host)
+ 
+     node_info.data.name = rrdhost_hostname(host);
+     node_info.data.os = rrdhost_os(host);
+-    node_info.data.os_name = host->system_info->host_os_name;
+-    node_info.data.os_version = host->system_info->host_os_version;
+-    node_info.data.kernel_name = host->system_info->kernel_name;
+-    node_info.data.kernel_version = host->system_info->kernel_version;
+-    node_info.data.architecture = host->system_info->architecture;
+-    node_info.data.cpus = host->system_info->host_cores ? str2uint32_t(host->system_info->host_cores, NULL) : 0;
+-    node_info.data.cpu_frequency = host->system_info->host_cpu_freq ? host->system_info->host_cpu_freq : "0";
+-    node_info.data.memory = host->system_info->host_ram_total ? host->system_info->host_ram_total : "0";
+-    node_info.data.disk_space = host->system_info->host_disk_space ? host->system_info->host_disk_space : "0";
+     node_info.data.version = host_version ? host_version : NETDATA_VERSION;
+     node_info.data.release_channel = get_release_channel();
+     node_info.data.timezone = rrdhost_abbrev_timezone(host);
+-    node_info.data.virtualization_type = host->system_info->virtualization ? host->system_info->virtualization : "unknown";
+-    node_info.data.container_type = host->system_info->container ? host->system_info->container : "unknown";
+     node_info.data.custom_info = config_get(CONFIG_SECTION_WEB, "custom dashboard_info.js", "");
+     node_info.data.machine_guid = host->machine_guid;
+-
+     node_info.node_capabilities = (struct capability *)aclk_get_agent_capas();
+-
+-    node_info.data.ml_info.ml_capable = host->system_info->ml_capable;
+-    node_info.data.ml_info.ml_enabled = host->system_info->ml_enabled;
+-
+     node_info.data.host_labels_ptr = host->rrdlabels;
+ 
++    rrdhost_system_info_to_node_info(host->system_info, &node_info);
++
+     aclk_update_node_info(&node_info);
+     nd_log(
+         NDLS_ACCESS,
+diff --git a/src/database/sqlite/sqlite_metadata.c b/src/database/sqlite/sqlite_metadata.c
+index 56193772a..f70d3f6c0 100644
+--- a/src/database/sqlite/sqlite_metadata.c
++++ b/src/database/sqlite/sqlite_metadata.c
+@@ -460,7 +460,7 @@ struct node_instance_list *get_node_list(void)
+             node_list[row].queryable = 1;
+             node_list[row].live =
+                 (host == localhost || host->receiver || !(rrdhost_flag_check(host, RRDHOST_FLAG_ORPHAN))) ? 1 : 0;
+-            node_list[row].hops = host->system_info ? host->system_info->hops :
++            node_list[row].hops = host->system_info ? rrdhost_system_info_hops(host->system_info) :
+                                   uuid_eq(*host_id, localhost->host_id.uuid) ? 0 : 1;
+             node_list[row].hostname =
+                 sqlite3_column_bytes(res, 2) ? strdupz((char *)sqlite3_column_text(res, 2)) : NULL;
+@@ -520,7 +520,7 @@ void sql_build_host_system_info(nd_uuid_t *host_id, struct rrdhost_system_info *
+ 
+     param = 0;
+     while (sqlite3_step_monitored(res) == SQLITE_ROW) {
+-        rrdhost_set_system_info_variable(
++        rrdhost_system_info_set_by_name(
+             system_info, (char *)sqlite3_column_text(res, 0), (char *)sqlite3_column_text(res, 1));
+     }
+ 
+@@ -957,7 +957,7 @@ static int store_host_metadata(RRDHOST *host)
+     SQLITE_BIND_FAIL(bind_fail, bind_text_null(res, ++param, rrdhost_os(host), 1));
+     SQLITE_BIND_FAIL(bind_fail, bind_text_null(res, ++param, rrdhost_timezone(host), 1));
+     SQLITE_BIND_FAIL(bind_fail, bind_text_null(res, ++param, "", 1));
+-    SQLITE_BIND_FAIL(bind_fail, sqlite3_bind_int(res, ++param, host->system_info ? host->system_info->hops : 0));
++    SQLITE_BIND_FAIL(bind_fail, sqlite3_bind_int(res, ++param, host->system_info ? rrdhost_system_info_hops(host->system_info) : 0));
+     SQLITE_BIND_FAIL(bind_fail, sqlite3_bind_int(res, ++param, host->rrd_memory_mode));
+     SQLITE_BIND_FAIL(bind_fail, bind_text_null(res, ++param, rrdhost_abbrev_timezone(host), 1));
+     SQLITE_BIND_FAIL(bind_fail, sqlite3_bind_int(res, ++param, host->utc_offset));
+@@ -1018,34 +1018,7 @@ static bool store_host_systeminfo(RRDHOST *host)
+     if (unlikely(!system_info))
+         return false;
+ 
+-    int ret = 0;
+-
+-    ret += add_host_sysinfo_key_value("NETDATA_CONTAINER_OS_NAME", system_info->container_os_name, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_CONTAINER_OS_ID", system_info->container_os_id, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_CONTAINER_OS_ID_LIKE", system_info->container_os_id_like, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_CONTAINER_OS_VERSION", system_info->container_os_version, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_CONTAINER_OS_VERSION_ID", system_info->container_os_version_id, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_CONTAINER_OS_DETECTION", system_info->host_os_detection, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_HOST_OS_NAME", system_info->host_os_name, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_HOST_OS_ID", system_info->host_os_id, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_HOST_OS_ID_LIKE", system_info->host_os_id_like, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_HOST_OS_VERSION", system_info->host_os_version, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_HOST_OS_VERSION_ID", system_info->host_os_version_id, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_HOST_OS_DETECTION", system_info->host_os_detection, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_SYSTEM_KERNEL_NAME", system_info->kernel_name, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_SYSTEM_CPU_LOGICAL_CPU_COUNT", system_info->host_cores, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_SYSTEM_CPU_FREQ", system_info->host_cpu_freq, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_SYSTEM_TOTAL_RAM", system_info->host_ram_total, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_SYSTEM_TOTAL_DISK_SIZE", system_info->host_disk_space, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_SYSTEM_KERNEL_VERSION", system_info->kernel_version, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_SYSTEM_ARCHITECTURE", system_info->architecture, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_SYSTEM_VIRTUALIZATION", system_info->virtualization, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_SYSTEM_VIRT_DETECTION", system_info->virt_detection, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_SYSTEM_CONTAINER", system_info->container, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_SYSTEM_CONTAINER_DETECTION", system_info->container_detection, &host->host_id.uuid);
+-    ret += add_host_sysinfo_key_value("NETDATA_HOST_IS_K8S_NODE", system_info->is_k8s_node, &host->host_id.uuid);
+-
+-    return !(24 == ret);
++    return (24 != rrdhost_system_info_foreach(system_info, add_host_sysinfo_key_value, &host->host_id.uuid));
+ }
+ 
+ 
+diff --git a/src/libnetdata/buffer/buffer.h b/src/libnetdata/buffer/buffer.h
+index 90396296b..3f87e9a3e 100644
+--- a/src/libnetdata/buffer/buffer.h
++++ b/src/libnetdata/buffer/buffer.h
+@@ -1294,4 +1294,16 @@ static inline BUFFER *buffer_dup(BUFFER *src) {
+     return dst;
+ }
+ 
++char *url_encode(const char *str);
++static inline void buffer_key_value_urlencode(BUFFER *wb, const char *key, const char *value) {
++    char *encoded = NULL;
++
++    if(value && *value)
++        encoded = url_encode(value);
++
++    buffer_sprintf(wb, "%s=%s", key, encoded ? encoded : "");
++
++    freez(encoded);
++}
++
+ #endif /* NETDATA_WEB_BUFFER_H */
+diff --git a/src/plugins.d/pluginsd_parser.c b/src/plugins.d/pluginsd_parser.c
+index 1427acc7d..5c35f0593 100644
+--- a/src/plugins.d/pluginsd_parser.c
++++ b/src/plugins.d/pluginsd_parser.c
+@@ -200,7 +200,7 @@ static inline PARSER_RC pluginsd_host_define_end(char **words __maybe_unused, si
+         stream_receive.replication.enabled,
+         stream_receive.replication.period,
+         stream_receive.replication.step,
+-        rrdhost_labels_to_system_info(parser->user.host_define.rrdlabels),
++        rrdhost_system_info_from_host_labels(parser->user.host_define.rrdlabels),
+         false);
+ 
+     rrdhost_option_set(host, RRDHOST_OPTION_VIRTUAL_HOST);
+diff --git a/src/streaming/rrdhost-status.c b/src/streaming/rrdhost-status.c
+index f069e3757..41a545425 100644
+--- a/src/streaming/rrdhost-status.c
++++ b/src/streaming/rrdhost-status.c
+@@ -130,7 +130,7 @@ void rrdhost_status(RRDHOST *host, time_t now, RRDHOST_STATUS *s) {
+     s->ingest.reason = (online) ? STREAM_HANDSHAKE_NEVER : host->stream.rcv.status.exit_reason;
+ 
+     rrdhost_receiver_lock(host);
+-    s->ingest.hops = (int16_t)(host->system_info ? host->system_info->hops : (host == localhost) ? 0 : 1);
++    s->ingest.hops = (int16_t)(host->system_info ? rrdhost_system_info_hops(host->system_info) : (host == localhost) ? 0 : 1);
+     bool has_receiver = false;
+     if (host->receiver && rrdhost_flag_check(host, RRDHOST_FLAG_COLLECTOR_ONLINE)) {
+         has_receiver = true;
+diff --git a/src/streaming/stream-connector.c b/src/streaming/stream-connector.c
+index b184028dd..4d1979de4 100644
+--- a/src/streaming/stream-connector.c
++++ b/src/streaming/stream-connector.c
+@@ -266,17 +266,6 @@ stream_connect_validate_first_response(RRDHOST *host, struct sender_state *s, ch
+     return false;
+ }
+ 
+-static inline void buffer_key_value_urlencode(BUFFER *wb, const char *key, const char *value) {
+-    char *encoded = NULL;
+-
+-    if(value && *value)
+-        encoded = url_encode(value);
+-
+-    buffer_sprintf(wb, "%s=%s", key, encoded ? encoded : "");
+-
+-    freez(encoded);
+-}
+-
+ bool stream_connect(struct sender_state *s, uint16_t default_port, time_t timeout) {
+     worker_is_busy(WORKER_SENDER_CONNECTOR_JOB_CONNECTING);
+ 
+@@ -285,7 +274,7 @@ bool stream_connect(struct sender_state *s, uint16_t default_port, time_t timeou
+     // make sure the socket is closed
+     nd_sock_close(&s->sock);
+ 
+-    s->hops = (int16_t)(host->system_info->hops + 1);
++    s->hops = (int16_t)(rrdhost_system_info_hops(host->system_info) + 1);
+ 
+     // reset this to make sure we have its current value
+     s->sock.verify_certificate = netdata_ssl_validate_certificate_sender;
+@@ -322,37 +311,8 @@ bool stream_connect(struct sender_state *s, uint16_t default_port, time_t timeou
+     buffer_key_value_urlencode(wb, "&abbrev_timezone", rrdhost_abbrev_timezone(host));
+     buffer_sprintf(wb, "&utc_offset=%d", host->utc_offset);
+     buffer_sprintf(wb, "&hops=%d", s->hops);
+-    buffer_sprintf(wb, "&ml_capable=%d", host->system_info->ml_capable);
+-    buffer_sprintf(wb, "&ml_enabled=%d", host->system_info->ml_enabled);
+-    buffer_sprintf(wb, "&mc_version=%d", host->system_info->mc_version);
+     buffer_sprintf(wb, "&ver=%u", s->capabilities);
+-    buffer_key_value_urlencode(wb, "&NETDATA_INSTANCE_CLOUD_TYPE", host->system_info->cloud_provider_type);
+-    buffer_key_value_urlencode(wb, "&NETDATA_INSTANCE_CLOUD_INSTANCE_TYPE", host->system_info->cloud_instance_type);
+-    buffer_key_value_urlencode(wb, "&NETDATA_INSTANCE_CLOUD_INSTANCE_REGION", host->system_info->cloud_instance_region);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_OS_NAME", host->system_info->host_os_name);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_OS_ID", host->system_info->host_os_id);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_OS_ID_LIKE", host->system_info->host_os_id_like);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_OS_VERSION", host->system_info->host_os_version);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_OS_VERSION_ID", host->system_info->host_os_version_id);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_OS_DETECTION", host->system_info->host_os_detection);
+-    buffer_key_value_urlencode(wb, "&NETDATA_HOST_IS_K8S_NODE", host->system_info->is_k8s_node);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_KERNEL_NAME", host->system_info->kernel_name);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_KERNEL_VERSION", host->system_info->kernel_version);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_ARCHITECTURE", host->system_info->architecture);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_VIRTUALIZATION", host->system_info->virtualization);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_VIRT_DETECTION", host->system_info->virt_detection);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_CONTAINER", host->system_info->container);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_CONTAINER_DETECTION", host->system_info->container_detection);
+-    buffer_key_value_urlencode(wb, "&NETDATA_CONTAINER_OS_NAME", host->system_info->container_os_name);
+-    buffer_key_value_urlencode(wb, "&NETDATA_CONTAINER_OS_ID", host->system_info->container_os_id);
+-    buffer_key_value_urlencode(wb, "&NETDATA_CONTAINER_OS_ID_LIKE", host->system_info->container_os_id_like);
+-    buffer_key_value_urlencode(wb, "&NETDATA_CONTAINER_OS_VERSION", host->system_info->container_os_version);
+-    buffer_key_value_urlencode(wb, "&NETDATA_CONTAINER_OS_VERSION_ID", host->system_info->container_os_version_id);
+-    buffer_key_value_urlencode(wb, "&NETDATA_CONTAINER_OS_DETECTION", host->system_info->container_os_detection);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_CPU_LOGICAL_CPU_COUNT", host->system_info->host_cores);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_CPU_FREQ", host->system_info->host_cpu_freq);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_TOTAL_RAM", host->system_info->host_ram_total);
+-    buffer_key_value_urlencode(wb, "&NETDATA_SYSTEM_TOTAL_DISK_SIZE", host->system_info->host_disk_space);
++    rrdhost_system_info_to_url_encode_stream(wb, host->system_info);
+     buffer_key_value_urlencode(wb, "&NETDATA_PROTOCOL_VERSION", STREAMING_PROTOCOL_VERSION);
+     buffer_strcat(wb, HTTP_1_1 HTTP_ENDL);
+     buffer_sprintf(wb, "User-Agent: %s/%s" HTTP_ENDL, rrdhost_program_name(host), rrdhost_program_version(host));
+diff --git a/src/streaming/stream-receiver-connection.c b/src/streaming/stream-receiver-connection.c
+index 40e4cbb5a..c56ef2ea9 100644
+--- a/src/streaming/stream-receiver-connection.c
++++ b/src/streaming/stream-receiver-connection.c
+@@ -140,6 +140,8 @@ static bool stream_receiver_send_first_response(struct receiver_state *rpt) {
+             rpt->config.replication.step,
+             rpt->system_info,
+             0);
++        // IMPORTANT: system_info is now consumed!
++        rpt->system_info = NULL;
+ 
+         if(!host) {
+             stream_receiver_log_status(
+@@ -150,10 +152,6 @@ static bool stream_receiver_send_first_response(struct receiver_state *rpt) {
+             stream_send_error_on_taken_over_connection(rpt, START_STREAMING_ERROR_INTERNAL_ERROR);
+             return false;
+         }
+-        // IMPORTANT: KEEP THIS FIRST AFTER CHECKING host RESPONSE!
+-        // THIS IS HOW WE KNOW THE system_info IS GONE NOW...
+-        // system_info has been consumed by the host structure
+-        rpt->system_info = NULL;
+ 
+         if (unlikely(rrdhost_flag_check(host, RRDHOST_FLAG_PENDING_CONTEXT_LOAD))) {
+             stream_receiver_log_status(
+@@ -291,10 +289,9 @@ int stream_receiver_accept_connection(struct web_client *w, char *decoded_query_
+ #endif
+ 
+     __atomic_add_fetch(&netdata_buffers_statistics.rrdhost_receivers, sizeof(*rpt), __ATOMIC_RELAXED);
+-    __atomic_add_fetch(&netdata_buffers_statistics.rrdhost_allocations_size, sizeof(struct rrdhost_system_info), __ATOMIC_RELAXED);
+ 
+-    rpt->system_info = callocz(1, sizeof(struct rrdhost_system_info));
+-    rpt->system_info->hops = rpt->hops;
++    rpt->system_info = rrdhost_system_info_create();
++    rrdhost_system_info_hops_set(rpt->system_info, rpt->hops);
+ 
+     nd_sock_init(&rpt->sock, netdata_ssl_web_server_ctx, false);
+     rpt->client_ip         = strdupz(w->client_ip);
+@@ -339,17 +336,19 @@ int stream_receiver_accept_connection(struct web_client *w, char *decoded_query_
+         else if(!strcmp(name, "utc_offset"))
+             rpt->utc_offset = (int32_t)strtol(value, NULL, 0);
+ 
+-        else if(!strcmp(name, "hops"))
+-            rpt->hops = rpt->system_info->hops = (int16_t)strtol(value, NULL, 0);
++        else if(!strcmp(name, "hops")) {
++            rpt->hops = (int16_t)strtol(value, NULL, 0);
++            rrdhost_system_info_hops_set(rpt->system_info, rpt->hops);
++        }
+ 
+         else if(!strcmp(name, "ml_capable"))
+-            rpt->system_info->ml_capable = strtoul(value, NULL, 0);
++            rrdhost_system_info_ml_capable_set(rpt->system_info, str2i(value));
+ 
+         else if(!strcmp(name, "ml_enabled"))
+-            rpt->system_info->ml_enabled = strtoul(value, NULL, 0);
++            rrdhost_system_info_ml_enabled_set(rpt->system_info, str2i(value));
+ 
+         else if(!strcmp(name, "mc_version"))
+-            rpt->system_info->mc_version = strtoul(value, NULL, 0);
++            rrdhost_system_info_mc_version_set(rpt->system_info, str2i(value));
+ 
+         else if(!strcmp(name, "ver") && (rpt->capabilities & STREAM_CAP_INVALID))
+             rpt->capabilities = convert_stream_version_to_capabilities(strtoul(value, NULL, 0), NULL, false);
+@@ -377,7 +376,7 @@ int stream_receiver_accept_connection(struct web_client *w, char *decoded_query_
+             else if(!strcmp(name, "NETDATA_PROTOCOL_VERSION") && (rpt->capabilities & STREAM_CAP_INVALID))
+                 rpt->capabilities = convert_stream_version_to_capabilities(1, NULL, false);
+ 
+-            if (unlikely(rrdhost_set_system_info_variable(rpt->system_info, name, value))) {
++            if (unlikely(rrdhost_system_info_set_by_name(rpt->system_info, name, value))) {
+                 nd_log_daemon(NDLP_NOTICE, "STREAM RCV '%s' [from [%s]:%s]: "
+                                            "request has parameter '%s' = '%s', which is not used."
+                               , (rpt->hostname && *rpt->hostname) ? rpt->hostname : "-"
+diff --git a/src/web/api/v1/api_v1_info.c b/src/web/api/v1/api_v1_info.c
+index 7d64afb58..272916d77 100644
+--- a/src/web/api/v1/api_v1_info.c
++++ b/src/web/api/v1/api_v1_info.c
+@@ -38,7 +38,7 @@ static inline void web_client_api_request_v1_info_mirrored_hosts_status(BUFFER *
+     buffer_json_add_array_item_object(wb);
+ 
+     buffer_json_member_add_string(wb, "hostname", rrdhost_hostname(host));
+-    buffer_json_member_add_uint64(wb, "hops", host->system_info ? host->system_info->hops : (host == localhost) ? 0 : 1);
++    buffer_json_member_add_uint64(wb, "hops", host->system_info ? rrdhost_system_info_hops(host->system_info) : (host == localhost) ? 0 : 1);
+     buffer_json_member_add_boolean(wb, "reachable", (host == localhost || !rrdhost_flag_check(host, RRDHOST_FLAG_ORPHAN)));
+ 
+     buffer_json_member_add_string(wb, "guid", host->machine_guid);
+@@ -115,36 +115,7 @@ static int web_client_api_request_v1_info_fill_buffer(RRDHOST *host, BUFFER *wb)
+ 
+     web_client_api_request_v1_info_summary_alarm_statuses(host, wb, "alarms");
+ 
+-    buffer_json_member_add_string_or_empty(wb, "os_name", host->system_info->host_os_name);
+-    buffer_json_member_add_string_or_empty(wb, "os_id", host->system_info->host_os_id);
+-    buffer_json_member_add_string_or_empty(wb, "os_id_like", host->system_info->host_os_id_like);
+-    buffer_json_member_add_string_or_empty(wb, "os_version", host->system_info->host_os_version);
+-    buffer_json_member_add_string_or_empty(wb, "os_version_id", host->system_info->host_os_version_id);
+-    buffer_json_member_add_string_or_empty(wb, "os_detection", host->system_info->host_os_detection);
+-    buffer_json_member_add_string_or_empty(wb, "cores_total", host->system_info->host_cores);
+-    buffer_json_member_add_string_or_empty(wb, "total_disk_space", host->system_info->host_disk_space);
+-    buffer_json_member_add_string_or_empty(wb, "cpu_freq", host->system_info->host_cpu_freq);
+-    buffer_json_member_add_string_or_empty(wb, "ram_total", host->system_info->host_ram_total);
+-
+-    buffer_json_member_add_string_or_omit(wb, "container_os_name", host->system_info->container_os_name);
+-    buffer_json_member_add_string_or_omit(wb, "container_os_id", host->system_info->container_os_id);
+-    buffer_json_member_add_string_or_omit(wb, "container_os_id_like", host->system_info->container_os_id_like);
+-    buffer_json_member_add_string_or_omit(wb, "container_os_version", host->system_info->container_os_version);
+-    buffer_json_member_add_string_or_omit(wb, "container_os_version_id", host->system_info->container_os_version_id);
+-    buffer_json_member_add_string_or_omit(wb, "container_os_detection", host->system_info->container_os_detection);
+-    buffer_json_member_add_string_or_omit(wb, "is_k8s_node", host->system_info->is_k8s_node);
+-
+-    buffer_json_member_add_string_or_empty(wb, "kernel_name", host->system_info->kernel_name);
+-    buffer_json_member_add_string_or_empty(wb, "kernel_version", host->system_info->kernel_version);
+-    buffer_json_member_add_string_or_empty(wb, "architecture", host->system_info->architecture);
+-    buffer_json_member_add_string_or_empty(wb, "virtualization", host->system_info->virtualization);
+-    buffer_json_member_add_string_or_empty(wb, "virt_detection", host->system_info->virt_detection);
+-    buffer_json_member_add_string_or_empty(wb, "container", host->system_info->container);
+-    buffer_json_member_add_string_or_empty(wb, "container_detection", host->system_info->container_detection);
+-
+-    buffer_json_member_add_string_or_omit(wb, "cloud_provider_type", host->system_info->cloud_provider_type);
+-    buffer_json_member_add_string_or_omit(wb, "cloud_instance_type", host->system_info->cloud_instance_type);
+-    buffer_json_member_add_string_or_omit(wb, "cloud_instance_region", host->system_info->cloud_instance_region);
++    rrdhost_system_info_to_json_v1(wb, host->system_info);
+ 
+     host_labels2json(host, wb, "host_labels");
+     host_functions2json(host, wb);

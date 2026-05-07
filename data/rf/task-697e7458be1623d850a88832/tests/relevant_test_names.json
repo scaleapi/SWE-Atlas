@@ -1,0 +1,103 @@
+{
+  "tests": [
+    {
+      "name": "TestGetRuntimeOptionsIntegration"
+    },
+    {
+      "name": "TestGetRuntimeOptionsIntegration/cli_flag_overrides_env_var"
+    },
+    {
+      "name": "TestGetRuntimeOptionsIntegration/env_vars_combined_with_flags"
+    },
+    {
+      "name": "TestPopulateRuntimeOptionsFromEnv"
+    },
+    {
+      "name": "TestPopulateRuntimeOptionsFromEnv/K6_COMPATIBILITY_MODE_from_env"
+    },
+    {
+      "name": "TestPopulateRuntimeOptionsFromEnv/K6_INCLUDE_SYSTEM_ENV_VARS_invalid"
+    },
+    {
+      "name": "TestPopulateRuntimeOptionsFromEnv/K6_INCLUDE_SYSTEM_ENV_VARS_true"
+    },
+    {
+      "name": "TestPopulateRuntimeOptionsFromEnv/K6_NO_SUMMARY_from_env"
+    },
+    {
+      "name": "TestPopulateRuntimeOptionsFromEnv/K6_NO_THRESHOLDS_from_env"
+    },
+    {
+      "name": "TestPopulateRuntimeOptionsFromEnv/K6_SUMMARY_EXPORT_from_env"
+    },
+    {
+      "name": "TestPopulateRuntimeOptionsFromEnv/K6_TRACES_OUTPUT_from_env"
+    },
+    {
+      "name": "TestPopulateRuntimeOptionsFromEnv/K6_TYPE_from_env"
+    },
+    {
+      "name": "TestPopulateRuntimeOptionsFromEnv/K6_TYPE_not_overwritten_when_already_set"
+    },
+    {
+      "name": "TestPopulateRuntimeOptionsFromEnv/SSLKEYLOGFILE_from_env"
+    },
+    {
+      "name": "TestPopulateRuntimeOptionsFromEnv/system_env_vars_included_when_enabled"
+    },
+    {
+      "name": "TestRuntimeOptionsFromFlags"
+    },
+    {
+      "name": "TestRuntimeOptionsFromFlags/compatibility_mode_base"
+    },
+    {
+      "name": "TestRuntimeOptionsFromFlags/default_values_with_sys_env_disabled"
+    },
+    {
+      "name": "TestRuntimeOptionsFromFlags/default_values_with_sys_env_enabled"
+    },
+    {
+      "name": "TestRuntimeOptionsFromFlags/multiple_flags_combined"
+    },
+    {
+      "name": "TestRuntimeOptionsFromFlags/no-summary_flag"
+    },
+    {
+      "name": "TestRuntimeOptionsFromFlags/no-thresholds_flag"
+    },
+    {
+      "name": "TestRuntimeOptionsFromFlags/summary-export_flag"
+    },
+    {
+      "name": "TestRuntimeOptionsFromFlags/test_type_flag"
+    },
+    {
+      "name": "TestRuntimeOptionsFromFlags/traces-output_flag"
+    },
+    {
+      "name": "TestSaveBoolFromEnv"
+    },
+    {
+      "name": "TestSaveBoolFromEnv/already_set_placeholder_not_overwritten"
+    },
+    {
+      "name": "TestSaveBoolFromEnv/invalid_bool_value"
+    },
+    {
+      "name": "TestSaveBoolFromEnv/var_not_present"
+    },
+    {
+      "name": "TestSaveBoolFromEnv/var_present_0"
+    },
+    {
+      "name": "TestSaveBoolFromEnv/var_present_1"
+    },
+    {
+      "name": "TestSaveBoolFromEnv/var_present_false"
+    },
+    {
+      "name": "TestSaveBoolFromEnv/var_present_true"
+    }
+  ]
+}

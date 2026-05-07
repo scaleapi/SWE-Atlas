@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "name": "public/app/features/alerting/unified/rule-list/hooks/filters.test.ts"
+    },
+    {
+      "name": "public/app/features/alerting/unified/rule-list/hooks/useFilteredRulesIterator.test.ts"
+    }
+  ]
+}

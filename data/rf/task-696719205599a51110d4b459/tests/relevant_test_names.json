@@ -1,0 +1,109 @@
+{
+  "tests": [
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestCUEKindDefinitionsAreSimplified"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestCUEKindDefinitionsDoNotHaveCodegenConfig"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestCUEKindDefinitionsDoNotHaveNestedVersions"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestCUEKindDefinitionsHaveSchemaAtTopLevel"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestCUEKindDefinitionsPreserveIndexSchemaFields"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestCUEKindDefinitionsPreserveSchemaFields"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestCUEKindIdentifiersAreVersionAware"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestCUEManifestHasCodegenConfig"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestCUEManifestHasKindsInVersionBlock"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestCUEManifestHasVersionsBlock"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestCUEManifestReferencesVersionAwareKinds"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestEmbeddedInvestigationIndexSchemaHasNoStatusProperty"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestEmbeddedInvestigationSchemaHasNoStatusProperty"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestEmbeddedSchemasHaveNoOperatorStateDefinition"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationClientFileHasNoMetav1Import"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationClientHasNoUpdateStatusMethod"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationDeepCopyPreservesSpec"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationGetSubresourceStatusNotFound"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationGetSubresourcesReturnsEmpty"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationHasNoStatusField"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationIndexClientFileHasNoMetav1Import"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationIndexClientHasNoUpdateStatusMethod"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationIndexDeepCopyPreservesSpec"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationIndexGetSubresourceStatusNotFound"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationIndexGetSubresourcesReturnsEmpty"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationIndexHasNoStatusField"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationIndexJSONRoundTripHasNoStatus"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationIndexObjectFileHasNoStatusDeepCopy"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationIndexSetSubresourceStatusReturnsError"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationJSONRoundTripHasNoStatus"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationObjectFileHasNoStatusDeepCopy"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationSetSubresourceStatusReturnsError"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestInvestigationStatusFileDoesNotExist"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestMakefileDisablesOperatorState"
+    },
+    {
+      "name": "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1/TestMakefileDoesNotUseOldManifestKinds"
+    }
+  ]
+}

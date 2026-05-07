@@ -1,0 +1,162 @@
+[
+  {
+    "id": "8a9318679bdb26719276055ef4c84d3e",
+    "title": "Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f7b321ae91a7e2a0bcf7df0eab4263f7",
+    "title": "1.1: Adds all three required field groups to SiteContextualPlan (pricing, product identification, discount and cost)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "852a31be316008117eb296fcb00c03b1",
+    "title": "1.2: Adds all six conditional field groups to SiteContextualPlan (billing, coupon, offer, current plan, subscription, trial)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9e49aa301b4a75b1ecf84462f6989da5",
+    "title": "1.3: Adds cost override interface to site-plans types module",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ed5bd85fb3bd30902b4d893bf8e679a4",
+    "title": "1.4: Changes SiteContextualPlan id field type from optional string to optional number",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d0ed51a2a8f64669ef6289c6b6c3faf3",
+    "title": "1.5: Normalizes site plan numeric fields in fetchSitePlans response",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "091e7d3a69106c1148cd5f4a6c07775a",
+    "title": "1.6: Updates fetchSitePlans to accept an optional coupon parameter",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "091d0789295092f89ba85a87ca0d3026",
+    "title": "1.7: Updates fetchSitePlans return type from record to array",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9117958b282e875b924c9e5e0f015067",
+    "title": "1.8: Adds sitePlansQuery function to site-plans queries module",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c0c480b2f25d4bb89fab7d5735fcc811",
+    "title": "1.9: Updates site-plan query functions to use array methods",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "42e63fdeb9a216df65c4c6453c1f130d",
+    "title": "1.10: Removes parseInt coercions for plan id at dashboard call sites",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "59298234f5176b41059190eb4c468965",
+    "title": "Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "88975e1746cd3f0f7bf1cd0fc8270724",
+    "title": "3.1: Removes SiteSpecificPlanProduct type from plans types module",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a258156f3a71d6c9f17fe10a898c75f0",
+    "title": "3.2: Removes SiteSpecificPlanCostOverride type from plans types module",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "196bdac42f0fc1af246be38721194fd1",
+    "title": "3.3: Removes fetchPricedSitePlans function from plans fetchers module",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d394f042ac41cb204c147f117d1056f3",
+    "title": "3.4: Removes normalizeSiteSpecificPlanProduct function from plans fetchers module",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "55f6d9b3642c962eeaa1a7d0fe5b04b2",
+    "title": "3.5: Removes sitePricedPlansQuery from plans queries module",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0248934eb1b30de7faea157dd07d4b5d",
+    "title": "Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "01873200688729f0975dec3ad1d2ebc8",
+    "title": "4.1: Removes normalization logic for site plan numeric fields",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8695dacc3ef136e7b2907aeeac1954f3",
+    "title": "4.2: Sets coupon as a required parameter in fetchSitePlans",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

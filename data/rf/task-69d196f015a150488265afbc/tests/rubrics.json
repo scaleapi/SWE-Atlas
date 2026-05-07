@@ -1,0 +1,170 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "458395c203cf8ab93fc4209f8ba2161b",
+    "title": "1.1: Extracts SaveProvisionedDashboard into dashboard-scene/saving/SaveProvisionedDashboard.tsx",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5c3d3a0a764e1f7066489d4e0a9ee4e6",
+    "title": "1.2: Includes a repository field in SaveProvisionedDashboard",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1af472d0deb6e8551787336cbfa67af8",
+    "title": "1.3: Includes a file path field in SaveProvisionedDashboard",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f4729ca6486f785b98e0a81ff5fbf598",
+    "title": "1.4: Includes a branch field in SaveProvisionedDashboard",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1835ed3f3d49900a36ef70805ddb8c47",
+    "title": "1.5: Includes a comment field in SaveProvisionedDashboard",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c1f0cf4c88f7348a400f007fb247785f",
+    "title": "1.6: Removes inline provisioning logic from dashboard-scene/saving/SaveDashboardDrawer.tsx",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "62006834260e77a3ba6de7647207d533",
+    "title": "1.7: Adds kind field to FallbackResourceLoader in pkg/registry/apis/provisioning/utils.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b6f2f3bcd8f5fc7895747de359d382b0",
+    "title": "1.8: Uses both existing annotation key constants (AnnoKeyRepoName, AnnoKeyRepoPath) from app/features/apiserver/types instead of hardcoded annotation key strings",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "58bc9a14ee6b21771f37162b88ba9c2f",
+    "title": "1.9: Uses v0alpha1 API version for provisioning API calls",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "aea10343c24eaa61d9eebdb629f33f96",
+    "title": "1.10: Integrates SaveProvisionedDashboard into dashboard-scene/saving/SaveDashboardDrawer.tsx",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "cbc6f97ac71f1e16f91c56e032bfa205",
+    "title": "1.11: Exports BASE_URL constant from provisioning/api/baseAPI.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3a99750ce858b8c91663dd71b06676ae",
+    "title": "1.12: Refactors provisioning/api/baseAPI.ts to use the exported BASE_URL constant",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "52c76b2add6c8d443b18f2b68ac32387",
+    "title": "1.13: Updates provisioning/dashboard.ts to use BASE_URL from baseAPI",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "adf5a2b4700b63fed0fa81d533b1cdc6",
+    "title": "1.14: Sets both annotation keys (AnnoKeyRepoName, AnnoKeyRepoPath) on the loaded dashboard metadata in loadDashboardFromProvisioning in provisioning/dashboard.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c146e40e19e792cac66a935aaf7dc101",
+    "title": "3.1: Removes unused imports (Button from @grafana/ui, getBackendSrv from @grafana/runtime) from dashboard-scene/saving/SaveDashboardDrawer.tsx after refactoring",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1f8d14faed178f26353ec38b1bdb52ff",
+    "title": "4.1: Removes existing SaveProvisionedDashboardForm component or its usage",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ba5259b0a2e3f382f5dee6def2073ff2",
+    "title": "4.2: Places SaveProvisionedDashboard outside public/app/features/dashboard-scene/saving/",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

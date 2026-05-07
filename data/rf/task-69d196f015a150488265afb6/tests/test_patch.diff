@@ -1,0 +1,245 @@
+diff --git a/test/contrib/homeplugav.uts b/test/contrib/homeplugav.uts
+index 08f87c7f..5b63b2dd 100644
+--- a/test/contrib/homeplugav.uts
++++ b/test/contrib/homeplugav.uts
+@@ -122,3 +122,18 @@ a = pkt.checksum == chksum32(pkt.ModuleData)
+ b = pkt.DataLen == len(pkt.ModuleData)
+ a, b
+ assert a and b
++
++= AutoConnection version field test
++~ basic HomePlugAV AutoConnection
++
++ac = AutoConnection()
++fld_names = [f.name for f in AutoConnection.fields_desc]
++assert "version" in fld_names
++ac.version = 42
++assert ac.version == 42
++
++= ModulePIB reserved_21b field test
++~ basic HomePlugAV ModulePIB
++
++fld_names = [f.name for f in ModulePIB.fields_desc]
++assert "reserved_21b" in fld_names
+diff --git a/test/contrib/loraphy2wan.uts b/test/contrib/loraphy2wan.uts
+index 739a4a16..3c385e15 100644
+--- a/test/contrib/loraphy2wan.uts
++++ b/test/contrib/loraphy2wan.uts
+@@ -63,3 +63,14 @@ assert raw(pkt) == b'\x00\x00\x00 J\xe1o\x03\x02\x01\xb1\x8c\x8e\x06\x00\x00\x00
+ p = b'\r0\xc0\x80\xad\x15\x00`\x01\x01\x00\x02\xc0\xe3N\xb7\xc7\xae'
+ pkt = LoRa(p)
+ assert pkt.FOpts_up[0].CID == 2
++
++= ForceRejoinReq RFU2 field test
++
++pkt = ForceRejoinReq()
++fld_names = [f.name for f in ForceRejoinReq.fields_desc]
++assert "RFU2" in fld_names
++pkt.RFU2 = 1
++assert pkt.RFU2 == 1
++raw_pkt = raw(pkt)
++pkt2 = ForceRejoinReq(raw_pkt)
++assert pkt2.RFU2 == 1
+diff --git a/test/contrib/pnio_dcp.uts b/test/contrib/pnio_dcp.uts
+index c7d8f753..50990e0c 100644
+--- a/test/contrib/pnio_dcp.uts
++++ b/test/contrib/pnio_dcp.uts
+@@ -203,3 +203,33 @@ assert(p[DCPNameOfStationBlock].name_of_station == b'device')
+ 
+ 
+ conf.debug_dissector = old_conf_dissector
++
++= ProfinetDCP Identify Request with name_of_station
++
++p = ProfinetIO(frameID=DCP_IDENTIFY_REQUEST_FRAME_ID) / ProfinetDCP(service_id=DCP_SERVICE_ID_IDENTIFY, service_type=DCP_REQUEST, option=2, sub_option=2, name_of_station="et200sp", dcp_block_length=7, dcp_data_length=11)
++assert p[ProfinetDCP].service_id == 0x05
++assert p[ProfinetDCP].name_of_station == b"et200sp"
++assert p[ProfinetDCP].dcp_block_length == 7
++
++= ProfinetDCP Set Request name_of_station parsing
++
++p = Ether(b'\x01\x23\x45\x67\x89\xac\x01\x23\x45\x67\x89\xab\x88\x92\xfe\xfd' \
++       b'\x04\x00\x00\x00\x00\x01\x00\x00\x00\x0c\x02\x02\x00\x08\x00\x01' \
++       b'\x64\x65\x76\x69\x63\x65\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' \
++       b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
++assert p[ProfinetDCP].name_of_station == b"device"
++
++= ProfinetDCP name_of_station field uses MultipleTypeField
++
++from scapy.fields import MultipleTypeField, ConditionalField
++fld = None
++for f in ProfinetDCP.fields_desc:
++    if hasattr(f, 'name') and f.name == 'name_of_station':
++        if isinstance(f, ConditionalField) and hasattr(f, 'fld'):
++            fld = f.fld
++        else:
++            fld = f
++        break
++
++assert fld is not None
++assert isinstance(fld, MultipleTypeField)
+diff --git a/test/contrib/vqp.uts b/test/contrib/vqp.uts
+new file mode 100644
+index 00000000..d2084dbd
+--- /dev/null
++++ b/test/contrib/vqp.uts
+@@ -0,0 +1,77 @@
++% VQP tests
++
+++ Basic VQP tests
++
++= Build VQP
++
++from scapy.contrib.vqp import *
++
++pkt = UDP()/VQP(type=2,
++  seq=15)/VQPEntry(datatype=3073,data="1.2.3.4")/VQPEntry(datatype=3078,
++  data="AA:AA:AA:AA:AA:AA")
++
++assert VQP in pkt
++assert pkt[VQP].type == 2
++assert pkt[VQP].seq == 15
++entry1 = pkt.getlayer(VQPEntry, 1)
++entry2 = pkt.getlayer(VQPEntry, 2)
++assert entry1.datatype == 3073
++assert entry1.data == "1.2.3.4"
++assert entry2.datatype == 3078
++assert entry2.data.lower() == "aa:aa:aa:aa:aa:aa"
++
++= Dissect VQP
++
++pkt = UDP(b'\x065\x065\x00&\x00\x00\x01\x02\x00\x02\x00\x00\x00\x0f\x00\x00\x0c\x01\x00\x04\x01\x02\x03\x04\x00\x00\x0c\x06\x00\x06\xaa\xaa\xaa\xaa\xaa\xaa')
++
++assert pkt[VQP].sprintf("%type%") == "responseVLAN"
++assert pkt.getlayer(VQPEntry, 1).len == 4
++assert pkt.getlayer(VQPEntry, 1).sprintf("%datatype%") == "clientIPAddress"
++assert pkt.getlayer(VQPEntry, 2).len == 6
++assert pkt.getlayer(VQPEntry, 2).sprintf("%datatype%") == "ReqMACAddress"
++
++= VQP ResMACAddress with MultipleTypeField
++
++pkt = VQPEntry(datatype=3080, data="bb:bb:bb:bb:bb:bb")
++raw_pkt = bytes(pkt)
++parsed = VQPEntry(raw_pkt)
++assert parsed.datatype == 3080
++assert parsed.sprintf("%datatype%") == "ResMACAddress"
++assert parsed.len == 6
++assert parsed.data == "bb:bb:bb:bb:bb:bb"
++
++= VQP StrLenField default path
++
++pkt = VQPEntry(datatype=3074, data=b"FastEth0/1")
++raw_pkt = bytes(pkt)
++parsed = VQPEntry(raw_pkt)
++assert parsed.datatype == 3074
++assert parsed.len == 10
++assert parsed.sprintf("%datatype%") == "portName"
++assert parsed.data == b"FastEth0/1"
++
++= VQP FieldLenField auto-computes length
++
++pkt = VQPEntry(datatype=3073, data="10.0.0.1")
++assert pkt.len is None
++raw_pkt = bytes(pkt)
++parsed = VQPEntry(raw_pkt)
++assert parsed.len == 4
++
++= VQP bind_bottom_up dissect by sport
++
++raw_udp = bytes(IP()/UDP(sport=1589, dport=9999)/bytes(VQP(type=1, seq=1)))
++pkt = IP(raw_udp)
++assert VQP in pkt
++
++= VQP bind_bottom_up dissect by dport
++
++raw_udp = bytes(IP()/UDP(sport=9999, dport=1589)/bytes(VQP(type=1, seq=1)))
++pkt = IP(raw_udp)
++assert VQP in pkt
++
++= VQP build with bind_layers default ports
++
++pkt = IP()/UDP()/VQP(type=2, seq=1)
++assert pkt[UDP].sport == 1589
++assert pkt[UDP].dport == 1589
+diff --git a/test/test_base_classes.uts b/test/test_base_classes.uts
+new file mode 100644
+index 00000000..1e960f17
+--- /dev/null
++++ b/test/test_base_classes.uts
+@@ -0,0 +1,41 @@
++% Base classes type annotation and metaclass tests
++
+++ Packet_metaclass and Field_metaclass tests
++
++= Packet with fields_desc resolution
++
++from scapy.packet import Packet
++from scapy.fields import ByteField, ShortField
++import warnings
++
++class _TestPktBC(Packet):
++    name = "TestPktBC"
++    fields_desc = [ByteField("x", 0), ShortField("y", 0)]
++
++pkt = _TestPktBC()
++assert pkt.x == 0
++assert pkt.y == 0
++
++= Packet_metaclass __getattr__ for field access
++
++fld = _TestPktBC.x
++assert fld.name == "x"
++
++= Packet_metaclass duplicate field warning
++
++with warnings.catch_warnings(record=True) as w:
++    warnings.simplefilter("always")
++    class _DupPktBC(Packet):
++        name = "DupPktBC"
++        fields_desc = [ByteField("dup", 0), ByteField("dup", 1)]
++    assert len(w) >= 1
++    assert any("duplicated" in str(x.message) for x in w)
++
++= Field_metaclass basic test
++
++from scapy.fields import Field
++
++class _TestFldBC(Field):
++    pass
++
++assert _TestFldBC is not None
+diff --git a/test/test_tools_utscapy.uts b/test/test_tools_utscapy.uts
+new file mode 100644
+index 00000000..9afcaf7d
+--- /dev/null
++++ b/test/test_tools_utscapy.uts
+@@ -0,0 +1,29 @@
++% UTscapy Windows libpcap test
++
+++ UTscapy Windows libpcap requirement
++
++= Test UTscapy exits on Windows without libpcap
++
++import sys
++import io
++import contextlib
++from unittest.mock import patch
++from scapy.config import conf
++
++_argv = sys.argv[:]
++_use_pcap = conf.use_pcap
++
++try:
++    sys.argv = ['UTscapy']
++    conf.use_pcap = False
++    import scapy.tools.UTscapy as utmod
++    raised = False
++    with patch.object(utmod, 'WINDOWS', True), contextlib.redirect_stdout(io.StringIO()):
++        try:
++            utmod.main()
++        except SystemExit:
++            raised = True
++    assert raised
++finally:
++    sys.argv = _argv
++    conf.use_pcap = _use_pcap

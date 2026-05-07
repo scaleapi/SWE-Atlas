@@ -1,0 +1,16 @@
+{
+  "files": [
+    {
+      "name": "extra/innochecksum.cc"
+    },
+    {
+      "name": "storage/innobase/include/fsp0types.h"
+    },
+    {
+      "name": "storage/innobase/include/trx0sys.h"
+    },
+    {
+      "name": "storage/innobase/include/trx0undo.h"
+    }
+  ]
+}

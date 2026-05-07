@@ -1,0 +1,570 @@
+diff --git a/client/a8c-for-agencies/components/sidebar-menu/hooks/test/use-main-menu-items.tsx b/client/a8c-for-agencies/components/sidebar-menu/hooks/test/use-main-menu-items.tsx
+new file mode 100644
+index 00000000000..466d18836d0
+--- /dev/null
++++ b/client/a8c-for-agencies/components/sidebar-menu/hooks/test/use-main-menu-items.tsx
+@@ -0,0 +1,161 @@
++/**
++ * @jest-environment jsdom
++ */
++
++import { renderHook } from '@testing-library/react';
++import useMainMenuItems from '../use-main-menu-items';
++
++jest.mock( 'i18n-calypso', () => ( {
++	useTranslate: () => ( ( text: string ) => text ),
++} ) );
++
++jest.mock( 'react', () => ( {
++	...jest.requireActual( 'react' ),
++	useMemo: ( fn: () => any ) => fn(),
++} ) );
++
++jest.mock( 'calypso/state', () => ( {
++	useSelector: ( selector: any ) =>
++		selector( {
++			a8cForAgencies: {
++				agency: {
++					activeAgency: { tier: { id: 'emerging-partner' } },
++				},
++			},
++		} ),
++} ) );
++
++jest.mock( 'calypso/state/a8c-for-agencies/agency/selectors', () => ( {
++	getActiveAgency: ( state: any ) => state.a8cForAgencies?.agency?.activeAgency,
++} ) );
++
++jest.mock( 'calypso/a8c-for-agencies/lib/permission', () => ( {
++	isPathAllowed: () => true,
++} ) );
++
++jest.mock( 'calypso/sections-filter', () => ( {
++	isSectionNameEnabled: () => true,
++} ) );
++
++jest.mock( 'calypso/my-sites/sidebar/utils', () => ( {
++	itemLinkMatches: () => false,
++} ) );
++
++jest.mock( 'calypso/a8c-for-agencies/sections/reports/constants', () => ( {
++	A4A_REPORTS_LINK: '/reports',
++} ) );
++
++jest.mock( 'calypso/assets/images/a8c-for-agencies/woopayments/woo-sidebar-icon.svg', () => 'woo-icon.svg' );
++
++jest.mock( '@automattic/components', () => ( {
++	Badge: ( { children }: any ) => <span>{ children }</span>,
++} ) );
++
++describe( 'useMainMenuItems', () => {
++	it( 'should include an Agency Tier menu item', () => {
++		const { result } = renderHook( () => useMainMenuItems( '/' ) );
++		const agencyTierItem = result.current.find(
++			( item: any ) => item.trackEventProps?.menu_item === 'Automattic for Agencies / Agency Tier'
++		);
++		expect( agencyTierItem ).toBeDefined();
++	} );
++
++	it( 'should have exactly one Agency Tier menu item, not duplicates', () => {
++		const { result } = renderHook( () => useMainMenuItems( '/' ) );
++		const agencyTierItems = result.current.filter(
++			( item: any ) => item.trackEventProps?.menu_item === 'Automattic for Agencies / Agency Tier'
++		);
++		expect( agencyTierItems ).toHaveLength( 1 );
++	} );
++
++	it( 'should not reference the tiers-revamp feature flag', () => {
++		const { result } = renderHook( () => useMainMenuItems( '/' ) );
++		const items = result.current;
++		expect( items.length ).toBeGreaterThan( 0 );
++	} );
++
++	it( 'should place Agency Tier near the top of the menu after Overview', () => {
++		const { result } = renderHook( () => useMainMenuItems( '/' ) );
++		const items = result.current;
++		const overviewIndex = items.findIndex(
++			( item: any ) => item.trackEventProps?.menu_item === 'Automattic for Agencies / Overview'
++		);
++		const agencyTierIndex = items.findIndex(
++			( item: any ) => item.trackEventProps?.menu_item === 'Automattic for Agencies / Agency Tier'
++		);
++		expect( agencyTierIndex ).toBeGreaterThan( overviewIndex );
++		expect( agencyTierIndex ).toBe( overviewIndex + 1 );
++	} );
++
++	it( 'should include Referrals when section is enabled', () => {
++		const { result } = renderHook( () => useMainMenuItems( '/' ) );
++		const referralsItem = result.current.find(
++			( item: any ) => item.trackEventProps?.menu_item === 'Automattic for Agencies / Referrals'
++		);
++		expect( referralsItem ).toBeDefined();
++	} );
++
++	it( 'should include Migrations when section is enabled', () => {
++		const { result } = renderHook( () => useMainMenuItems( '/' ) );
++		const migrationsItem = result.current.find(
++			( item: any ) => item.trackEventProps?.menu_item === 'Automattic for Agencies / Migrations'
++		);
++		expect( migrationsItem ).toBeDefined();
++	} );
++
++	it( 'should include Plugins when section is enabled', () => {
++		const { result } = renderHook( () => useMainMenuItems( '/' ) );
++		const pluginsItem = result.current.find(
++			( item: any ) => item.trackEventProps?.menu_item === 'Automattic for Agencies / Plugins'
++		);
++		expect( pluginsItem ).toBeDefined();
++	} );
++
++	it( 'should include Learn when section is enabled', () => {
++		const { result } = renderHook( () => useMainMenuItems( '/' ) );
++		const learnItem = result.current.find(
++			( item: any ) => item.trackEventProps?.menu_item === 'Automattic for Agencies / Learn'
++		);
++		expect( learnItem ).toBeDefined();
++	} );
++
++	it( 'should include Settings when section is enabled', () => {
++		const { result } = renderHook( () => useMainMenuItems( '/' ) );
++		const settingsItem = result.current.find(
++			( item: any ) => item.trackEventProps?.menu_item === 'Automattic for Agencies / Settings'
++		);
++		expect( settingsItem ).toBeDefined();
++	} );
++
++	it( 'should include Team when section is enabled', () => {
++		const { result } = renderHook( () => useMainMenuItems( '/' ) );
++		const teamItem = result.current.find(
++			( item: any ) => item.trackEventProps?.menu_item === 'Automattic for Agencies / Team'
++		);
++		expect( teamItem ).toBeDefined();
++	} );
++
++	it( 'should include WooPayments menu item', () => {
++		const { result } = renderHook( () => useMainMenuItems( '/' ) );
++		const wooPaymentsItem = result.current.find(
++			( item: any ) => item.trackEventProps?.menu_item === 'Automattic for Agencies / WooPayments'
++		);
++		expect( wooPaymentsItem ).toBeDefined();
++	} );
++
++	it( 'should include Marketplace menu item', () => {
++		const { result } = renderHook( () => useMainMenuItems( '/' ) );
++		const marketplaceItem = result.current.find(
++			( item: any ) => item.trackEventProps?.menu_item === 'Automattic for Agencies / Marketplace'
++		);
++		expect( marketplaceItem ).toBeDefined();
++	} );
++
++	it( 'should include Purchases menu item', () => {
++		const { result } = renderHook( () => useMainMenuItems( '/' ) );
++		const purchasesItem = result.current.find(
++			( item: any ) => item.trackEventProps?.menu_item === 'Automattic for Agencies / Purchases'
++		);
++		expect( purchasesItem ).toBeDefined();
++	} );
++} );
+diff --git a/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview/test/index.tsx b/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview/test/index.tsx
+new file mode 100644
+index 00000000000..91e2613227c
+--- /dev/null
++++ b/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview/test/index.tsx
+@@ -0,0 +1,124 @@
++/**
++ * @jest-environment jsdom
++ */
++
++import { render } from '@testing-library/react';
++import AgencyTierOverview from '../index';
++
++const mockAgency = {
++	tier: { id: 'agency-partner', is_early_access: false },
++	influenced_revenue: 5000,
++};
++
++jest.mock( 'i18n-calypso', () => ( {
++	useTranslate: () => ( ( text: string ) => text ),
++} ) );
++
++jest.mock( 'calypso/state', () => ( {
++	useSelector: ( selector: any ) =>
++		selector( {
++			a8cForAgencies: {
++				agency: { activeAgency: mockAgency },
++			},
++		} ),
++} ) );
++
++jest.mock( 'calypso/state/a8c-for-agencies/agency/selectors', () => ( {
++	getActiveAgency: ( state: any ) => state.a8cForAgencies?.agency?.activeAgency,
++} ) );
++
++jest.mock( 'calypso/a8c-for-agencies/components/layout/layout-with-guided-tour', () => ( {
++	LayoutWithGuidedTour: ( { children, title }: any ) => (
++		<div data-testid="layout" data-title={ title }>
++			{ children }
++		</div>
++	),
++} ) );
++
++jest.mock( 'calypso/a8c-for-agencies/components/layout/layout-with-payment-notification', () => ( {
++	children,
++}: any ) => <div data-testid="layout-top">{ children }</div> );
++
++jest.mock( 'calypso/a8c-for-agencies/components/sidebar/mobile-sidebar-navigation', () => () => (
++	<div data-testid="mobile-sidebar-nav" />
++) );
++
++jest.mock( 'calypso/layout/hosting-dashboard/body', () => ( { children }: any ) => (
++	<div data-testid="layout-body">{ children }</div>
++) );
++
++jest.mock( 'calypso/layout/hosting-dashboard/header', () => {
++	const Header = ( { children }: any ) => <div data-testid="layout-header">{ children }</div>;
++	Header.displayName = 'LayoutHeader';
++	const LayoutHeaderTitle = ( { children }: any ) => <h1 data-testid="title">{ children }</h1>;
++	const LayoutHeaderActions = ( { children }: any ) => (
++		<div data-testid="actions">{ children }</div>
++	);
++	return Object.assign( Header, {
++		__esModule: true,
++		default: Header,
++		LayoutHeaderTitle,
++		LayoutHeaderActions,
++	} );
++} );
++
++let capturedProps: any = null;
++jest.mock( '../../../overview-content', () => ( props: any ) => {
++	capturedProps = props;
++	return <div data-testid="overview-content" />;
++} );
++
++jest.mock( '../style.scss', () => ( {} ) );
++
++describe( 'AgencyTierOverview', () => {
++	beforeEach( () => {
++		capturedProps = null;
++	} );
++
++	it( 'should render the updated page title', () => {
++		const { getByTestId } = render( <AgencyTierOverview /> );
++		expect( getByTestId( 'title' ).textContent ).toBe( 'Your agency tier and benefits' );
++	} );
++
++	it( 'should render AgencyTierOverviewContent', () => {
++		const { getByTestId } = render( <AgencyTierOverview /> );
++		expect( getByTestId( 'overview-content' ) ).toBeTruthy();
++	} );
++
++	it( 'should pass currentAgencyTierId from agency selector', () => {
++		render( <AgencyTierOverview /> );
++		expect( capturedProps.currentAgencyTierId ).toBe( 'agency-partner' );
++	} );
++
++	it( 'should pass totalInfluencedRevenue from agency selector', () => {
++		render( <AgencyTierOverview /> );
++		expect( capturedProps.totalInfluencedRevenue ).toBe( 5000 );
++	} );
++
++	it( 'should pass isEarlyAccess from agency selector', () => {
++		render( <AgencyTierOverview /> );
++		expect( capturedProps.isEarlyAccess ).toBe( false );
++	} );
++
++	it( 'should not render old V1 elements like benefit cards or tier badges', () => {
++		const { container } = render( <AgencyTierOverview /> );
++		expect( container.querySelector( '.agency-tier-overview__benefit-card' ) ).toBeNull();
++		expect( container.querySelector( '.agency-tier-overview__current-tier-badge' ) ).toBeNull();
++		expect( container.querySelector( '.agency-tier-overview__bottom-content' ) ).toBeNull();
++	} );
++
++	it( 'should not use useDispatch or recordTracksEvent', () => {
++		const { container } = render( <AgencyTierOverview /> );
++		expect( container ).toBeTruthy();
++	} );
++
++	it( 'should render the MobileSidebarNavigation component', () => {
++		const { getByTestId } = render( <AgencyTierOverview /> );
++		expect( getByTestId( 'mobile-sidebar-nav' ) ).toBeTruthy();
++	} );
++
++	it( 'should render the LayoutBody component', () => {
++		const { getByTestId } = render( <AgencyTierOverview /> );
++		expect( getByTestId( 'layout-body' ) ).toBeTruthy();
++	} );
++} );
+diff --git a/client/a8c-for-agencies/sections/agency-tier/test/controller.tsx b/client/a8c-for-agencies/sections/agency-tier/test/controller.tsx
+new file mode 100644
+index 00000000000..d5fd251118a
+--- /dev/null
++++ b/client/a8c-for-agencies/sections/agency-tier/test/controller.tsx
+@@ -0,0 +1,62 @@
++/**
++ * @jest-environment jsdom
++ */
++
++import { agencyTierContext } from '../controller';
++
++jest.mock( 'calypso/a8c-for-agencies/components/a4a-page-view-tracker', () => () => (
++	<div data-testid="page-view-tracker" />
++) );
++
++jest.mock( 'calypso/a8c-for-agencies/components/sidebar-menu/main', () => () => (
++	<div data-testid="main-sidebar" />
++) );
++
++jest.mock( '../primary/agency-tier-overview', () => () => (
++	<div data-testid="agency-tier-overview" />
++) );
++
++describe( 'agencyTierContext', () => {
++	it( 'should set context.primary with AgencyTierOverview', () => {
++		const context: any = { path: '/agency-tier' };
++		const next = jest.fn();
++
++		agencyTierContext( context, next );
++
++		expect( context.primary ).toBeDefined();
++		expect( next ).toHaveBeenCalled();
++	} );
++
++	it( 'should not conditionally render based on any feature flag', () => {
++		const context: any = { path: '/agency-tier' };
++		const next = jest.fn();
++
++		agencyTierContext( context, next );
++
++		const rendered = context.primary;
++		expect( rendered ).toBeDefined();
++		expect( rendered.props.children ).toEqual(
++			expect.arrayContaining( [
++				expect.objectContaining( { type: expect.any( Function ) } ),
++			] )
++		);
++	} );
++
++	it( 'should set context.secondary with MainSidebar', () => {
++		const context: any = { path: '/agency-tier' };
++		const next = jest.fn();
++
++		agencyTierContext( context, next );
++
++		expect( context.secondary ).toBeDefined();
++	} );
++
++	it( 'should call next to continue the routing chain', () => {
++		const context: any = { path: '/agency-tier' };
++		const next = jest.fn();
++
++		agencyTierContext( context, next );
++
++		expect( next ).toHaveBeenCalledTimes( 1 );
++	} );
++} );
+diff --git a/client/a8c-for-agencies/sections/agency-tier/test/feature-flag-cleanup.ts b/client/a8c-for-agencies/sections/agency-tier/test/feature-flag-cleanup.ts
+new file mode 100644
+index 00000000000..3cf53fe09da
+--- /dev/null
++++ b/client/a8c-for-agencies/sections/agency-tier/test/feature-flag-cleanup.ts
+@@ -0,0 +1,91 @@
++/**
++ * @jest-environment node
++ */
++
++import fs from 'fs';
++import path from 'path';
++
++const configDir = path.resolve( __dirname, '../../../../../config' );
++
++const a4aConfigFiles = [
++	'a8c-for-agencies-development.json',
++	'a8c-for-agencies-horizon.json',
++	'a8c-for-agencies-production.json',
++	'a8c-for-agencies-stage.json',
++];
++
++describe( 'tiers-revamp feature flag removal from config files', () => {
++	a4aConfigFiles.forEach( ( configFile ) => {
++		it( `should not contain tiers-revamp in ${ configFile }`, () => {
++			const configPath = path.join( configDir, configFile );
++			const config = JSON.parse( fs.readFileSync( configPath, 'utf-8' ) );
++			expect( config.features ).toBeDefined();
++			expect( config.features ).not.toHaveProperty( 'tiers-revamp' );
++		} );
++	} );
++} );
++
++describe( 'AgencyTierOverviewV2 component removal', () => {
++	const v2Dir = path.resolve(
++		__dirname,
++		'../primary/agency-tier-overview-v2'
++	);
++
++	it( 'should no longer have the V2 overview component directory', () => {
++		expect( fs.existsSync( v2Dir ) ).toBe( false );
++	} );
++
++	it( 'should no longer have the V2 index.tsx file', () => {
++		expect( fs.existsSync( path.join( v2Dir, 'index.tsx' ) ) ).toBe( false );
++	} );
++
++	it( 'should no longer have the V2 style.scss file', () => {
++		expect( fs.existsSync( path.join( v2Dir, 'style.scss' ) ) ).toBe( false );
++	} );
++} );
++
++describe( 'tiers-revamp feature flag removal from source files', () => {
++	const sourceFiles = [
++		path.resolve( __dirname, '../../../components/sidebar-menu/hooks/use-main-menu-items.tsx' ),
++		path.resolve( __dirname, '../controller.tsx' ),
++		path.resolve( __dirname, '../primary/agency-tier-overview/index.tsx' ),
++		path.resolve( __dirname, '../../overview/sidebar/agency-tier/index.tsx' ),
++	];
++
++	sourceFiles.forEach( ( sourceFile ) => {
++		const fileName = path.basename( sourceFile );
++		it( `should not reference tiers-revamp in ${ fileName }`, () => {
++			const content = fs.readFileSync( sourceFile, 'utf-8' );
++			expect( content ).not.toContain( 'tiers-revamp' );
++		} );
++
++		it( `should not import isEnabled from calypso-config in ${ fileName }`, () => {
++			const content = fs.readFileSync( sourceFile, 'utf-8' );
++			expect( content ).not.toMatch( /import.*isEnabled.*from.*calypso-config/ );
++		} );
++	} );
++} );
++
++describe( 'V1 stylesheet cleanup', () => {
++	it( 'should have replaced the old V1 SCSS with a minimal stylesheet', () => {
++		const stylePath = path.resolve(
++			__dirname,
++			'../primary/agency-tier-overview/style.scss'
++		);
++		const content = fs.readFileSync( stylePath, 'utf-8' );
++		const lines = content.trim().split( '\n' ).filter( ( l: string ) => l.trim().length > 0 );
++		expect( lines.length ).toBeLessThanOrEqual( 5 );
++	} );
++
++	it( 'should not contain old V1 class selectors', () => {
++		const stylePath = path.resolve(
++			__dirname,
++			'../primary/agency-tier-overview/style.scss'
++		);
++		const content = fs.readFileSync( stylePath, 'utf-8' );
++		expect( content ).not.toContain( '.agency-tier-overview__top-content' );
++		expect( content ).not.toContain( '.agency-tier-overview__benefit-card' );
++		expect( content ).not.toContain( '.agency-tier-overview__current-tier-badge' );
++		expect( content ).not.toContain( '.agency-tier-overview__bottom-content' );
++	} );
++} );
+diff --git a/client/a8c-for-agencies/sections/overview/sidebar/agency-tier/test/index.tsx b/client/a8c-for-agencies/sections/overview/sidebar/agency-tier/test/index.tsx
+new file mode 100644
+index 00000000000..14eea41b4c9
+--- /dev/null
++++ b/client/a8c-for-agencies/sections/overview/sidebar/agency-tier/test/index.tsx
+@@ -0,0 +1,102 @@
++/**
++ * @jest-environment jsdom
++ */
++
++import { render } from '@testing-library/react';
++import OverviewSidebarAgencyTier from '../index';
++
++const mockAgency = {
++	tier: { id: 'emerging-partner', is_early_access: true },
++	influenced_revenue: 1200,
++};
++
++jest.mock( 'i18n-calypso', () => ( {
++	useTranslate: () => ( ( text: string ) => text ),
++} ) );
++
++jest.mock( 'calypso/state', () => ( {
++	useSelector: ( selector: any ) =>
++		selector( {
++			a8cForAgencies: {
++				agency: { activeAgency: mockAgency },
++			},
++		} ),
++} ) );
++
++jest.mock( 'calypso/state/a8c-for-agencies/agency/selectors', () => ( {
++	getActiveAgency: ( state: any ) => state.a8cForAgencies?.agency?.activeAgency,
++} ) );
++
++jest.mock( 'calypso/a8c-for-agencies/sections/agency-tier/lib/get-agency-tier-info', () => (
++	tierId: string | undefined
++) => {
++	if ( ! tierId ) {
++		return null;
++	}
++	return {
++		id: tierId,
++		title: 'Test Tier',
++		logo: 'test-logo.svg',
++		description: 'A test tier',
++	};
++} );
++
++let capturedProgressCardProps: any = null;
++jest.mock( 'calypso/a8c-for-agencies/sections/agency-tier/progress-card', () => ( props: any ) => {
++	capturedProgressCardProps = props;
++	return <div data-testid="agency-tier-progress-card" />;
++} );
++
++jest.mock( '../style.scss', () => ( {} ) );
++
++describe( 'OverviewSidebarAgencyTier', () => {
++	beforeEach( () => {
++		capturedProgressCardProps = null;
++	} );
++
++	it( 'should render AgencyTierProgressCard directly', () => {
++		const { getByTestId } = render( <OverviewSidebarAgencyTier /> );
++		expect( getByTestId( 'agency-tier-progress-card' ) ).toBeTruthy();
++	} );
++
++	it( 'should pass currentAgencyTierId to AgencyTierProgressCard', () => {
++		render( <OverviewSidebarAgencyTier /> );
++		expect( capturedProgressCardProps.currentAgencyTierId ).toBe( 'emerging-partner' );
++	} );
++
++	it( 'should pass influencedRevenue to AgencyTierProgressCard', () => {
++		render( <OverviewSidebarAgencyTier /> );
++		expect( capturedProgressCardProps.influencedRevenue ).toBe( 1200 );
++	} );
++
++	it( 'should pass isEarlyAccess to AgencyTierProgressCard', () => {
++		render( <OverviewSidebarAgencyTier /> );
++		expect( capturedProgressCardProps.isEarlyAccess ).toBe( true );
++	} );
++
++	it( 'should not render old V1 elements like FoldableCard or celebration modal', () => {
++		const { container } = render( <OverviewSidebarAgencyTier /> );
++		expect( container.querySelector( '.agency-tier__card' ) ).toBeNull();
++		expect( container.querySelector( '.foldable-nav' ) ).toBeNull();
++	} );
++
++	it( 'should not render the Explore Tiers and benefits button', () => {
++		const { container } = render( <OverviewSidebarAgencyTier /> );
++		expect( container.textContent ).not.toContain( 'Explore Tiers and benefits' );
++	} );
++
++	it( 'should return null when agency tier info is not available', () => {
++		jest.resetModules();
++		jest.doMock( 'calypso/state', () => ( {
++			useSelector: () => ( { tier: undefined } ),
++		} ) );
++		jest.doMock( 'calypso/state/a8c-for-agencies/agency/selectors', () => ( {
++			getActiveAgency: ( state: any ) => state,
++		} ) );
++		jest.doMock( 'calypso/a8c-for-agencies/sections/agency-tier/lib/get-agency-tier-info', () => () => null );
++
++		const Component = require( '../index' ).default;
++		const { container } = render( <Component /> );
++		expect( container.innerHTML ).toBe( '' );
++	} );
++} );

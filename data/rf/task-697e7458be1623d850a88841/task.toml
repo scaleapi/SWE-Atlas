@@ -1,0 +1,25 @@
+[metadata]
+author_name = "ScaleAI"
+author_email = "unknown"
+difficulty = "medium"
+category = "refactoring"
+tags = ["refactoring", "master-validator", "rubric-graded", "Go"]
+
+[verifier]
+timeout_sec = 7200
+
+[verifier.env]
+EVAL_API_KEY = "${OPENAI_API_KEY}"
+EVAL_BASE_URL = "${OPENAI_API_BASE}"
+EVAL_MODEL = "${EVAL_MODEL:-anthropic/claude-opus-4-5-20251101}"
+
+[agent]
+timeout_sec = 3600
+
+[environment]
+docker_image = "ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_trufflesecurity_trufflehog_697e7458be1623d850a88841_1.0@sha256:689d93eb032e59d2651a0c8c3f64c50cc83f1b015666d3a3ede5ffe3a21b24c9"
+build_timeout_sec = 1800
+allow_internet = true
+cpus = 16
+memory_mb = 16384
+storage_mb = 20480

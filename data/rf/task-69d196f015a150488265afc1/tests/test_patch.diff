@@ -1,0 +1,447 @@
+diff --git a/mysql-test/suite/gcol/r/innodb_virtual_stats.result b/mysql-test/suite/gcol/r/innodb_virtual_stats.result
+index 74a0480883d..c0f595263df 100644
+--- a/mysql-test/suite/gcol/r/innodb_virtual_stats.result
++++ b/mysql-test/suite/gcol/r/innodb_virtual_stats.result
+@@ -38,6 +38,10 @@ idxa	n_diff_pfx01	a
+ idxa	n_diff_pfx02	a,DB_ROW_ID
+ idxa	n_leaf_pages	Number of leaf pages in the index
+ idxa	size	Number of pages in the index
++idxb	n_diff_pfx01	b
++idxb	n_diff_pfx02	b,DB_ROW_ID
++idxb	n_leaf_pages	Number of leaf pages in the index
++idxb	size	Number of pages in the index
+ vidxcd	n_diff_pfx01	c
+ vidxcd	n_diff_pfx02	c,d
+ vidxcd	n_diff_pfx03	c,d,DB_ROW_ID
+@@ -54,6 +58,14 @@ index_name	stat_name	stat_description
+ GEN_CLUST_INDEX	n_diff_pfx01	DB_ROW_ID
+ GEN_CLUST_INDEX	n_leaf_pages	Number of leaf pages in the index
+ GEN_CLUST_INDEX	size	Number of pages in the index
++idxb	n_diff_pfx01	b
++idxb	n_diff_pfx02	b,DB_ROW_ID
++idxb	n_leaf_pages	Number of leaf pages in the index
++idxb	size	Number of pages in the index
++vidxcd	n_diff_pfx01	d
++vidxcd	n_diff_pfx02	d,DB_ROW_ID
++vidxcd	n_leaf_pages	Number of leaf pages in the index
++vidxcd	size	Number of pages in the index
+ ALTER TABLE t ADD INDEX vidxe (e), ALGORITHM=INPLACE;
+ select count(*) from t;
+ count(*)
+@@ -65,6 +77,18 @@ index_name	stat_name	stat_description
+ GEN_CLUST_INDEX	n_diff_pfx01	DB_ROW_ID
+ GEN_CLUST_INDEX	n_leaf_pages	Number of leaf pages in the index
+ GEN_CLUST_INDEX	size	Number of pages in the index
++idxb	n_diff_pfx01	b
++idxb	n_diff_pfx02	b,DB_ROW_ID
++idxb	n_leaf_pages	Number of leaf pages in the index
++idxb	size	Number of pages in the index
++vidxcd	n_diff_pfx01	d
++vidxcd	n_diff_pfx02	d,DB_ROW_ID
++vidxcd	n_leaf_pages	Number of leaf pages in the index
++vidxcd	size	Number of pages in the index
++vidxe	n_diff_pfx01	e
++vidxe	n_diff_pfx02	e,DB_ROW_ID
++vidxe	n_leaf_pages	Number of leaf pages in the index
++vidxe	size	Number of pages in the index
+ ALTER TABLE t ADD COLUMN f INT GENERATED ALWAYS AS(a + a), ADD INDEX vidxf (f), ALGORITHM=INPLACE;
+ select count(*) from t;
+ count(*)
+@@ -76,6 +100,22 @@ index_name	stat_name	stat_description
+ GEN_CLUST_INDEX	n_diff_pfx01	DB_ROW_ID
+ GEN_CLUST_INDEX	n_leaf_pages	Number of leaf pages in the index
+ GEN_CLUST_INDEX	size	Number of pages in the index
++idxb	n_diff_pfx01	b
++idxb	n_diff_pfx02	b,DB_ROW_ID
++idxb	n_leaf_pages	Number of leaf pages in the index
++idxb	size	Number of pages in the index
++vidxcd	n_diff_pfx01	d
++vidxcd	n_diff_pfx02	d,DB_ROW_ID
++vidxcd	n_leaf_pages	Number of leaf pages in the index
++vidxcd	size	Number of pages in the index
++vidxe	n_diff_pfx01	e
++vidxe	n_diff_pfx02	e,DB_ROW_ID
++vidxe	n_leaf_pages	Number of leaf pages in the index
++vidxe	size	Number of pages in the index
++vidxf	n_diff_pfx01	f
++vidxf	n_diff_pfx02	f,DB_ROW_ID
++vidxf	n_leaf_pages	Number of leaf pages in the index
++vidxf	size	Number of pages in the index
+ ALTER TABLE t DROP INDEX vidxcd;
+ SELECT index_name, stat_name, stat_description
+ FROM mysql.innodb_index_stats
+@@ -84,4 +124,16 @@ index_name	stat_name	stat_description
+ GEN_CLUST_INDEX	n_diff_pfx01	DB_ROW_ID
+ GEN_CLUST_INDEX	n_leaf_pages	Number of leaf pages in the index
+ GEN_CLUST_INDEX	size	Number of pages in the index
++idxb	n_diff_pfx01	b
++idxb	n_diff_pfx02	b,DB_ROW_ID
++idxb	n_leaf_pages	Number of leaf pages in the index
++idxb	size	Number of pages in the index
++vidxe	n_diff_pfx01	e
++vidxe	n_diff_pfx02	e,DB_ROW_ID
++vidxe	n_leaf_pages	Number of leaf pages in the index
++vidxe	size	Number of pages in the index
++vidxf	n_diff_pfx01	f
++vidxf	n_diff_pfx02	f,DB_ROW_ID
++vidxf	n_leaf_pages	Number of leaf pages in the index
++vidxf	size	Number of pages in the index
+ DROP TABLE t;
+diff --git a/mysql-test/suite/innodb/r/innodb_stats_auto_recalc_on_nonexistent.result b/mysql-test/suite/innodb/r/innodb_stats_auto_recalc_on_nonexistent.result
+index 6b2397432df..9a216374125 100644
+--- a/mysql-test/suite/innodb/r/innodb_stats_auto_recalc_on_nonexistent.result
++++ b/mysql-test/suite/innodb/r/innodb_stats_auto_recalc_on_nonexistent.result
+@@ -5,13 +5,13 @@ COUNT(*)	1
+ SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 't';
+ COUNT(*)	3
+ SELECT * FROM t;
+-FLUSH TABLE t;
+ DELETE FROM mysql.innodb_index_stats WHERE table_name = 't';
+ DELETE FROM mysql.innodb_table_stats WHERE table_name = 't';
+ SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 't';
+ COUNT(*)	0
+ SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 't';
+ COUNT(*)	0
++RENAME TABLE t TO tmp, tmp TO t;
+ SELECT * FROM t;
+ SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 't';
+ COUNT(*)	1
+@@ -25,13 +25,13 @@ COUNT(*)	1
+ SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 't';
+ COUNT(*)	3
+ SELECT * FROM t;
+-FLUSH TABLE t;
+ DELETE FROM mysql.innodb_index_stats WHERE table_name = 't';
+ DELETE FROM mysql.innodb_table_stats WHERE table_name = 't';
+ SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 't';
+ COUNT(*)	0
+ SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 't';
+ COUNT(*)	0
++RENAME TABLE t TO tmp, tmp TO t;
+ SELECT * FROM t;
+ SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 't';
+ COUNT(*)	1
+@@ -45,13 +45,13 @@ COUNT(*)	1
+ SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 't';
+ COUNT(*)	3
+ SELECT * FROM t;
+-FLUSH TABLE t;
+ DELETE FROM mysql.innodb_index_stats WHERE table_name = 't';
+ DELETE FROM mysql.innodb_table_stats WHERE table_name = 't';
+ SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 't';
+ COUNT(*)	0
+ SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 't';
+ COUNT(*)	0
++RENAME TABLE t TO tmp, tmp TO t;
+ SELECT * FROM t;
+ SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 't';
+ COUNT(*)	0
+diff --git a/mysql-test/suite/innodb/r/innodb_stats_fetch.result b/mysql-test/suite/innodb/r/innodb_stats_fetch.result
+index d2fce6301d3..772cc5d146a 100644
+--- a/mysql-test/suite/innodb/r/innodb_stats_fetch.result
++++ b/mysql-test/suite/innodb/r/innodb_stats_fetch.result
+@@ -125,7 +125,7 @@ WHERE
+ table_name = 'test_ps_fetch' AND
+ index_name = 'idx' AND
+ stat_name = 'n_diff_pfx02';
+-FLUSH TABLE test_ps_fetch;
++RENAME TABLE test_ps_fetch TO tmp, tmp TO test_ps_fetch;
+ SELECT seq_in_index, column_name, cardinality
+ FROM information_schema.statistics WHERE table_name = 'test_ps_fetch'
+ ORDER BY index_name, seq_in_index;
+diff --git a/mysql-test/suite/innodb/t/innodb_stats_auto_recalc_on_nonexistent.test b/mysql-test/suite/innodb/t/innodb_stats_auto_recalc_on_nonexistent.test
+index 4cd910071e8..b9ef74ea30d 100644
+--- a/mysql-test/suite/innodb/t/innodb_stats_auto_recalc_on_nonexistent.test
++++ b/mysql-test/suite/innodb/t/innodb_stats_auto_recalc_on_nonexistent.test
+@@ -17,9 +17,7 @@ CREATE TABLE t (a INT, PRIMARY KEY (a)) ENGINE=INNODB;
+ -- eval $check_stats1
+ -- eval $check_stats2
+ 
+-# open and close the table
+ SELECT * FROM t;
+-FLUSH TABLE t;
+ 
+ DELETE FROM mysql.innodb_index_stats WHERE table_name = 't';
+ DELETE FROM mysql.innodb_table_stats WHERE table_name = 't';
+@@ -27,7 +25,8 @@ DELETE FROM mysql.innodb_table_stats WHERE table_name = 't';
+ -- eval $check_stats1
+ -- eval $check_stats2
+ 
+-# open the table, causing stats recalc/save
++# rename and open the table, causing stats recalc/save
++RENAME TABLE t TO tmp, tmp TO t;
+ SELECT * FROM t;
+ 
+ -- eval $check_stats1
+@@ -43,9 +42,7 @@ CREATE TABLE t (a INT, PRIMARY KEY (a)) ENGINE=INNODB STATS_AUTO_RECALC=1;
+ -- eval $check_stats1
+ -- eval $check_stats2
+ 
+-# open and close the table
+ SELECT * FROM t;
+-FLUSH TABLE t;
+ 
+ DELETE FROM mysql.innodb_index_stats WHERE table_name = 't';
+ DELETE FROM mysql.innodb_table_stats WHERE table_name = 't';
+@@ -53,7 +50,7 @@ DELETE FROM mysql.innodb_table_stats WHERE table_name = 't';
+ -- eval $check_stats1
+ -- eval $check_stats2
+ 
+-# open the table, causing stats recalc/save
++RENAME TABLE t TO tmp, tmp TO t;
+ SELECT * FROM t;
+ 
+ -- eval $check_stats1
+@@ -69,9 +66,7 @@ CREATE TABLE t (a INT, PRIMARY KEY (a)) ENGINE=INNODB STATS_AUTO_RECALC=0;
+ -- eval $check_stats1
+ -- eval $check_stats2
+ 
+-# open and close the table
+ SELECT * FROM t;
+-FLUSH TABLE t;
+ 
+ DELETE FROM mysql.innodb_index_stats WHERE table_name = 't';
+ DELETE FROM mysql.innodb_table_stats WHERE table_name = 't';
+@@ -79,7 +74,8 @@ DELETE FROM mysql.innodb_table_stats WHERE table_name = 't';
+ -- eval $check_stats1
+ -- eval $check_stats2
+ 
+-# open the table, stats should not be present, since autorecalc is disabled
++# rename the table, stats should not be present, since autorecalc is disabled
++RENAME TABLE t TO tmp, tmp TO t;
+ SELECT * FROM t;
+ 
+ -- eval $check_stats1
+diff --git a/mysql-test/suite/innodb/t/innodb_stats_fetch.test b/mysql-test/suite/innodb/t/innodb_stats_fetch.test
+index 031144d82bc..844e17a521b 100644
+--- a/mysql-test/suite/innodb/t/innodb_stats_fetch.test
++++ b/mysql-test/suite/innodb/t/innodb_stats_fetch.test
+@@ -69,7 +69,7 @@ table_name = 'test_ps_fetch' AND
+ index_name = 'idx' AND
+ stat_name = 'n_diff_pfx02';
+ 
+-FLUSH TABLE test_ps_fetch;
++RENAME TABLE test_ps_fetch TO tmp, tmp TO test_ps_fetch;
+ 
+ SELECT seq_in_index, column_name, cardinality
+ FROM information_schema.statistics WHERE table_name = 'test_ps_fetch'
+diff --git a/mysql-test/suite/innodb/r/innodb_stats_flush_no_reload.result b/mysql-test/suite/innodb/r/innodb_stats_flush_no_reload.result
+new file mode 100644
+index 00000000000..4cb9c790055
+--- /dev/null
++++ b/mysql-test/suite/innodb/r/innodb_stats_flush_no_reload.result
+@@ -0,0 +1,75 @@
++CREATE TABLE tf (a INT, PRIMARY KEY (a)) ENGINE=INNODB STATS_PERSISTENT=1;
++SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++COUNT(*)	1
++SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 'tf';
++COUNT(*)	3
++DELETE FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++DELETE FROM mysql.innodb_index_stats WHERE table_name = 'tf';
++SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++COUNT(*)	0
++SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 'tf';
++COUNT(*)	0
++FLUSH TABLE tf;
++SELECT * FROM tf;
++SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++COUNT(*)	0
++SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 'tf';
++COUNT(*)	0
++DROP TABLE tf;
++CREATE TABLE tf (a INT, PRIMARY KEY (a)) ENGINE=INNODB STATS_PERSISTENT=1;
++SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++COUNT(*)	1
++SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 'tf';
++COUNT(*)	3
++DELETE FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++DELETE FROM mysql.innodb_index_stats WHERE table_name = 'tf';
++SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++COUNT(*)	0
++SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 'tf';
++COUNT(*)	0
++RENAME TABLE tf TO tmp, tmp TO tf;
++SELECT * FROM tf;
++SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++COUNT(*)	1
++SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 'tf';
++COUNT(*)	3
++DROP TABLE tf;
++CREATE TABLE tf (a INT, PRIMARY KEY (a)) ENGINE=INNODB STATS_PERSISTENT=1;
++INSERT INTO tf VALUES (1), (2), (3);
++SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++COUNT(*)	1
++SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 'tf';
++COUNT(*)	3
++FLUSH TABLE tf;
++SELECT COUNT(*) FROM tf;
++COUNT(*)	3
++FLUSH TABLE tf;
++SELECT COUNT(*) FROM tf;
++COUNT(*)	3
++FLUSH TABLE tf;
++SELECT COUNT(*) FROM tf;
++COUNT(*)	3
++SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++COUNT(*)	1
++SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 'tf';
++COUNT(*)	3
++DROP TABLE tf;
++CREATE TABLE tf (a INT, PRIMARY KEY (a)) ENGINE=INNODB STATS_PERSISTENT=0;
++INSERT INTO tf VALUES (1), (2), (3);
++SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++COUNT(*)	0
++SELECT COUNT(*) FROM tf;
++COUNT(*)	3
++SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++COUNT(*)	0
++DROP TABLE tf;
++CREATE TABLE tf (a INT, PRIMARY KEY (a)) ENGINE=INNODB STATS_PERSISTENT=1;
++INSERT INTO tf VALUES (1), (2), (3);
++SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++COUNT(*)	1
++TRUNCATE TABLE tf;
++SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++COUNT(*)	1
++SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 'tf';
++COUNT(*)	3
++DROP TABLE tf;
+diff --git a/mysql-test/suite/innodb/t/innodb_stats_flush_no_reload.test b/mysql-test/suite/innodb/t/innodb_stats_flush_no_reload.test
+new file mode 100644
+index 00000000000..bad4a7a0933
+--- /dev/null
++++ b/mysql-test/suite/innodb/t/innodb_stats_flush_no_reload.test
+@@ -0,0 +1,133 @@
++#
++# MDEV-35000: Verify that FLUSH TABLE no longer triggers InnoDB
++# persistent statistics deinitialization and reload.
++# RENAME TABLE remains the supported way to force a stats reload.
++#
++
++-- source include/have_innodb.inc
++
++-- vertical_results
++
++-- let $check_stats1 = SELECT COUNT(*) FROM mysql.innodb_table_stats WHERE table_name = 'tf'
++-- let $check_stats2 = SELECT COUNT(*) FROM mysql.innodb_index_stats WHERE table_name = 'tf'
++
++#
++# Test 1: FLUSH TABLE does NOT cause stats to be reloaded after deletion
++#
++
++CREATE TABLE tf (a INT, PRIMARY KEY (a)) ENGINE=INNODB STATS_PERSISTENT=1;
++
++# verify stats were created
++-- eval $check_stats1
++-- eval $check_stats2
++
++# delete the persistent stats
++DELETE FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++DELETE FROM mysql.innodb_index_stats WHERE table_name = 'tf';
++
++# confirm stats are gone
++-- eval $check_stats1
++-- eval $check_stats2
++
++# FLUSH TABLE and reopen - stats should NOT come back
++FLUSH TABLE tf;
++SELECT * FROM tf;
++
++-- eval $check_stats1
++-- eval $check_stats2
++
++DROP TABLE tf;
++
++#
++# Test 2: RENAME TABLE DOES cause stats to be reloaded after deletion
++#
++
++CREATE TABLE tf (a INT, PRIMARY KEY (a)) ENGINE=INNODB STATS_PERSISTENT=1;
++
++# verify stats were created
++-- eval $check_stats1
++-- eval $check_stats2
++
++# delete the persistent stats
++DELETE FROM mysql.innodb_table_stats WHERE table_name = 'tf';
++DELETE FROM mysql.innodb_index_stats WHERE table_name = 'tf';
++
++# confirm stats are gone
++-- eval $check_stats1
++-- eval $check_stats2
++
++# RENAME TABLE forces stats deinit, next open triggers recalculation
++RENAME TABLE tf TO tmp, tmp TO tf;
++SELECT * FROM tf;
++
++-- eval $check_stats1
++-- eval $check_stats2
++
++DROP TABLE tf;
++
++#
++# Test 3: Stats persist across normal table open/close cycles
++# (no FLUSH, no RENAME - just open and close)
++#
++
++CREATE TABLE tf (a INT, PRIMARY KEY (a)) ENGINE=INNODB STATS_PERSISTENT=1;
++INSERT INTO tf VALUES (1), (2), (3);
++
++let $wait_condition = SELECT stat_value = 3 FROM mysql.innodb_index_stats WHERE table_name = 'tf' AND index_name = 'PRIMARY' AND stat_name = 'n_diff_pfx01';
++-- source include/wait_condition.inc
++
++# verify stats reflect the inserted rows
++-- eval $check_stats1
++-- eval $check_stats2
++
++# close and reopen the table multiple times
++FLUSH TABLE tf;
++SELECT COUNT(*) FROM tf;
++FLUSH TABLE tf;
++SELECT COUNT(*) FROM tf;
++FLUSH TABLE tf;
++SELECT COUNT(*) FROM tf;
++
++# stats should still be present and unchanged
++-- eval $check_stats1
++-- eval $check_stats2
++
++DROP TABLE tf;
++
++#
++# Test 4: Transient stats fallback with STATS_PERSISTENT=0
++# Table should still be usable, stats computed transiently
++#
++
++CREATE TABLE tf (a INT, PRIMARY KEY (a)) ENGINE=INNODB STATS_PERSISTENT=0;
++INSERT INTO tf VALUES (1), (2), (3);
++
++# persistent stats tables should have no entry for this table
++-- eval $check_stats1
++
++SELECT COUNT(*) FROM tf;
++
++# no persistent stats should appear
++-- eval $check_stats1
++
++DROP TABLE tf;
++
++#
++# Test 5: TRUNCATE TABLE clears and re-saves stats
++#
++
++CREATE TABLE tf (a INT, PRIMARY KEY (a)) ENGINE=INNODB STATS_PERSISTENT=1;
++INSERT INTO tf VALUES (1), (2), (3);
++
++let $wait_condition = SELECT stat_value = 3 FROM mysql.innodb_index_stats WHERE table_name = 'tf' AND index_name = 'PRIMARY' AND stat_name = 'n_diff_pfx01';
++-- source include/wait_condition.inc
++
++-- eval $check_stats1
++
++TRUNCATE TABLE tf;
++
++# after truncate, stats should be reset (zeroed) but still present
++-- eval $check_stats1
++-- eval $check_stats2
++
++DROP TABLE tf;

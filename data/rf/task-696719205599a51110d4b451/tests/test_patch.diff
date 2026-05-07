@@ -1,0 +1,844 @@
+diff --git a/api/server_test.go b/api/server_test.go
+index dd7fc06c8..a8c0ee8d8 100644
+--- a/api/server_test.go
++++ b/api/server_test.go
+@@ -9,15 +9,8 @@ import (
+ 	"github.com/sirupsen/logrus"
+ 	logtest "github.com/sirupsen/logrus/hooks/test"
+ 	"github.com/stretchr/testify/assert"
+-	"github.com/stretchr/testify/require"
+ 
+-	"go.k6.io/k6/api/common"
+-	"go.k6.io/k6/core"
+-	"go.k6.io/k6/execution"
+-	"go.k6.io/k6/lib"
+ 	"go.k6.io/k6/lib/testutils"
+-	"go.k6.io/k6/lib/testutils/minirunner"
+-	"go.k6.io/k6/metrics"
+ )
+ 
+ func testHTTPHandler(rw http.ResponseWriter, r *http.Request) {
+@@ -37,7 +30,7 @@ func TestLogger(t *testing.T) {
+ 
+ 					l, hook := logtest.NewNullLogger()
+ 					l.Level = logrus.DebugLevel
+-					newLogger(l, http.HandlerFunc(testHTTPHandler))(rw, r)
++					withLoggingHandler(l, http.HandlerFunc(testHTTPHandler))(rw, r)
+ 
+ 					res := rw.Result()
+ 					assert.Equal(t, http.StatusOK, res.StatusCode)
+@@ -57,36 +50,10 @@ func TestLogger(t *testing.T) {
+ 	}
+ }
+ 
+-func TestWithEngine(t *testing.T) {
+-	logger := logrus.New()
+-	logger.SetOutput(testutils.NewTestOutput(t))
+-	registry := metrics.NewRegistry()
+-	testState := &lib.TestRunState{
+-		TestPreInitState: &lib.TestPreInitState{
+-			Logger:         logger,
+-			Registry:       registry,
+-			BuiltinMetrics: metrics.RegisterBuiltinMetrics(registry),
+-		},
+-		Options: lib.Options{},
+-		Runner:  &minirunner.MiniRunner{},
+-	}
+-
+-	execScheduler, err := execution.NewScheduler(testState)
+-	require.NoError(t, err)
+-	engine, err := core.NewEngine(testState, execScheduler, nil)
+-	require.NoError(t, err)
+-
+-	rw := httptest.NewRecorder()
+-	r := httptest.NewRequest("GET", "http://example.com/", nil)
+-	withEngine(engine, http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+-		assert.Equal(t, engine, common.GetEngine(r.Context()))
+-	}))(rw, r)
+-}
+-
+ func TestPing(t *testing.T) {
+ 	logger := logrus.New()
+ 	logger.SetOutput(testutils.NewTestOutput(t))
+-	mux := newHandler(logger)
++	mux := handlePing(logger)
+ 
+ 	rw := httptest.NewRecorder()
+ 	r := httptest.NewRequest("GET", "/ping", nil)
+diff --git a/api/v1/group_routes_test.go b/api/v1/group_routes_test.go
+index 460fb0e46..e9b7868ab 100644
+--- a/api/v1/group_routes_test.go
++++ b/api/v1/group_routes_test.go
+@@ -1,6 +1,7 @@
+ package v1
+ 
+ import (
++	"context"
+ 	"encoding/json"
+ 	"net/http"
+ 	"net/http/httptest"
+@@ -10,12 +11,12 @@ import (
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
+ 
+-	"go.k6.io/k6/core"
+ 	"go.k6.io/k6/execution"
+ 	"go.k6.io/k6/lib"
+ 	"go.k6.io/k6/lib/testutils"
+ 	"go.k6.io/k6/lib/testutils/minirunner"
+ 	"go.k6.io/k6/metrics"
++	"go.k6.io/k6/metrics/engine"
+ )
+ 
+ func getTestPreInitState(tb testing.TB) *lib.TestPreInitState {
+@@ -41,6 +42,26 @@ func getTestRunState(tb testing.TB, options lib.Options, runner lib.Runner) *lib
+ 	}
+ }
+ 
++func getControlSurface(tb testing.TB, testState *lib.TestRunState) *ControlSurface {
++	execScheduler, err := execution.NewScheduler(testState)
++	require.NoError(tb, err)
++
++	me, err := engine.NewMetricsEngine(execScheduler.GetState())
++	require.NoError(tb, err)
++
++	ctx, cancel := context.WithCancel(context.Background())
++	tb.Cleanup(cancel)
++	ctx, _ = execution.NewTestRunContext(ctx, testState.Logger)
++
++	return &ControlSurface{
++		RunCtx:        ctx,
++		Samples:       make(chan metrics.SampleContainer, 1000),
++		MetricsEngine: me,
++		Scheduler:     execScheduler,
++		RunState:      testState,
++	}
++}
++
+ func TestGetGroups(t *testing.T) {
+ 	g0, err := lib.NewGroup("", nil)
+ 	assert.NoError(t, err)
+@@ -49,15 +70,11 @@ func TestGetGroups(t *testing.T) {
+ 	g2, err := g1.Group("group 2")
+ 	assert.NoError(t, err)
+ 
+-	testState := getTestRunState(t, lib.Options{}, &minirunner.MiniRunner{Group: g0})
+-	execScheduler, err := execution.NewScheduler(testState)
+-	require.NoError(t, err)
+-	engine, err := core.NewEngine(testState, execScheduler, nil)
+-	require.NoError(t, err)
++	cs := getControlSurface(t, getTestRunState(t, lib.Options{}, &minirunner.MiniRunner{Group: g0}))
+ 
+ 	t.Run("list", func(t *testing.T) {
+ 		rw := httptest.NewRecorder()
+-		NewHandler().ServeHTTP(rw, newRequestWithEngine(engine, "GET", "/v1/groups", nil))
++		NewHandler(cs).ServeHTTP(rw, httptest.NewRequest(http.MethodGet, "/v1/groups", nil))
+ 		res := rw.Result()
+ 		body := rw.Body.Bytes()
+ 		assert.Equal(t, http.StatusOK, res.StatusCode)
+@@ -105,7 +122,7 @@ func TestGetGroups(t *testing.T) {
+ 	for _, gp := range []*lib.Group{g0, g1, g2} {
+ 		t.Run(gp.Name, func(t *testing.T) {
+ 			rw := httptest.NewRecorder()
+-			NewHandler().ServeHTTP(rw, newRequestWithEngine(engine, "GET", "/v1/groups/"+gp.ID, nil))
++			NewHandler(cs).ServeHTTP(rw, httptest.NewRequest(http.MethodGet, "/v1/groups/"+gp.ID, nil))
+ 			res := rw.Result()
+ 			assert.Equal(t, http.StatusOK, res.StatusCode)
+ 		})
+diff --git a/api/v1/metric_routes_test.go b/api/v1/metric_routes_test.go
+index 5612d5f35..f39ed3c13 100644
+--- a/api/v1/metric_routes_test.go
++++ b/api/v1/metric_routes_test.go
+@@ -10,8 +10,6 @@ import (
+ 	"github.com/stretchr/testify/require"
+ 	"gopkg.in/guregu/null.v3"
+ 
+-	"go.k6.io/k6/core"
+-	"go.k6.io/k6/execution"
+ 	"go.k6.io/k6/lib"
+ 	"go.k6.io/k6/lib/testutils/minirunner"
+ 	"go.k6.io/k6/metrics"
+@@ -23,18 +21,15 @@ func TestGetMetrics(t *testing.T) {
+ 	testState := getTestRunState(t, lib.Options{}, &minirunner.MiniRunner{})
+ 	testMetric, err := testState.Registry.NewMetric("my_metric", metrics.Trend, metrics.Time)
+ 	require.NoError(t, err)
+-	execScheduler, err := execution.NewScheduler(testState)
+-	require.NoError(t, err)
+-	engine, err := core.NewEngine(testState, execScheduler, nil)
+-	require.NoError(t, err)
++	cs := getControlSurface(t, testState)
+ 
+-	engine.MetricsEngine.ObservedMetrics = map[string]*metrics.Metric{
++	cs.MetricsEngine.ObservedMetrics = map[string]*metrics.Metric{
+ 		"my_metric": testMetric,
+ 	}
+-	engine.MetricsEngine.ObservedMetrics["my_metric"].Tainted = null.BoolFrom(true)
++	cs.MetricsEngine.ObservedMetrics["my_metric"].Tainted = null.BoolFrom(true)
+ 
+ 	rw := httptest.NewRecorder()
+-	NewHandler().ServeHTTP(rw, newRequestWithEngine(engine, "GET", "/v1/metrics", nil))
++	NewHandler(cs).ServeHTTP(rw, httptest.NewRequest(http.MethodGet, "/v1/metrics", nil))
+ 	res := rw.Result()
+ 	assert.Equal(t, http.StatusOK, res.StatusCode)
+ 
+@@ -82,21 +77,18 @@ func TestGetMetric(t *testing.T) {
+ 	testState := getTestRunState(t, lib.Options{}, &minirunner.MiniRunner{})
+ 	testMetric, err := testState.Registry.NewMetric("my_metric", metrics.Trend, metrics.Time)
+ 	require.NoError(t, err)
+-	execScheduler, err := execution.NewScheduler(testState)
+-	require.NoError(t, err)
+-	engine, err := core.NewEngine(testState, execScheduler, nil)
+-	require.NoError(t, err)
++	cs := getControlSurface(t, testState)
+ 
+-	engine.MetricsEngine.ObservedMetrics = map[string]*metrics.Metric{
++	cs.MetricsEngine.ObservedMetrics = map[string]*metrics.Metric{
+ 		"my_metric": testMetric,
+ 	}
+-	engine.MetricsEngine.ObservedMetrics["my_metric"].Tainted = null.BoolFrom(true)
++	cs.MetricsEngine.ObservedMetrics["my_metric"].Tainted = null.BoolFrom(true)
+ 
+ 	t.Run("nonexistent", func(t *testing.T) {
+ 		t.Parallel()
+ 
+ 		rw := httptest.NewRecorder()
+-		NewHandler().ServeHTTP(rw, newRequestWithEngine(engine, "GET", "/v1/metrics/notreal", nil))
++		NewHandler(cs).ServeHTTP(rw, httptest.NewRequest(http.MethodGet, "/v1/metrics/notreal", nil))
+ 		res := rw.Result()
+ 		assert.Equal(t, http.StatusNotFound, res.StatusCode)
+ 	})
+@@ -105,7 +97,7 @@ func TestGetMetric(t *testing.T) {
+ 		t.Parallel()
+ 
+ 		rw := httptest.NewRecorder()
+-		NewHandler().ServeHTTP(rw, newRequestWithEngine(engine, "GET", "/v1/metrics/my_metric", nil))
++		NewHandler(cs).ServeHTTP(rw, httptest.NewRequest(http.MethodGet, "/v1/metrics/my_metric", nil))
+ 		res := rw.Result()
+ 		assert.Equal(t, http.StatusOK, res.StatusCode)
+ 
+diff --git a/api/v1/routes_test.go b/api/v1/routes_test.go
+deleted file mode 100644
+index ffbd9ebcc..000000000
+--- a/api/v1/routes_test.go
++++ /dev/null
+@@ -1,22 +0,0 @@
+-package v1
+-
+-import (
+-	"io"
+-	"net/http"
+-	"net/http/httptest"
+-	"testing"
+-
+-	"github.com/stretchr/testify/assert"
+-
+-	"go.k6.io/k6/api/common"
+-	"go.k6.io/k6/core"
+-)
+-
+-func newRequestWithEngine(engine *core.Engine, method, target string, body io.Reader) *http.Request {
+-	r := httptest.NewRequest(method, target, body)
+-	return r.WithContext(common.WithEngine(r.Context(), engine))
+-}
+-
+-func TestNewHandler(t *testing.T) {
+-	assert.NotNil(t, NewHandler())
+-}
+diff --git a/api/v1/setup_teardown_routes_test.go b/api/v1/setup_teardown_routes_test.go
+index 4b9e06b15..7d0571fc9 100644
+--- a/api/v1/setup_teardown_routes_test.go
++++ b/api/v1/setup_teardown_routes_test.go
+@@ -141,25 +141,34 @@ func TestSetupData(t *testing.T) {
+ 			engine, err := core.NewEngine(testState, execScheduler, nil)
+ 			require.NoError(t, err)
+ 
++			globalCtx, globalCancel := context.WithCancel(context.Background())
++			t.Cleanup(globalCancel)
++			runCtx, runAbort := execution.NewTestRunContext(globalCtx, testState.Logger)
++			defer runAbort(fmt.Errorf("unexpected abort"))
++
+ 			require.NoError(t, engine.OutputManager.StartOutputs())
+ 			defer engine.OutputManager.StopOutputs(nil)
+ 
+-			globalCtx, globalCancel := context.WithCancel(context.Background())
+-			runCtx, runCancel := context.WithCancel(globalCtx)
++			cs := &ControlSurface{
++				RunCtx:        runCtx,
++				Samples:       engine.Samples,
++				MetricsEngine: engine.MetricsEngine,
++				Scheduler:     execScheduler,
++				RunState:      testState,
++			}
+ 			run, wait, err := engine.Init(globalCtx, runCtx)
+ 			require.NoError(t, err)
+ 
+ 			defer wait()
+-			defer globalCancel()
+ 
+ 			errC := make(chan error)
+ 			go func() { errC <- run() }()
+ 
+-			handler := NewHandler()
++			handler := NewHandler(cs)
+ 
+ 			checkSetup := func(method, body, expResult string) {
+ 				rw := httptest.NewRecorder()
+-				handler.ServeHTTP(rw, newRequestWithEngine(engine, method, "/v1/setup", bytes.NewBufferString(body)))
++				handler.ServeHTTP(rw, httptest.NewRequest(method, "/v1/setup", bytes.NewBufferString(body)))
+ 				res := rw.Result()
+ 				if !assert.Equal(t, http.StatusOK, res.StatusCode) {
+ 					t.Logf("body: %s\n", rw.Body.String())
+@@ -179,14 +188,12 @@ func TestSetupData(t *testing.T) {
+ 				checkSetup(setupRun[0], setupRun[1], setupRun[2])
+ 			}
+ 
+-			require.NoError(t, engine.ExecutionScheduler.SetPaused(false))
++			require.NoError(t, cs.Scheduler.SetPaused(false))
+ 
+ 			select {
+ 			case <-time.After(10 * time.Second):
+-				runCancel()
+ 				t.Fatal("Test timed out")
+ 			case err := <-errC:
+-				runCancel()
+ 				require.NoError(t, err)
+ 			}
+ 		})
+diff --git a/api/v1/status_routes_test.go b/api/v1/status_routes_test.go
+index bb31003ed..9e74f768e 100644
+--- a/api/v1/status_routes_test.go
++++ b/api/v1/status_routes_test.go
+@@ -4,8 +4,10 @@ import (
+ 	"bytes"
+ 	"context"
+ 	"encoding/json"
++	"fmt"
+ 	"net/http"
+ 	"net/http/httptest"
++	"sync"
+ 	"testing"
+ 	"time"
+ 
+@@ -23,13 +25,10 @@ func TestGetStatus(t *testing.T) {
+ 	t.Parallel()
+ 
+ 	testState := getTestRunState(t, lib.Options{}, &minirunner.MiniRunner{})
+-	execScheduler, err := execution.NewScheduler(testState)
+-	require.NoError(t, err)
+-	engine, err := core.NewEngine(testState, execScheduler, nil)
+-	require.NoError(t, err)
++	cs := getControlSurface(t, testState)
+ 
+ 	rw := httptest.NewRecorder()
+-	NewHandler().ServeHTTP(rw, newRequestWithEngine(engine, "GET", "/v1/status", nil))
++	NewHandler(cs).ServeHTTP(rw, httptest.NewRequest(http.MethodGet, "/v1/status", nil))
+ 	res := rw.Result()
+ 	assert.Equal(t, http.StatusOK, res.StatusCode)
+ 
+@@ -118,23 +117,40 @@ func TestPatchStatus(t *testing.T) {
+ 			require.NoError(t, engine.OutputManager.StartOutputs())
+ 			defer engine.OutputManager.StopOutputs(nil)
+ 
+-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+-			run, wait, err := engine.Init(ctx, ctx)
++			globalCtx, globalCancel := context.WithCancel(context.Background())
++			t.Cleanup(globalCancel)
++			runCtx, runAbort := execution.NewTestRunContext(globalCtx, testState.Logger)
++			defer runAbort(fmt.Errorf("unexpected abort"))
++			engine.AbortFn = runAbort
++
++			cs := &ControlSurface{
++				RunCtx:        runCtx,
++				Samples:       engine.Samples,
++				MetricsEngine: engine.MetricsEngine,
++				Scheduler:     execScheduler,
++				RunState:      testState,
++			}
++
++			run, wait, err := engine.Init(globalCtx, runCtx)
+ 			require.NoError(t, err)
+ 
++			wg := &sync.WaitGroup{}
++			wg.Add(1)
+ 			defer func() {
+-				cancel()
++				runAbort(fmt.Errorf("custom cancel signal"))
+ 				wait()
++				wg.Wait()
+ 			}()
+ 
+ 			go func() {
+-				assert.ErrorContains(t, run(), "test run aborted by signal")
++				assert.ErrorContains(t, run(), "custom cancel signal")
++				wg.Done()
+ 			}()
+ 			// wait for the executor to initialize to avoid a potential data race below
+ 			time.Sleep(200 * time.Millisecond)
+ 
+ 			rw := httptest.NewRecorder()
+-			NewHandler().ServeHTTP(rw, newRequestWithEngine(engine, "PATCH", "/v1/status", bytes.NewReader(testCase.Payload)))
++			NewHandler(cs).ServeHTTP(rw, httptest.NewRequest(http.MethodPatch, "/v1/status", bytes.NewReader(testCase.Payload)))
+ 			res := rw.Result()
+ 
+ 			require.Equal(t, "application/json; charset=utf-8", rw.Header().Get("Content-Type"))
+@@ -145,7 +161,7 @@ func TestPatchStatus(t *testing.T) {
+ 				return
+ 			}
+ 
+-			status := NewStatus(engine)
++			status := newStatus(cs)
+ 			if testCase.ExpectedStatus.Paused.Valid {
+ 				assert.Equal(t, testCase.ExpectedStatus.Paused, status.Paused)
+ 			}
+diff --git a/cmd/tests/cmd_run_test.go b/cmd/tests/cmd_run_test.go
+index 98c6cd589..1f5f76ea2 100644
+--- a/cmd/tests/cmd_run_test.go
++++ b/cmd/tests/cmd_run_test.go
+@@ -610,7 +610,9 @@ func TestAbortedByThreshold(t *testing.T) {
+ 	)
+ 	cmd.ExecuteWithGlobalState(ts.GlobalState)
+ 
+-	assert.True(t, testutils.LogContains(ts.LoggerHook.Drain(), logrus.ErrorLevel, `test run aborted by failed thresholds`))
++	logs := ts.LoggerHook.Drain()
++	assert.False(t, testutils.LogContains(logs, logrus.ErrorLevel, `test run aborted by failed thresholds`), "old threshold abort message should no longer appear")
++	assert.True(t, testutils.LogContains(logs, logrus.ErrorLevel, `iterations`), "error log should mention the breached metric name")
+ 	stdOut := ts.Stdout.String()
+ 	t.Log(stdOut)
+ 	assert.Contains(t, stdOut, `✗ iterations`)
+@@ -661,7 +663,8 @@ func TestAbortedByUserWithGoodThresholds(t *testing.T) {
+ 
+ 	logs := ts.LoggerHook.Drain()
+ 	assert.False(t, testutils.LogContains(logs, logrus.ErrorLevel, `some thresholds have failed`))
+-	assert.True(t, testutils.LogContains(logs, logrus.ErrorLevel, `test run aborted by signal`))
++	assert.False(t, testutils.LogContains(logs, logrus.ErrorLevel, `test run aborted by signal`), "old signal abort message should no longer appear")
++	assert.True(t, testutils.LogContains(logs, logrus.ErrorLevel, `interrupt`), "error log should mention the interrupt signal")
+ 	stdout := ts.Stdout.String()
+ 	t.Log(stdout)
+ 	assert.Contains(t, stdout, `✓ iterations`)
+@@ -793,7 +797,8 @@ func TestAbortedByUserWithRestAPI(t *testing.T) {
+ 	assert.Contains(t, stdout, `a simple iteration`)
+ 	assert.Contains(t, stdout, `teardown() called`)
+ 	assert.Contains(t, stdout, `PATCH /v1/status`)
+-	assert.Contains(t, stdout, `run: stopped by user via REST API; exiting...`)
++	assert.NotContains(t, stdout, `run: stopped by user via REST API; exiting...`, "old REST API stop message should no longer appear")
++	assert.Regexp(t, `level=error msg=.*REST API`, stdout)
+ 	assert.Contains(t, stdout, `level=debug msg="Metrics emission of VUs and VUsMax metrics stopped"`)
+ 	assert.Contains(t, stdout, `level=debug msg="Metrics processing finished!"`)
+ 	assert.Contains(t, stdout, `level=debug msg="Sending test finished" output=cloud ref=111 run_status=5 tainted=false`)
+diff --git a/core/engine_test.go b/core/engine_test.go
+index 30e3a8984..2152a8c1a 100644
+--- a/core/engine_test.go
++++ b/core/engine_test.go
+@@ -34,17 +34,19 @@ const isWindows = runtime.GOOS == "windows"
+ // TODO: completely rewrite all of these tests
+ 
+ type testStruct struct {
+-	engine    *Engine
+-	run       func() error
+-	runCancel func()
+-	wait      func()
+-	piState   *lib.TestPreInitState
++	engine   *Engine
++	run      func() error
++	runAbort func(error)
++	wait     func()
++	piState  *lib.TestPreInitState
+ }
+ 
+ func getTestPreInitState(tb testing.TB) *lib.TestPreInitState {
+ 	reg := metrics.NewRegistry()
++	logger := testutils.NewLogger(tb)
++	logger.SetLevel(logrus.DebugLevel)
+ 	return &lib.TestPreInitState{
+-		Logger:         testutils.NewLogger(tb),
++		Logger:         logger,
+ 		RuntimeOptions: lib.RuntimeOptions{},
+ 		Registry:       reg,
+ 		BuiltinMetrics: metrics.RegisterBuiltinMetrics(reg),
+@@ -97,16 +99,19 @@ func newTestEngineWithTestPreInitState( //nolint:golint
+ 	} else {
+ 		runCtx, runCancel = context.WithCancel(globalCtx)
+ 	}
+-	run, waitFn, err := engine.Init(globalCtx, runCtx)
++	runSubCtx, runSubAbort := execution.NewTestRunContext(runCtx, piState.Logger)
++	engine.AbortFn = runSubAbort
++
++	run, waitFn, err := engine.Init(globalCtx, runSubCtx)
+ 	require.NoError(t, err)
+ 
+ 	var test *testStruct
+ 	test = &testStruct{
+-		engine:    engine,
+-		run:       run,
+-		runCancel: runCancel,
++		engine:   engine,
++		run:      run,
++		runAbort: runSubAbort,
+ 		wait: func() {
+-			test.runCancel()
++			runCancel()
+ 			globalCancel()
+ 			waitFn()
+ 			engine.OutputManager.StopOutputs(nil)
+@@ -141,7 +146,7 @@ func TestEngineRun(t *testing.T) {
+ 		defer test.wait()
+ 
+ 		startTime := time.Now()
+-		assert.ErrorContains(t, test.run(), "test run aborted by signal")
++		assert.ErrorContains(t, test.run(), "context deadline exceeded")
+ 		assert.WithinDuration(t, startTime.Add(duration), time.Now(), 100*time.Millisecond)
+ 		<-done
+ 	})
+@@ -191,8 +196,8 @@ func TestEngineRun(t *testing.T) {
+ 		errC := make(chan error)
+ 		go func() { errC <- test.run() }()
+ 		<-signalChan
+-		test.runCancel()
+-		assert.ErrorContains(t, <-errC, "test run aborted by signal")
++		test.runAbort(fmt.Errorf("custom error"))
++		assert.ErrorContains(t, <-errC, "custom error")
+ 		test.wait()
+ 
+ 		found := 0
+@@ -218,21 +223,6 @@ func TestEngineAtTime(t *testing.T) {
+ 	assert.NoError(t, test.run())
+ }
+ 
+-func TestEngineStopped(t *testing.T) {
+-	t.Parallel()
+-	test := newTestEngine(t, nil, nil, nil, lib.Options{
+-		VUs:      null.IntFrom(1),
+-		Duration: types.NullDurationFrom(20 * time.Second),
+-	})
+-	defer test.wait()
+-
+-	assert.NoError(t, test.run())
+-	assert.Equal(t, false, test.engine.IsStopped(), "engine should be running")
+-	test.engine.Stop()
+-	assert.Equal(t, true, test.engine.IsStopped(), "engine should be stopped")
+-	test.engine.Stop() // test that a second stop doesn't panic
+-}
+-
+ func TestEngineOutput(t *testing.T) {
+ 	t.Parallel()
+ 
+@@ -413,7 +403,7 @@ func TestEngineThresholdsWillAbort(t *testing.T) {
+ 		assert.Fail(t, "Test should have completed within 10 seconds")
+ 	}
+ 	test.wait()
+-	assert.True(t, test.engine.thresholdsTainted)
++	assert.True(t, test.engine.IsTainted())
+ }
+ 
+ func TestEngineAbortedByThresholds(t *testing.T) {
+@@ -434,7 +424,8 @@ func TestEngineAbortedByThresholds(t *testing.T) {
+ 
+ 	thresholds := map[string]metrics.Thresholds{metric.Name: ths}
+ 
+-	done := make(chan struct{})
++	doneIter := make(chan struct{})
++	doneRun := make(chan struct{})
+ 	runner := &minirunner.MiniRunner{
+ 		Fn: func(ctx context.Context, _ *lib.State, out chan<- metrics.SampleContainer) error {
+ 			out <- metrics.Sample{
+@@ -446,7 +437,7 @@ func TestEngineAbortedByThresholds(t *testing.T) {
+ 				Value: 1.25,
+ 			}
+ 			<-ctx.Done()
+-			close(done)
++			close(doneIter)
+ 			return nil
+ 		},
+ 	}
+@@ -455,12 +446,18 @@ func TestEngineAbortedByThresholds(t *testing.T) {
+ 	defer test.wait()
+ 
+ 	go func() {
+-		require.ErrorContains(t, test.run(), "aborted by failed thresholds")
++		defer close(doneRun)
++		t.Logf("test run done with err '%s'", err)
++		assert.ErrorContains(t, test.run(), "my_metric")
+ 	}()
+ 
+ 	select {
+-	case <-done:
+-		return
++	case <-doneIter:
++	case <-time.After(10 * time.Second):
++		assert.Fail(t, "Iteration should have completed within 10 seconds")
++	}
++	select {
++	case <-doneRun:
+ 	case <-time.After(10 * time.Second):
+ 		assert.Fail(t, "Test should have completed within 10 seconds")
+ 	}
+@@ -1208,7 +1205,7 @@ func TestEngineRunsTeardownEvenAfterTestRunIsAborted(t *testing.T) {
+ 	var test *testStruct
+ 	runner := &minirunner.MiniRunner{
+ 		Fn: func(_ context.Context, _ *lib.State, _ chan<- metrics.SampleContainer) error {
+-			test.runCancel() // we cancel the run immediately after the test starts
++			test.runAbort(fmt.Errorf("custom error")) // we cancel the run immediately after the test starts
+ 			return nil
+ 		},
+ 		TeardownFn: func(_ context.Context, out chan<- metrics.SampleContainer) error {
+@@ -1229,7 +1226,7 @@ func TestEngineRunsTeardownEvenAfterTestRunIsAborted(t *testing.T) {
+ 		VUs: null.IntFrom(1), Iterations: null.IntFrom(1),
+ 	}, piState)
+ 
+-	assert.ErrorContains(t, test.run(), "test run aborted by signal")
++	assert.ErrorContains(t, test.run(), "custom error")
+ 	test.wait()
+ 
+ 	var count float64
+diff --git a/lib/options_test.go b/lib/options_test.go
+index 10fb9017d..d8d1f354b 100644
+--- a/lib/options_test.go
++++ b/lib/options_test.go
+@@ -114,6 +114,7 @@ func TestOptions(t *testing.T) {
+ 	t.Run("TLSCipherSuites", func(t *testing.T) {
+ 		t.Parallel()
+ 		for suiteName, suiteID := range SupportedTLSCipherSuites {
++			suiteName, suiteID := suiteName, suiteID
+ 			t.Run(suiteName, func(t *testing.T) {
+ 				t.Parallel()
+ 				opts := Options{}.Apply(Options{TLSCipherSuites: &TLSCipherSuites{suiteID}})
+diff --git a/metrics/engine/engine_test.go b/metrics/engine/engine_test.go
+new file mode 100644
+index 000000000..4d94b34f5
+--- /dev/null
++++ b/metrics/engine/engine_test.go
+@@ -0,0 +1,234 @@
++package engine
++
++import (
++	"sync"
++	"testing"
++	"time"
++
++	"github.com/sirupsen/logrus"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++
++	"go.k6.io/k6/lib"
++	"go.k6.io/k6/lib/testutils"
++	"go.k6.io/k6/metrics"
++)
++
++func newTestMetricsEngineWithThresholds(
++	tb testing.TB, thresholdsMap map[string]metrics.Thresholds,
++) (*MetricsEngine, *metrics.Registry) {
++	tb.Helper()
++	logger := testutils.NewLogger(tb)
++	logger.SetLevel(logrus.DebugLevel)
++	registry := metrics.NewRegistry()
++	builtins := metrics.RegisterBuiltinMetrics(registry)
++
++	for name := range thresholdsMap {
++		_, _ = registry.NewMetric(name, metrics.Gauge)
++	}
++
++	piState := &lib.TestPreInitState{
++		Logger:         logger,
++		RuntimeOptions: lib.RuntimeOptions{},
++		Registry:       registry,
++		BuiltinMetrics: builtins,
++	}
++	testRunState := &lib.TestRunState{
++		TestPreInitState: piState,
++		Options:          lib.Options{Thresholds: thresholdsMap},
++	}
++	et, err := lib.NewExecutionTuple(nil, nil)
++	require.NoError(tb, err)
++	es := lib.NewExecutionState(testRunState, et, 0, 0)
++	me, err := NewMetricsEngine(es)
++	require.NoError(tb, err)
++	return me, registry
++}
++
++func addSample(registry *metrics.Registry, name string, value float64) {
++	m := registry.Get(name)
++	m.Sink.Add(metrics.Sample{
++		TimeSeries: metrics.TimeSeries{Metric: m},
++		Time:       time.Now(),
++		Value:      value,
++	})
++}
++
++func TestCreateIngester(t *testing.T) {
++	t.Parallel()
++	me, _ := newTestMetricsEngineWithThresholds(t, nil)
++
++	ingester := me.CreateIngester()
++	require.NotNil(t, ingester)
++}
++
++func TestCreateIngesterReturnsDifferentInstances(t *testing.T) {
++	t.Parallel()
++	me, _ := newTestMetricsEngineWithThresholds(t, nil)
++
++	first := me.CreateIngester()
++	second := me.CreateIngester()
++	require.NotNil(t, first)
++	require.NotNil(t, second)
++	assert.NotSame(t, first, second)
++}
++
++func TestGetMetricsWithBreachedThresholdsCountInitiallyZero(t *testing.T) {
++	t.Parallel()
++	me, _ := newTestMetricsEngineWithThresholds(t, nil)
++	assert.Equal(t, uint32(0), me.GetMetricsWithBreachedThresholdsCount())
++}
++
++func TestGetMetricsWithBreachedThresholdsCountConcurrentSafe(t *testing.T) {
++	t.Parallel()
++	ths := metrics.NewThresholds([]string{"value<50"})
++	require.NoError(t, ths.Parse())
++	me, registry := newTestMetricsEngineWithThresholds(t, map[string]metrics.Thresholds{
++		"conc_metric": ths,
++	})
++	addSample(registry, "conc_metric", 100)
++
++	finalize := me.StartThresholdCalculations(func(err error) {})
++	time.Sleep(3 * time.Second)
++	finalize()
++
++	var wg sync.WaitGroup
++	for i := 0; i < 10; i++ {
++		wg.Add(1)
++		go func() {
++			defer wg.Done()
++			count := me.GetMetricsWithBreachedThresholdsCount()
++			assert.True(t, count > 0)
++		}()
++	}
++	wg.Wait()
++}
++
++func TestStartThresholdCalculationsPassingThresholds(t *testing.T) {
++	t.Parallel()
++	ths := metrics.NewThresholds([]string{"value<100"})
++	require.NoError(t, ths.Parse())
++	me, registry := newTestMetricsEngineWithThresholds(t, map[string]metrics.Thresholds{
++		"pass_metric": ths,
++	})
++	addSample(registry, "pass_metric", 50)
++
++	abortCalled := false
++	finalize := me.StartThresholdCalculations(func(err error) {
++		abortCalled = true
++	})
++	require.NotNil(t, finalize)
++
++	breached := finalize()
++	assert.Empty(t, breached)
++	assert.False(t, abortCalled)
++	assert.Equal(t, uint32(0), me.GetMetricsWithBreachedThresholdsCount())
++}
++
++func TestStartThresholdCalculationsBreachedThresholds(t *testing.T) {
++	t.Parallel()
++	ths := metrics.NewThresholds([]string{"value<50"})
++	require.NoError(t, ths.Parse())
++	me, registry := newTestMetricsEngineWithThresholds(t, map[string]metrics.Thresholds{
++		"fail_metric": ths,
++	})
++	addSample(registry, "fail_metric", 100)
++
++	finalize := me.StartThresholdCalculations(func(err error) {})
++	require.NotNil(t, finalize)
++
++	breached := finalize()
++	assert.Contains(t, breached, "fail_metric")
++	assert.True(t, me.GetMetricsWithBreachedThresholdsCount() > 0)
++
++	metric := registry.Get("fail_metric")
++	assert.True(t, metric.Tainted.Bool)
++}
++
++func TestStartThresholdCalculationsAbortOnFail(t *testing.T) {
++	t.Parallel()
++	ths := metrics.NewThresholds([]string{"value<50"})
++	require.NoError(t, ths.Parse())
++	ths.Abort = true
++	me, registry := newTestMetricsEngineWithThresholds(t, map[string]metrics.Thresholds{
++		"abort_metric": ths,
++	})
++	addSample(registry, "abort_metric", 100)
++
++	var abortErr error
++	var mu sync.Mutex
++	finalize := me.StartThresholdCalculations(func(err error) {
++		mu.Lock()
++		abortErr = err
++		mu.Unlock()
++	})
++
++	time.Sleep(3 * time.Second)
++	finalize()
++
++	mu.Lock()
++	defer mu.Unlock()
++	require.Error(t, abortErr)
++	assert.Contains(t, abortErr.Error(), "abort_metric")
++}
++
++func TestStartThresholdCalculationsNoMetrics(t *testing.T) {
++	t.Parallel()
++	me, _ := newTestMetricsEngineWithThresholds(t, nil)
++
++	abortCalled := false
++	finalize := me.StartThresholdCalculations(func(err error) {
++		abortCalled = true
++	})
++
++	breached := finalize()
++	assert.Empty(t, breached)
++	assert.False(t, abortCalled)
++	assert.Equal(t, uint32(0), me.GetMetricsWithBreachedThresholdsCount())
++}
++
++func TestStartThresholdCalculationsMultipleMetricsMixed(t *testing.T) {
++	t.Parallel()
++	passThs := metrics.NewThresholds([]string{"value<200"})
++	require.NoError(t, passThs.Parse())
++	failThs := metrics.NewThresholds([]string{"value<10"})
++	require.NoError(t, failThs.Parse())
++
++	me, registry := newTestMetricsEngineWithThresholds(t, map[string]metrics.Thresholds{
++		"metric_pass": passThs,
++		"metric_fail": failThs,
++	})
++	addSample(registry, "metric_pass", 50)
++	addSample(registry, "metric_fail", 100)
++
++	finalize := me.StartThresholdCalculations(func(err error) {})
++
++	breached := finalize()
++	assert.Contains(t, breached, "metric_fail")
++	assert.NotContains(t, breached, "metric_pass")
++
++	passMetric := registry.Get("metric_pass")
++	failMetric := registry.Get("metric_fail")
++	assert.False(t, passMetric.Tainted.Bool)
++	assert.True(t, failMetric.Tainted.Bool)
++}
++
++func TestStartThresholdCalculationsUpdatesBreachedCount(t *testing.T) {
++	t.Parallel()
++	ths := metrics.NewThresholds([]string{"value<10"})
++	require.NoError(t, ths.Parse())
++	me, registry := newTestMetricsEngineWithThresholds(t, map[string]metrics.Thresholds{
++		"counted_metric": ths,
++	})
++	addSample(registry, "counted_metric", 100)
++
++	assert.Equal(t, uint32(0), me.GetMetricsWithBreachedThresholdsCount())
++
++	finalize := me.StartThresholdCalculations(func(err error) {})
++	time.Sleep(3 * time.Second)
++
++	assert.True(t, me.GetMetricsWithBreachedThresholdsCount() > 0)
++
++	finalize()
++	assert.True(t, me.GetMetricsWithBreachedThresholdsCount() > 0)
++}

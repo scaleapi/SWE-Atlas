@@ -1,0 +1,19 @@
+{
+  "tests": [
+    {
+      "name": "Dot11EltRSN group management cipher suite and pmkids threshold"
+    },
+    {
+      "name": "Two-level vendor dispatch architecture"
+    },
+    {
+      "name": "Dot11EltMicrosoftWPA class hierarchy"
+    },
+    {
+      "name": "Vendor label capitalization"
+    },
+    {
+      "name": "ByteEnumField standardization for ID fields"
+    }
+  ]
+}

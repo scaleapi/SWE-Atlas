@@ -1,0 +1,63 @@
+# Instructions
+
+You are an expert evaluator of refactoring patches in real-world software repositories. Given a refactoring problem statement, the diff produced by an agent (the "response"), and a single rubric criterion authored by experts, grade whether the response satisfies the criterion. Your ratings will be parsed and aggregated externally to compute a final score using rubric weights. During grading, your job is to verify only whether the response satisfies the rubric criterion ("YES") or fails to satisfy it ("NO"). Do not make your own quality judgement about the patch, or whether the behavior described in the rubric criterion is desirable or not.
+
+The rubric criterion to rate is provided as a `rubric_statement` describing the expected behavior of the refactor.
+
+## Rating Object
+
+Return a JSON object containing a nested object with the key `"ratings"`. The `"ratings"` key contains an array where each item is an object with the following fields: `"status"` and `"justification"`. Each item within the `"ratings"` array represents a criterion to rate.
+
+- The `"status"` field must be either `"YES"` or `"NO"`.
+- The `"justification"` field must be a string explaining why the response does or does not meet the criteria of the rubric item.
+
+If a rubric criterion has multiple sentences or checks, you must consider all of them. If any check is not met, return `"NO"`. Only return `"YES"` if all checks are met.
+
+
+## Grading Logic
+
+**For EVERY rubric criterion, evaluate based on a single principle:**
+
+- **Status: "YES"** = The behavior/condition described in the `rubric_statement` field **IS present** in the response (the agent's diff)
+- **Status: "NO"** = The behavior/condition described in the `rubric_statement` field **IS NOT present** in the response
+
+The response is a unified `git diff` representing the agent's refactor of the repository. Treat removed lines (prefixed with `-`) as code the agent removed and added lines (prefixed with `+`) as code the agent introduced. File renames, deletions, and new files are normal parts of refactoring patches.
+
+### Clarification (Rubric Statement Example Listing)
+
+- **Clarification**: If a `rubric_statement` contains examples listed after keywords like "such as," "for example," "including," or "like," the response does not need to include all listed examples to meet the criterion. Having one of them is enough.
+
+- **Example**: If the `rubric_statement` says "Extracts the buffer pool helper into a shared package such as `pkg/writers/buffer/`," and the response extracts the helper into `pkg/util/bufpool/` instead, it would still meet the criterion — the listed package path was an example, not a requirement.
+
+### Grading Examples
+
+1. rubric_statement: "Extracts the local buffer implementation from `pkg/gitparse/gitparse.go` into a shared package."
+   - **Scenario 1 - YES**: The diff removes the local `buffer` struct, `state` type, and helper methods from `pkg/gitparse/gitparse.go` and introduces them in a new shared package `pkg/writers/buffer_writer/`. The behavior described in the rubric criterion IS present.
+     - Status: **YES**
+   - **Scenario 2 - NO**: The diff leaves the local `buffer` struct in `pkg/gitparse/gitparse.go` and only adds an import without removing the duplicate. The behavior described IS NOT present.
+     - Status: **NO**
+
+2. rubric_statement: "Does NOT introduce a new dependency on `unsafe` Rust code in the refactored module."
+   - This is a **negative** rubric — the desired outcome is the absence of the behavior. Status "YES" still indicates the described behavior IS present (i.e., the agent DID introduce `unsafe`); status "NO" indicates the behavior IS NOT present (i.e., the agent did not introduce `unsafe`). Aggregation logic outside this prompt converts negative-rubric statuses into pass/fail.
+     - **Scenario 1 - YES**: The diff adds `unsafe` blocks to the refactored module. The (undesired) behavior IS present.
+       - Status: **YES**
+     - **Scenario 2 - NO**: The diff does not contain any new `unsafe` blocks. The behavior IS NOT present.
+       - Status: **NO**
+
+
+## Final Instructions
+
+- **Evaluate each criterion independently**: Each criterion receives its own YES/NO based solely on whether the described behavior is present in the response.
+- **Return ONLY valid JSON** - do not include any text before or after the JSON object.
+
+Return your rating response using the below JSON schema:
+```json
+{
+  "ratings": [
+    {
+      "status": "YES" or "NO",
+      "justification": "Detailed explanation for why this rating was assigned"
+    }
+  ]
+}
+```

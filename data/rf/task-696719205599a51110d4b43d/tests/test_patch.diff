@@ -1,0 +1,318 @@
+diff --git a/execution/scheduler_ext_test.go b/execution/scheduler_ext_test.go
+index e175f3db5..3fbffdf0e 100644
+--- a/execution/scheduler_ext_test.go
++++ b/execution/scheduler_ext_test.go
+@@ -363,8 +363,8 @@ func TestSchedulerSystemTags(t *testing.T) {
+ 
+ 	expTrailPVUTags := expCommonTrailTags.With("scenario", "per_vu_test")
+ 	expTrailSITags := expCommonTrailTags.With("scenario", "shared_test")
+-	expNetTrailPVUTags := testRunState.RunTags.With("group", "").With("scenario", "per_vu_test")
+-	expNetTrailSITags := testRunState.RunTags.With("group", "").With("scenario", "shared_test")
++	expDataSentPVUTags := testRunState.RunTags.With("group", "").With("scenario", "per_vu_test")
++	expDataSentSITags := testRunState.RunTags.With("group", "").With("scenario", "shared_test")
+ 
+ 	var gotCorrectTags int
+ 	for {
+@@ -375,9 +375,13 @@ func TestSchedulerSystemTags(t *testing.T) {
+ 				if s.Tags == expTrailPVUTags || s.Tags == expTrailSITags {
+ 					gotCorrectTags++
+ 				}
+-			case *netext.NetTrail:
+-				if s.Tags == expNetTrailPVUTags || s.Tags == expNetTrailSITags {
+-					gotCorrectTags++
++			default:
++				for _, sample := range s.GetSamples() {
++					if sample.Metric.Name == metrics.DataSentName {
++						if sample.Tags == expDataSentPVUTags || sample.Tags == expDataSentSITags {
++							gotCorrectTags++
++						}
++					}
+ 				}
+ 			}
+ 
+@@ -487,7 +491,7 @@ func TestSchedulerRunCustomTags(t *testing.T) {
+ 				defer stopEmission()
+ 				require.NoError(t, execScheduler.Run(ctx, ctx, samples))
+ 			}()
+-			var gotTrailTag, gotNetTrailTag bool
++			var gotTrailTag, gotDataSentTag bool
+ 			for {
+ 				select {
+ 				case sample := <-samples:
+@@ -497,14 +501,16 @@ func TestSchedulerRunCustomTags(t *testing.T) {
+ 							gotTrailTag = true
+ 						}
+ 					}
+-					if netTrail, ok := sample.(*netext.NetTrail); ok && !gotNetTrailTag {
+-						tags := netTrail.Tags.Map()
+-						if v, ok := tags["customTag"]; ok && v == "value" {
+-							gotNetTrailTag = true
++					for _, s := range sample.GetSamples() {
++						if s.Metric.Name == metrics.DataSentName && !gotDataSentTag {
++							tags := s.Tags.Map()
++							if v, ok := tags["customTag"]; ok && v == "value" {
++								gotDataSentTag = true
++							}
+ 						}
+ 					}
+ 				case <-done:
+-					if !gotTrailTag || !gotNetTrailTag {
++					if !gotTrailTag || !gotDataSentTag {
+ 						assert.FailNow(t, "a sample with expected tag wasn't received")
+ 					}
+ 					return
+@@ -692,11 +698,15 @@ func TestSchedulerRunCustomConfigNoCrossover(t *testing.T) {
+ 					gotSampleTags++
+ 				}
+ 			}
+-		case *netext.NetTrail:
+-			tags := s.Tags.Map()
+-			for _, expTags := range expectedNetTrailTags {
+-				if reflect.DeepEqual(expTags, tags) {
+-					gotSampleTags++
++		case metrics.Samples:
++			for _, sample := range s.GetSamples() {
++				if sample.Metric.Name == metrics.DataSentName {
++					tags := sample.Tags.Map()
++					for _, expTags := range expectedNetTrailTags {
++						if reflect.DeepEqual(expTags, tags) {
++							gotSampleTags++
++						}
++					}
+ 				}
+ 			}
+ 		case metrics.ConnectedSamples:
+@@ -1275,7 +1285,7 @@ func TestRealTimeAndSetupTeardownMetrics(t *testing.T) {
+ 			Value: expValue,
+ 		}
+ 	}
+-	getDummyTrail := func(group string, emitIterations bool, addExpTags ...string) metrics.SampleContainer {
++	getNetworkSamples := func(group string, addExpTags ...string) metrics.SampleContainer {
+ 		expTags := []string{"group", group}
+ 		expTags = append(expTags, addExpTags...)
+ 		dialer := netext.NewDialer(
+@@ -1284,25 +1294,56 @@ func TestRealTimeAndSetupTeardownMetrics(t *testing.T) {
+ 		)
+ 
+ 		ctm := metrics.TagsAndMeta{Tags: getTags(piState.Registry, expTags...)}
+-		return dialer.GetTrail(time.Now(), time.Now(), true, emitIterations, ctm, piState.BuiltinMetrics)
++		return dialer.IOSamples(time.Now(), ctm, piState.BuiltinMetrics)
++	}
++
++	getIterationsSamples := func(group string, addExpTags ...string) metrics.SampleContainer {
++		expTags := []string{"group", group}
++		expTags = append(expTags, addExpTags...)
++		ctm := metrics.TagsAndMeta{Tags: getTags(piState.Registry, expTags...)}
++		startTime := time.Now()
++		endTime := time.Now()
++
++		return metrics.Samples([]metrics.Sample{
++			{
++				TimeSeries: metrics.TimeSeries{
++					Metric: piState.BuiltinMetrics.IterationDuration,
++					Tags:   ctm.Tags,
++				},
++				Time:     endTime,
++				Metadata: ctm.Metadata,
++				Value:    metrics.D(endTime.Sub(startTime)),
++			},
++			{
++				TimeSeries: metrics.TimeSeries{
++					Metric: piState.BuiltinMetrics.Iterations,
++					Tags:   ctm.Tags,
++				},
++				Time:     endTime,
++				Metadata: ctm.Metadata,
++				Value:    1,
++			},
++		})
+ 	}
+ 
+ 	// Initially give a long time (5s) for the execScheduler to start
+ 	expectIn(0, 5000, getSample(1, testCounter, "group", "::setup", "place", "setupBeforeSleep"))
+ 	expectIn(900, 1100, getSample(2, testCounter, "group", "::setup", "place", "setupAfterSleep"))
+-	expectIn(0, 100, getDummyTrail("::setup", false))
++	expectIn(0, 100, getNetworkSamples("::setup"))
+ 
+ 	expectIn(0, 100, getSample(5, testCounter, "group", "", "place", "defaultBeforeSleep", "scenario", "default"))
+ 	expectIn(900, 1100, getSample(6, testCounter, "group", "", "place", "defaultAfterSleep", "scenario", "default"))
+-	expectIn(0, 100, getDummyTrail("", true, "scenario", "default"))
++	expectIn(0, 100, getNetworkSamples("", "scenario", "default"))
++	expectIn(0, 100, getIterationsSamples("", "scenario", "default"))
+ 
+ 	expectIn(0, 100, getSample(5, testCounter, "group", "", "place", "defaultBeforeSleep", "scenario", "default"))
+ 	expectIn(900, 1100, getSample(6, testCounter, "group", "", "place", "defaultAfterSleep", "scenario", "default"))
+-	expectIn(0, 100, getDummyTrail("", true, "scenario", "default"))
++	expectIn(0, 100, getNetworkSamples("", "scenario", "default"))
++	expectIn(0, 100, getIterationsSamples("", "scenario", "default"))
+ 
+ 	expectIn(0, 1000, getSample(3, testCounter, "group", "::teardown", "place", "teardownBeforeSleep"))
+ 	expectIn(900, 1100, getSample(4, testCounter, "group", "::teardown", "place", "teardownAfterSleep"))
+-	expectIn(0, 100, getDummyTrail("::teardown", false))
++	expectIn(0, 100, getNetworkSamples("::teardown"))
+ 
+ 	for {
+ 		select {
+diff --git a/js/runner_test.go b/js/runner_test.go
+index c0ca81808..0808547a4 100644
+--- a/js/runner_test.go
++++ b/js/runner_test.go
+@@ -794,10 +794,9 @@ func TestVUIntegrationMetrics(t *testing.T) {
+ 			require.NoError(t, err)
+ 			sampleCount := 0
+ 			builtinMetrics := r.preInitState.BuiltinMetrics
+-			for i, sampleC := range metrics.GetBufferedSamples(samples) {
+-				for j, s := range sampleC.GetSamples() {
+-					sampleCount++
+-					switch i + j {
++			for _, sampleC := range metrics.GetBufferedSamples(samples) {
++				for _, s := range sampleC.GetSamples() {
++					switch sampleCount {
+ 					case 0:
+ 						assert.Equal(t, 5.0, s.Value)
+ 						assert.Equal(t, "my_metric", s.Metric.Name)
+@@ -814,6 +813,7 @@ func TestVUIntegrationMetrics(t *testing.T) {
+ 						assert.Same(t, builtinMetrics.Iterations, s.Metric, "`iterations` sample is after `iteration_duration`")
+ 						assert.Equal(t, float64(1), s.Value)
+ 					}
++					sampleCount++
+ 				}
+ 			}
+ 			assert.Equal(t, sampleCount, 5)
+diff --git a/lib/netext/dialer_test.go b/lib/netext/dialer_test.go
+index 4955c4d30..8d3fc54c8 100644
+--- a/lib/netext/dialer_test.go
++++ b/lib/netext/dialer_test.go
+@@ -3,12 +3,14 @@ package netext
+ import (
+ 	"net"
+ 	"testing"
++	"time"
+ 
+ 	"github.com/stretchr/testify/require"
+ 
+ 	"go.k6.io/k6/lib"
+ 	"go.k6.io/k6/lib/testutils/mockresolver"
+ 	"go.k6.io/k6/lib/types"
++	"go.k6.io/k6/metrics"
+ )
+ 
+ func TestDialerAddr(t *testing.T) {
+@@ -148,3 +150,95 @@ func newResolver() *mockresolver.MockResolver {
+ 		},
+ 	)
+ }
++
++func TestIOSamples(t *testing.T) {
++	t.Parallel()
++
++	registry := metrics.NewRegistry()
++	builtinMetrics := metrics.RegisterBuiltinMetrics(registry)
++
++	dialer := NewDialer(net.Dialer{}, newResolver())
++	dialer.BytesWritten = 100
++	dialer.BytesRead = 200
++
++	sampleTime := time.Now()
++	tags := registry.RootTagSet().With("test", "value")
++	ctm := metrics.TagsAndMeta{Tags: tags}
++
++	result := dialer.IOSamples(sampleTime, ctm, builtinMetrics)
++	require.NotNil(t, result)
++
++	samples := result.GetSamples()
++	require.Len(t, samples, 2)
++
++	require.Equal(t, builtinMetrics.DataSent, samples[0].Metric)
++	require.Equal(t, float64(100), samples[0].Value)
++	require.Equal(t, sampleTime, samples[0].Time)
++	require.Equal(t, tags, samples[0].Tags)
++
++	require.Equal(t, builtinMetrics.DataReceived, samples[1].Metric)
++	require.Equal(t, float64(200), samples[1].Value)
++	require.Equal(t, sampleTime, samples[1].Time)
++	require.Equal(t, tags, samples[1].Tags)
++
++	require.Equal(t, int64(0), dialer.BytesWritten)
++	require.Equal(t, int64(0), dialer.BytesRead)
++}
++
++func TestIOSamples_ZeroBytes(t *testing.T) {
++	t.Parallel()
++
++	registry := metrics.NewRegistry()
++	builtinMetrics := metrics.RegisterBuiltinMetrics(registry)
++
++	dialer := NewDialer(net.Dialer{}, newResolver())
++
++	sampleTime := time.Now()
++	tags := registry.RootTagSet()
++	ctm := metrics.TagsAndMeta{Tags: tags}
++
++	result := dialer.IOSamples(sampleTime, ctm, builtinMetrics)
++	samples := result.GetSamples()
++
++	require.Len(t, samples, 2)
++	require.Equal(t, float64(0), samples[0].Value)
++	require.Equal(t, float64(0), samples[1].Value)
++}
++
++func TestIOSamples_ReturnsMetricsSamples(t *testing.T) {
++	t.Parallel()
++
++	registry := metrics.NewRegistry()
++	builtinMetrics := metrics.RegisterBuiltinMetrics(registry)
++
++	dialer := NewDialer(net.Dialer{}, newResolver())
++	dialer.BytesWritten = 50
++	dialer.BytesRead = 75
++
++	sampleTime := time.Now()
++	ctm := metrics.TagsAndMeta{Tags: registry.RootTagSet()}
++
++	result := dialer.IOSamples(sampleTime, ctm, builtinMetrics)
++
++	_, ok := result.(metrics.Samples)
++	require.True(t, ok, "IOSamples should return metrics.Samples type")
++}
++
++func TestIOSamples_AtomicSwap(t *testing.T) {
++	t.Parallel()
++
++	registry := metrics.NewRegistry()
++	builtinMetrics := metrics.RegisterBuiltinMetrics(registry)
++
++	dialer := NewDialer(net.Dialer{}, newResolver())
++	dialer.BytesWritten = 1000
++	dialer.BytesRead = 2000
++
++	ctm := metrics.TagsAndMeta{Tags: registry.RootTagSet()}
++
++	result1 := dialer.IOSamples(time.Now(), ctm, builtinMetrics)
++	result2 := dialer.IOSamples(time.Now(), ctm, builtinMetrics)
++
++	require.Equal(t, float64(1000), result1.GetSamples()[0].Value)
++	require.Equal(t, float64(0), result2.GetSamples()[0].Value)
++}
+diff --git a/output/cloud/insights/collect_test.go b/output/cloud/insights/collect_test.go
+index aeca952b9..6350dc8eb 100644
+--- a/output/cloud/insights/collect_test.go
++++ b/output/cloud/insights/collect_test.go
+@@ -8,7 +8,6 @@ import (
+ 	"github.com/stretchr/testify/require"
+ 
+ 	"go.k6.io/k6/cloudapi/insights"
+-	"go.k6.io/k6/lib/netext"
+ 	"go.k6.io/k6/lib/netext/httpext"
+ 	"go.k6.io/k6/metrics"
+ )
+@@ -51,9 +50,6 @@ func Test_Collector_CollectRequestMetadatas_FiltersAndStoresHTTPTrailsAsRequestM
+ 		&httpext.Trail{
+ 			// HTTP trail without trace ID should be ignored
+ 		},
+-		&netext.NetTrail{
+-			// Net trail should be ignored
+-		},
+ 		&httpext.Trail{
+ 			EndTime:  time.Unix(20, 0),
+ 			Duration: time.Second,

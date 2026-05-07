@@ -1,0 +1,374 @@
+diff --git a/public/app/features/apiserver/client.ts b/public/app/features/apiserver/client.ts
+index 1792db96ddb18..6f89b313b61ae 100644
+--- a/public/app/features/apiserver/client.ts
++++ b/public/app/features/apiserver/client.ts
+@@ -65,38 +65,7 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
+     return getBackendSrv().delete<MetaStatus>(`${this.url}/${name}`);
+   }
+ 
+-  private parseListOptionsSelector(
+-    selector: ListOptionsLabelSelector | ListOptionsFieldSelector | undefined
+-  ): string | undefined {
+-    if (!Array.isArray(selector)) {
+-      return selector;
+-    }
+-
+-    return selector
+-      .map((label) => {
+-        const key = String(label.key);
+-        const operator = label.operator;
+-
+-        switch (operator) {
+-          case '=':
+-          case '!=':
+-            return `${key}${operator}${label.value}`;
+-
+-          case 'in':
+-          case 'notin':
+-            return `${key} ${operator} (${label.value.join(',')})`;
+-
+-          case '':
+-          case '!':
+-            return `${operator}${key}`;
+-
+-          default:
+-            return null;
+-        }
+-      })
+-      .filter(Boolean)
+-      .join(',');
+-  }
++  private parseListOptionsSelector = parseListOptionsSelector;
+ }
+ 
+ // add the origin annotations so we know what was set from the UI
+@@ -137,3 +106,34 @@ export class DatasourceAPIVersions {
+     return apiVersions[pluginID];
+   }
+ }
++
++export const parseListOptionsSelector = (selector: ListOptionsLabelSelector | ListOptionsFieldSelector | undefined) => {
++  if (!Array.isArray(selector)) {
++    return selector;
++  }
++
++  return selector
++    .map((label) => {
++      const key = String(label.key);
++      const operator = label.operator;
++
++      switch (operator) {
++        case '=':
++        case '!=':
++          return `${key}${operator}${label.value}`;
++
++        case 'in':
++        case 'notin':
++          return `${key} ${operator} (${label.value.join(',')})`;
++
++        case '':
++        case '!':
++          return `${operator}${key}`;
++
++        default:
++          return null;
++      }
++    })
++    .filter(Boolean)
++    .join(',');
++};
+diff --git a/public/app/features/provisioning/RepositoryStatusPage.tsx b/public/app/features/provisioning/RepositoryStatusPage.tsx
+index ca0e3f3aed7c7..2cd5f596a656d 100644
+--- a/public/app/features/provisioning/RepositoryStatusPage.tsx
++++ b/public/app/features/provisioning/RepositoryStatusPage.tsx
+@@ -1,7 +1,6 @@
+ import { useMemo, useState } from 'react';
+ import { useLocation } from 'react-router';
+ import { useParams } from 'react-router-dom-v5-compat';
+-import { useAsync } from 'react-use';
+ 
+ import { SelectableValue, urlUtil } from '@grafana/data';
+ import {
+@@ -25,10 +24,13 @@ import {
+ import { Page } from 'app/core/components/Page/Page';
+ import { useQueryParams } from 'app/core/hooks/useQueryParams';
+ 
+-import { ScopedResourceClient } from '../apiserver/client';
+-
+-import { useGetRepositoryStatusQuery, useListRepositoryFilesQuery, useTestRepositoryQuery } from './api';
+-import { JobSpec, JobStatus, RepositoryResource, FileDetails, TestResponse } from './api/types';
++import {
++  useGetRepositoryStatusQuery,
++  useListJobsQuery,
++  useListRepositoryFilesQuery,
++  useTestRepositoryQuery,
++} from './api';
++import { RepositoryResource, FileDetails, TestResponse } from './api/types';
+ import { PROVISIONING_URL } from './constants';
+ 
+ enum TabSelection {
+@@ -202,37 +204,30 @@ function FilesView({ repo }: RepoProps) {
+   );
+ }
+ 
+-const jobsClient = new ScopedResourceClient<JobSpec, JobStatus, 'Job'>({
+-  group: 'provisioning.grafana.app',
+-  version: 'v0alpha1',
+-  resource: 'jobs',
+-});
+-
+ function JobsView({ repo }: RepoProps) {
+   const name = repo.metadata.name;
+-  const jobs = useAsync(async () => {
+-    return jobsClient.list({
+-      labelSelector: [
+-        {
+-          key: 'repository',
+-          operator: '=',
+-          value: name,
+-        },
+-      ],
+-    });
+-  }, [name]);
++  const query = useListJobsQuery({
++    labelSelector: [
++      {
++        key: 'repository',
++        operator: '=',
++        value: name,
++      },
++    ],
++  });
++  const items = query?.data?.items ?? [];
+ 
+-  if (jobs.loading) {
++  if (query.isLoading) {
+     return <Spinner />;
+   }
+-  if (jobs.error) {
++  if (query.isError) {
+     return (
+       <Alert title="error loading jobs">
+-        <pre>{JSON.stringify(jobs.error)}</pre>
++        <pre>{JSON.stringify(query.error)}</pre>
+       </Alert>
+     );
+   }
+-  if (!jobs.value?.items?.length) {
++  if (!items?.length) {
+     return (
+       <div>
+         No recent events...
+@@ -244,7 +239,7 @@ function JobsView({ repo }: RepoProps) {
+ 
+   return (
+     <div>
+-      {jobs.value.items.map((item) => {
++      {items.map((item) => {
+         return (
+           <Card key={item.metadata.resourceVersion}>
+             <Card.Heading>
+diff --git a/public/app/features/provisioning/api/endpoints.ts b/public/app/features/provisioning/api/endpoints.ts
+index 44bd453b26a9b..93ad30932d01c 100644
+--- a/public/app/features/provisioning/api/endpoints.ts
++++ b/public/app/features/provisioning/api/endpoints.ts
+@@ -1,5 +1,7 @@
+ import { Resource } from 'app/features/apiserver/types';
+ 
++import { parseListOptionsSelector } from '../../apiserver/client';
++
+ import { baseAPI as api } from './baseAPI';
+ import {
+   RepositoryList,
+@@ -15,20 +17,38 @@ import {
+   TestResponse,
+   RepositorySpec,
+   JobList,
++  JobResource,
++  ListApiArg,
++  WebhookResponse,
++  HistoryItem,
++  GetRequestArg,
+ } from './types';
+ 
+ const BASE_PATH = '/repositories';
+ 
+ const injectedRtkApi = api.injectEndpoints({
+   endpoints: (build) => ({
+-    listRepository: build.query<RepositoryList, void>({
+-      query: () => ({ url: BASE_PATH }),
+-      providesTags: ['RepositoryList'],
+-    }),
+-    listJobs: build.query<JobList, void>({
+-      query: () => ({ url: '/jobs' }),
++    listJobs: build.query<JobList, ListApiArg | void>({
++      query: (queryArg) => {
++        return {
++          url: `/jobs`,
++          params: getListParams(queryArg),
++        };
++      },
+       providesTags: ['JobList'],
+     }),
++    getJob: build.query<JobResource, RequestArg>({
++      query: (queryArg) => ({
++        url: `/jobs/${queryArg.name}`,
++      }),
++    }),
++    listRepository: build.query<RepositoryList, ListApiArg | void>({
++      query: (params) => ({
++        url: `${BASE_PATH}`,
++        params: getListParams(params),
++      }),
++      providesTags: ['RepositoryList'],
++    }),
+     createRepository: build.mutation<void, RepositoryForCreate>({
+       query: (body) => ({
+         url: BASE_PATH,
+@@ -37,9 +57,6 @@ const injectedRtkApi = api.injectEndpoints({
+       }),
+       invalidatesTags: ['RepositoryList'],
+     }),
+-    getRepository: build.query<RepositoryResource, RequestArg>({
+-      query: ({ name }) => ({ url: `${BASE_PATH}/${name}` }),
+-    }),
+     updateRepository: build.mutation<void, UpdateRequestArg>({
+       query: ({ name, body }) => ({
+         url: `${BASE_PATH}/${name}`,
+@@ -63,6 +80,11 @@ const injectedRtkApi = api.injectEndpoints({
+       }),
+       invalidatesTags: ['RepositoryList'],
+     }),
++    getRepository: build.query<RepositoryResource, RequestArg>({
++      query: (queryArg) => ({
++        url: `${BASE_PATH}/${queryArg.name}`,
++      }),
++    }),
+     createRepositoryExport: build.mutation<ResourceWrapper, RequestArg>({
+       query: ({ name }) => ({
+         url: `${BASE_PATH}/${name}/export`,
+@@ -110,6 +132,19 @@ const injectedRtkApi = api.injectEndpoints({
+       query: ({ name, path, ref, message }) => ({
+         url: `${BASE_PATH}/${name}/files/${path}`,
+         method: 'DELETE',
++        params: { ref, message },
++      }),
++    }),
++    listRepositoryHistory: build.query<HistoryListResponse, RequestArg>({
++      query: (queryArg) => ({
++        url: `${BASE_PATH}/${queryArg.name}/history`,
++        params: { ref: queryArg.ref },
++      }),
++    }),
++    getRepositoryHistory: build.query<HistoryItem, GetRequestArg>({
++      query: (queryArg) => ({
++        url: `${BASE_PATH}/${queryArg.name}/history/${queryArg.path}`,
++        params: { ref: queryArg.ref },
+       }),
+     }),
+     createRepositoryImport: build.mutation<ResourceWrapper, { name: string; ref?: string }>({
+@@ -151,6 +186,17 @@ const injectedRtkApi = api.injectEndpoints({
+         method: 'POST',
+       }),
+     }),
++    getRepositoryWebhook: build.query<WebhookResponse, RequestArg>({
++      query: (queryArg) => ({
++        url: `${BASE_PATH}/${queryArg.name}/webhook`,
++      }),
++    }),
++    postRepositoryWebhook: build.mutation<WebhookResponse, RequestArg>({
++      query: (queryArg) => ({
++        url: `${BASE_PATH}/${queryArg.name}/webhook`,
++        method: 'POST',
++      }),
++    }),
+   }),
+   overrideExisting: false,
+ });
+@@ -179,3 +225,15 @@ export const {
+   useTestRepositoryQuery,
+   useTestRepositoryConfigMutation,
+ } = injectedRtkApi;
++
++function getListParams(queryArg: ListApiArg | void) {
++  if (!queryArg) {
++    return undefined;
++  }
++  const { fieldSelector, labelSelector, ...params } = queryArg;
++  return {
++    fieldSelector: fieldSelector ? parseListOptionsSelector(fieldSelector) : undefined,
++    labelSelector: labelSelector ? parseListOptionsSelector(labelSelector) : undefined,
++    ...params,
++  };
++}
+diff --git a/public/app/features/provisioning/api/types.ts b/public/app/features/provisioning/api/types.ts
+index eacf3203f229d..a0960cce003fd 100644
+--- a/public/app/features/provisioning/api/types.ts
++++ b/public/app/features/provisioning/api/types.ts
+@@ -1,6 +1,6 @@
+ import { AlertVariant } from '@grafana/ui';
+ 
+-import { Resource, ResourceForCreate, ResourceList } from '../../apiserver/types';
++import { ListOptions, Resource, ResourceForCreate, ResourceList } from '../../apiserver/types';
+ 
+ export type GitHubRepositoryConfig = {
+   branchWorkflow?: boolean;
+@@ -56,6 +56,11 @@ export type TestResponse = {
+ export interface RequestArg {
+   /** Repository UID */
+   name: string;
++  ref?: string;
++}
++
++export interface GetRequestArg extends RequestArg {
++  path: string;
+ }
+ 
+ export type RepositoryForCreate = ResourceForCreate<RepositorySpec>;
+@@ -68,11 +73,24 @@ export type RepositoryResource = Resource<RepositorySpec, RepositoryStatus, 'Rep
+ export type RepositoryList = ResourceList<RepositorySpec, RepositoryStatus, 'Repository'>;
+ 
+ export type JobSpec = {
+-  action: string;
++  action: 'export' | 'merge' | 'pr';
+   ref?: string;
+   pr?: number;
+   hash?: string;
+   url?: string;
++  commits?: CommitInfo[];
++};
++
++export type FileRef = {
++  path: string;
++  ref: string;
++};
++
++export type CommitInfo = {
++  added?: FileRef[];
++  modified?: FileRef[];
++  removed?: FileRef[];
++  sha1?: string;
+ };
+ 
+ export type JobStatus = {
+@@ -162,3 +180,20 @@ export type AuthorInfo = {
+   username: string;
+   avatarURL?: string;
+ };
++
++export type WebhookResponse = {
++  added?: string;
++  apiVersion?: string;
++  code?: number;
++  job?: JobSpec;
++  kind?: string;
++};
++
++export interface ListApiArg extends ListOptions {
++  allowWatchBookmarks?: boolean;
++  resourceVersion?: string;
++  resourceVersionMatch?: string;
++  sendInitialEvents?: boolean;
++  timeoutSeconds?: number;
++  watch?: boolean;
++}

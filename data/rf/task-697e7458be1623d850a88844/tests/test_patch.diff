@@ -1,0 +1,1342 @@
+diff --git a/pkg/detectors/abbysale/abbysale_mock_test.go b/pkg/detectors/abbysale/abbysale_mock_test.go
+new file mode 100644
+index 000000000..36e368c21
+--- /dev/null
++++ b/pkg/detectors/abbysale/abbysale_mock_test.go
+@@ -0,0 +1,116 @@
++package abbysale
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
++)
++
++func TestAbbysale_Mock(t *testing.T) {
++	tests := []struct {
++		name                string
++		s                   Scanner
++		data                string
++		verify              bool
++		wantFound           bool
++		wantVerify          bool
++		wantVerificationErr bool
++	}{
++		{
++			name:       "verified on 200",
++			s:          Scanner{client: common.ConstantResponseHttpClient(200, `{}`)},
++			data:       `abbysale token xaji0y6dpbhsahxthv3a3zmf8mdd4v30t9nt3w5u`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: true,
++		},
++		{
++			name:       "unverified on 401",
++			s:          Scanner{client: common.ConstantResponseHttpClient(401, "{}")},
++			data:       `abbysale token xaji0y6dpbhsahxthv3a3zmf8mdd4v30t9nt3w5u`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: false,
++		},
++		{
++			name:                "no panic on 500",
++			s:                   Scanner{client: common.ConstantResponseHttpClient(500, "{}")},
++			data:                `abbysale token xaji0y6dpbhsahxthv3a3zmf8mdd4v30t9nt3w5u`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:                "no panic on timeout",
++			s:                   Scanner{client: common.SaneHttpClientTimeOut(1 * time.Microsecond)},
++			data:                `abbysale token xaji0y6dpbhsahxthv3a3zmf8mdd4v30t9nt3w5u`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:      "no match",
++			s:         Scanner{},
++			data:      "no secrets here",
++			verify:    true,
++			wantFound: false,
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			got, err := tt.s.FromData(context.Background(), tt.verify, []byte(tt.data))
++			if err != nil {
++				t.Fatalf("FromData() returned error: %v", err)
++			}
++
++			if tt.wantFound {
++				if len(got) == 0 {
++					t.Fatal("expected at least one result, got none")
++				}
++				for _, r := range got {
++					if len(r.Raw) == 0 {
++						t.Error("result has empty Raw field")
++					}
++					if r.DetectorType != detectorspb.DetectorType_Abbysale {
++						t.Errorf("wrong DetectorType: got %v, want %v", r.DetectorType, detectorspb.DetectorType_Abbysale)
++					}
++				}
++				hasVerified := false
++				for _, r := range got {
++					if r.Verified {
++						hasVerified = true
++						break
++					}
++				}
++				if tt.wantVerify && !hasVerified {
++					t.Error("expected at least one verified result, got none")
++				}
++			if !tt.wantVerify {
++				for _, r := range got {
++					if r.Verified {
++						t.Error("expected no verified results, but got one")
++						break
++					}
++				}
++			}
++			if tt.wantVerificationErr {
++				for _, r := range got {
++					if r.VerificationError() == nil {
++						t.Error("expected verification error to be set")
++					}
++				}
++			}
++		} else {
++				if len(got) != 0 {
++					t.Errorf("expected no results, got %d", len(got))
++				}
++			}
++		})
++	}
++}
+diff --git a/pkg/detectors/abstract/abstract_mock_test.go b/pkg/detectors/abstract/abstract_mock_test.go
+new file mode 100644
+index 000000000..3c6849df8
+--- /dev/null
++++ b/pkg/detectors/abstract/abstract_mock_test.go
+@@ -0,0 +1,116 @@
++package abstract
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
++)
++
++func TestAbstract_Mock(t *testing.T) {
++	tests := []struct {
++		name                string
++		s                   Scanner
++		data                string
++		verify              bool
++		wantFound           bool
++		wantVerify          bool
++		wantVerificationErr bool
++	}{
++		{
++			name:       "verified on 200",
++			s:          Scanner{client: common.ConstantResponseHttpClient(200, `{}`)},
++			data:       `abstract key zbikcidkwnnhj7xvg0fn9xuy41ibljh7`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: true,
++		},
++		{
++			name:       "unverified on 401",
++			s:          Scanner{client: common.ConstantResponseHttpClient(401, "{}")},
++			data:       `abstract key zbikcidkwnnhj7xvg0fn9xuy41ibljh7`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: false,
++		},
++		{
++			name:                "no panic on 500",
++			s:                   Scanner{client: common.ConstantResponseHttpClient(500, "{}")},
++			data:                `abstract key zbikcidkwnnhj7xvg0fn9xuy41ibljh7`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:                "no panic on timeout",
++			s:                   Scanner{client: common.SaneHttpClientTimeOut(1 * time.Microsecond)},
++			data:                `abstract key zbikcidkwnnhj7xvg0fn9xuy41ibljh7`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:      "no match",
++			s:         Scanner{},
++			data:      "no secrets here",
++			verify:    true,
++			wantFound: false,
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			got, err := tt.s.FromData(context.Background(), tt.verify, []byte(tt.data))
++			if err != nil {
++				t.Fatalf("FromData() returned error: %v", err)
++			}
++
++			if tt.wantFound {
++				if len(got) == 0 {
++					t.Fatal("expected at least one result, got none")
++				}
++				for _, r := range got {
++					if len(r.Raw) == 0 {
++						t.Error("result has empty Raw field")
++					}
++					if r.DetectorType != detectorspb.DetectorType_Abstract {
++						t.Errorf("wrong DetectorType: got %v, want %v", r.DetectorType, detectorspb.DetectorType_Abstract)
++					}
++				}
++				hasVerified := false
++				for _, r := range got {
++					if r.Verified {
++						hasVerified = true
++						break
++					}
++				}
++				if tt.wantVerify && !hasVerified {
++					t.Error("expected at least one verified result, got none")
++				}
++			if !tt.wantVerify {
++				for _, r := range got {
++					if r.Verified {
++						t.Error("expected no verified results, but got one")
++						break
++					}
++				}
++			}
++			if tt.wantVerificationErr {
++				for _, r := range got {
++					if r.VerificationError() == nil {
++						t.Error("expected verification error to be set")
++					}
++				}
++			}
++		} else {
++				if len(got) != 0 {
++					t.Errorf("expected no results, got %d", len(got))
++				}
++			}
++		})
++	}
++}
+diff --git a/pkg/detectors/abuseipdb/abuseipdb_mock_test.go b/pkg/detectors/abuseipdb/abuseipdb_mock_test.go
+new file mode 100644
+index 000000000..1327f3cd2
+--- /dev/null
++++ b/pkg/detectors/abuseipdb/abuseipdb_mock_test.go
+@@ -0,0 +1,116 @@
++package abuseipdb
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
++)
++
++func TestAbuseIPDB_Mock(t *testing.T) {
++	tests := []struct {
++		name                string
++		s                   Scanner
++		data                string
++		verify              bool
++		wantFound           bool
++		wantVerify          bool
++		wantVerificationErr bool
++	}{
++		{
++			name:       "verified on 200",
++			s:          Scanner{client: common.ConstantResponseHttpClient(200, `{"data":{"ipAddress":"8.8.8.8"}}`)},
++			data:       `abuseipdb key 5lxo6qjiujv6oh9sdbdw2pcn9t84azytjxepq85jsg65kxvf1t2tala753lc58drc11ertj5pht0hl9x`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: true,
++		},
++		{
++			name:       "unverified on 401",
++			s:          Scanner{client: common.ConstantResponseHttpClient(401, "{}")},
++			data:       `abuseipdb key 5lxo6qjiujv6oh9sdbdw2pcn9t84azytjxepq85jsg65kxvf1t2tala753lc58drc11ertj5pht0hl9x`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: false,
++		},
++		{
++			name:                "no panic on 500",
++			s:                   Scanner{client: common.ConstantResponseHttpClient(500, "{}")},
++			data:                `abuseipdb key 5lxo6qjiujv6oh9sdbdw2pcn9t84azytjxepq85jsg65kxvf1t2tala753lc58drc11ertj5pht0hl9x`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:                "no panic on timeout",
++			s:                   Scanner{client: common.SaneHttpClientTimeOut(1 * time.Microsecond)},
++			data:                `abuseipdb key 5lxo6qjiujv6oh9sdbdw2pcn9t84azytjxepq85jsg65kxvf1t2tala753lc58drc11ertj5pht0hl9x`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:      "no match",
++			s:         Scanner{},
++			data:      "no secrets here",
++			verify:    true,
++			wantFound: false,
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			got, err := tt.s.FromData(context.Background(), tt.verify, []byte(tt.data))
++			if err != nil {
++				t.Fatalf("FromData() returned error: %v", err)
++			}
++
++			if tt.wantFound {
++				if len(got) == 0 {
++					t.Fatal("expected at least one result, got none")
++				}
++				for _, r := range got {
++					if len(r.Raw) == 0 {
++						t.Error("result has empty Raw field")
++					}
++					if r.DetectorType != detectorspb.DetectorType_AbuseIPDB {
++						t.Errorf("wrong DetectorType: got %v, want %v", r.DetectorType, detectorspb.DetectorType_AbuseIPDB)
++					}
++				}
++				hasVerified := false
++				for _, r := range got {
++					if r.Verified {
++						hasVerified = true
++						break
++					}
++				}
++				if tt.wantVerify && !hasVerified {
++					t.Error("expected at least one verified result, got none")
++				}
++			if !tt.wantVerify {
++				for _, r := range got {
++					if r.Verified {
++						t.Error("expected no verified results, but got one")
++						break
++					}
++				}
++			}
++			if tt.wantVerificationErr {
++				for _, r := range got {
++					if r.VerificationError() == nil {
++						t.Error("expected verification error to be set")
++					}
++				}
++			}
++		} else {
++				if len(got) != 0 {
++					t.Errorf("expected no results, got %d", len(got))
++				}
++			}
++		})
++	}
++}
+diff --git a/pkg/detectors/accuweather/accuweather_mock_test.go b/pkg/detectors/accuweather/accuweather_mock_test.go
+new file mode 100644
+index 000000000..462e92357
+--- /dev/null
++++ b/pkg/detectors/accuweather/accuweather_mock_test.go
+@@ -0,0 +1,116 @@
++package accuweather
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
++)
++
++func TestAccuweather_Mock(t *testing.T) {
++	tests := []struct {
++		name                string
++		s                   Scanner
++		data                string
++		verify              bool
++		wantFound           bool
++		wantVerify          bool
++		wantVerificationErr bool
++	}{
++		{
++			name:       "verified on 200",
++			s:          Scanner{client: common.ConstantResponseHttpClient(200, `{}`)},
++			data:       `accuweather apikey pseimvihcwi64ciyhe7ur23gdppq0y9dom5`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: true,
++		},
++		{
++			name:       "unverified on 401",
++			s:          Scanner{client: common.ConstantResponseHttpClient(401, "{}")},
++			data:       `accuweather apikey pseimvihcwi64ciyhe7ur23gdppq0y9dom5`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: false,
++		},
++		{
++			name:                "no panic on 500",
++			s:                   Scanner{client: common.ConstantResponseHttpClient(500, "{}")},
++			data:                `accuweather apikey pseimvihcwi64ciyhe7ur23gdppq0y9dom5`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:                "no panic on timeout",
++			s:                   Scanner{client: common.SaneHttpClientTimeOut(1 * time.Microsecond)},
++			data:                `accuweather apikey pseimvihcwi64ciyhe7ur23gdppq0y9dom5`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:      "no match",
++			s:         Scanner{},
++			data:      "no secrets here",
++			verify:    true,
++			wantFound: false,
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			got, err := tt.s.FromData(context.Background(), tt.verify, []byte(tt.data))
++			if err != nil {
++				t.Fatalf("FromData() returned error: %v", err)
++			}
++
++			if tt.wantFound {
++				if len(got) == 0 {
++					t.Fatal("expected at least one result, got none")
++				}
++				for _, r := range got {
++					if len(r.Raw) == 0 {
++						t.Error("result has empty Raw field")
++					}
++					if r.DetectorType != detectorspb.DetectorType_Accuweather {
++						t.Errorf("wrong DetectorType: got %v, want %v", r.DetectorType, detectorspb.DetectorType_Accuweather)
++					}
++				}
++				hasVerified := false
++				for _, r := range got {
++					if r.Verified {
++						hasVerified = true
++						break
++					}
++				}
++				if tt.wantVerify && !hasVerified {
++					t.Error("expected at least one verified result, got none")
++				}
++			if !tt.wantVerify {
++				for _, r := range got {
++					if r.Verified {
++						t.Error("expected no verified results, but got one")
++						break
++					}
++				}
++			}
++			if tt.wantVerificationErr {
++				for _, r := range got {
++					if r.VerificationError() == nil {
++						t.Error("expected verification error to be set")
++					}
++				}
++			}
++		} else {
++				if len(got) != 0 {
++					t.Errorf("expected no results, got %d", len(got))
++				}
++			}
++		})
++	}
++}
+diff --git a/pkg/detectors/adafruitio/adafruitio_mock_test.go b/pkg/detectors/adafruitio/adafruitio_mock_test.go
+new file mode 100644
+index 000000000..8dbc351e2
+--- /dev/null
++++ b/pkg/detectors/adafruitio/adafruitio_mock_test.go
+@@ -0,0 +1,116 @@
++package adafruitio
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
++)
++
++func TestAdafruitIO_Mock(t *testing.T) {
++	tests := []struct {
++		name                string
++		s                   Scanner
++		data                string
++		verify              bool
++		wantFound           bool
++		wantVerify          bool
++		wantVerificationErr bool
++	}{
++		{
++			name:       "verified on 200",
++			s:          Scanner{client: common.ConstantResponseHttpClient(200, `{}`)},
++			data:       `adafruit io key aio_x9k2mRp4sT7vN3wQ1jF6bY8h0L5u`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: true,
++		},
++		{
++			name:       "unverified on 401",
++			s:          Scanner{client: common.ConstantResponseHttpClient(401, "{}")},
++			data:       `adafruit io key aio_x9k2mRp4sT7vN3wQ1jF6bY8h0L5u`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: false,
++		},
++		{
++			name:                "no panic on 500",
++			s:                   Scanner{client: common.ConstantResponseHttpClient(500, "{}")},
++			data:                `adafruit io key aio_x9k2mRp4sT7vN3wQ1jF6bY8h0L5u`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:                "no panic on timeout",
++			s:                   Scanner{client: common.SaneHttpClientTimeOut(1 * time.Microsecond)},
++			data:                `adafruit io key aio_x9k2mRp4sT7vN3wQ1jF6bY8h0L5u`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:      "no match",
++			s:         Scanner{},
++			data:      "no secrets here",
++			verify:    true,
++			wantFound: false,
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			got, err := tt.s.FromData(context.Background(), tt.verify, []byte(tt.data))
++			if err != nil {
++				t.Fatalf("FromData() returned error: %v", err)
++			}
++
++			if tt.wantFound {
++				if len(got) == 0 {
++					t.Fatal("expected at least one result, got none")
++				}
++				for _, r := range got {
++					if len(r.Raw) == 0 {
++						t.Error("result has empty Raw field")
++					}
++					if r.DetectorType != detectorspb.DetectorType_AdafruitIO {
++						t.Errorf("wrong DetectorType: got %v, want %v", r.DetectorType, detectorspb.DetectorType_AdafruitIO)
++					}
++				}
++				hasVerified := false
++				for _, r := range got {
++					if r.Verified {
++						hasVerified = true
++						break
++					}
++				}
++				if tt.wantVerify && !hasVerified {
++					t.Error("expected at least one verified result, got none")
++				}
++			if !tt.wantVerify {
++				for _, r := range got {
++					if r.Verified {
++						t.Error("expected no verified results, but got one")
++						break
++					}
++				}
++			}
++			if tt.wantVerificationErr {
++				for _, r := range got {
++					if r.VerificationError() == nil {
++						t.Error("expected verification error to be set")
++					}
++				}
++			}
++		} else {
++				if len(got) != 0 {
++					t.Errorf("expected no results, got %d", len(got))
++				}
++			}
++		})
++	}
++}
+diff --git a/pkg/detectors/adzuna/adzuna_mock_test.go b/pkg/detectors/adzuna/adzuna_mock_test.go
+new file mode 100644
+index 000000000..39f5c3405
+--- /dev/null
++++ b/pkg/detectors/adzuna/adzuna_mock_test.go
+@@ -0,0 +1,116 @@
++package adzuna
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
++)
++
++func TestAdzuna_Mock(t *testing.T) {
++	tests := []struct {
++		name                string
++		s                   Scanner
++		data                string
++		verify              bool
++		wantFound           bool
++		wantVerify          bool
++		wantVerificationErr bool
++	}{
++		{
++			name:       "verified on 200",
++			s:          Scanner{client: common.ConstantResponseHttpClient(200, `{}`)},
++			data:       `adzuna app_key zbikcidkwnnhj7xvg0fn9xuy41ibljh7 within adzuna app_id k8m3v2p1`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: true,
++		},
++		{
++			name:       "unverified on 401",
++			s:          Scanner{client: common.ConstantResponseHttpClient(401, "{}")},
++			data:       `adzuna app_key zbikcidkwnnhj7xvg0fn9xuy41ibljh7 within adzuna app_id k8m3v2p1`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: false,
++		},
++		{
++			name:                "no panic on 500",
++			s:                   Scanner{client: common.ConstantResponseHttpClient(500, "{}")},
++			data:                `adzuna app_key zbikcidkwnnhj7xvg0fn9xuy41ibljh7 within adzuna app_id k8m3v2p1`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:                "no panic on timeout",
++			s:                   Scanner{client: common.SaneHttpClientTimeOut(1 * time.Microsecond)},
++			data:                `adzuna app_key zbikcidkwnnhj7xvg0fn9xuy41ibljh7 within adzuna app_id k8m3v2p1`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:      "no match",
++			s:         Scanner{},
++			data:      "no secrets here",
++			verify:    true,
++			wantFound: false,
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			got, err := tt.s.FromData(context.Background(), tt.verify, []byte(tt.data))
++			if err != nil {
++				t.Fatalf("FromData() returned error: %v", err)
++			}
++
++			if tt.wantFound {
++				if len(got) == 0 {
++					t.Fatal("expected at least one result, got none")
++				}
++				for _, r := range got {
++					if len(r.Raw) == 0 {
++						t.Error("result has empty Raw field")
++					}
++					if r.DetectorType != detectorspb.DetectorType_Adzuna {
++						t.Errorf("wrong DetectorType: got %v, want %v", r.DetectorType, detectorspb.DetectorType_Adzuna)
++					}
++				}
++				hasVerified := false
++				for _, r := range got {
++					if r.Verified {
++						hasVerified = true
++						break
++					}
++				}
++				if tt.wantVerify && !hasVerified {
++					t.Error("expected at least one verified result, got none")
++				}
++			if !tt.wantVerify {
++				for _, r := range got {
++					if r.Verified {
++						t.Error("expected no verified results, but got one")
++						break
++					}
++				}
++			}
++			if tt.wantVerificationErr {
++				for _, r := range got {
++					if r.VerificationError() == nil {
++						t.Error("expected verification error to be set")
++					}
++				}
++			}
++		} else {
++				if len(got) != 0 {
++					t.Errorf("expected no results, got %d", len(got))
++				}
++			}
++		})
++	}
++}
+diff --git a/pkg/detectors/aeroworkflow/aeroworkflow_mock_test.go b/pkg/detectors/aeroworkflow/aeroworkflow_mock_test.go
+new file mode 100644
+index 000000000..e020b6b5e
+--- /dev/null
++++ b/pkg/detectors/aeroworkflow/aeroworkflow_mock_test.go
+@@ -0,0 +1,116 @@
++package aeroworkflow
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
++)
++
++func TestAeroworkflow_Mock(t *testing.T) {
++	tests := []struct {
++		name                string
++		s                   Scanner
++		data                string
++		verify              bool
++		wantFound           bool
++		wantVerify          bool
++		wantVerificationErr bool
++	}{
++		{
++			name:       "verified on 200",
++			s:          Scanner{client: common.ConstantResponseHttpClient(200, `{}`)},
++			data:       `aeroworkflow apikey xK3mR9pT2sV7nQ1wY5aB within aeroworkflow account 12345`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: true,
++		},
++		{
++			name:       "unverified on 401",
++			s:          Scanner{client: common.ConstantResponseHttpClient(401, "{}")},
++			data:       `aeroworkflow apikey xK3mR9pT2sV7nQ1wY5aB within aeroworkflow account 12345`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: false,
++		},
++		{
++			name:                "no panic on 500",
++			s:                   Scanner{client: common.ConstantResponseHttpClient(500, "{}")},
++			data:                `aeroworkflow apikey xK3mR9pT2sV7nQ1wY5aB within aeroworkflow account 12345`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:                "no panic on timeout",
++			s:                   Scanner{client: common.SaneHttpClientTimeOut(1 * time.Microsecond)},
++			data:                `aeroworkflow apikey xK3mR9pT2sV7nQ1wY5aB within aeroworkflow account 12345`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:      "no match",
++			s:         Scanner{},
++			data:      "no secrets here",
++			verify:    true,
++			wantFound: false,
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			got, err := tt.s.FromData(context.Background(), tt.verify, []byte(tt.data))
++			if err != nil {
++				t.Fatalf("FromData() returned error: %v", err)
++			}
++
++			if tt.wantFound {
++				if len(got) == 0 {
++					t.Fatal("expected at least one result, got none")
++				}
++				for _, r := range got {
++					if len(r.Raw) == 0 {
++						t.Error("result has empty Raw field")
++					}
++					if r.DetectorType != detectorspb.DetectorType_Aeroworkflow {
++						t.Errorf("wrong DetectorType: got %v, want %v", r.DetectorType, detectorspb.DetectorType_Aeroworkflow)
++					}
++				}
++				hasVerified := false
++				for _, r := range got {
++					if r.Verified {
++						hasVerified = true
++						break
++					}
++				}
++				if tt.wantVerify && !hasVerified {
++					t.Error("expected at least one verified result, got none")
++				}
++			if !tt.wantVerify {
++				for _, r := range got {
++					if r.Verified {
++						t.Error("expected no verified results, but got one")
++						break
++					}
++				}
++			}
++			if tt.wantVerificationErr {
++				for _, r := range got {
++					if r.VerificationError() == nil {
++						t.Error("expected verification error to be set")
++					}
++				}
++			}
++		} else {
++				if len(got) != 0 {
++					t.Errorf("expected no results, got %d", len(got))
++				}
++			}
++		})
++	}
++}
+diff --git a/pkg/detectors/agora/agora_mock_test.go b/pkg/detectors/agora/agora_mock_test.go
+new file mode 100644
+index 000000000..7523f0610
+--- /dev/null
++++ b/pkg/detectors/agora/agora_mock_test.go
+@@ -0,0 +1,116 @@
++package agora
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
++)
++
++func TestAgora_Mock(t *testing.T) {
++	tests := []struct {
++		name                string
++		s                   Scanner
++		data                string
++		verify              bool
++		wantFound           bool
++		wantVerify          bool
++		wantVerificationErr bool
++	}{
++		{
++			name:       "verified on 200",
++			s:          Scanner{client: common.ConstantResponseHttpClient(200, `{}`)},
++			data:       `agora credentials zbikcidkwnnhj7xvg0fn9xuy41ibljh7`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: true,
++		},
++		{
++			name:       "unverified on 401",
++			s:          Scanner{client: common.ConstantResponseHttpClient(401, "{}")},
++			data:       `agora credentials zbikcidkwnnhj7xvg0fn9xuy41ibljh7`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: false,
++		},
++		{
++			name:                "no panic on 500",
++			s:                   Scanner{client: common.ConstantResponseHttpClient(500, "{}")},
++			data:                `agora credentials zbikcidkwnnhj7xvg0fn9xuy41ibljh7`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:                "no panic on timeout",
++			s:                   Scanner{client: common.SaneHttpClientTimeOut(1 * time.Microsecond)},
++			data:                `agora credentials zbikcidkwnnhj7xvg0fn9xuy41ibljh7`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:      "no match",
++			s:         Scanner{},
++			data:      "no secrets here",
++			verify:    true,
++			wantFound: false,
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			got, err := tt.s.FromData(context.Background(), tt.verify, []byte(tt.data))
++			if err != nil {
++				t.Fatalf("FromData() returned error: %v", err)
++			}
++
++			if tt.wantFound {
++				if len(got) == 0 {
++					t.Fatal("expected at least one result, got none")
++				}
++				for _, r := range got {
++					if len(r.Raw) == 0 {
++						t.Error("result has empty Raw field")
++					}
++					if r.DetectorType != detectorspb.DetectorType_Agora {
++						t.Errorf("wrong DetectorType: got %v, want %v", r.DetectorType, detectorspb.DetectorType_Agora)
++					}
++				}
++				hasVerified := false
++				for _, r := range got {
++					if r.Verified {
++						hasVerified = true
++						break
++					}
++				}
++				if tt.wantVerify && !hasVerified {
++					t.Error("expected at least one verified result, got none")
++				}
++			if !tt.wantVerify {
++				for _, r := range got {
++					if r.Verified {
++						t.Error("expected no verified results, but got one")
++						break
++					}
++				}
++			}
++			if tt.wantVerificationErr {
++				for _, r := range got {
++					if r.VerificationError() == nil {
++						t.Error("expected verification error to be set")
++					}
++				}
++			}
++		} else {
++				if len(got) != 0 {
++					t.Errorf("expected no results, got %d", len(got))
++				}
++			}
++		})
++	}
++}
+diff --git a/pkg/detectors/aha/aha_mock_test.go b/pkg/detectors/aha/aha_mock_test.go
+new file mode 100644
+index 000000000..ef428f118
+--- /dev/null
++++ b/pkg/detectors/aha/aha_mock_test.go
+@@ -0,0 +1,116 @@
++package aha
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
++)
++
++func TestAha_Mock(t *testing.T) {
++	tests := []struct {
++		name                string
++		s                   Scanner
++		data                string
++		verify              bool
++		wantFound           bool
++		wantVerify          bool
++		wantVerificationErr bool
++	}{
++		{
++			name:       "verified on 200",
++			s:          Scanner{client: common.ConstantResponseHttpClient(200, `{}`)},
++			data:       `aha bearer 337643e7d80fdfed273606f4c76ff8b24f98b098d2f129a31e399698e3b36a45 at mycompany.aha.io`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: true,
++		},
++		{
++			name:       "unverified on 401",
++			s:          Scanner{client: common.ConstantResponseHttpClient(401, "{}")},
++			data:       `aha bearer 337643e7d80fdfed273606f4c76ff8b24f98b098d2f129a31e399698e3b36a45 at mycompany.aha.io`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: false,
++		},
++		{
++			name:                "no panic on 500",
++			s:                   Scanner{client: common.ConstantResponseHttpClient(500, "{}")},
++			data:                `aha bearer 337643e7d80fdfed273606f4c76ff8b24f98b098d2f129a31e399698e3b36a45 at mycompany.aha.io`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:                "no panic on timeout",
++			s:                   Scanner{client: common.SaneHttpClientTimeOut(1 * time.Microsecond)},
++			data:                `aha bearer 337643e7d80fdfed273606f4c76ff8b24f98b098d2f129a31e399698e3b36a45 at mycompany.aha.io`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:      "no match",
++			s:         Scanner{},
++			data:      "no secrets here",
++			verify:    true,
++			wantFound: false,
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			got, err := tt.s.FromData(context.Background(), tt.verify, []byte(tt.data))
++			if err != nil {
++				t.Fatalf("FromData() returned error: %v", err)
++			}
++
++			if tt.wantFound {
++				if len(got) == 0 {
++					t.Fatal("expected at least one result, got none")
++				}
++				for _, r := range got {
++					if len(r.Raw) == 0 {
++						t.Error("result has empty Raw field")
++					}
++					if r.DetectorType != detectorspb.DetectorType_Aha {
++						t.Errorf("wrong DetectorType: got %v, want %v", r.DetectorType, detectorspb.DetectorType_Aha)
++					}
++				}
++				hasVerified := false
++				for _, r := range got {
++					if r.Verified {
++						hasVerified = true
++						break
++					}
++				}
++				if tt.wantVerify && !hasVerified {
++					t.Error("expected at least one verified result, got none")
++				}
++			if !tt.wantVerify {
++				for _, r := range got {
++					if r.Verified {
++						t.Error("expected no verified results, but got one")
++						break
++					}
++				}
++			}
++			if tt.wantVerificationErr {
++				for _, r := range got {
++					if r.VerificationError() == nil {
++						t.Error("expected verification error to be set")
++					}
++				}
++			}
++		} else {
++				if len(got) != 0 {
++					t.Errorf("expected no results, got %d", len(got))
++				}
++			}
++		})
++	}
++}
+diff --git a/pkg/detectors/alibaba/alibaba_mock_test.go b/pkg/detectors/alibaba/alibaba_mock_test.go
+new file mode 100644
+index 000000000..9de0f7916
+--- /dev/null
++++ b/pkg/detectors/alibaba/alibaba_mock_test.go
+@@ -0,0 +1,116 @@
++package alibaba
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
++)
++
++func TestAlibaba_Mock(t *testing.T) {
++	tests := []struct {
++		name                string
++		s                   Scanner
++		data                string
++		verify              bool
++		wantFound           bool
++		wantVerify          bool
++		wantVerificationErr bool
++	}{
++		{
++			name:       "verified on 200",
++			s:          Scanner{client: common.ConstantResponseHttpClient(200, `{"RequestId":"test"}`)},
++			data:       `LTAI5tR8m3vP2sK7nQ1wY6x secret UeC99enq522wjZRL9OaYsP6ihgIqLS`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: true,
++		},
++		{
++			name:       "unverified on 401",
++			s:          Scanner{client: common.ConstantResponseHttpClient(401, "{}")},
++			data:       `LTAI5tR8m3vP2sK7nQ1wY6x secret UeC99enq522wjZRL9OaYsP6ihgIqLS`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: false,
++		},
++		{
++			name:                "no panic on 500",
++			s:                   Scanner{client: common.ConstantResponseHttpClient(500, "{}")},
++			data:                `LTAI5tR8m3vP2sK7nQ1wY6x secret UeC99enq522wjZRL9OaYsP6ihgIqLS`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:                "no panic on timeout",
++			s:                   Scanner{client: common.SaneHttpClientTimeOut(1 * time.Microsecond)},
++			data:                `LTAI5tR8m3vP2sK7nQ1wY6x secret UeC99enq522wjZRL9OaYsP6ihgIqLS`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:      "no match",
++			s:         Scanner{},
++			data:      "no secrets here",
++			verify:    true,
++			wantFound: false,
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			got, err := tt.s.FromData(context.Background(), tt.verify, []byte(tt.data))
++			if err != nil {
++				t.Fatalf("FromData() returned error: %v", err)
++			}
++
++			if tt.wantFound {
++				if len(got) == 0 {
++					t.Fatal("expected at least one result, got none")
++				}
++				for _, r := range got {
++					if len(r.Raw) == 0 {
++						t.Error("result has empty Raw field")
++					}
++					if r.DetectorType != detectorspb.DetectorType_Alibaba {
++						t.Errorf("wrong DetectorType: got %v, want %v", r.DetectorType, detectorspb.DetectorType_Alibaba)
++					}
++				}
++				hasVerified := false
++				for _, r := range got {
++					if r.Verified {
++						hasVerified = true
++						break
++					}
++				}
++				if tt.wantVerify && !hasVerified {
++					t.Error("expected at least one verified result, got none")
++				}
++			if !tt.wantVerify {
++				for _, r := range got {
++					if r.Verified {
++						t.Error("expected no verified results, but got one")
++						break
++					}
++				}
++			}
++			if tt.wantVerificationErr {
++				for _, r := range got {
++					if r.VerificationError() == nil {
++						t.Error("expected verification error to be set")
++					}
++				}
++			}
++		} else {
++				if len(got) != 0 {
++					t.Errorf("expected no results, got %d", len(got))
++				}
++			}
++		})
++	}
++}
+diff --git a/pkg/detectors/artifactory/artifactory_mock_test.go b/pkg/detectors/artifactory/artifactory_mock_test.go
+new file mode 100644
+index 000000000..56092493a
+--- /dev/null
++++ b/pkg/detectors/artifactory/artifactory_mock_test.go
+@@ -0,0 +1,116 @@
++package artifactory
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
++)
++
++func TestArtifactory_Mock(t *testing.T) {
++	tests := []struct {
++		name                string
++		s                   Scanner
++		data                string
++		verify              bool
++		wantFound           bool
++		wantVerify          bool
++		wantVerificationErr bool
++	}{
++		{
++			name:       "verified on 200",
++			s:          Scanner{client: common.ConstantResponseHttpClient(200, `{}`)},
++			data:       `artifactory token mNqE40fAraVNqTIAae24HZKjht3X13npgW2zMj518Y2bTu5X1YqWg21nYCsXoblu17rNy8H6h at acme.jfrog.io`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: true,
++		},
++		{
++			name:       "unverified on 401",
++			s:          Scanner{client: common.ConstantResponseHttpClient(401, "{}")},
++			data:       `artifactory token mNqE40fAraVNqTIAae24HZKjht3X13npgW2zMj518Y2bTu5X1YqWg21nYCsXoblu17rNy8H6h at acme.jfrog.io`,
++			verify:     true,
++			wantFound:  true,
++			wantVerify: false,
++		},
++		{
++			name:                "no panic on 500",
++			s:                   Scanner{client: common.ConstantResponseHttpClient(500, "{}")},
++			data:                `artifactory token mNqE40fAraVNqTIAae24HZKjht3X13npgW2zMj518Y2bTu5X1YqWg21nYCsXoblu17rNy8H6h at acme.jfrog.io`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:                "no panic on timeout",
++			s:                   Scanner{client: common.SaneHttpClientTimeOut(1 * time.Microsecond)},
++			data:                `artifactory token mNqE40fAraVNqTIAae24HZKjht3X13npgW2zMj518Y2bTu5X1YqWg21nYCsXoblu17rNy8H6h at acme.jfrog.io`,
++			verify:              true,
++			wantFound:           true,
++			wantVerify:          false,
++			wantVerificationErr: true,
++		},
++		{
++			name:      "no match",
++			s:         Scanner{},
++			data:      "no secrets here",
++			verify:    true,
++			wantFound: false,
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			got, err := tt.s.FromData(context.Background(), tt.verify, []byte(tt.data))
++			if err != nil {
++				t.Fatalf("FromData() returned error: %v", err)
++			}
++
++			if tt.wantFound {
++				if len(got) == 0 {
++					t.Fatal("expected at least one result, got none")
++				}
++				for _, r := range got {
++					if len(r.Raw) == 0 {
++						t.Error("result has empty Raw field")
++					}
++					if r.DetectorType != detectorspb.DetectorType_ArtifactoryAccessToken {
++						t.Errorf("wrong DetectorType: got %v, want %v", r.DetectorType, detectorspb.DetectorType_ArtifactoryAccessToken)
++					}
++				}
++				hasVerified := false
++				for _, r := range got {
++					if r.Verified {
++						hasVerified = true
++						break
++					}
++				}
++				if tt.wantVerify && !hasVerified {
++					t.Error("expected at least one verified result, got none")
++				}
++			if !tt.wantVerify {
++				for _, r := range got {
++					if r.Verified {
++						t.Error("expected no verified results, but got one")
++						break
++					}
++				}
++			}
++			if tt.wantVerificationErr {
++				for _, r := range got {
++					if r.VerificationError() == nil {
++						t.Error("expected verification error to be set")
++					}
++				}
++			}
++		} else {
++				if len(got) != 0 {
++					t.Errorf("expected no results, got %d", len(got))
++				}
++			}
++		})
++	}
++}

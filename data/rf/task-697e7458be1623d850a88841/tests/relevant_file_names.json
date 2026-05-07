@@ -1,0 +1,43 @@
+{
+  "files": [
+    {
+      "name": "pkg/tui/common/utils_test.go"
+    },
+    {
+      "name": "pkg/tui/components/textinputs/textinputs_test.go"
+    },
+    {
+      "name": "pkg/tui/sources/circleci/circleci_test.go"
+    },
+    {
+      "name": "pkg/tui/sources/docker/docker_test.go"
+    },
+    {
+      "name": "pkg/tui/sources/filesystem/filesystem_test.go"
+    },
+    {
+      "name": "pkg/tui/sources/gcs/gcs_test.go"
+    },
+    {
+      "name": "pkg/tui/sources/git/git_test.go"
+    },
+    {
+      "name": "pkg/tui/sources/github/github_test.go"
+    },
+    {
+      "name": "pkg/tui/sources/gitlab/gitlab_test.go"
+    },
+    {
+      "name": "pkg/tui/sources/s3/s3_test.go"
+    },
+    {
+      "name": "pkg/tui/sources/syslog/syslog_test.go"
+    },
+    {
+      "name": "pkg/tui/pages/source_configure/trufflehog_configure_test.go"
+    },
+    {
+      "name": "pkg/tui/pages/source_select/source_select_test.go"
+    }
+  ]
+}

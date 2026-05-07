@@ -1,0 +1,210 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "de562f80fcd3f6f5b25ba7ba781f294b",
+    "title": "1.1: Changes NewMetricsEngine in metrics/engine/engine.go to accept both explicit dependencies (*metrics.Registry, logrus.FieldLogger)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3300e6ce86b309c6c3e25531bcc12a26",
+    "title": "1.2: Removes threshold and submetric initialization logic from the NewMetricsEngine constructor body in metrics/engine/engine.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a6a74cc2f2bded08f78521a134e26297",
+    "title": "1.3: Exports an InitSubMetricsAndThresholds method on MetricsEngine in metrics/engine/engine.go that accepts both parameters (lib.Options and a flag controlling error-only logging)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "56bbba3f64b61b58d71eb5934c703e52",
+    "title": "1.4: Calls InitSubMetricsAndThresholds only when thresholds or end-of-test summary are enabled in cmd/run.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ec0d130e9f7fd0c83f167306245e9d76",
+    "title": "1.5: Exports the outputIngester type as OutputIngester in metrics/engine/ingester.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "66d131f9155318694a7e41e42307e0ab",
+    "title": "1.6: Updates StartThresholdCalculations in metrics/engine/engine.go to accept an *OutputIngester parameter",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7920952e034a7ebb83fd44fdc9e4674a",
+    "title": "1.7: Changes CreateIngester in metrics/engine/engine.go to return *OutputIngester as the concrete type",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "191ff6aa5a6e26d4471aa8492945c037",
+    "title": "1.8: Adds all 5 accessor methods (Min(), Max(), Count(), Avg(), Total()) to TrendSink in metrics/sink.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "20afbdc0fe35d32a6508ef5bf199f3f1",
+    "title": "1.9: Adds a NewTrendSink constructor function in metrics/sink.go that returns *TrendSink",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3590484239e8b63b55be26359f65c9ed",
+    "title": "1.10: Updates callers of TrendSink in metrics/sample.go to use all 4 accessor methods (Min(), Max(), Avg(), Count())",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0593ca15419e87fb11b9a08bd2e0ffb2",
+    "title": "1.11: Updates Thresholds.Run in metrics/thresholds.go to use the 3 TrendSink accessor methods (Min(), Max(), Avg())",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "bd03383a711b5919673e1aa10e467190",
+    "title": "1.12: Renames the named error return in Scheduler.Init in execution/scheduler.go to an error name derived from the function name",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6bc7370c1007529876076694146d427b",
+    "title": "1.13: Renames the named error return in Scheduler.Run in execution/scheduler.go to an error name derived from the function name",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0d5a7486ae1ac4caf53d2536a1172b10",
+    "title": "1.14: Updates the deferred closure in Scheduler.Init in execution/scheduler.go to reference the renamed error variable",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0610d7021493609c6ba49b5314010b4e",
+    "title": "1.15: Updates deferred closure in Scheduler.Run in execution/scheduler.go to reference the renamed error variable",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b3f880ac97333effd0f6150eb24545b4",
+    "title": "1.16: Removes the DummySink type and all 3 of its methods (IsEmpty, Add, Format) from metrics/sink.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4ad0ff9473cceb85aba0bda32c029f73",
+    "title": "1.17: Removes the DummySink case from the type switch in Thresholds.Run in metrics/thresholds.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "34e4077258b4e37ac964d14495f8a65f",
+    "title": "1.18: Removes all 5 TrendSink fields (Min, Max, Count, Avg, Values) from the public API of metrics/sink.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "fd83df1468745ec2bbb64623d9597b2e",
+    "title": "2.1: Adds a GoDoc comment for the exported InitSubMetricsAndThresholds method in metrics/engine/engine.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4ac90dc78fb8c6118ca7c918646536e2",
+    "title": "3.1: Removes the outputIngester field from the MetricsEngine struct in metrics/engine/engine.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ae3a1bbf81979f61b75d461c6084fde0",
+    "title": "4.1: Leaves the call site in cmd/run.go still using the old NewMetricsEngine(*lib.TestRunState) signature",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5d105912ee2600e26bff97055f0b44c7",
+    "title": "4.2: Leaves production code reading TrendSink statistics via direct access to any of the 4 unexported fields (.Min, .Max, .Avg, .Count) instead of using accessor methods",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

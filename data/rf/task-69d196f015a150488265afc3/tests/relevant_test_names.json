@@ -1,0 +1,88 @@
+{
+  "tests": [
+    {
+      "name": "applies git sources"
+    },
+    {
+      "name": "continues if Google auth is not configured"
+    },
+    {
+      "name": "discard dependencies if the devGroup is missing"
+    },
+    {
+      "name": "dont propagate uv.tool.index into UV_EXTRA_INDEX_URL"
+    },
+    {
+      "name": "includes uv dev dependencies if there is a tool.uv section"
+    },
+    {
+      "name": "index with optional name"
+    },
+    {
+      "name": "override explicit default index"
+    },
+    {
+      "name": "override implicit default index"
+    },
+    {
+      "name": "performs update on private package registry"
+    },
+    {
+      "name": "pinned to non-default index"
+    },
+    {
+      "name": "return null if the lock file is unchanged"
+    },
+    {
+      "name": "return null if there is no lock file"
+    },
+    {
+      "name": "return update dep update"
+    },
+    {
+      "name": "return update on lockfileMaintenance"
+    },
+    {
+      "name": "returns artifact error"
+    },
+    {
+      "name": "returns initial dependencies if there is no tool.uv section"
+    },
+    {
+      "name": "returns null if the lock file is unchanged"
+    },
+    {
+      "name": "returns null if there is no lock file"
+    },
+    {
+      "name": "sets Git environment variables"
+    },
+    {
+      "name": "should extract build-system.requires dependencies"
+    },
+    {
+      "name": "should extract dependency-groups with depGroup metadata"
+    },
+    {
+      "name": "should extract hatch environment dependencies"
+    },
+    {
+      "name": "should extract optional-dependencies with depGroup metadata"
+    },
+    {
+      "name": "should extract pdm dev-dependencies with depGroup metadata"
+    },
+    {
+      "name": "should return a non-null result for valid pyproject content"
+    },
+    {
+      "name": "should return null for invalid toml"
+    },
+    {
+      "name": "should return null when packageFile is provided for invalid toml"
+    },
+    {
+      "name": "should skip malformed dependency strings gracefully"
+    }
+  ]
+}

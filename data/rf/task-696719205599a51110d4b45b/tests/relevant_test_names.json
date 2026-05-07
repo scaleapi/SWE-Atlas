@@ -1,0 +1,88 @@
+{
+  "tests": [
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestAggBuilder_EmptyBuild"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestAggBuilder_GeoHashGrid"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestAggBuilder_Metric_WithSettings"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestAggBuilder_Nested"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestAggBuilder_NilCallback"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestAggBuilder_Pipeline"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestAggBuilder_TermsOrderReplacement"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestBoolQueryBuilder_EmptyBuild"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestBoolQueryBuilder_FilterReturnsExistingBuilder"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestClient_ContentTypeHeader"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestClient_IntervalSubstitution"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestClient_InvalidURL"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestClient_NDJSONFormat"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestClient_PostMethod"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestClient_RequestBodyReceived"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestClient_URLPathConstruction"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestFilterQueryBuilder_EmptyBuild"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestFilterQueryBuilder_EmptyQueryStringIgnored"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestQueryBuilder_BoolReturnsExistingBuilder"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestQueryBuilder_BoolWithFilters"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestQueryBuilder_EmptyBuild"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestQueryBuilder_MarshalJSON"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestStreamMultiSearchResponse_MultipleResponses"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestStreamMultiSearchResponse_NestedUnknownObject"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestStreamMultiSearchResponse_UnknownFieldsSkipped"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestStreamMultiSearchResponse_WithAggregations"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestStreamMultiSearchResponse_WithErrorField"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client/TestStreamMultiSearchResponse_WithHitsData"
+    }
+  ]
+}

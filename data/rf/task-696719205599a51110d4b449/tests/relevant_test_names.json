@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "go.k6.io/k6/js/modules/TestResolveLoaded/CacheMiss"
+    },
+    {
+      "name": "go.k6.io/k6/js/modules/TestResolveLoaded/CacheHit"
+    },
+    {
+      "name": "go.k6.io/k6/js/modules/TestResolveLoaded/ResolveSpecifierError"
+    },
+    {
+      "name": "go.k6.io/k6/js/modules/TestRunSourceData/Success"
+    },
+    {
+      "name": "go.k6.io/k6/js/modules/TestRunSourceData/CachedModuleReused"
+    },
+    {
+      "name": "go.k6.io/k6/js/modules/TestRunSourceData/ResolveLoadedError"
+    },
+    {
+      "name": "go.k6.io/k6/js/modules/TestRunSourceData/InterfaceVerification"
+    },
+    {
+      "name": "go.k6.io/k6/js/modules/TestRunSourceDataSpecifierAndPwd/CorrectSpecifierExtraction"
+    }
+  ]
+}

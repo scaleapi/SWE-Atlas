@@ -1,0 +1,210 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "60ef76fc6eba3d466c5e6b2318c17d39",
+    "title": "1.1: Removes the vizAndWidgetSplit property from the FeatureToggles TypeScript interface",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "aa983224ed90d2e7f849dbfeafc99771",
+    "title": "1.2: Removes the LS_WIDGET_SELECT_TAB_KEY constant from public/app/core/constants.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "546b7bd6ff033911418b23d21b45c989",
+    "title": "1.3: Removes the Widgets value from the VisualizationSelectPaneTab enum",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6fb8159fe30e093496e61fba356b615a",
+    "title": "1.4: Removes both widget-specific items (isWidget prop, vizAndWidgetSplit conditional logic) from PanelTypeFilter in PanelTypeFilter.tsx",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "fb1f8f599b35a4e68ab2c07ecba0eb3f",
+    "title": "1.5: Removes both widget-specific items (isWidget prop, vizAndWidgetSplit conditional logic) from VizTypePicker in VizTypePicker.tsx",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b71998f1f5917f81f4c1ca3d59c5db91",
+    "title": "1.6: Removes both widget-specific items (isWidget prop, widget filtering logic) from LibraryPanelsView in LibraryPanelsView.tsx",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6abc2eedb0e1b34f6b6ea7094dcb0b6c",
+    "title": "1.7: Removes the isWidget prop from PanelLibraryOptionsGroup in PanelLibraryOptionsGroup.tsx",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "61a44cb67f503641f6ab177b94b25136",
+    "title": "1.8: Removes the widget menu item from the add panel menu",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "21ff349fd95903548ba30c9d2a8eb246",
+    "title": "1.9: Removes the widget modal usage from DashboardPage",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2938f5b24643a083ae08cf44123f6ba6",
+    "title": "1.10: Removes the widget button section from the empty dashboard page",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "47ee25cea52fba4afdb56a815539ae7f",
+    "title": "1.11: Removes the Widgets tab from VisualizationSelectPane",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "34ed096f12cb9eb238ae44a234b9d3cc",
+    "title": "1.12: Removes the Widgets tab from PanelVizTypePicker",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a2765e294d5fb2259bbb8390233fb62f",
+    "title": "1.13: Removes widget filtering logic from library panel search",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "51bcd8363c8e9561ac99197f34bcd34a",
+    "title": "1.14: Removes the vizAndWidgetSplit guard from the panel suggestions logic",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c91426f5f0ba24af1437d475e9bf8cfb",
+    "title": "1.15: Removes all 4 widget translation keys (dashboard.add-menu.widget, dashboard.empty.add-widget-body, dashboard.empty.add-widget-button, dashboard.empty.add-widget-header) from the en-US localization file",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "327413b85a00dcc220cf8c6efe78fb24",
+    "title": "1.16: Removes all 4 widget translation keys (dashboard.add-menu.widget, dashboard.empty.add-widget-body, dashboard.empty.add-widget-button, dashboard.empty.add-widget-header) from the pseudo-LOCALE localization file",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c1ce2fc6e0d5e4c57f9c3c63292a73ee",
+    "title": "1.17: Removes the vizAndWidgetSplit row from the feature toggles documentation",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2b990b29a1bea22e4081087ba1b0c2b8",
+    "title": "1.18: Removes the vizAndWidgetSplit feature flag definition from the Go registry",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "63df70598ae933c531034b7f9c49ad3b",
+    "title": "1.19: Removes the FlagVizAndWidgetSplit constant from the Go generated toggles file",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "45c199f9186c6d6351af06735cfaf4d2",
+    "title": "1.20: Removes the vizAndWidgetSplit entry from the Go generated CSV file",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0b837e57a58f1dace678f54bcf3586d8",
+    "title": "1.21: Marks the vizAndWidgetSplit feature toggle as deprecated by adding a deletionTimestamp to its entry in toggles_gen.json",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6e3bad22ed666f3a543229b2a5e05742",
+    "title": "4.1: Removes any of the 3 preserved VisualizationSelectPaneTab enum values (Visualizations, Suggestions, LibraryPanels) from types.ts",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

@@ -1,0 +1,984 @@
+diff --git a/src/decode-api-test.c b/src/decode-api-test.c
+new file mode 100644
+index 000000000..91d9569f3
+--- /dev/null
++++ b/src/decode-api-test.c
+@@ -0,0 +1,934 @@
++/* Copyright (C) 2013 Open Information Security Foundation */
++#include "suricata-common.h"
++#include "decode.h"
++#include "decode-ethernet.h"
++#include "decode-ipv4.h"
++#include "decode-ipv6.h"
++#include "decode-tcp.h"
++#include "decode-udp.h"
++#include "decode-icmpv4.h"
++#include "decode-icmpv6.h"
++#include "decode-gre.h"
++#include "decode-ppp.h"
++#include "decode-pppoe.h"
++#include "decode-vlan.h"
++#include "decode-sctp.h"
++#include "decode-sll.h"
++#include "decode-raw.h"
++#include "decode-events.h"
++#include "defrag.h"
++#include "threadvars.h"
++#include "tm-threads-common.h"
++#include "util-unittest.h"
++#include "decode-api-test.h"
++
++#ifdef UNITTESTS
++
++static int DecodeEthernetReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {0};
++    int ret = DecodeEthernet(&tv, &dtv, p, raw, 1, NULL);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int DecodeSllReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {0};
++    int ret = DecodeSll(&tv, &dtv, p, raw, 1, NULL);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int DecodePPPReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {0};
++    int ret = DecodePPP(&tv, &dtv, p, raw, 1, NULL);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int DecodePPPOESessionReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {0};
++    int ret = DecodePPPOESession(&tv, &dtv, p, raw, 1, NULL);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int DecodePPPOEDiscoveryReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {0};
++    int ret = DecodePPPOEDiscovery(&tv, &dtv, p, raw, 1, NULL);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int DecodeTunnelReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {0};
++    int ret = DecodeTunnel(&tv, &dtv, p, raw, 1, NULL, IPPROTO_IP);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int DecodeRawReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {0};
++    int ret = DecodeRaw(&tv, &dtv, p, raw, 1, NULL);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int DecodeIPV4ReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {0x45, 0, 0, 0x14};
++    int ret = DecodeIPV4(&tv, &dtv, p, raw, 4, NULL);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int DecodeIPV6ReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {0x60, 0, 0, 0};
++    int ret = DecodeIPV6(&tv, &dtv, p, raw, 4, NULL);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int DecodeICMPV4ReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {8, 0};
++    int ret = DecodeICMPV4(&tv, &dtv, p, raw, 2, NULL);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int DecodeICMPV6ReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {0x80, 0};
++    int ret = DecodeICMPV6(&tv, &dtv, p, raw, 2, NULL);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int DecodeTCPReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {0, 80, 0, 81};
++    int ret = DecodeTCP(&tv, &dtv, p, raw, 4, NULL);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int DecodeUDPReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {0, 53, 0, 54};
++    int ret = DecodeUDP(&tv, &dtv, p, raw, 4, NULL);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int DecodeSCTPReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {0, 80, 0, 81};
++    int ret = DecodeSCTP(&tv, &dtv, p, raw, 4, NULL);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int DecodeGREReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {0, 0};
++    int ret = DecodeGRE(&tv, &dtv, p, raw, 2, NULL);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int DecodeVLANReturnsIntType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    uint8_t raw[] = {0, 1};
++    int ret = DecodeVLAN(&tv, &dtv, p, raw, 2, NULL);
++    PacketFree(p);
++    return (ret == TM_ECODE_OK || ret == TM_ECODE_FAILED);
++}
++
++static int PacketTunnelPktSetupExists(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    PacketQueue pq;
++    Packet *parent = PacketGetFromAlloc();
++    if (!parent) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    memset(&pq, 0, sizeof(pq));
++    SCMutexInit(&pq.mutex_q, NULL);
++    uint8_t raw[] = {0x45, 0};
++    parent->ts.tv_sec = 1;
++    parent->ts.tv_usec = 0;
++    Packet *tp = PacketTunnelPktSetup(&tv, &dtv, parent, raw, 2, IPPROTO_IP, &pq);
++    if (tp) PacketFree(tp);
++    SCMutexDestroy(&pq.mutex_q);
++    PacketFree(parent);
++    return 1;
++}
++
++static int DefragAcceptsPacketQueueParam(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    PacketQueue pq;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    memset(&pq, 0, sizeof(pq));
++    Packet *rp = Defrag(&tv, &dtv, p, &pq);
++    if (rp) PacketFree(rp);
++    PacketFree(p);
++    return 1;
++}
++
++/* Targeted coverage for gold.patch decoder branches (diff-cover). */
++
++static int GoldCovDecodeTunnelUnsupportedProto(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    uint8_t pkt[4] = { 0 };
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeTunnel(&tv, &dtv, p, pkt, sizeof(pkt), NULL, 200);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovDecodeTunnelVlanOverGre(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    PacketQueue pq;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    memset(&pq, 0, sizeof(pq));
++    SCMutexInit(&pq.mutex_q, NULL);
++    /* Inner VLAN + IPv4 (same layout as DecodeVLANTest03). */
++    uint8_t inner[] = {
++        0x00, 0x20, 0x08, 0x00, 0x45, 0x00, 0x00, 0x14,
++        0x00, 0x00, 0x40, 0x00, 0x40, 0x11, 0x00, 0x00,
++        0xc0, 0xa8, 0x01, 0x01, 0xc0, 0xa8, 0x01, 0x02
++    };
++    (void)DecodeTunnel(&tv, &dtv, p, inner, sizeof(inner), &pq, VLAN_OVER_GRE);
++    SCMutexDestroy(&pq.mutex_q);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreV0Recur(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t gre[] = { 0x01, 0x00, 0x08, 0x00 };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeGRE(&tv, &dtv, p, gre, sizeof(gre), NULL);
++    (void)ENGINE_ISSET_EVENT(p, GRE_VERSION0_RECUR);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreV0VersionFlags(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t gre[] = { 0x00, 0x48, 0x08, 0x00 };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeGRE(&tv, &dtv, p, gre, sizeof(gre), NULL);
++    (void)ENGINE_ISSET_EVENT(p, GRE_VERSION0_FLAGS);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreV0KeyHeaderTooBig(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t gre[] = { 0x20, 0x00, 0x08, 0x00 };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeGRE(&tv, &dtv, p, gre, sizeof(gre), NULL);
++    (void)ENGINE_ISSET_EVENT(p, GRE_VERSION0_HDR_TOO_BIG);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreV0RouteSreTerminate(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t gre[] = {
++        0x40, 0x00, 0x08, 0x00,
++        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
++        0x00, 0x00, 0x00, 0x00
++    };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeGRE(&tv, &dtv, p, gre, sizeof(gre), NULL);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreWrongVersion(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t gre[] = { 0x00, 0x05, 0x08, 0x00 };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeGRE(&tv, &dtv, p, gre, sizeof(gre), NULL);
++    (void)ENGINE_ISSET_EVENT(p, GRE_WRONG_VERSION);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreV1Checksum(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t gre[] = { 0x80, 0x31, 0x88, 0x0b };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeGRE(&tv, &dtv, p, gre, sizeof(gre), NULL);
++    (void)ENGINE_ISSET_EVENT(p, GRE_VERSION1_CHKSUM);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreV1Route(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t gre[] = { 0x40, 0x31, 0x88, 0x0b };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeGRE(&tv, &dtv, p, gre, sizeof(gre), NULL);
++    (void)ENGINE_ISSET_EVENT(p, GRE_VERSION1_ROUTE);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreV1Ssr(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t gre[] = { 0x08, 0x31, 0x88, 0x0b };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeGRE(&tv, &dtv, p, gre, sizeof(gre), NULL);
++    (void)ENGINE_ISSET_EVENT(p, GRE_VERSION1_SSR);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreV1Recur(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t gre[] = { 0x01, 0x31, 0x88, 0x0b };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeGRE(&tv, &dtv, p, gre, sizeof(gre), NULL);
++    (void)ENGINE_ISSET_EVENT(p, GRE_VERSION1_RECUR);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreV1VersionFlags(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t gre[] = { 0x00, 0x39, 0x88, 0x0b };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeGRE(&tv, &dtv, p, gre, sizeof(gre), NULL);
++    (void)ENGINE_ISSET_EVENT(p, GRE_VERSION1_FLAGS);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreV1WrongProto(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t gre[] = { 0x00, 0x31, 0x08, 0x00 };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeGRE(&tv, &dtv, p, gre, sizeof(gre), NULL);
++    (void)ENGINE_ISSET_EVENT(p, GRE_VERSION1_WRONG_PROTOCOL);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreV1NoKey(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t gre[] = { 0x00, 0x31, 0x88, 0x0b };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeGRE(&tv, &dtv, p, gre, sizeof(gre), NULL);
++    (void)ENGINE_ISSET_EVENT(p, GRE_VERSION1_NO_KEY);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreV1HdrTooBig(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t gre[] = { 0x30, 0xb1, 0x88, 0x0b };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeGRE(&tv, &dtv, p, gre, sizeof(gre), NULL);
++    (void)ENGINE_ISSET_EVENT(p, GRE_VERSION1_HDR_TOO_BIG);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreTunnelIpv4WithQueue(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    PacketQueue pq;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    memset(&pq, 0, sizeof(pq));
++    SCMutexInit(&pq.mutex_q, NULL);
++    p->ts.tv_sec = 1;
++    p->ts.tv_usec = 0;
++    uint8_t pkt[] = {
++        0x00, 0x00, 0x08, 0x00,
++        0x45, 0x00, 0x00, 0x14, 0x00, 0x00, 0x40, 0x00,
++        0x40, 0x11, 0x00, 0x00, 0xc0, 0xa8, 0x01, 0x01,
++        0xc0, 0xa8, 0x01, 0x02
++    };
++    (void)DecodeGRE(&tv, &dtv, p, pkt, sizeof(pkt), &pq);
++    SCMutexDestroy(&pq.mutex_q);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreTunnelIpv6WithQueue(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    PacketQueue pq;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    memset(&pq, 0, sizeof(pq));
++    SCMutexInit(&pq.mutex_q, NULL);
++    p->ts.tv_sec = 1;
++    p->ts.tv_usec = 0;
++    uint8_t pkt[44];
++    memset(pkt, 0, sizeof(pkt));
++    pkt[0] = 0x00;
++    pkt[1] = 0x00;
++    pkt[2] = 0x86;
++    pkt[3] = 0xdd;
++    pkt[4] = 0x60;
++    pkt[5] = 0;
++    pkt[6] = 0;
++    pkt[7] = 0;
++    pkt[8] = 0;
++    pkt[9] = 0;
++    pkt[10] = 0;
++    pkt[11] = 0;
++    pkt[10] = IPPROTO_NONE;
++    pkt[11] = 64;
++    (void)DecodeGRE(&tv, &dtv, p, pkt, sizeof(pkt), &pq);
++    SCMutexDestroy(&pq.mutex_q);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreTunnelPppWithQueue(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    PacketQueue pq;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    memset(&pq, 0, sizeof(pq));
++    SCMutexInit(&pq.mutex_q, NULL);
++    p->ts.tv_sec = 1;
++    p->ts.tv_usec = 0;
++    uint8_t pkt[] = {
++        0x00, 0x00, 0x88, 0x0b,
++        0xff, 0x03, 0x00, 0x21,
++        0x45, 0x00, 0x00, 0x14, 0x00, 0x00, 0x40, 0x00,
++        0x40, 0x11, 0x00, 0x00, 0xc0, 0xa8, 0x01, 0x01,
++        0xc0, 0xa8, 0x01, 0x02
++    };
++    (void)DecodeGRE(&tv, &dtv, p, pkt, sizeof(pkt), &pq);
++    SCMutexDestroy(&pq.mutex_q);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovGreTunnelVlanWithQueue(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    PacketQueue pq;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    memset(&pq, 0, sizeof(pq));
++    SCMutexInit(&pq.mutex_q, NULL);
++    p->ts.tv_sec = 1;
++    p->ts.tv_usec = 0;
++    uint8_t pkt[] = {
++        0x00, 0x00, 0x81, 0x00,
++        0x00, 0x20, 0x08, 0x00,
++        0x45, 0x00, 0x00, 0x14, 0x00, 0x00, 0x40, 0x00,
++        0x40, 0x11, 0x00, 0x00, 0xc0, 0xa8, 0x01, 0x01,
++        0xc0, 0xa8, 0x01, 0x02
++    };
++    (void)DecodeGRE(&tv, &dtv, p, pkt, sizeof(pkt), &pq);
++    SCMutexDestroy(&pq.mutex_q);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovIpv6InIpv6Tunnel(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    PacketQueue pq;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    memset(&pq, 0, sizeof(pq));
++    SCMutexInit(&pq.mutex_q, NULL);
++    p->ts.tv_sec = 1;
++    p->ts.tv_usec = 0;
++    uint8_t buf[80];
++    memset(buf, 0, sizeof(buf));
++    buf[0] = 0x60;
++    buf[4] = 0;
++    buf[5] = 40;
++    buf[6] = IPPROTO_IPV6;
++    buf[7] = 64;
++    buf[40] = 0x60;
++    buf[46] = IPPROTO_NONE;
++    buf[47] = 64;
++    (void)DecodeIPV6(&tv, &dtv, p, buf, sizeof(buf), &pq);
++    SCMutexDestroy(&pq.mutex_q);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovIpv4Ipv6Tunnel(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    PacketQueue pq;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    memset(&pq, 0, sizeof(pq));
++    SCMutexInit(&pq.mutex_q, NULL);
++    p->ts.tv_sec = 1;
++    p->ts.tv_usec = 0;
++    uint8_t buf[60];
++    memset(buf, 0, sizeof(buf));
++    buf[0] = 0x45;
++    buf[2] = 0;
++    buf[3] = 60;
++    buf[8] = 64;
++    buf[9] = IPPROTO_IPV6;
++    buf[20] = 0x60;
++    buf[26] = IPPROTO_NONE;
++    buf[27] = 64; /* nh / hlim at byte offsets 20+6, 20+7 */
++    (void)DecodeIPV4(&tv, &dtv, p, buf, sizeof(buf), &pq);
++    SCMutexDestroy(&pq.mutex_q);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovPppIpv6(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t buf[44];
++    memset(buf, 0, sizeof(buf));
++    buf[0] = 0xff;
++    buf[1] = 0x03;
++    buf[2] = 0x00;
++    buf[3] = 0x57;
++    buf[4] = 0x60;
++    buf[10] = IPPROTO_NONE;
++    buf[11] = 64;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodePPP(&tv, &dtv, p, buf, sizeof(buf), NULL);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovPppUnsupProto(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t buf[] = { 0xff, 0x03, 0x00, 0x23 };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodePPP(&tv, &dtv, p, buf, sizeof(buf), NULL);
++    (void)ENGINE_ISSET_EVENT(p, PPP_UNSUP_PROTO);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovPppWrongType(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t buf[] = { 0xff, 0x03, 0xff, 0xff };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodePPP(&tv, &dtv, p, buf, sizeof(buf), NULL);
++    (void)ENGINE_ISSET_EVENT(p, PPP_WRONG_TYPE);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovPppoeSessionIpv6(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t buf[48];
++    memset(buf, 0, sizeof(buf));
++    buf[0] = 0x11;
++    buf[1] = 0x00;
++    buf[4] = 0;
++    buf[5] = 40;
++    buf[6] = 0x00;
++    buf[7] = 0x57;
++    buf[8] = 0x60;
++    buf[14] = IPPROTO_NONE;
++    buf[15] = 64;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodePPPOESession(&tv, &dtv, p, buf, sizeof(buf), NULL);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovPppoeDiscoveryWrongCode(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t buf[] = { 0x11, 0xff, 0x00, 0x00, 0x00, 0x00 };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodePPPOEDiscovery(&tv, &dtv, p, buf, sizeof(buf), NULL);
++    (void)ENGINE_ISSET_EVENT(p, PPPOE_WRONG_CODE);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovPppoeDiscoveryMalformedTags(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t buf[] = { 0x11, 0x09, 0x00, 0x00, 0xff, 0xff };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodePPPOEDiscovery(&tv, &dtv, p, buf, sizeof(buf), NULL);
++    (void)ENGINE_ISSET_EVENT(p, PPPOE_MALFORMED_TAGS);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovVlanTooManyLayers(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    p->vlan_idx = 2;
++    uint8_t buf[] = { 0x00, 0x20, 0x08, 0x00 };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeVLAN(&tv, &dtv, p, buf, sizeof(buf), NULL);
++    (void)ENGINE_ISSET_EVENT(p, VLAN_HEADER_TOO_MANY_LAYERS);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovVlanNestedTooDeep(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t buf[] = {
++        0x00, 0x20, 0x81, 0x00,
++        0x00, 0x20, 0x81, 0x00
++    };
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeVLAN(&tv, &dtv, p, buf, sizeof(buf), NULL);
++    (void)ENGINE_ISSET_EVENT(p, VLAN_HEADER_TOO_MANY_LAYERS);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovSllIpv4(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t buf[36];
++    memset(buf, 0, sizeof(buf));
++    buf[14] = 0x08;
++    buf[15] = 0x00;
++    memcpy(buf + 16, (uint8_t[]){
++        0x45, 0x00, 0x00, 0x14, 0x00, 0x00, 0x40, 0x00,
++        0x40, 0x3b, 0x00, 0x00, 0xc0, 0xa8, 0x01, 0x01,
++        0xc0, 0xa8, 0x01, 0x02
++    }, 20);
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeSll(&tv, &dtv, p, buf, sizeof(buf), NULL);
++    PacketFree(p);
++    return 1;
++}
++
++static int GoldCovEthernetValid(void)
++{
++    ThreadVars tv;
++    DecodeThreadVars dtv;
++    Packet *p = PacketGetFromAlloc();
++    if (!p) return 0;
++    uint8_t buf[14 + 20];
++    memset(buf, 0, sizeof(buf));
++    buf[12] = 0x08;
++    buf[13] = 0x00;
++    buf[14] = 0x45;
++    buf[16] = 0;
++    buf[17] = 20;
++    buf[22] = 64;
++    buf[23] = IPPROTO_NONE;
++    memset(&tv, 0, sizeof(tv));
++    memset(&dtv, 0, sizeof(dtv));
++    (void)DecodeEthernet(&tv, &dtv, p, buf, sizeof(buf), NULL);
++    PacketFree(p);
++    return 1;
++}
++
++#endif /* UNITTESTS */
++
++void DecodeAPIRegisterTests(void)
++{
++#ifdef UNITTESTS
++    UtRegisterTest("DecodeEthernetReturnsIntType", DecodeEthernetReturnsIntType, 1);
++    UtRegisterTest("DecodeSllReturnsIntType", DecodeSllReturnsIntType, 1);
++    UtRegisterTest("DecodePPPReturnsIntType", DecodePPPReturnsIntType, 1);
++    UtRegisterTest("DecodePPPOESessionReturnsIntType", DecodePPPOESessionReturnsIntType, 1);
++    UtRegisterTest("DecodePPPOEDiscoveryReturnsIntType", DecodePPPOEDiscoveryReturnsIntType, 1);
++    UtRegisterTest("DecodeTunnelReturnsIntType", DecodeTunnelReturnsIntType, 1);
++    UtRegisterTest("DecodeRawReturnsIntType", DecodeRawReturnsIntType, 1);
++    UtRegisterTest("DecodeIPV4ReturnsIntType", DecodeIPV4ReturnsIntType, 1);
++    UtRegisterTest("DecodeIPV6ReturnsIntType", DecodeIPV6ReturnsIntType, 1);
++    UtRegisterTest("DecodeICMPV4ReturnsIntType", DecodeICMPV4ReturnsIntType, 1);
++    UtRegisterTest("DecodeICMPV6ReturnsIntType", DecodeICMPV6ReturnsIntType, 1);
++    UtRegisterTest("DecodeTCPReturnsIntType", DecodeTCPReturnsIntType, 1);
++    UtRegisterTest("DecodeUDPReturnsIntType", DecodeUDPReturnsIntType, 1);
++    UtRegisterTest("DecodeSCTPReturnsIntType", DecodeSCTPReturnsIntType, 1);
++    UtRegisterTest("DecodeGREReturnsIntType", DecodeGREReturnsIntType, 1);
++    UtRegisterTest("DecodeVLANReturnsIntType", DecodeVLANReturnsIntType, 1);
++    UtRegisterTest("PacketTunnelPktSetupExists", PacketTunnelPktSetupExists, 1);
++    UtRegisterTest("DefragAcceptsPacketQueueParam", DefragAcceptsPacketQueueParam, 1);
++    UtRegisterTest("GoldCovDecodeTunnelUnsupportedProto", GoldCovDecodeTunnelUnsupportedProto, 1);
++    UtRegisterTest("GoldCovDecodeTunnelVlanOverGre", GoldCovDecodeTunnelVlanOverGre, 1);
++    UtRegisterTest("GoldCovGreV0Recur", GoldCovGreV0Recur, 1);
++    UtRegisterTest("GoldCovGreV0VersionFlags", GoldCovGreV0VersionFlags, 1);
++    UtRegisterTest("GoldCovGreV0KeyHeaderTooBig", GoldCovGreV0KeyHeaderTooBig, 1);
++    UtRegisterTest("GoldCovGreV0RouteSreTerminate", GoldCovGreV0RouteSreTerminate, 1);
++    UtRegisterTest("GoldCovGreWrongVersion", GoldCovGreWrongVersion, 1);
++    UtRegisterTest("GoldCovGreV1Checksum", GoldCovGreV1Checksum, 1);
++    UtRegisterTest("GoldCovGreV1Route", GoldCovGreV1Route, 1);
++    UtRegisterTest("GoldCovGreV1Ssr", GoldCovGreV1Ssr, 1);
++    UtRegisterTest("GoldCovGreV1Recur", GoldCovGreV1Recur, 1);
++    UtRegisterTest("GoldCovGreV1VersionFlags", GoldCovGreV1VersionFlags, 1);
++    UtRegisterTest("GoldCovGreV1WrongProto", GoldCovGreV1WrongProto, 1);
++    UtRegisterTest("GoldCovGreV1NoKey", GoldCovGreV1NoKey, 1);
++    UtRegisterTest("GoldCovGreV1HdrTooBig", GoldCovGreV1HdrTooBig, 1);
++    UtRegisterTest("GoldCovGreTunnelIpv4WithQueue", GoldCovGreTunnelIpv4WithQueue, 1);
++    UtRegisterTest("GoldCovGreTunnelIpv6WithQueue", GoldCovGreTunnelIpv6WithQueue, 1);
++    UtRegisterTest("GoldCovGreTunnelPppWithQueue", GoldCovGreTunnelPppWithQueue, 1);
++    UtRegisterTest("GoldCovGreTunnelVlanWithQueue", GoldCovGreTunnelVlanWithQueue, 1);
++    UtRegisterTest("GoldCovIpv6InIpv6Tunnel", GoldCovIpv6InIpv6Tunnel, 1);
++    UtRegisterTest("GoldCovIpv4Ipv6Tunnel", GoldCovIpv4Ipv6Tunnel, 1);
++    UtRegisterTest("GoldCovPppIpv6", GoldCovPppIpv6, 1);
++    UtRegisterTest("GoldCovPppUnsupProto", GoldCovPppUnsupProto, 1);
++    UtRegisterTest("GoldCovPppWrongType", GoldCovPppWrongType, 1);
++    UtRegisterTest("GoldCovPppoeSessionIpv6", GoldCovPppoeSessionIpv6, 1);
++    UtRegisterTest("GoldCovPppoeDiscoveryWrongCode", GoldCovPppoeDiscoveryWrongCode, 1);
++    UtRegisterTest("GoldCovPppoeDiscoveryMalformedTags", GoldCovPppoeDiscoveryMalformedTags, 1);
++    UtRegisterTest("GoldCovVlanTooManyLayers", GoldCovVlanTooManyLayers, 1);
++    UtRegisterTest("GoldCovVlanNestedTooDeep", GoldCovVlanNestedTooDeep, 1);
++    UtRegisterTest("GoldCovSllIpv4", GoldCovSllIpv4, 1);
++    UtRegisterTest("GoldCovEthernetValid", GoldCovEthernetValid, 1);
++#endif
++}
+diff --git a/src/decode-api-test.h b/src/decode-api-test.h
+new file mode 100644
+index 000000000..6c5f85b00
+--- /dev/null
++++ b/src/decode-api-test.h
+@@ -0,0 +1,5 @@
++/* Copyright (C) 2013 Open Information Security Foundation */
++#ifndef __DECODE_API_TEST_H__
++#define __DECODE_API_TEST_H__
++void DecodeAPIRegisterTests(void);
++#endif
+diff --git a/src/Makefile.am b/src/Makefile.am
+index f458f8519..5eed5c82f 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -38,6 +38,7 @@ conf-yaml-loader.c conf-yaml-loader.h \
+ counters.c counters.h \
+ data-queue.c data-queue.h \
+ decode.c decode.h \
++decode-api-test.c decode-api-test.h \
+ decode-ethernet.c decode-ethernet.h \
+ decode-events.c decode-events.h \
+ decode-gre.c decode-gre.h \
+diff --git a/src/runmode-unittests.c b/src/runmode-unittests.c
+index b58abcbd8..d064d31a8 100644
+--- a/src/runmode-unittests.c
++++ b/src/runmode-unittests.c
+@@ -113,6 +113,8 @@
+ #include "defrag.h"
+ #include "detect-engine-siggroup.h"
+ 
++#include "decode-api-test.h"
++
+ #endif /* UNITTESTS */
+ 
+ void RegisterAllModules();
+@@ -247,6 +249,7 @@ int RunUnittests(int list_unittests, char *regex_arg)
+     DetectEngineHttpHRHRegisterTests();
+     DetectEngineRegisterTests();
+     SCLogRegisterTests();
++    DecodeAPIRegisterTests();
+     SMTPParserRegisterTests();
+     MagicRegisterTests();
+     UtilMiscRegisterTests();

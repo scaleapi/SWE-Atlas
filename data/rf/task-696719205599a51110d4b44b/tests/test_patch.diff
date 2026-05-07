@@ -1,0 +1,690 @@
+diff --git a/api/v1/group_routes_test.go b/api/v1/group_routes_test.go
+index 4f919e320..1a8f5eed8 100644
+--- a/api/v1/group_routes_test.go
++++ b/api/v1/group_routes_test.go
+@@ -7,7 +7,6 @@ import (
+ 	"net/http/httptest"
+ 	"testing"
+ 
+-	"github.com/sirupsen/logrus"
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
+ 
+@@ -22,7 +21,6 @@ import (
+ func getTestPreInitState(tb testing.TB) *lib.TestPreInitState {
+ 	reg := metrics.NewRegistry()
+ 	logger := testutils.NewLogger(tb)
+-	logger.SetLevel(logrus.DebugLevel)
+ 	return &lib.TestPreInitState{
+ 		Logger:         logger,
+ 		RuntimeOptions: lib.RuntimeOptions{},
+diff --git a/js/bundle_test.go b/js/bundle_test.go
+index c11bdb9ac..f0d58f326 100644
+--- a/js/bundle_test.go
++++ b/js/bundle_test.go
+@@ -31,7 +31,7 @@ import (
+ 
+ const isWindows = runtime.GOOS == "windows"
+ 
+-func getTestPreInitState(tb testing.TB, logger *logrus.Logger, rtOpts *lib.RuntimeOptions) *lib.TestPreInitState {
++func getTestPreInitState(tb testing.TB, logger logrus.FieldLogger, rtOpts *lib.RuntimeOptions) *lib.TestPreInitState {
+ 	if logger == nil {
+ 		logger = testutils.NewLogger(tb)
+ 	}
+@@ -50,14 +50,14 @@ func getTestPreInitState(tb testing.TB, logger *logrus.Logger, rtOpts *lib.Runti
+ func getSimpleBundle(tb testing.TB, filename, data string, opts ...interface{}) (*Bundle, error) {
+ 	fs := afero.NewMemMapFs()
+ 	var rtOpts *lib.RuntimeOptions
+-	var logger *logrus.Logger
++	var logger logrus.FieldLogger
+ 	for _, o := range opts {
+ 		switch opt := o.(type) {
+ 		case afero.Fs:
+ 			fs = opt
+ 		case lib.RuntimeOptions:
+ 			rtOpts = &opt
+-		case *logrus.Logger:
++		case logrus.FieldLogger:
+ 			logger = opt
+ 		default:
+ 			tb.Fatalf("unknown test option %q", opt)
+diff --git a/js/console_test.go b/js/console_test.go
+index 4f16b72bc..a2f8565c9 100644
+--- a/js/console_test.go
++++ b/js/console_test.go
+@@ -103,8 +103,7 @@ func TestConsoleLogWithGojaNativeObject(t *testing.T) {
+ 	err := obj.Set("text", "nativeObject")
+ 	require.NoError(t, err)
+ 
+-	logger := testutils.NewLogger(t)
+-	hook := logtest.NewLocal(logger)
++	logger, hook := testutils.NewLoggerWithHook(t)
+ 
+ 	c := newConsole(logger)
+ 	c.Log(obj)
+@@ -160,8 +159,7 @@ func TestConsoleLogObjectsWithGoTypes(t *testing.T) {
+ 			rt.SetFieldNameMapper(common.FieldNameMapper{})
+ 			obj := rt.ToValue(tt.in)
+ 
+-			logger := testutils.NewLogger(t)
+-			hook := logtest.NewLocal(logger)
++			logger, hook := testutils.NewLoggerWithHook(t)
+ 
+ 			c := newConsole(logger)
+ 			c.Log(obj)
+diff --git a/js/modules/k6/http/async_request_test.go b/js/modules/k6/http/async_request_test.go
+index 6a747c6da..47cba6af4 100644
+--- a/js/modules/k6/http/async_request_test.go
++++ b/js/modules/k6/http/async_request_test.go
+@@ -5,7 +5,6 @@ import (
+ 	"time"
+ 
+ 	"github.com/sirupsen/logrus"
+-	logtest "github.com/sirupsen/logrus/hooks/test"
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
+ 	"go.k6.io/k6/js/modulestest"
+@@ -126,10 +125,8 @@ func TestAsyncRequestErrors(t *testing.T) {
+ 		t.Run("unsupported protocol", func(t *testing.T) {
+ 			t.Parallel()
+ 			ts := newTestCase(t)
+-			state := ts.runtime.VU.State()
+ 
+-			hook := logtest.NewLocal(state.Logger)
+-			defer hook.Reset()
++			ts.hook.Reset()
+ 
+ 			err := runOnEventLoop(ts.runtime, `
+             try {
+@@ -146,16 +143,14 @@ func TestAsyncRequestErrors(t *testing.T) {
+ 			require.Nil(t, exceptionThrown)
+ 			assert.Contains(t, promiseRejected.ToString(), "unsupported protocol scheme")
+ 
+-			logEntry := hook.LastEntry()
++			logEntry := ts.hook.LastEntry()
+ 			assert.Nil(t, logEntry)
+ 		})
+ 
+ 		t.Run("throw=false", func(t *testing.T) {
+ 			t.Parallel()
+ 			ts := newTestCase(t)
+-			state := ts.runtime.VU.State()
+-			hook := logtest.NewLocal(state.Logger)
+-			defer hook.Reset()
++			ts.hook.Reset()
+ 
+ 			err := runOnEventLoop(ts.runtime, `
+ 				var res = await http.asyncRequest("GET", "some://example.com", null, { throw: false });
+@@ -166,7 +161,7 @@ func TestAsyncRequestErrors(t *testing.T) {
+ 			`)
+ 			require.ErrorContains(t, err, "another error")
+ 
+-			logEntry := hook.LastEntry()
++			logEntry := ts.hook.LastEntry()
+ 			require.NotNil(t, logEntry)
+ 			assert.Equal(t, logrus.WarnLevel, logEntry.Level)
+ 			err, ok := logEntry.Data["error"].(error)
+@@ -208,8 +203,7 @@ func TestAsyncRequestErrors(t *testing.T) {
+ 			state.Options.Throw.Bool = false
+ 			defer func() { state.Options.Throw.Bool = true }()
+ 
+-			hook := logtest.NewLocal(state.Logger)
+-			defer hook.Reset()
++			ts.hook.Reset()
+ 
+ 			js := `
+                 var r = await http.asyncRequest("GET", "https:// test.k6.io");
+@@ -226,7 +220,7 @@ func TestAsyncRequestErrors(t *testing.T) {
+ 			require.Equal(t, int64(1020), retobj["error_code"])
+ 			require.Equal(t, expErr, retobj["error"])
+ 
+-			logEntry := hook.LastEntry()
++			logEntry := ts.hook.LastEntry()
+ 			require.NotNil(t, logEntry)
+ 			assert.Equal(t, logrus.WarnLevel, logEntry.Level)
+ 			err, ok = logEntry.Data["error"].(error)
+@@ -243,8 +237,7 @@ func TestAsyncRequestErrors(t *testing.T) {
+ 			state.Options.Throw.Bool = false
+ 			defer func() { state.Options.Throw.Bool = true }()
+ 
+-			hook := logtest.NewLocal(state.Logger)
+-			defer hook.Reset()
++			ts.hook.Reset()
+ 
+ 			js := `
+                 var r = await http.asyncRequest("GET", "https:// test.k6.io");
+@@ -258,7 +251,7 @@ func TestAsyncRequestErrors(t *testing.T) {
+ 			assert.Nil(t, ret)
+ 			assert.Contains(t, err.Error(), "unexpected end of JSON input")
+ 
+-			logEntry := hook.LastEntry()
++			logEntry := ts.hook.LastEntry()
+ 			require.NotNil(t, logEntry)
+ 			assert.Equal(t, logrus.WarnLevel, logEntry.Level)
+ 			err, ok := logEntry.Data["error"].(error)
+diff --git a/js/modules/k6/http/batch_test.go b/js/modules/k6/http/batch_test.go
+index e5d8c2027..08cd47969 100644
+--- a/js/modules/k6/http/batch_test.go
++++ b/js/modules/k6/http/batch_test.go
+@@ -5,7 +5,6 @@ import (
+ 	"testing"
+ 
+ 	"github.com/sirupsen/logrus"
+-	logtest "github.com/sirupsen/logrus/hooks/test"
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
+ 	"go.k6.io/k6/metrics"
+@@ -80,8 +79,7 @@ func TestBatchError(t *testing.T) {
+ 			state.Options.Throw.Bool = tc.throw
+ 			defer func() { state.Options.Throw.Bool = oldThrow }()
+ 
+-			hook := logtest.NewLocal(state.Logger)
+-			defer hook.Reset()
++			ts.hook.Reset()
+ 
+ 			ret, err := rt.RunString(fmt.Sprintf(`
+ 						(function(){
+@@ -104,7 +102,7 @@ func TestBatchError(t *testing.T) {
+ 				require.Equal(t, int64(1020), retobj["error_code"])
+ 				require.Equal(t, invalidURLerr, retobj["error"])
+ 
+-				logEntry := hook.LastEntry()
++				logEntry := ts.hook.LastEntry()
+ 				require.NotNil(t, logEntry)
+ 				assert.Equal(t, logrus.WarnLevel, logEntry.Level)
+ 				e, ok := logEntry.Data["error"].(error)
+@@ -144,8 +142,7 @@ func TestBatchErrorNoPanic(t *testing.T) {
+ 			state.Options.Throw.Bool = false
+ 			defer func() { state.Options.Throw.Bool = oldThrow }()
+ 
+-			hook := logtest.NewLocal(state.Logger)
+-			defer hook.Reset()
++			ts.hook.Reset()
+ 
+ 			ret, err := rt.RunString(fmt.Sprintf(`
+ 						(function(){
+@@ -160,7 +157,7 @@ func TestBatchErrorNoPanic(t *testing.T) {
+ 			require.Error(t, err)
+ 			assert.Nil(t, ret)
+ 			assert.Contains(t, err.Error(), "unexpected end of JSON input")
+-			logEntry := hook.LastEntry()
++			logEntry := ts.hook.LastEntry()
+ 			require.NotNil(t, logEntry)
+ 			assert.Equal(t, logrus.WarnLevel, logEntry.Level)
+ 			e, ok := logEntry.Data["error"].(error)
+diff --git a/js/modules/k6/http/request_test.go b/js/modules/k6/http/request_test.go
+index 4ce685d18..e57c0cfb1 100644
+--- a/js/modules/k6/http/request_test.go
++++ b/js/modules/k6/http/request_test.go
+@@ -33,7 +33,6 @@ import (
+ 	"github.com/klauspost/compress/zstd"
+ 	"github.com/mccutchen/go-httpbin/httpbin"
+ 	"github.com/sirupsen/logrus"
+-	logtest "github.com/sirupsen/logrus/hooks/test"
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
+ 	"gopkg.in/guregu/null.v3"
+@@ -122,6 +121,8 @@ type httpTestCase struct {
+ 	runtime  *modulestest.Runtime
+ 	samples  chan metrics.SampleContainer
+ 	instance *ModuleInstance
++	logger   logrus.FieldLogger
++	hook     *testutils.SimpleLogrusHook
+ }
+ 
+ func newTestCase(t testing.TB) *httpTestCase {
+@@ -133,6 +134,8 @@ func newTestCase(t testing.TB) *httpTestCase {
+ 
+ 	logger := logrus.New()
+ 	logger.Level = logrus.DebugLevel
++	hook := testutils.NewLogHook()
++	logger.AddHook(hook)
+ 
+ 	options := lib.Options{
+ 		MaxRedirects: null.IntFrom(10),
+@@ -167,6 +170,8 @@ func newTestCase(t testing.TB) *httpTestCase {
+ 		samples:  samples,
+ 		runtime:  runtime,
+ 		instance: mi,
++		logger:   logger,
++		hook:     hook,
+ 	}
+ }
+ 
+@@ -225,8 +230,7 @@ func TestRequest(t *testing.T) {
+ 			assert.NoError(t, err)
+ 
+ 			t.Run("Unset Max", func(t *testing.T) {
+-				hook := logtest.NewLocal(state.Logger)
+-				defer hook.Reset()
++				ts.hook.Reset()
+ 
+ 				oldOpts := state.Options
+ 				defer func() { state.Options = oldOpts }()
+@@ -240,7 +244,7 @@ func TestRequest(t *testing.T) {
+ 				`))
+ 				assert.NoError(t, err)
+ 
+-				logEntry := hook.LastEntry()
++				logEntry := ts.hook.LastEntry()
+ 				require.NotNil(t, logEntry)
+ 				assert.Equal(t, logrus.WarnLevel, logEntry.Level)
+ 				assert.Equal(t, sr("HTTPBIN_URL/redirect/11"), logEntry.Data["url"])
+@@ -291,8 +295,7 @@ func TestRequest(t *testing.T) {
+ 			assert.NoError(t, err)
+ 		})
+ 		t.Run("10s", func(t *testing.T) {
+-			hook := logtest.NewLocal(state.Logger)
+-			defer hook.Reset()
++			ts.hook.Reset()
+ 
+ 			startTime := time.Now()
+ 			_, err := rt.RunString(sr(`
+@@ -305,12 +308,11 @@ func TestRequest(t *testing.T) {
+ 			assert.Contains(t, err.Error(), "request timeout")
+ 			assert.WithinDuration(t, startTime.Add(1*time.Second), endTime, 2*time.Second)
+ 
+-			logEntry := hook.LastEntry()
++			logEntry := ts.hook.LastEntry()
+ 			assert.Nil(t, logEntry)
+ 		})
+ 		t.Run("10s", func(t *testing.T) {
+-			hook := logtest.NewLocal(state.Logger)
+-			defer hook.Reset()
++			ts.hook.Reset()
+ 
+ 			startTime := time.Now()
+ 			_, err := rt.RunString(sr(`
+@@ -323,7 +325,7 @@ func TestRequest(t *testing.T) {
+ 			assert.Contains(t, err.Error(), "request timeout")
+ 			assert.WithinDuration(t, startTime.Add(1*time.Second), endTime, 2*time.Second)
+ 
+-			logEntry := hook.LastEntry()
++			logEntry := ts.hook.LastEntry()
+ 			assert.Nil(t, logEntry)
+ 		})
+ 	})
+@@ -502,19 +504,17 @@ func TestRequest(t *testing.T) {
+ 		}
+ 	})
+ 	t.Run("Invalid", func(t *testing.T) {
+-		hook := logtest.NewLocal(state.Logger)
+-		defer hook.Reset()
++		ts.hook.Reset()
+ 
+ 		_, err := rt.RunString(`http.request("", "");`)
+ 		require.Error(t, err)
+ 		assert.Contains(t, err.Error(), "unsupported protocol scheme")
+ 
+-		logEntry := hook.LastEntry()
++		logEntry := ts.hook.LastEntry()
+ 		assert.Nil(t, logEntry)
+ 
+ 		t.Run("throw=false", func(t *testing.T) {
+-			hook := logtest.NewLocal(state.Logger)
+-			defer hook.Reset()
++			ts.hook.Reset()
+ 
+ 			_, err := rt.RunString(`
+ 				var res = http.request("GET", "some://example.com", null, { throw: false });
+@@ -526,7 +526,7 @@ func TestRequest(t *testing.T) {
+ 			require.Error(t, err)
+ 			assert.Contains(t, err.Error(), "another error")
+ 
+-			logEntry := hook.LastEntry()
++			logEntry := ts.hook.LastEntry()
+ 			require.NotNil(t, logEntry)
+ 			assert.Equal(t, logrus.WarnLevel, logEntry.Level)
+ 			err, ok := logEntry.Data["error"].(error)
+@@ -553,8 +553,7 @@ func TestRequest(t *testing.T) {
+ 			state.Options.Throw.Bool = false
+ 			defer func() { state.Options.Throw.Bool = true }()
+ 
+-			hook := logtest.NewLocal(state.Logger)
+-			defer hook.Reset()
++			ts.hook.Reset()
+ 
+ 			js := `
+ 				(function(){
+@@ -573,7 +572,7 @@ func TestRequest(t *testing.T) {
+ 			require.Equal(t, int64(1020), retobj["error_code"])
+ 			require.Equal(t, expErr, retobj["error"])
+ 
+-			logEntry := hook.LastEntry()
++			logEntry := ts.hook.LastEntry()
+ 			require.NotNil(t, logEntry)
+ 			assert.Equal(t, logrus.WarnLevel, logEntry.Level)
+ 			assert.Contains(t, logEntry.Data["error"].(error).Error(), expErr)
+@@ -584,8 +583,7 @@ func TestRequest(t *testing.T) {
+ 			state.Options.Throw.Bool = false
+ 			defer func() { state.Options.Throw.Bool = true }()
+ 
+-			hook := logtest.NewLocal(state.Logger)
+-			defer hook.Reset()
++			ts.hook.Reset()
+ 
+ 			js := `
+ 				(function(){
+@@ -600,7 +598,7 @@ func TestRequest(t *testing.T) {
+ 			assert.Nil(t, ret)
+ 			assert.Contains(t, err.Error(), "unexpected end of JSON input")
+ 
+-			logEntry := hook.LastEntry()
++			logEntry := ts.hook.LastEntry()
+ 			require.NotNil(t, logEntry)
+ 			assert.Equal(t, logrus.WarnLevel, logEntry.Level)
+ 			assert.Contains(t, logEntry.Data["error"].(error).Error(), expErr)
+@@ -1296,12 +1294,10 @@ func TestRequestCancellation(t *testing.T) {
+ 	ts := newTestCase(t)
+ 	tb := ts.tb
+ 	rt := ts.runtime.VU.Runtime()
+-	state := ts.runtime.VU.State()
+ 	mi := ts.instance
+ 	sr := tb.Replacer.Replace
+ 
+-	hook := logtest.NewLocal(state.Logger)
+-	defer hook.Reset()
++	ts.hook.Reset()
+ 
+ 	testVU, ok := mi.vu.(*modulestest.VU)
+ 	require.True(t, ok)
+@@ -1312,7 +1308,7 @@ func TestRequestCancellation(t *testing.T) {
+ 
+ 	_, err := rt.RunString(sr(`http.get("HTTPBIN_URL/get/");`))
+ 	assert.Error(t, err)
+-	assert.Nil(t, hook.LastEntry())
++	assert.Nil(t, ts.hook.LastEntry())
+ }
+ 
+ func TestRequestArrayBufferBody(t *testing.T) {
+@@ -1373,9 +1369,6 @@ func TestRequestCompression(t *testing.T) {
+ 	rt := ts.runtime.VU.Runtime()
+ 	state := ts.runtime.VU.State()
+ 
+-	logHook := testutils.SimpleLogrusHook{HookedLevels: []logrus.Level{logrus.WarnLevel}}
+-	state.Logger.AddHook(&logHook)
+-
+ 	// We don't expect any failed requests
+ 	state.Options.Throw = null.BoolFrom(true)
+ 
+@@ -1495,7 +1488,7 @@ func TestRequestCompression(t *testing.T) {
+ 		expectedEncoding = "not, valid"
+ 		actualEncoding = "gzip, deflate"
+ 
+-		logHook.Drain()
++		ts.hook.Drain()
+ 		t.Run("encoding", func(t *testing.T) {
+ 			_, err := rt.RunString(tb.Replacer.Replace(`
+ 				http.post("HTTPBIN_URL/compressed-text", ` + "`" + text + "`" + `,
+@@ -1505,7 +1498,7 @@ func TestRequestCompression(t *testing.T) {
+ 				);
+ 			`))
+ 			require.NoError(t, err)
+-			require.NotEmpty(t, logHook.Drain())
++			require.NotEmpty(t, ts.hook.Drain())
+ 		})
+ 
+ 		t.Run("encoding and length", func(t *testing.T) {
+@@ -1518,7 +1511,7 @@ func TestRequestCompression(t *testing.T) {
+ 				);
+ 			`))
+ 			require.NoError(t, err)
+-			require.NotEmpty(t, logHook.Drain())
++			require.NotEmpty(t, ts.hook.Drain())
+ 		})
+ 
+ 		expectedEncoding = actualEncoding
+@@ -1531,7 +1524,7 @@ func TestRequestCompression(t *testing.T) {
+ 				);
+ 			`))
+ 			require.NoError(t, err)
+-			require.Empty(t, logHook.Drain())
++			require.Empty(t, ts.hook.Drain())
+ 		})
+ 
+ 		// TODO: move to some other test?
+@@ -1540,7 +1533,7 @@ func TestRequestCompression(t *testing.T) {
+ 				`http.post("HTTPBIN_URL/post", "0123456789", { "headers": {"Content-Length": "10"}});`,
+ 			))
+ 			require.NoError(t, err)
+-			require.Empty(t, logHook.Drain())
++			require.Empty(t, ts.hook.Drain())
+ 		})
+ 
+ 		t.Run("content-length is set", func(t *testing.T) {
+@@ -1551,7 +1544,7 @@ func TestRequestCompression(t *testing.T) {
+ 				}
+ 			`))
+ 			require.NoError(t, err)
+-			require.Empty(t, logHook.Drain())
++			require.Empty(t, ts.hook.Drain())
+ 		})
+ 	})
+ }
+diff --git a/metrics/engine/ingester_test.go b/metrics/engine/ingester_test.go
+index cb292bd23..71f7a7c84 100644
+--- a/metrics/engine/ingester_test.go
++++ b/metrics/engine/ingester_test.go
+@@ -106,7 +106,7 @@ func TestOutputFlushMetricsTimeSeriesWarning(t *testing.T) {
+ 	testMetric, err := piState.Registry.NewMetric("test_metric", metrics.Gauge)
+ 	require.NoError(t, err)
+ 
+-	logger, hook := testutils.NewMemLogger()
++	logger, hook := testutils.NewLoggerWithHook(nil)
+ 	ingester := outputIngester{
+ 		logger: logger,
+ 		metricsEngine: &MetricsEngine{
+@@ -199,7 +199,6 @@ func TestCardinalityControlLimitHit(t *testing.T) {
+ func newTestPreInitState(tb testing.TB) *lib.TestPreInitState {
+ 	reg := metrics.NewRegistry()
+ 	logger := testutils.NewLogger(tb)
+-	logger.SetLevel(logrus.DebugLevel)
+ 	return &lib.TestPreInitState{
+ 		Logger:         logger,
+ 		RuntimeOptions: lib.RuntimeOptions{},
+diff --git a/lib/fieldlogger_compat_test.go b/lib/fieldlogger_compat_test.go
+new file mode 100644
+index 000000000..3fcd274d4
+--- /dev/null
++++ b/lib/fieldlogger_compat_test.go
+@@ -0,0 +1,32 @@
++package lib
++
++import (
++	"testing"
++
++	"github.com/sirupsen/logrus"
++	"github.com/stretchr/testify/assert"
++)
++
++func TestTestPreInitStateLoggerAcceptsFieldLogger(t *testing.T) {
++	var fl logrus.FieldLogger = logrus.New()
++	state := &TestPreInitState{Logger: fl}
++	assert.NotNil(t, state.Logger)
++}
++
++func TestTestPreInitStateLoggerAcceptsEntry(t *testing.T) {
++	entry := logrus.NewEntry(logrus.New())
++	state := &TestPreInitState{Logger: entry}
++	assert.NotNil(t, state.Logger)
++}
++
++func TestStateLoggerAcceptsFieldLogger(t *testing.T) {
++	var fl logrus.FieldLogger = logrus.New()
++	state := &State{Logger: fl}
++	assert.NotNil(t, state.Logger)
++}
++
++func TestStateLoggerAcceptsEntry(t *testing.T) {
++	entry := logrus.NewEntry(logrus.New())
++	state := &State{Logger: entry}
++	assert.NotNil(t, state.Logger)
++}
+diff --git a/lib/testutils/logrus_hook_test.go b/lib/testutils/logrus_hook_test.go
+new file mode 100644
+index 000000000..4805475c8
+--- /dev/null
++++ b/lib/testutils/logrus_hook_test.go
+@@ -0,0 +1,119 @@
++package testutils
++
++import (
++	"testing"
++
++	"github.com/sirupsen/logrus"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestNewLogHookDefaultLevels(t *testing.T) {
++	hook := NewLogHook()
++	assert.Equal(t, logrus.AllLevels, hook.HookedLevels)
++}
++
++func TestNewLogHookSpecificLevels(t *testing.T) {
++	hook := NewLogHook(logrus.WarnLevel, logrus.ErrorLevel)
++	assert.Equal(t, []logrus.Level{logrus.WarnLevel, logrus.ErrorLevel}, hook.HookedLevels)
++}
++
++func TestSimpleLogrusHookLastEntryEmpty(t *testing.T) {
++	hook := NewLogHook()
++	assert.Nil(t, hook.LastEntry())
++}
++
++func TestSimpleLogrusHookLastEntry(t *testing.T) {
++	hook := NewLogHook()
++	logger := logrus.New()
++	logger.AddHook(hook)
++	logger.SetOutput(&testOutput{t})
++
++	logger.Warn("first message")
++	logger.Error("second message")
++
++	entry := hook.LastEntry()
++	require.NotNil(t, entry)
++	assert.Equal(t, "second message", entry.Message)
++	assert.Equal(t, logrus.ErrorLevel, entry.Level)
++}
++
++func TestSimpleLogrusHookReset(t *testing.T) {
++	hook := NewLogHook()
++	logger := logrus.New()
++	logger.AddHook(hook)
++	logger.SetOutput(&testOutput{t})
++
++	logger.Warn("a message")
++	require.NotNil(t, hook.LastEntry())
++
++	hook.Reset()
++	assert.Nil(t, hook.LastEntry())
++}
++
++func TestSimpleLogrusHookDrainAfterReset(t *testing.T) {
++	hook := NewLogHook()
++	logger := logrus.New()
++	logger.AddHook(hook)
++	logger.SetOutput(&testOutput{t})
++
++	logger.Warn("msg1")
++	logger.Error("msg2")
++	hook.Reset()
++
++	entries := hook.Drain()
++	assert.Empty(t, entries)
++}
++
++func TestNewLoggerReturnsFieldLogger(t *testing.T) {
++	logger := NewLogger(t)
++	require.NotNil(t, logger)
++
++	var fl logrus.FieldLogger = logger
++	assert.NotNil(t, fl)
++}
++
++func TestNewLoggerNilTB(t *testing.T) {
++	logger := NewLogger(nil)
++	require.NotNil(t, logger)
++}
++
++func TestNewLoggerWithHookDefaultLevels(t *testing.T) {
++	logger, hook := NewLoggerWithHook(t)
++	require.NotNil(t, logger)
++	require.NotNil(t, hook)
++	assert.Equal(t, logrus.AllLevels, hook.HookedLevels)
++}
++
++func TestNewLoggerWithHookSpecificLevels(t *testing.T) {
++	logger, hook := NewLoggerWithHook(t, logrus.WarnLevel, logrus.ErrorLevel)
++	require.NotNil(t, logger)
++	require.NotNil(t, hook)
++	assert.Equal(t, []logrus.Level{logrus.WarnLevel, logrus.ErrorLevel}, hook.HookedLevels)
++
++	logger.WithField("key", "val").Warn("test warn")
++	entry := hook.LastEntry()
++	require.NotNil(t, entry)
++	assert.Equal(t, logrus.WarnLevel, entry.Level)
++}
++
++func TestNewLoggerWithHookNilTB(t *testing.T) {
++	logger, hook := NewLoggerWithHook(nil)
++	require.NotNil(t, logger)
++	require.NotNil(t, hook)
++
++	logger.WithField("k", "v").Info("discarded msg")
++	assert.NotNil(t, hook.LastEntry())
++}
++
++func TestNewLoggerWithHookCapturesAtCorrectLevel(t *testing.T) {
++	logger, hook := NewLoggerWithHook(t, logrus.ErrorLevel)
++
++	logger.WithField("k", "v").Info("should not be captured")
++	assert.Nil(t, hook.LastEntry())
++
++	logger.WithField("k", "v").Error("should be captured")
++	entry := hook.LastEntry()
++	require.NotNil(t, entry)
++	assert.Equal(t, logrus.ErrorLevel, entry.Level)
++}
+diff --git a/output/csv/config_fieldlogger_test.go b/output/csv/config_fieldlogger_test.go
+new file mode 100644
+index 000000000..7d1ab420b
+--- /dev/null
++++ b/output/csv/config_fieldlogger_test.go
+@@ -0,0 +1,37 @@
++package csv
++
++import (
++	"testing"
++
++	"github.com/sirupsen/logrus"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestParseArgAcceptsFieldLogger(t *testing.T) {
++	var logger logrus.FieldLogger = logrus.New()
++	cfg, err := ParseArg("test.csv", logger)
++	require.NoError(t, err)
++	assert.Equal(t, "test.csv", cfg.FileName.String)
++}
++
++func TestParseArgAcceptsLogEntry(t *testing.T) {
++	logger := logrus.NewEntry(logrus.New())
++	cfg, err := ParseArg("output.csv", logger)
++	require.NoError(t, err)
++	assert.Equal(t, "output.csv", cfg.FileName.String)
++}
++
++func TestGetConsolidatedConfigAcceptsFieldLogger(t *testing.T) {
++	var logger logrus.FieldLogger = logrus.New()
++	cfg, err := GetConsolidatedConfig(nil, nil, "result.csv", logger)
++	require.NoError(t, err)
++	assert.Equal(t, "result.csv", cfg.FileName.String)
++}
++
++func TestGetConsolidatedConfigAcceptsLogEntry(t *testing.T) {
++	logger := logrus.NewEntry(logrus.New())
++	cfg, err := GetConsolidatedConfig(nil, nil, "data.csv", logger)
++	require.NoError(t, err)
++	assert.Equal(t, "data.csv", cfg.FileName.String)
++}

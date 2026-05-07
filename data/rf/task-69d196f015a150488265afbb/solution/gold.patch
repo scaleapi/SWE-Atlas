@@ -1,0 +1,436 @@
+diff --git a/.betterer.results b/.betterer.results
+index 7a748db1e03..b7e9a5b4b6f 100644
+--- a/.betterer.results
++++ b/.betterer.results
+@@ -2071,11 +2071,6 @@ exports[`better eslint`] = {
+       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+     ],
+-    "public/app/features/dashboard-scene/saving/SaveDashboardDrawer.tsx:5381": [
+-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+-    ],
+     "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx:5381": [
+       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+@@ -2084,6 +2079,11 @@ exports[`better eslint`] = {
+       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
+       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
+     ],
++    "public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.tsx:5381": [
++      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
++      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
++      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
++    ],
+     "public/app/features/dashboard-scene/saving/SaveProvisionedDashboardForm.tsx:5381": [
+       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+@@ -3707,9 +3707,6 @@ exports[`better eslint`] = {
+       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+     ],
+-    "public/app/features/provisioning/dashboard.ts:5381": [
+-      [0, 0, 0, "Do not use any type assertions.", "0"]
+-    ],
+     "public/app/features/query/components/QueryEditorRow.tsx:5381": [
+       [0, 0, 0, "Do not use any type assertions.", "0"],
+       [0, 0, 0, "Do not use any type assertions.", "1"],
+diff --git a/public/app/features/dashboard-scene/saving/SaveDashboardDrawer.tsx b/public/app/features/dashboard-scene/saving/SaveDashboardDrawer.tsx
+index ab6a23e0285..2069179469b 100644
+--- a/public/app/features/dashboard-scene/saving/SaveDashboardDrawer.tsx
++++ b/public/app/features/dashboard-scene/saving/SaveDashboardDrawer.tsx
+@@ -53,7 +53,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
+     const { provisioned: isProvisioned, folderTitle } = meta;
+ 
+     // Provisioned dashboards have k8s metadata annotations
+-    const isProvisionedNG = meta.k8s?.annotations?.[AnnoKeyRepoName]
++    const isProvisionedNG = meta.k8s?.annotations?.[AnnoKeyRepoName];
+ 
+     const tabs = (
+       <TabsBar>
+diff --git a/public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.tsx b/public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.tsx
+index 9084c635d15..9c8e89736aa 100644
+--- a/public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.tsx
++++ b/public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.tsx
+@@ -1,17 +1,39 @@
+-import { css } from '@emotion/css';
+-import { useEffect, useMemo, useState } from 'react';
++import { useEffect } from 'react';
++import { useForm } from 'react-hook-form';
+ 
+-import { config, getBackendSrv } from '@grafana/runtime';
++import { AppEvents } from '@grafana/data';
++import { getAppEvents } from '@grafana/runtime';
+ import { Button, Stack, Box, TextArea, Field, Input, Alert } from '@grafana/ui';
+ import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
+ import { DashboardMeta } from 'app/types';
+ 
++import { useUpdateRepositoryFilesMutation } from '../../provisioning/api';
+ import { DashboardScene } from '../scene/DashboardScene';
+ 
+ import { SaveDashboardDrawer } from './SaveDashboardDrawer';
+ import { SaveDashboardFormCommonOptions } from './SaveDashboardForm';
+ import { DashboardChangeInfo } from './shared';
+ 
++type FormData = {
++  ref: string;
++  path: string;
++  comment?: string;
++  repo: string;
++};
++
++function getDefaultValues(meta: DashboardMeta) {
++  const anno = meta.k8s?.annotations;
++  let ref = '';
++  let path = anno?.[AnnoKeyRepoPath] ?? '';
++  const repo = anno?.[AnnoKeyRepoName] ?? '';
++  const idx = path.indexOf('#');
++  if (idx > 0) {
++    ref = path.substring(idx + 1);
++    path = path.substring(0, idx);
++  }
++  return { ref, path, repo, comment: '' };
++}
++
+ export interface Props {
+   meta: DashboardMeta;
+   dashboard: DashboardScene;
+@@ -19,55 +41,38 @@ export interface Props {
+   changeInfo: DashboardChangeInfo;
+ }
+ 
+-export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
+-  const dashboardJSON = useMemo(() => JSON.stringify(changeInfo.changedSaveModel, null, 2), [changeInfo]);
+-
+-  const [repo, setRepo] = useState<string>();
+-  const [path, setPath] = useState<string>();
+-  const [ref, setRef] = useState<string>();
+-  const [comment, setComment] = useState<string>();
++export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }: Props) {
++  const [saveDashboard, request] = useUpdateRepositoryFilesMutation();
++  const { register, handleSubmit } = useForm({ defaultValues: getDefaultValues(meta) });
+ 
+   useEffect(() => {
+-    const anno = meta.k8s?.annotations;
+-    if (!anno) {
+-      setRepo('');
+-      setPath('');
+-      setRef('');
+-      return;
+-    }
+-    let ref = '';
+-    let path = anno[AnnoKeyRepoPath] ?? '';
+-    const idx = path.indexOf('#');
+-    if (idx > 0) {
+-      ref = path.substring(idx + 1);
+-      path = path.substring(0, idx);
+-    }
+-    setRepo(anno[AnnoKeyRepoName]);
+-    setPath(path);
+-    setRef(ref);
+-  }, [meta]);
+-
+-  const doSave = () => {
+-    const url = `apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}/repositories/${repo}/files/${path}`;
+-    const params: Record<string, string> = {};
+-    if (ref) {
+-      params['ref'] = ref;
+-    }
+-    if (comment) {
+-      params['comment'] = comment;
++    const appEvents = getAppEvents();
++    if (request.isSuccess) {
++      appEvents.publish({
++        type: AppEvents.alertSuccess.name,
++        payload: ['Dashboard saved'],
++      });
++      dashboard.setState({ isDirty: false });
++      // TODO Avoid full reload
++      window.location.reload();
++    } else if (request.isError) {
++      appEvents.publish({
++        type: AppEvents.alertError.name,
++        payload: ['Error saving dashboard', request.error],
++      });
+     }
++  }, [request.isSuccess, request.isError, request.error, dashboard]);
+ 
+-    getBackendSrv()
+-      .put(url, dashboardJSON, { params })
+-      .then((v) => {
+-        console.log('WROTE', v);
+-        alert('WROTE value');
+-      });
++  const doSave = ({ ref, path, comment, repo }: FormData) => {
++    if (!repo || !path) {
++      return;
++    }
++    saveDashboard({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
+   };
+ 
+   return (
+-    <div className={styles.container}>
+-      <Stack direction="column" gap={2} grow={1}>
++    <form onSubmit={handleSubmit(doSave)}>
++      <Stack direction="column" gap={2}>
+         <div>
+           <Alert severity="warning" title="Development feature">
+             More warnings here... mostly exploratory interfaces.
+@@ -77,34 +82,21 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
+         <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
+ 
+         <Field label="Repository">
+-          <div>{repo}</div>
++          <Input {...register('repo')} readOnly />
+         </Field>
+ 
+         <Field label="Path" description="File path inside the repository. This must be .json or .yaml">
+-          <Input
+-            value={path}
+-            onChange={(e) => {
+-              setPath(e.currentTarget.value);
+-            }}
+-          />
++          <Input {...register('path')} />
+         </Field>
+ 
+-        <Field label="Branch" description="only supported by github right now">
+-          <Input
+-            value={ref}
+-            onChange={(e) => {
+-              setRef(e.currentTarget.value);
+-            }}
+-          />
++        <Field label="Branch" description="Only supported by GitHub right now">
++          <Input {...register('ref')} />
+         </Field>
+ 
+         <Field label="Comment">
+           <TextArea
++            {...register('comment')}
+             aria-label="comment"
+-            value={comment ?? ''}
+-            onChange={(e) => {
+-              setComment(e.currentTarget.value);
+-            }}
+             placeholder="Add a note to describe your changes (optional)."
+             autoFocus
+             rows={5}
+@@ -113,7 +105,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
+ 
+         <Box paddingTop={2}>
+           <Stack gap={2}>
+-            <Button variant="primary" onClick={doSave}>
++            <Button variant="primary" type="submit">
+               Save
+             </Button>
+             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
+@@ -122,13 +114,6 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
+           </Stack>
+         </Box>
+       </Stack>
+-    </div>
++    </form>
+   );
+ }
+-
+-const styles = {
+-  container: css({
+-    height: '100%',
+-    display: 'flex',
+-  }),
+-};
+diff --git a/public/app/features/provisioning/api/endpoints.ts b/public/app/features/provisioning/api/endpoints.ts
+index 878e16acee8..9f7416b0d5f 100644
+--- a/public/app/features/provisioning/api/endpoints.ts
++++ b/public/app/features/provisioning/api/endpoints.ts
+@@ -6,7 +6,6 @@ import {
+   UpdateRequestArg,
+   HelloWorld,
+   RepositoryForCreate,
+-  WatchEvent,
+   WebhookResponse,
+   ResourceWrapper,
+   FileOperationArg,
+@@ -55,47 +54,50 @@ const injectedRtkApi = api.injectEndpoints({
+       }),
+       invalidatesTags: ['RepositoryList'],
+     }),
+-    connectGetRepositoryExport: build.query<ResourceWrapper, RequestArg>({
++    getRepositoryExport: build.query<ResourceWrapper, RequestArg>({
+       query: ({ name }) => ({
+         url: `${BASE_PATH}/${name}/export`,
+       }),
+     }),
+-    connectPostRepositoryExport: build.mutation<ResourceWrapper, RequestArg>({
++    createRepositoryExport: build.mutation<ResourceWrapper, RequestArg>({
+       query: ({ name }) => ({
+         url: `${BASE_PATH}/${name}/export`,
+         method: 'POST',
+       }),
+     }),
+-    connectGetRepositoryFiles: build.query<ResourceWrapper, GetFileArg>({
+-      query: ({ name, path, commit }) => ({
++    getRepositoryFiles: build.query<ResourceWrapper, GetFileArg>({
++      query: ({ name, path, ref }) => ({
+         url: `${BASE_PATH}/${name}/files/${path}`,
+-        params: { commit },
++        params: { ref },
+       }),
+     }),
+-    connectPutRepositoryFiles: build.mutation<ResourceWrapper, FileOperationArg>({
+-      query: ({ name, path, body, message }) => ({
++    updateRepositoryFiles: build.mutation<ResourceWrapper, FileOperationArg>({
++      query: ({ name, path, body, ref, message }) => ({
+         url: `${BASE_PATH}/${name}/files/${path}`,
+         method: 'PUT',
+         body,
+-        params: { message },
++        params: { ref, message },
+       }),
+     }),
+-    connectPostRepositoryFiles: build.mutation<ResourceWrapper, FileOperationArg>({
+-      query: ({ name, path, body, message }) => ({
++    createRepositoryFiles: build.mutation<ResourceWrapper, FileOperationArg>({
++      query: ({ name, path, body, ref, message }) => ({
+         url: `${BASE_PATH}/${name}/files/${path}`,
+         method: 'POST',
+         body,
+-        params: { message },
++        params: { ref, message },
+       }),
+     }),
+-    connectDeleteRepositoryFiles: build.mutation<ResourceWrapper, { name: string; path: string; message?: string }>({
+-      query: ({ name, path, message }) => ({
++    deleteRepositoryFiles: build.mutation<
++      ResourceWrapper,
++      { name: string; path: string; ref?: string; message?: string }
++    >({
++      query: ({ name, path, ref, message }) => ({
+         url: `${BASE_PATH}/${name}/files/${path}`,
+         method: 'DELETE',
+-        params: { message },
++        params: { ref, message },
+       }),
+     }),
+-    connectGetRepositoryHello: build.query<HelloWorld, { name: string; whom?: string }>({
++    getRepositoryHello: build.query<HelloWorld, { name: string; whom?: string }>({
+       query: ({ name, whom }) => ({
+         url: `${BASE_PATH}/${name}/hello`,
+         params: { whom },
+@@ -121,29 +123,17 @@ const injectedRtkApi = api.injectEndpoints({
+         body,
+       }),
+     }),
+-    connectGetRepositoryWebhook: build.query<WebhookResponse, RequestArg>({
++    getRepositoryWebhook: build.query<WebhookResponse, RequestArg>({
+       query: ({ name }) => ({
+         url: `${BASE_PATH}/${name}/webhook`,
+       }),
+     }),
+-    connectPostRepositoryWebhook: build.mutation<WebhookResponse, RequestArg>({
++    createRepositoryWebhook: build.mutation<WebhookResponse, RequestArg>({
+       query: ({ name }) => ({
+         url: `${BASE_PATH}/${name}/webhook`,
+         method: 'POST',
+       }),
+     }),
+-    watchRepositoryList: build.query<WatchEvent, void>({
+-      query: () => ({
+-        url: `${BASE_PATH}`,
+-        params: { watch: true },
+-      }),
+-    }),
+-    watchRepository: build.query<WatchEvent, RequestArg>({
+-      query: ({ name }) => ({
+-        url: `${BASE_PATH}/${name}`,
+-        params: { watch: true },
+-      }),
+-    }),
+   }),
+   overrideExisting: false,
+ });
+@@ -157,18 +147,16 @@ export const {
+   useUpdateRepositoryMutation,
+   useDeleteRepositoryMutation,
+   usePatchRepositoryMutation,
+-  useConnectGetRepositoryExportQuery,
+-  useConnectPostRepositoryExportMutation,
+-  useConnectGetRepositoryFilesQuery,
+-  useConnectPutRepositoryFilesMutation,
+-  useConnectPostRepositoryFilesMutation,
+-  useConnectDeleteRepositoryFilesMutation,
+-  useConnectGetRepositoryHelloQuery,
++  useGetRepositoryExportQuery,
++  useCreateRepositoryExportMutation,
++  useGetRepositoryFilesQuery,
++  useUpdateRepositoryFilesMutation,
++  useCreateRepositoryFilesMutation,
++  useDeleteRepositoryFilesMutation,
++  useGetRepositoryHelloQuery,
+   useGetRepositoryStatusQuery,
+   useUpdateRepositoryStatusMutation,
+   usePatchRepositoryStatusMutation,
+-  useConnectGetRepositoryWebhookQuery,
+-  useConnectPostRepositoryWebhookMutation,
+-  useWatchRepositoryListQuery,
+-  useWatchRepositoryQuery,
++  useGetRepositoryWebhookQuery,
++  useCreateRepositoryWebhookMutation,
+ } = injectedRtkApi;
+diff --git a/public/app/features/provisioning/api/types.ts b/public/app/features/provisioning/api/types.ts
+index 33c3990d836..a1009c5e40a 100644
+--- a/public/app/features/provisioning/api/types.ts
++++ b/public/app/features/provisioning/api/types.ts
+@@ -89,10 +89,11 @@ export type FileOperationArg = {
+   path: string;
+   body: object;
+   message?: string;
++  ref?: string;
+ };
+ 
+ export type GetFileArg = {
+   name: string;
+   path: string;
+-  commit?: string;
++  ref?: string;
+ };
+diff --git a/public/app/features/provisioning/dashboard.ts b/public/app/features/provisioning/dashboard.ts
+index 9f56bde8bca..ec8a6ff7031 100644
+--- a/public/app/features/provisioning/dashboard.ts
++++ b/public/app/features/provisioning/dashboard.ts
+@@ -1,10 +1,12 @@
+ import { getBackendSrv } from '@grafana/runtime';
+ import { DashboardDTO } from 'app/types';
+ 
++import { AnnoKeyRepoName, AnnoKeyRepoPath } from '../apiserver/types';
++
+ import { BASE_URL } from './api/baseAPI';
+-import { AnnoKeyRepoName, AnnoKeyRepoPath, Resource } from '../apiserver/types';
+ 
+ /**
++ *
+  * Load a dashboard from repository
+  */
+ export async function loadDashboardFromProvisioning(repo: string, path: string): Promise<DashboardDTO> {
+@@ -26,14 +28,14 @@ export async function loadDashboardFromProvisioning(repo: string, path: string):
+       }
+ 
+       // Make sure the annotation key exists
+-      let anno = dryRun.metadata.annotations
++      let anno = dryRun.metadata.annotations;
+       if (!anno) {
+-        dryRun.metadata.annotations = anno = {}
++        dryRun.metadata.annotations = anno = {};
+       }
+-      anno[AnnoKeyRepoName] = repo
+-      anno[AnnoKeyRepoPath] = path
++      anno[AnnoKeyRepoName] = repo;
++      anno[AnnoKeyRepoPath] = path;
+       if (ref) {
+-        anno[AnnoKeyRepoPath] += path + '#' + ref
++        anno[AnnoKeyRepoPath] += path + '#' + ref;
+       }
+ 
+       return {

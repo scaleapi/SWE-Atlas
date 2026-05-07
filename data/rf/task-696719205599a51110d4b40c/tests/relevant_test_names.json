@@ -1,0 +1,43 @@
+{
+  "tests": [
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/engine/TestEngine_DuplicatSecrets"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/engine/TestScanGCS"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/engine/TestGitEngine"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/engine/TestNewAhoCorasickCore_AcceptsFlatSlice"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/engine/TestNewAhoCorasickCore_EmptySlice"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/engine/TestPopulateDetectorsByMatch_ReturnsDetectorDirectly"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/engine/TestPopulateDetectorsByMatch_NoMatch"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/engine/TestPopulateDetectorsByMatch_MultipleDetectorsSameKeyword"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/engine/TestWithDetectors_AppendsToFlatList"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/engine/TestWithDetectors_MultipleInSingleCall"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/engine/TestWithVerify_SetsFlag"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/engine/TestWithFilterDetectors_FiltersSlice"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/engine/TestCoreIntegration_MatchAndPopulate"
+    }
+  ]
+}

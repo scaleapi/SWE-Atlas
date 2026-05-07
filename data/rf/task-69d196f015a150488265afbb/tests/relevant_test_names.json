@@ -1,0 +1,100 @@
+{
+  "tests": [
+    {
+      "name": "Provisioning API endpoints > connect-prefixed endpoints are removed > no endpoint name starts with connect"
+    },
+    {
+      "name": "Provisioning API endpoints > file operation endpoints include ref support > createRepositoryFiles endpoint is registered"
+    },
+    {
+      "name": "Provisioning API endpoints > file operation endpoints include ref support > createRepositoryFiles passes ref as a query param"
+    },
+    {
+      "name": "Provisioning API endpoints > file operation endpoints include ref support > deleteRepositoryFiles endpoint is registered"
+    },
+    {
+      "name": "Provisioning API endpoints > file operation endpoints include ref support > deleteRepositoryFiles passes ref as a query param"
+    },
+    {
+      "name": "Provisioning API endpoints > file operation endpoints include ref support > getRepositoryFiles endpoint is registered"
+    },
+    {
+      "name": "Provisioning API endpoints > file operation endpoints include ref support > getRepositoryFiles passes ref as a query param"
+    },
+    {
+      "name": "Provisioning API endpoints > file operation endpoints include ref support > updateRepositoryFiles endpoint is registered"
+    },
+    {
+      "name": "Provisioning API endpoints > file operation endpoints include ref support > updateRepositoryFiles passes ref as a query param"
+    },
+    {
+      "name": "Provisioning API endpoints > renamed endpoint hooks are exported > exports useCreateRepositoryExportMutation as a function"
+    },
+    {
+      "name": "Provisioning API endpoints > renamed endpoint hooks are exported > exports useCreateRepositoryFilesMutation as a function"
+    },
+    {
+      "name": "Provisioning API endpoints > renamed endpoint hooks are exported > exports useCreateRepositoryWebhookMutation as a function"
+    },
+    {
+      "name": "Provisioning API endpoints > renamed endpoint hooks are exported > exports useDeleteRepositoryFilesMutation as a function"
+    },
+    {
+      "name": "Provisioning API endpoints > renamed endpoint hooks are exported > exports useGetRepositoryExportQuery as a function"
+    },
+    {
+      "name": "Provisioning API endpoints > renamed endpoint hooks are exported > exports useGetRepositoryFilesQuery as a function"
+    },
+    {
+      "name": "Provisioning API endpoints > renamed endpoint hooks are exported > exports useGetRepositoryHelloQuery as a function"
+    },
+    {
+      "name": "Provisioning API endpoints > renamed endpoint hooks are exported > exports useGetRepositoryWebhookQuery as a function"
+    },
+    {
+      "name": "Provisioning API endpoints > renamed endpoint hooks are exported > exports useUpdateRepositoryFilesMutation as a function"
+    },
+    {
+      "name": "Provisioning API endpoints > watch endpoints are removed > does not include watchRepositoryList or watchRepository"
+    },
+    {
+      "name": "SaveProvisionedDashboard > default values from metadata > handles metadata with no annotations"
+    },
+    {
+      "name": "SaveProvisionedDashboard > default values from metadata > handles path without a ref fragment"
+    },
+    {
+      "name": "SaveProvisionedDashboard > default values from metadata > populates path without the ref fragment"
+    },
+    {
+      "name": "SaveProvisionedDashboard > default values from metadata > populates ref extracted from path fragment"
+    },
+    {
+      "name": "SaveProvisionedDashboard > default values from metadata > populates repo from annotations"
+    },
+    {
+      "name": "SaveProvisionedDashboard > form rendering > Save button has type submit"
+    },
+    {
+      "name": "SaveProvisionedDashboard > form rendering > renders a form element"
+    },
+    {
+      "name": "SaveProvisionedDashboard > form rendering > renders the Branch field"
+    },
+    {
+      "name": "SaveProvisionedDashboard > form rendering > renders the Comment textarea"
+    },
+    {
+      "name": "SaveProvisionedDashboard > form rendering > renders the Path field"
+    },
+    {
+      "name": "SaveProvisionedDashboard > form rendering > renders the Repository field as a read-only input"
+    },
+    {
+      "name": "SaveProvisionedDashboard > form submission > calls the mutation with correct field mappings on submit"
+    },
+    {
+      "name": "SaveProvisionedDashboard > success handling > clears dashboard dirty state on successful save"
+    }
+  ]
+}

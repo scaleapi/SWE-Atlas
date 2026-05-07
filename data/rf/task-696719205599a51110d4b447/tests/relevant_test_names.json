@@ -1,0 +1,118 @@
+{
+  "tests": [
+    {
+      "name": "go.k6.io/k6/output/cloud/TestNewOutputNameResolution"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/TestCloudOutputRequireScriptName"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/TestOutputCreateTestWithConfigOverwrite"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/TestStartVersionedOutputRequiresReferenceID"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/TestStartVersionedOutputSetsVersionedOutput"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/TestSetThresholdsStoresValues"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/TestSetTestRunStopCallbackGateway"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/TestGetRunStatusFinishedOnNil"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/TestGetRunStatusAbortReasons"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/TestGetRunStatusUnknownErrorIsSystem"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/TestTestFinishedSkipsWhenPushRefIDSet"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/TestTestFinishedSkipsWhenEmptyReferenceID"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/TestStopWithTestErrorDelegatesToVersionedOutput"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/TestDescriptionContainsReferenceID"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/TestOutputStartWithPushRefID"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/TestVersionedOutputInterfaceCompliance"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestSampleMarshaling"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestMetricAggregation"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestQuickSelectAndBounds"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestSortInterpolation"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestCloudOutput"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestCloudOutputMaxPerPacket"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestCloudOutputStopSendingMetric"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestCloudOutputPushRefID"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestCloudOutputRecvIterLIAllIterations"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestPublishMetric"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestNewOutputClientTimeout"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestNewV1OutputReturnsValidOutput"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestSetReferenceIDStoresValue"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestSetReferenceIDOverwritesPrevious"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestSetTestRunStopCallbackStoresFunc"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestStartAndStopWithNoAggregation"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestStartAndStopWithAggregation"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestStopWithTestErrorReturnsNil"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestAddMetricSamplesIgnoredWithEmptyReferenceID"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestAddMetricSamplesWithHTTPTrailsNoAggregation"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestAddMetricSamplesWithHTTPTrailsAggregation"
+    },
+    {
+      "name": "go.k6.io/k6/output/cloud/v1/TestAddMetricSamplesIgnoredAfterStop"
+    }
+  ]
+}

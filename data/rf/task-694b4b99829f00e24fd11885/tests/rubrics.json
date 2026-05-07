@@ -1,0 +1,138 @@
+[
+  {
+    "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d601",
+    "title": "1.1: Defines a UserRes struct type with all 7 fields (Login, Type, SiteAdmin, Name, Company, UserURL, LdapDN) in v1 accessible by both detectors",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d602",
+    "title": "1.2: Defines a HeaderInfo struct type with all 2 fields (Scopes, Expiry) in v1 for header data",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c3d4e5f6a7b8c9d0e1f2a3b4c5d60102",
+    "title": "1.3: Implements a VerifyGithub method on Scanner with inline HTTP request logic for token verification, with signature (ctx context.Context, client *http.Client, token string) returning (bool, *UserRes, *HeaderInfo, error)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d4e5f6a7b8c9d0e1f2a3b4c5d6010203",
+    "title": "1.4: Implements a SetUserResponse function with signature (userResponse *UserRes, s1 *detectors.Result) that populates ExtraData with user information",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d4e5f6a7b8c9d0e1f2a3b4c5d6010204",
+    "title": "1.5: Implements a SetHeaderInfo function with signature (headers *HeaderInfo, s1 *detectors.Result) that populates ExtraData with scopes and expiry",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f6a7b8c9d0e1f2a3b4c5d60102030405",
+    "title": "1.6: Modifies v2 Scanner struct to embed v1.Scanner for reusing verification logic",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f6a7b8c9d0e1f2a3b4c5d60102030406",
+    "title": "1.7: Calls all 3 shared functions (VerifyGithub, SetUserResponse, SetHeaderInfo) from v1 in v2 instead of duplicating inline logic",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a7b8c9d0e1f2a3b4c5d6010203040506",
+    "title": "1.8: Exports all 2 struct types (UserRes, HeaderInfo) from v1 so v2 detector can import and use them",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f2a3b4c5d6a7b8c9d0e1f2a3b4c5d6a8",
+    "title": "1.9: Removes all 2 unused imports (encoding/json, net/http) from v2 detector after consolidation",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b8c9d0e1f2a3b4c5d6a7b8c9d0e1f2a3",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "c9d0e1f2a3b4c5d6a7b8c9d0e1f2a3b4",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d0e1f2a3b4c5d6a7b8c9d0e1f2a3b4c5",
+    "title": "3.1: Removes the duplicate userRes struct definition from v2 detector after consolidation",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e1f2a3b4c5d6a7b8c9d0e1f2a3b4c5d6",
+    "title": "3.2: Removes the duplicate inline verification loop from the FromData function in v2 detector after consolidation",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a3b4c5d6a7b8c9d0e1f2a3b4c5d6a7b8",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e7b8c9d0e1f2a3b4c5d6a7b8c9d0e1f2",
+    "title": "4.1: Alters the token verification logic so that HTTP 2xx status codes with a decodable JSON response no longer set Verified to true",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f8c9d0e1f2a3b4c5d6a7b8c9d0e1f2a3",
+    "title": "4.2: Removes the version-specific token pattern matching (keyPat regex) from either v1 or v2 detector",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

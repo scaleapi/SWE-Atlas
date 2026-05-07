@@ -1,0 +1,34 @@
+{
+  "files": [
+    {
+      "name": "api/v1/group_routes_test.go"
+    },
+    {
+      "name": "js/initcontext_test.go"
+    },
+    {
+      "name": "js/modules/k6/grpc/params_test.go"
+    },
+    {
+      "name": "js/modules/k6/grpc/teststate_test.go"
+    },
+    {
+      "name": "js/modules/k6/http/request_test.go"
+    },
+    {
+      "name": "js/modules/k6/http/response_test.go"
+    },
+    {
+      "name": "js/modules/k6/k6_test.go"
+    },
+    {
+      "name": "js/modules/k6/ws/ws_test.go"
+    },
+    {
+      "name": "js/runner_test.go"
+    },
+    {
+      "name": "lib/group_summary_test.go"
+    }
+  ]
+}

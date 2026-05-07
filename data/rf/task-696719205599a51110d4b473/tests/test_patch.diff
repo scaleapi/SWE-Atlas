@@ -1,0 +1,197 @@
+diff --git a/test/packet.uts b/test/packet.uts
+index cd6c944d..5711bd93 100644
+--- a/test/packet.uts
++++ b/test/packet.uts
+@@ -297,3 +297,150 @@ assert pl2[0].version == 6
+ 
+ pl2 = pl1.getlayer(PacketD, nb=1, flt={'version': 1})
+ assert len(pl2) == 0
++
+++ Test _pkt_ls function
++
++= _pkt_ls returns list of tuples for simple packet class
++from scapy.packet import _pkt_ls, Packet
++from scapy.fields import ByteField, ShortField, IntField
++
++class SimplePkt(Packet):
++    name = "SimplePkt"
++    fields_desc = [ByteField("a", 0), ShortField("b", 1)]
++
++result = _pkt_ls(SimplePkt)
++assert isinstance(result, list)
++assert len(result) == 2
++assert result[0][0] == "a"
++assert result[1][0] == "b"
++
++= _pkt_ls returns field class type in tuple
++result = _pkt_ls(SimplePkt)
++fname, cls, clsne, dflt, long_attrs = result[0]
++assert fname == "a"
++assert cls == ByteField
++assert dflt == 0
++
++= _pkt_ls works with packet instance
++pkt = SimplePkt(a=5, b=10)
++result = _pkt_ls(pkt)
++assert len(result) == 2
++assert result[0][0] == "a"
++assert result[0][3] == 0
++
++= _pkt_ls raises ValueError for non-Packet input
++try:
++    _pkt_ls("not a packet")
++    assert False, "Should have raised ValueError"
++except ValueError:
++    pass
++
++= _pkt_ls raises ValueError for integer input
++try:
++    _pkt_ls(123)
++    assert False, "Should have raised ValueError"
++except ValueError:
++    pass
++
++= _pkt_ls handles BitField with size info
++from scapy.fields import BitField
++
++class BitPkt(Packet):
++    name = "BitPkt"
++    fields_desc = [BitField("flags", 0, 4)]
++
++result = _pkt_ls(BitPkt)
++fname, cls, clsne, dflt, long_attrs = result[0]
++assert fname == "flags"
++assert cls == BitField
++assert "4 bit" in clsne
++
++= _pkt_ls handles ConditionalField
++from scapy.fields import ConditionalField
++
++class CondPkt(Packet):
++    name = "CondPkt"
++    fields_desc = [
++        ByteField("type", 0),
++        ConditionalField(ShortField("val", 0), lambda p: p.type == 1)
++    ]
++
++result = _pkt_ls(CondPkt)
++assert len(result) == 2
++fname, cls, clsne, dflt, long_attrs = result[1]
++assert fname == "val"
++assert "Cond" in clsne
++
++= _pkt_ls handles empty fields_desc
++class EmptyPkt(Packet):
++    name = "EmptyPkt"
++    fields_desc = []
++
++result = _pkt_ls(EmptyPkt)
++assert result == []
++
++= _pkt_ls verbose mode with EnumField
++from scapy.fields import ByteEnumField
++
++class EnumPkt(Packet):
++    name = "EnumPkt"
++    fields_desc = [ByteEnumField("code", 0, {0: "zero", 1: "one", 2: "two"})]
++
++result = _pkt_ls(EnumPkt, verbose=True)
++assert len(result) == 1
++fname, cls, clsne, dflt, long_attrs = result[0]
++assert fname == "code"
++assert len(long_attrs) > 0
++
++= _pkt_ls handles BitField with size=1 (singular bit)
++class BitPkt1(Packet):
++    name = "BitPkt1"
++    fields_desc = [BitField("flag", 0, 1)]
++
++result = _pkt_ls(BitPkt1)
++fname, cls, clsne, dflt, long_attrs = result[0]
++assert fname == "flag"
++assert "1 bit" in clsne
++
++= _pkt_ls verbose mode with FlagsField
++from scapy.fields import FlagsField
++
++class FlagsPkt(Packet):
++    name = "FlagsPkt"
++    fields_desc = [FlagsField("flags", 0, 8, ["a", "b", "c", "d", "e", "f", "g", "h"])]
++
++result = _pkt_ls(FlagsPkt, verbose=True)
++assert len(result) == 1
++fname, cls, clsne, dflt, long_attrs = result[0]
++assert fname == "flags"
++assert len(long_attrs) > 0
++
++= _pkt_ls handles MultiEnumField
++from scapy.fields import MultiEnumField
++
++class MultiEnumPkt(Packet):
++    name = "MultiEnumPkt"
++    fields_desc = [
++        ByteField("type", 0),
++        MultiEnumField("code", 0, {0: {0: "a", 1: "b"}, 1: {0: "c", 1: "d"}},
++                       depends_on=lambda pkt: pkt.type)
++    ]
++
++result = _pkt_ls(MultiEnumPkt)
++assert len(result) == 2
++fname, cls, clsne, dflt, long_attrs = result[1]
++assert fname == "code"
++assert "Depends on" in clsne
++
++= _pkt_ls handles MultiEnumField with verbose mode
++result = _pkt_ls(MultiEnumPkt, verbose=True)
++assert len(result) == 2
++fname, cls, clsne, dflt, long_attrs = result[1]
++assert len(long_attrs) > 0
++
++= _pkt_ls handles MultiEnumField with packet instance
++pkt = MultiEnumPkt(type=0, code=1)
++result = _pkt_ls(pkt, verbose=True)
++assert len(result) == 2
++assert result[0][0] == "type"
++assert result[1][0] == "code"
+diff --git a/test/regression.uts b/test/regression.uts
+index 9d545ebf..2507cde5 100644
+--- a/test/regression.uts
++++ b/test/regression.uts
+@@ -764,6 +764,37 @@ assert NTP in x
+ = fuzz on packets with FlagsField
+ assert isinstance(fuzz(TCP()).flags, VolatileValue)
+ 
++= AutoTime inherits from RandNum
++from scapy.volatile import AutoTime, RandNum
++assert issubclass(AutoTime, RandNum)
++
++= AutoTime default initialization
++import time
++at = AutoTime()
++fixed = at._fix()
++assert isinstance(fixed, float)
++assert abs(fixed - time.time()) < 1
++
++= AutoTime with base time
++import time
++base_time = time.time() - 100
++at = AutoTime(base=base_time)
++fixed = at._fix()
++assert abs(fixed - base_time) < 1
++
++= AutoTime repr does not crash
++at = AutoTime()
++r = repr(at)
++assert r is not None
++
++= IntAutoTime returns integer
++from scapy.volatile import IntAutoTime
++import time
++iat = IntAutoTime()
++fixed = iat._fix()
++assert isinstance(fixed, int)
++assert abs(fixed - int(time.time())) < 2
++
+ = Building some packets
+ ~ basic IP TCP UDP NTP LLC SNAP Dot11
+ IP()/TCP()

@@ -1,0 +1,34 @@
+{
+  "files": [
+    {
+      "name": "api/v1/group_routes_test.go"
+    },
+    {
+      "name": "js/bundle_test.go"
+    },
+    {
+      "name": "js/console_test.go"
+    },
+    {
+      "name": "js/modules/k6/http/async_request_test.go"
+    },
+    {
+      "name": "js/modules/k6/http/batch_test.go"
+    },
+    {
+      "name": "js/modules/k6/http/request_test.go"
+    },
+    {
+      "name": "lib/fieldlogger_compat_test.go"
+    },
+    {
+      "name": "lib/testutils/logrus_hook_test.go"
+    },
+    {
+      "name": "metrics/engine/ingester_test.go"
+    },
+    {
+      "name": "output/csv/config_fieldlogger_test.go"
+    }
+  ]
+}

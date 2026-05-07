@@ -1,0 +1,122 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1d9803a6c498c39f9b64cde6b5452af7",
+    "title": "1.1: Registers the fileext keyword with name \"fileext\" in the sigmatch_table",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "cfb955c408a9a4789c8403b3b1aae73e",
+    "title": "1.2: Configures the fileext keyword with both parsing flags (SIGMATCH_QUOTES_OPTIONAL, SIGMATCH_HANDLE_NEGATION)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ee8989eb50fe11344ad6d1348228e185",
+    "title": "1.3: Implements the fileext setup using content matching infrastructure rather than a custom data structure and FileMatch callback",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4d4b95fcabdb2ae692e35af33fc78602",
+    "title": "1.4: Sets both file inspection flags (FILE_SIG_NEED_FILE, FILE_SIG_NEED_FILENAME) when the fileext keyword is used in a signature",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "48e504192f5dda11a9831245449cbe4e",
+    "title": "1.5: Ensures the fileext keyword performs case-insensitive matching",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5fead06eebe9a85c52b92e02080dd9a4",
+    "title": "1.6: Ensures the fileext match is anchored to the end of the filename",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3fc0d19dbc43c463627334497a9d9bfc",
+    "title": "3.1: Removes the src/detect-fileext.c source file",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f6728af1d32780c67a77cd6a9dc6e3c1",
+    "title": "3.2: Removes the src/detect-fileext.h header file",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b46c4358a91a0e9c5c87119ff6d338f2",
+    "title": "3.3: Removes both fileext entries (detect-fileext.c, detect-fileext.h) from src/Makefile.am",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "cb99350c8bc0f649fa7e622b9c604ec1",
+    "title": "3.4: Removes both fileext references (#include \"detect-fileext.h\", DetectFileextRegister() call) from src/detect-engine-register.c",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "47df6a126777c48acf7a2eb5625dd6b4",
+    "title": "4.1: Removes any of the 2 types of unrelated entries (keyword registrations, #include directives) from src/detect-engine-register.c",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

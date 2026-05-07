@@ -1,0 +1,339 @@
+diff --git a/internal/cmd/test_load.go b/internal/cmd/test_load.go
+index 31e16edca..a495a9be7 100644
+--- a/internal/cmd/test_load.go
++++ b/internal/cmd/test_load.go
+@@ -13,6 +13,7 @@ import (
+ 	"github.com/sirupsen/logrus"
+ 	"github.com/spf13/cobra"
+ 	"github.com/spf13/pflag"
++
+ 	"go.k6.io/k6/cmd/state"
+ 	"go.k6.io/k6/errext"
+ 	"go.k6.io/k6/errext/exitcodes"
+@@ -67,7 +68,7 @@ func loadLocalTest(gs *state.GlobalState, cmd *cobra.Command, args []string) (*l
+ 	}
+ 
+ 	if runtimeOptions.CompatibilityMode.String == lib.CompatibilityModeExperimentalEnhanced.String() {
+-		gs.Logger.Warnf("ComaptibilityMode %[1]q is deprecated. Types are stripped by default for `.ts` files. "+
++		gs.Logger.Warnf("CompatibilityMode %[1]q is deprecated. Types are stripped by default for `.ts` files. "+
+ 			"Please move to using %[2]q instead as %[1]q will be removed in the future",
+ 			lib.CompatibilityModeExperimentalEnhanced.String(), lib.CompatibilityModeBase.String())
+ 	}
+@@ -134,8 +135,15 @@ func (lt *loadedTest) initializeFirstRunner(gs *state.GlobalState) error {
+ 	}
+ 	switch testType {
+ 	case testTypeJS:
++		specifier := lt.source.URL.String()
++		pwd := lt.source.URL.JoinPath("../")
+ 		logger.Debug("Trying to load as a JS test...")
+-		runner, err := js.New(lt.preInitState, lt.source, lt.fileSystems)
++		moduleResolver := js.NewModuleResolver(pwd, lt.preInitState, lt.fileSystems)
++		err := moduleResolver.LoadMainModule(pwd, specifier, lt.source.Data)
++		if err != nil {
++			return fmt.Errorf("could not load JS test '%s': %w", testPath, err)
++		}
++		runner, err := js.New(lt.preInitState, lt.source, lt.fileSystems, moduleResolver)
+ 		// TODO: should we use common.UnwrapGojaInterruptedError() here?
+ 		if err != nil {
+ 			return fmt.Errorf("could not load JS test '%s': %w", testPath, err)
+@@ -157,7 +165,14 @@ func (lt *loadedTest) initializeFirstRunner(gs *state.GlobalState) error {
+ 		switch arc.Type {
+ 		case testTypeJS:
+ 			logger.Debug("Evaluating JS from archive bundle...")
+-			runner, err := js.NewFromArchive(lt.preInitState, arc)
++			specifier := arc.Filename
++			pwd := arc.PwdURL
++			moduleResolver := js.NewModuleResolver(pwd, lt.preInitState, arc.Filesystems)
++			err := moduleResolver.LoadMainModule(pwd, specifier, arc.Data)
++			if err != nil {
++				return fmt.Errorf("could not load JS test '%s': %w", testPath, err)
++			}
++			runner, err := js.NewFromArchive(lt.preInitState, arc, moduleResolver)
+ 			if err != nil {
+ 				return fmt.Errorf("could not load JS from test archive bundle '%s': %w", testPath, err)
+ 			}
+diff --git a/internal/js/bundle.go b/internal/js/bundle.go
+index 5c71fb11d..da18d2344 100644
+--- a/internal/js/bundle.go
++++ b/internal/js/bundle.go
+@@ -6,6 +6,7 @@ import (
+ 	"encoding/json"
+ 	"errors"
+ 	"fmt"
++	"maps"
+ 	"net/url"
+ 	"path/filepath"
+ 	"runtime"
+@@ -13,7 +14,6 @@ import (
+ 
+ 	"github.com/grafana/sobek"
+ 	"github.com/sirupsen/logrus"
+-	"gopkg.in/guregu/null.v3"
+ 
+ 	"go.k6.io/k6/errext"
+ 	"go.k6.io/k6/errext/exitcodes"
+@@ -80,14 +80,15 @@ func (bi *BundleInstance) getExported(name string) sobek.Value {
+ 
+ // NewBundle creates a new bundle from a source file and a filesystem.
+ func NewBundle(
+-	piState *lib.TestPreInitState, src *loader.SourceData, filesystems map[string]fsext.Fs,
++	piState *lib.TestPreInitState, src *loader.SourceData, filesystems map[string]fsext.Fs, mr *modules.ModuleResolver,
+ ) (*Bundle, error) {
+-	return newBundle(piState, src, filesystems, lib.Options{}, true)
++	return newBundle(piState, src, filesystems, lib.Options{}, true, mr)
+ }
+ 
+ func newBundle(
+ 	piState *lib.TestPreInitState, src *loader.SourceData, filesystems map[string]fsext.Fs,
+ 	options lib.Options, updateOptions bool, // TODO: try to figure out a way to not need both
++	moduleResolver *modules.ModuleResolver,
+ ) (*Bundle, error) {
+ 	compatMode, err := lib.ValidateCompatibilityMode(piState.RuntimeOptions.CompatibilityMode.String)
+ 	if err != nil {
+@@ -103,16 +104,13 @@ func newBundle(
+ 		filesystems:       filesystems,
+ 		pwd:               src.PWD,
+ 		preInitState:      piState,
++		ModuleResolver:    moduleResolver,
+ 	}
+ 
+ 	if bundle.pwd == nil {
+ 		bundle.pwd = loader.Dir(src.URL)
+ 	}
+ 
+-	c := bundle.newCompiler(piState.Logger)
+-	bundle.ModuleResolver = modules.NewModuleResolver(
+-		getJSModules(), generateFileLoad(bundle), c, bundle.pwd, piState.Usage, piState.Logger)
+-
+ 	// Instantiate the bundle into a new VM using a bound init context. This uses a context with a
+ 	// runtime, but no state, to allow module-provided types to function within the init context.
+ 	// TODO use a real context
+@@ -140,30 +138,25 @@ func newBundle(
+ }
+ 
+ // NewBundleFromArchive creates a new bundle from an lib.Archive.
+-func NewBundleFromArchive(piState *lib.TestPreInitState, arc *lib.Archive) (*Bundle, error) {
++func NewBundleFromArchive(
++	piState *lib.TestPreInitState, arc *lib.Archive, mr *modules.ModuleResolver,
++) (*Bundle, error) {
+ 	if arc.Type != "js" {
+ 		return nil, fmt.Errorf("expected bundle type 'js', got '%s'", arc.Type)
+ 	}
+ 
+-	if !piState.RuntimeOptions.CompatibilityMode.Valid {
+-		// `k6 run --compatibility-mode=whatever archive.tar` should override
+-		// whatever value is in the archive
+-		piState.RuntimeOptions.CompatibilityMode = null.StringFrom(arc.CompatibilityMode)
+-	}
+ 	env := arc.Env
+ 	if env == nil {
+ 		// Older archives (<=0.20.0) don't have an "env" property
+ 		env = make(map[string]string)
+ 	}
+-	for k, v := range piState.RuntimeOptions.Env {
+-		env[k] = v
+-	}
++	maps.Copy(env, piState.RuntimeOptions.Env)
+ 	piState.RuntimeOptions.Env = env
+ 
+ 	return newBundle(piState, &loader.SourceData{
+ 		Data: arc.Data,
+ 		URL:  arc.FilenameURL,
+-	}, arc.Filesystems, arc.Options, false)
++	}, arc.Filesystems, arc.Options, false, mr)
+ }
+ 
+ func (b *Bundle) makeArchive() *lib.Archive {
+@@ -305,12 +298,11 @@ func (bi *BundleInstance) manipulateOptions(options lib.Options) error {
+ 	return instErr
+ }
+ 
+-func (b *Bundle) newCompiler(logger logrus.FieldLogger) *compiler.Compiler {
+-	c := compiler.New(logger)
+-	c.WithUsage(b.preInitState.Usage)
++func newCompiler(preInitState *lib.TestPreInitState, filesystems map[string]fsext.Fs) *compiler.Compiler {
++	c := compiler.New(preInitState.Logger)
++	c.WithUsage(preInitState.Usage)
+ 	c.Options = compiler.Options{
+-		CompatibilityMode: b.CompatibilityMode,
+-		SourceMapLoader:   generateSourceMapLoader(logger, b.filesystems),
++		SourceMapLoader: generateSourceMapLoader(preInitState.Logger, filesystems),
+ 	}
+ 	return c
+ }
+@@ -541,18 +533,26 @@ func (b *Bundle) setInitGlobals(rt *sobek.Runtime, vu *moduleVUImpl, modSys *mod
+ 	})
+ }
+ 
+-func generateFileLoad(b *Bundle) modules.FileLoader {
++func generateFileLoad(logger logrus.FieldLogger, filesystems map[string]fsext.Fs) modules.FileLoader {
+ 	return func(specifier *url.URL, name string) ([]byte, error) {
+ 		if filepath.IsAbs(name) && runtime.GOOS == "windows" {
+-			b.preInitState.Logger.Warnf("'%s' was imported with an absolute path - this won't be cross-platform and "+
++			logger.Warnf("'%s' was imported with an absolute path - this won't be cross-platform and "+
+ 				"won't work if you move the script between machines or run it with `k6 cloud`; if absolute paths are "+
+ 				"required, import them with the `file://` schema for slightly better compatibility",
+ 				name)
+ 		}
+-		d, err := loader.Load(b.preInitState.Logger, b.filesystems, specifier, name)
++		d, err := loader.Load(logger, filesystems, specifier, name)
+ 		if err != nil {
+ 			return nil, err
+ 		}
+ 		return d.Data, nil
+ 	}
+ }
++
++// NewModuleResolver is used to create a Runner appropriate module resolver
++func NewModuleResolver(pwd *url.URL, preInitState *lib.TestPreInitState, filesystems map[string]fsext.Fs,
++) *modules.ModuleResolver {
++	c := newCompiler(preInitState, filesystems)
++	return modules.NewModuleResolver(
++		getJSModules(), generateFileLoad(preInitState.Logger, filesystems), c, pwd, preInitState.Usage, preInitState.Logger)
++}
+diff --git a/internal/js/compiler/compiler.go b/internal/js/compiler/compiler.go
+index 022d8c0d7..de00026d6 100644
+--- a/internal/js/compiler/compiler.go
++++ b/internal/js/compiler/compiler.go
+@@ -16,7 +16,6 @@ import (
+ 	"github.com/sirupsen/logrus"
+ 
+ 	"go.k6.io/k6/internal/usage"
+-	"go.k6.io/k6/lib"
+ )
+ 
+ // A Compiler compiles JavaScript or TypeScript source code into a sobek.Program
+@@ -44,8 +43,7 @@ func (c *Compiler) WithUsage(u *usage.Usage) {
+ 
+ // Options are options to the compiler
+ type Options struct {
+-	CompatibilityMode lib.CompatibilityMode
+-	SourceMapLoader   func(string) ([]byte, error)
++	SourceMapLoader func(string) ([]byte, error)
+ }
+ 
+ // parsingState is helper struct to keep the state of a parsing
+@@ -53,12 +51,11 @@ type parsingState struct {
+ 	// set when we couldn't load external source map so we can try parsing without loading it
+ 	couldntLoadSourceMap bool
+ 	// srcMap is the current full sourceMap that has been generated read so far
+-	srcMap            []byte
+-	srcMapError       error
+-	commonJSWrapped   bool // whether the original source is wrapped in a function to make it a CommonJS module
+-	compatibilityMode lib.CompatibilityMode
+-	compiler          *Compiler
+-	esm               bool
++	srcMap          []byte
++	srcMapError     error
++	commonJSWrapped bool // whether the original source is wrapped in a function to make it a CommonJS module
++	compiler        *Compiler
++	esm             bool
+ 
+ 	loader func(string) ([]byte, error)
+ }
+@@ -70,11 +67,10 @@ func (c *Compiler) Parse(
+ 	src, filename string, commonJSWrap bool, esm bool,
+ ) (prg *ast.Program, finalCode string, err error) {
+ 	state := &parsingState{
+-		loader:            c.Options.SourceMapLoader,
+-		compatibilityMode: c.Options.CompatibilityMode,
+-		commonJSWrapped:   commonJSWrap,
+-		compiler:          c,
+-		esm:               esm,
++		loader:          c.Options.SourceMapLoader,
++		commonJSWrapped: commonJSWrap,
++		compiler:        c,
++		esm:             esm,
+ 	}
+ 	return state.parseImpl(src, filename, commonJSWrap)
+ }
+@@ -132,7 +128,6 @@ func (ps *parsingState) parseImpl(src, filename string, commonJSWrap bool) (*ast
+ 			code += "\n//# sourceMappingURL=" + internalSourceMapURL
+ 		}
+ 		ps.commonJSWrapped = false
+-		ps.compatibilityMode = lib.CompatibilityModeBase
+ 		return ps.parseImpl(code, filename, commonJSWrap)
+ 	}
+ 	return nil, "", err
+diff --git a/internal/js/runner.go b/internal/js/runner.go
+index 3f3d92e58..7743850aa 100644
+--- a/internal/js/runner.go
++++ b/internal/js/runner.go
+@@ -29,6 +29,7 @@ import (
+ 	"go.k6.io/k6/internal/lib/summary"
+ 	"go.k6.io/k6/internal/loader"
+ 	"go.k6.io/k6/js/common"
++	"go.k6.io/k6/js/modules"
+ 	"go.k6.io/k6/lib"
+ 	"go.k6.io/k6/lib/fsext"
+ 	"go.k6.io/k6/lib/netext"
+@@ -63,8 +64,10 @@ type Runner struct {
+ }
+ 
+ // New returns a new Runner for the provided source
+-func New(piState *lib.TestPreInitState, src *loader.SourceData, filesystems map[string]fsext.Fs) (*Runner, error) {
+-	bundle, err := NewBundle(piState, src, filesystems)
++func New(
++	piState *lib.TestPreInitState, src *loader.SourceData, filesystems map[string]fsext.Fs, mr *modules.ModuleResolver,
++) (*Runner, error) {
++	bundle, err := NewBundle(piState, src, filesystems, mr)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+@@ -73,8 +76,8 @@ func New(piState *lib.TestPreInitState, src *loader.SourceData, filesystems map[
+ }
+ 
+ // NewFromArchive returns a new Runner from the source in the provided archive
+-func NewFromArchive(piState *lib.TestPreInitState, arc *lib.Archive) (*Runner, error) {
+-	bundle, err := NewBundleFromArchive(piState, arc)
++func NewFromArchive(piState *lib.TestPreInitState, arc *lib.Archive, mr *modules.ModuleResolver) (*Runner, error) {
++	bundle, err := NewBundleFromArchive(piState, arc, mr)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+diff --git a/js/modules/resolution.go b/js/modules/resolution.go
+index 84d684b9c..8fabee9a9 100644
+--- a/js/modules/resolution.go
++++ b/js/modules/resolution.go
+@@ -210,6 +210,28 @@ func (mr *ModuleResolver) reversePath(referencingScriptOrModule interface{}) *ur
+ 	return p.JoinPath("..")
+ }
+ 
++// LoadMainModule loads a main module and resolves all it dependencies checking for any linking issues.
++// It does not run any javascript code, just compiling it and resolving module dependencies.
++func (mr *ModuleResolver) LoadMainModule(pwd *url.URL, specifier string, data []byte) error {
++	if _, err := mr.resolveLoaded(pwd, specifier, data); err != nil {
++		return err
++	}
++
++	mod, err := mr.resolve(pwd, specifier)
++	if err != nil {
++		return err
++	}
++	if err = mod.Link(); err != nil {
++		return err
++	}
++	_, ok := mod.(sobek.CyclicModuleRecord)
++	if !ok {
++		panic("somehow running source data for " + specifier + " didn't produce a cyclic module record")
++	}
++
++	return nil
++}
++
+ // ModuleSystem is implementing an ESM like module system to resolve js modules for k6 usage
+ type ModuleSystem struct {
+ 	vu            VU
+@@ -236,10 +258,10 @@ func NewModuleSystem(resolver *ModuleResolver, vu VU) *ModuleSystem {
+ func (ms *ModuleSystem) RunSourceData(source *loader.SourceData) (*RunSourceDataResult, error) {
+ 	specifier := source.URL.String()
+ 	pwd := source.URL.JoinPath("../")
+-	if _, err := ms.resolver.resolveLoaded(pwd, specifier, source.Data); err != nil {
++	err := ms.resolver.LoadMainModule(pwd, specifier, source.Data)
++	if err != nil {
+ 		return nil, err
+ 	}
+-
+ 	mod, err := ms.resolver.resolve(pwd, specifier)
+ 	if err != nil {
+ 		return nil, err

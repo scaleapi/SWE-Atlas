@@ -1,0 +1,64 @@
+{
+  "tests": [
+    {
+      "name": "OpcDaRequest"
+    },
+    {
+      "name": "OpcDaRequestLE"
+    },
+    {
+      "name": "OpcDaPing"
+    },
+    {
+      "name": "OpcDaResponse"
+    },
+    {
+      "name": "OpcDaResponseLE"
+    },
+    {
+      "name": "OpcDaAlter_context"
+    },
+    {
+      "name": "OpcDaAlter_contextLE"
+    },
+    {
+      "name": "PDU dispatch: OpcDaFackLE dispatched for LE packets with pduType 9"
+    },
+    {
+      "name": "PDU dispatch: OpcDaBind_nakLE dispatched for LE packets with pduType 13"
+    },
+    {
+      "name": "PDU dispatch: Big-endian header dispatches to BE PDU class"
+    },
+    {
+      "name": "OpcDaBind_ack field name fix (pad2 instead of pda2)"
+    },
+    {
+      "name": "OpcDaAlter_Context_Resp field name fix (portSpec instead of portSPec)"
+    },
+    {
+      "name": "OpcDaFault has authentication field"
+    },
+    {
+      "name": "OpcDaReject uses stubData field name"
+    },
+    {
+      "name": "AV_PAIR class with correct field names per MS-NLMP spec"
+    },
+    {
+      "name": "ResultElement has reason field"
+    },
+    {
+      "name": "LenStringPacket has data field"
+    },
+    {
+      "name": "NTLMSSP packet with MS-NLMP specification field names"
+    },
+    {
+      "name": "OpcDaRequest has uuid and stubData fields"
+    },
+    {
+      "name": "RequestStubData class replaces RequestSubData"
+    }
+  ]
+}

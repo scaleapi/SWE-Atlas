@@ -1,0 +1,114 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e52b90ecf52af65db0970a0f8eeca0a2",
+    "title": "1.1: Removes the verify boolean parameter from the WithDetectors function signature in pkg/engine/engine.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3a56b9886bf39dd8e849205a42b541a8",
+    "title": "1.2: Creates a new WithVerify option function to control verification independently in pkg/engine/engine.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "600813497abcec2b237f7af9b7c4a641",
+    "title": "1.3: Stores verification configuration at the Engine level in pkg/engine/engine.go instead of per detector",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e6866101ed25dddc7fde8a71f1db57c7",
+    "title": "1.4: Removes all 5 verification-tracking definitions (detectorKey struct, DetectorInfo struct, detectorTypeToDetectorInfo field, detectors map[bool][] field, keywordsToDetectors field) from pkg/engine/ahocorasickcore.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "db4d84a8b8a44cb643b09362712c8432",
+    "title": "1.5: Uses the Engine-level verify setting for chunk verification in pkg/engine/engine.go instead of per-detector ShouldVerify",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e43d032e4d67b884636e9465dca5dea0",
+    "title": "1.6: Updates main.go to pass verification via WithVerify instead of through WithDetectors",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "fa543c8704d43fed3ab0660c23ca5f21",
+    "title": "2.1: Adds documentation for both new verification API surfaces (verify field, WithVerify function) in pkg/engine/engine.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1e901659d858f6f55a5184ab8a77d4ea",
+    "title": "4.1: Misbuilds the keyword-to-detector mappings in NewAhoCorasickCore, causing MatchString or PopulateDetectorsByMatch to return wrong results in pkg/engine/ahocorasickcore.go",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f8bc6e3dd98d3540e45b3408d283b073",
+    "title": "4.2: Removes the ability to configure verification entirely (no WithVerify option or verify setting not applied to Chunk.Verify during scanning) in pkg/engine/engine.go",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "fdb66f489ad26f646fbf5fc07f7b0f42",
+    "title": "4.3: Adds redundant verify fields to internal structs (such as, AhoCorasickCore, detectableChunk) instead of using the single Engine.verify field in pkg/engine/engine.go",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

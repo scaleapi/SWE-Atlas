@@ -1,0 +1,286 @@
+diff --git a/internal/js/modules/k6/browser/tests/locator_test.go b/internal/js/modules/k6/browser/tests/locator_test.go
+index e862f0703..6f60f7885 100644
+--- a/internal/js/modules/k6/browser/tests/locator_test.go
++++ b/internal/js/modules/k6/browser/tests/locator_test.go
+@@ -1298,6 +1298,281 @@ func TestLocatorLocatorOptions(t *testing.T) {
+ 	})
+ }
+ 
++// TestLocatorMethodBehavior exercises all Locator methods that were changed
++// during the refactoring, verifying they produce correct results on
++// single-match selectors. This is a behavioral test that is agnostic to
++// whether the implementation uses private helper methods or inlines the logic.
++func TestLocatorMethodBehavior(t *testing.T) {
++	t.Parallel()
++
++	tb := newTestBrowser(t, withFileServer())
++	p := tb.NewPage(nil)
++	opts := &common.FrameGotoOptions{
++		Timeout: common.DefaultTimeout,
++	}
++	_, err := p.Goto(tb.staticURL("locators.html"), opts)
++	require.NoError(t, err)
++
++	t.Run("click_and_dblclick", func(t *testing.T) {
++		clickL := p.Locator("#link", nil)
++		require.NoError(t, clickL.Click(common.NewFrameClickOptions(clickL.Timeout())))
++		v, err := p.Evaluate(`() => window.result`)
++		require.NoError(t, err)
++		require.True(t, asBool(t, v))
++
++		_, err = p.Evaluate(`() => { window.result = false; }`)
++		require.NoError(t, err)
++
++		dblL := p.Locator("#linkdbl", nil)
++		require.NoError(t, dblL.Dblclick(common.NewFrameDblClickOptions(dblL.Timeout())))
++		v, err = p.Evaluate(`() => window.dblclick`)
++		require.NoError(t, err)
++		require.True(t, asBool(t, v))
++	})
++
++	t.Run("fill_clear_inputvalue", func(t *testing.T) {
++		l := p.Locator("#inputText", nil)
++
++		require.NoError(t, l.Fill("test value", common.NewFrameFillOptions(l.Timeout())))
++		iv, err := l.InputValue(common.NewFrameInputValueOptions(l.Timeout()))
++		require.NoError(t, err)
++		require.Equal(t, "test value", iv)
++
++		require.NoError(t, l.Clear(common.NewFrameFillOptions(l.Timeout())))
++		iv, err = l.InputValue(common.NewFrameInputValueOptions(l.Timeout()))
++		require.NoError(t, err)
++		require.Equal(t, "", iv)
++	})
++
++	t.Run("type_and_press", func(t *testing.T) {
++		l := p.Locator("#inputText", nil)
++		require.NoError(t, l.Fill("", common.NewFrameFillOptions(l.Timeout())))
++		require.NoError(t, l.Type("hello", common.NewFrameTypeOptions(l.Timeout())))
++		require.NoError(t, l.Press("KeyX", common.NewFramePressOptions(l.Timeout())))
++
++		iv, err := l.InputValue(common.NewFrameInputValueOptions(l.Timeout()))
++		require.NoError(t, err)
++		require.Equal(t, "hellox", iv)
++	})
++
++	t.Run("focus", func(t *testing.T) {
++		l := p.Locator("#inputText", nil)
++		require.NoError(t, l.Focus(common.NewFrameBaseOptions(l.Timeout())))
++		focused, err := p.Evaluate(
++			`() => document.activeElement == document.getElementById('inputText')`,
++		)
++		require.NoError(t, err)
++		require.True(t, asBool(t, focused))
++	})
++
++	t.Run("get_attribute", func(t *testing.T) {
++		l := p.Locator("#inputText", nil)
++		attr, ok, err := l.GetAttribute("type", common.NewFrameBaseOptions(l.Timeout()))
++		require.NoError(t, err)
++		require.True(t, ok)
++		require.Equal(t, "text", attr)
++	})
++
++	t.Run("hover", func(t *testing.T) {
++		_, err := p.Evaluate(`() => { window.result = false; }`)
++		require.NoError(t, err)
++
++		lo := p.Locator("#inputText", nil)
++		require.NoError(t, lo.Hover(common.NewFrameHoverOptions(lo.Timeout())))
++		v, err := p.Evaluate(`() => window.result`)
++		require.NoError(t, err)
++		require.True(t, asBool(t, v))
++	})
++
++	t.Run("innerHTML_innerText_textContent", func(t *testing.T) {
++		div := p.Locator("#divHello", nil)
++
++		html, err := div.InnerHTML(common.NewFrameInnerHTMLOptions(div.Timeout()))
++		require.NoError(t, err)
++		require.Equal(t, "<span>hello</span>", html)
++
++		text, ok, err := div.TextContent(common.NewFrameTextContentOptions(div.Timeout()))
++		require.NoError(t, err)
++		require.True(t, ok)
++		require.Equal(t, "hello", text)
++
++		span := p.Locator("#divHello > span", nil)
++		innerText, err := span.InnerText(common.NewFrameInnerTextOptions(span.Timeout()))
++		require.NoError(t, err)
++		require.Equal(t, "hello", innerText)
++	})
++
++	t.Run("checkbox_cycle", func(t *testing.T) {
++		l := p.Locator("#inputCheckbox", nil)
++
++		require.NoError(t, l.Check(common.NewFrameCheckOptions(l.Timeout())))
++		checked, err := l.IsChecked(common.NewFrameIsCheckedOptions(l.Timeout()))
++		require.NoError(t, err)
++		require.True(t, checked)
++
++		require.NoError(t, l.Uncheck(common.NewFrameUncheckOptions(l.Timeout())))
++		checked, err = l.IsChecked(common.NewFrameIsCheckedOptions(l.Timeout()))
++		require.NoError(t, err)
++		require.False(t, checked)
++
++		require.NoError(t, l.SetChecked(true, common.NewFrameCheckOptions(l.Timeout())))
++		checked, err = l.IsChecked(common.NewFrameIsCheckedOptions(l.Timeout()))
++		require.NoError(t, err)
++		require.True(t, checked)
++
++		require.NoError(t, l.SetChecked(false, common.NewFrameCheckOptions(l.Timeout())))
++		checked, err = l.IsChecked(common.NewFrameIsCheckedOptions(l.Timeout()))
++		require.NoError(t, err)
++		require.False(t, checked)
++	})
++
++	t.Run("element_state_queries", func(t *testing.T) {
++		l := p.Locator("#inputText", nil)
++
++		editable, err := l.IsEditable(common.NewFrameIsEditableOptions(l.Timeout()))
++		require.NoError(t, err)
++		require.True(t, editable)
++
++		enabled, err := l.IsEnabled(common.NewFrameIsEnabledOptions(l.Timeout()))
++		require.NoError(t, err)
++		require.True(t, enabled)
++
++		disabled, err := l.IsDisabled(common.NewFrameIsDisabledOptions(l.Timeout()))
++		require.NoError(t, err)
++		require.False(t, disabled)
++	})
++
++	t.Run("select_option", func(t *testing.T) {
++		l := p.Locator("#selectElement", nil)
++		a, err := common.ConvertSelectOptionValues(tb.vu.Runtime(), tb.toSobekValue(`option text 2`))
++		require.NoError(t, err)
++		rv, err := l.SelectOption(a, common.NewFrameSelectOptionOptions(l.Timeout()))
++		require.NoError(t, err)
++		require.Len(t, rv, 1)
++		require.Equal(t, "option text 2", rv[0])
++	})
++
++	t.Run("dispatch_event", func(t *testing.T) {
++		_, err := p.Evaluate(`() => { window.result = false; }`)
++		require.NoError(t, err)
++
++		lo := p.Locator("#link", nil)
++		require.NoError(t, lo.DispatchEvent("click", "mouseevent",
++			common.NewFrameDispatchEventOptions(lo.Timeout())))
++
++		v, err := p.Evaluate(`() => window.result`)
++		require.NoError(t, err)
++		require.True(t, asBool(t, v))
++	})
++
++	t.Run("wait_for", func(t *testing.T) {
++		visible := common.NewFrameWaitForSelectorOptions(100 * time.Millisecond)
++		require.NoError(t, p.Locator("#link", nil).WaitFor(visible))
++
++		hidden := common.NewFrameWaitForSelectorOptions(100 * time.Millisecond)
++		hidden.State = common.DOMElementStateHidden
++		require.NoError(t, p.Locator("#inputHiddenText", nil).WaitFor(hidden))
++	})
++}
++
++// TestLocatorStrictModeEnforcement verifies that all Locator methods enforce
++// strict mode by returning an error when the selector matches multiple elements.
++func TestLocatorStrictModeEnforcement(t *testing.T) {
++	t.Parallel()
++
++	tb := newTestBrowser(t, withFileServer())
++	p := tb.NewPage(nil)
++	opts := &common.FrameGotoOptions{
++		Timeout: common.DefaultTimeout,
++	}
++	_, err := p.Goto(tb.staticURL("locators.html"), opts)
++	require.NoError(t, err)
++
++	multiL := p.Locator("a", nil)
++	multiInput := p.Locator(`input[type=text]`, nil)
++	multiCheckbox := p.Locator(`input[type=checkbox]`, nil)
++	multiSelect := p.Locator("select", nil)
++
++	actionTests := []struct {
++		name string
++		fn   func() error
++	}{
++		{"Click", func() error { return multiL.Click(common.NewFrameClickOptions(100 * time.Millisecond)) }},
++		{"Dblclick", func() error {
++			return multiL.Dblclick(common.NewFrameDblClickOptions(100 * time.Millisecond))
++		}},
++		{"Fill", func() error { return multiInput.Fill("x", common.NewFrameFillOptions(100 * time.Millisecond)) }},
++		{"Clear", func() error { return multiInput.Clear(common.NewFrameFillOptions(100 * time.Millisecond)) }},
++		{"Focus", func() error { return multiL.Focus(common.NewFrameBaseOptions(100 * time.Millisecond)) }},
++		{"Hover", func() error { return multiL.Hover(common.NewFrameHoverOptions(100 * time.Millisecond)) }},
++		{"Press", func() error {
++			return multiL.Press("x", common.NewFramePressOptions(100 * time.Millisecond))
++		}},
++		{"Type", func() error { return multiL.Type("x", common.NewFrameTypeOptions(100 * time.Millisecond)) }},
++		{"Check", func() error { return multiCheckbox.Check(common.NewFrameCheckOptions(100 * time.Millisecond)) }},
++		{"Uncheck", func() error {
++			return multiCheckbox.Uncheck(common.NewFrameUncheckOptions(100 * time.Millisecond))
++		}},
++		{"SetChecked", func() error {
++			return multiCheckbox.SetChecked(true, common.NewFrameCheckOptions(100*time.Millisecond))
++		}},
++		{"DispatchEvent", func() error {
++			return multiL.DispatchEvent("click", "mouseevent",
++				common.NewFrameDispatchEventOptions(100*time.Millisecond))
++		}},
++		{"WaitFor", func() error {
++			return multiL.WaitFor(common.NewFrameWaitForSelectorOptions(100 * time.Millisecond))
++		}},
++		{"GetAttribute", func() error {
++			_, _, err := multiL.GetAttribute("href", common.NewFrameBaseOptions(100*time.Millisecond))
++			return err
++		}},
++		{"InnerHTML", func() error {
++			_, err := multiL.InnerHTML(common.NewFrameInnerHTMLOptions(100 * time.Millisecond))
++			return err
++		}},
++		{"InnerText", func() error {
++			_, err := multiL.InnerText(common.NewFrameInnerTextOptions(100 * time.Millisecond))
++			return err
++		}},
++		{"TextContent", func() error {
++			_, _, err := multiL.TextContent(common.NewFrameTextContentOptions(100 * time.Millisecond))
++			return err
++		}},
++		{"InputValue", func() error {
++			_, err := multiInput.InputValue(common.NewFrameInputValueOptions(100 * time.Millisecond))
++			return err
++		}},
++		{"SelectOption", func() error {
++			_, err := multiSelect.SelectOption([]any{""}, common.NewFrameSelectOptionOptions(100*time.Millisecond))
++			return err
++		}},
++		{"IsChecked", func() error {
++			_, err := multiL.IsChecked(common.NewFrameIsCheckedOptions(100 * time.Millisecond))
++			return err
++		}},
++		{"IsEditable", func() error {
++			_, err := multiL.IsEditable(common.NewFrameIsEditableOptions(100 * time.Millisecond))
++			return err
++		}},
++		{"IsEnabled", func() error {
++			_, err := multiL.IsEnabled(common.NewFrameIsEnabledOptions(100 * time.Millisecond))
++			return err
++		}},
++		{"IsDisabled", func() error {
++			_, err := multiL.IsDisabled(common.NewFrameIsDisabledOptions(100 * time.Millisecond))
++			return err
++		}},
++	}
++
++	for _, tt := range actionTests {
++		t.Run(tt.name, func(t *testing.T) {
++			t.Parallel()
++			require.Error(t, tt.fn(), "expected strict mode error for %s", tt.name)
++		})
++	}
++}
++
+ func TestVisibilityWithCORS(t *testing.T) {
+ 	t.Parallel()
+ 

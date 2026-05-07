@@ -1,0 +1,49 @@
+{
+  "files": [
+    {
+      "name": "mysql-test/suite/innodb/t/sys_defragment.test"
+    },
+    {
+      "name": "mysql-test/suite/innodb/t/sys_defragment.opt"
+    },
+    {
+      "name": "mysql-test/suite/innodb/r/sys_defragment.result"
+    },
+    {
+      "name": "mysql-test/suite/innodb/t/sys_defragment_fail.test"
+    },
+    {
+      "name": "mysql-test/suite/innodb/t/sys_defragment_fail.opt"
+    },
+    {
+      "name": "mysql-test/suite/innodb/r/sys_defragment_fail.result"
+    },
+    {
+      "name": "mysql-test/suite/innodb/t/flst_validate.test"
+    },
+    {
+      "name": "mysql-test/suite/innodb/t/flst_validate.opt"
+    },
+    {
+      "name": "mysql-test/suite/innodb/r/flst_validate.result"
+    },
+    {
+      "name": "mysql-test/suite/innodb/t/sys_truncate.test"
+    },
+    {
+      "name": "mysql-test/suite/innodb/t/sys_truncate.opt"
+    },
+    {
+      "name": "mysql-test/suite/innodb/r/sys_truncate.result"
+    },
+    {
+      "name": "mysql-test/suite/innodb/t/sys_truncate_debug.test"
+    },
+    {
+      "name": "mysql-test/suite/innodb/t/sys_truncate_debug.opt"
+    },
+    {
+      "name": "mysql-test/suite/innodb/r/sys_truncate_debug.result"
+    }
+  ]
+}

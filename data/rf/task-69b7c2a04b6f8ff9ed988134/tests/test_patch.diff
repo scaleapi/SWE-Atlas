@@ -1,0 +1,498 @@
+diff --git a/src/tests/output-tx.c b/src/tests/output-tx.c
+new file mode 100644
+--- /dev/null
++++ b/src/tests/output-tx.c
+@@ -0,0 +1,463 @@
++/* Copyright (C) 2020 Open Information Security Foundation
++ *
++ * You can copy, redistribute or modify this Program under the terms of
++ * the GNU General Public License version 2 as published by the Free
++ * Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * version 2 along with this program; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
++ * 02110-1301, USA.
++ */
++
++#include "../util-unittest.h"
++
++static int DummyTxLogger(ThreadVars *tv, void *thread_data,
++        const Packet *p, Flow *f, void *state, void *tx, uint64_t tx_id)
++{
++    return 0;
++}
++
++static TmEcode DummyTxLogThreadInit(ThreadVars *tv, const void *initdata,
++        void **data)
++{
++    *data = SCMalloc(1);
++    if (*data == NULL)
++        return TM_ECODE_FAILED;
++    return TM_ECODE_OK;
++}
++
++static TmEcode DummyTxLogThreadDeinit(ThreadVars *tv, void *data)
++{
++    if (data)
++        SCFree(data);
++    return TM_ECODE_OK;
++}
++
++static void DummyTxLogExitPrintStats(ThreadVars *tv, void *data)
++{
++    return;
++}
++
++/**
++ * \test Verify that registering a wildcard (ALPROTO_UNKNOWN) logger succeeds
++ *       and is counted.
++ */
++static int OutputTxLogTestRegisterWildcard(void)
++{
++    OutputTxShutdown();
++
++    int r = OutputRegisterTxLogger(LOGGER_JSON_HTTP, "test-wildcard",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++    FAIL_IF(r != 0);
++
++    FAIL_IF(OutputTxLoggerGetActiveCount() != 1);
++
++    OutputTxShutdown();
++    PASS;
++}
++
++/**
++ * \test Verify that registering multiple wildcard loggers chains them
++ *       together and the active count reflects both.
++ */
++static int OutputTxLogTestRegisterMultipleWildcards(void)
++{
++    OutputTxShutdown();
++
++    int r = OutputRegisterTxLogger(LOGGER_JSON_HTTP, "wildcard-1",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++    FAIL_IF(r != 0);
++
++    r = OutputRegisterTxLogger(LOGGER_JSON_HTTP, "wildcard-2",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++    FAIL_IF(r != 0);
++
++    FAIL_IF(OutputTxLoggerGetActiveCount() != 2);
++
++    OutputTxShutdown();
++    PASS;
++}
++
++/**
++ * \test Verify that shutdown clears all registered loggers and
++ *       the active count returns to zero.
++ */
++static int OutputTxLogTestShutdownClearsAll(void)
++{
++    OutputTxShutdown();
++
++    OutputRegisterTxLogger(LOGGER_JSON_HTTP, "logger-a",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++
++    OutputRegisterTxLogger(LOGGER_JSON_HTTP, "logger-b",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++
++    FAIL_IF(OutputTxLoggerGetActiveCount() != 2);
++
++    OutputTxShutdown();
++
++    FAIL_IF(OutputTxLoggerGetActiveCount() != 0);
++
++    PASS;
++}
++
++/**
++ * \test Verify that registering and then shutting down clears all
++ *       wildcard loggers without leaving stale state. Validates the
++ *       full register-count-shutdown-count cycle.
++ */
++static int OutputTxLogTestRegisterCountShutdownCycle(void)
++{
++    OutputTxShutdown();
++
++    int r = OutputRegisterTxLogger(LOGGER_JSON_HTTP, "wildcard-logger",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++    FAIL_IF(r != 0);
++
++    r = OutputRegisterTxLogger(LOGGER_JSON_HTTP, "wildcard-logger-2",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++    FAIL_IF(r != 0);
++
++    FAIL_IF(OutputTxLoggerGetActiveCount() != 2);
++
++    OutputTxShutdown();
++
++    FAIL_IF(OutputTxLoggerGetActiveCount() != 0);
++
++    PASS;
++}
++
++/**
++ * \test Verify that shutdown can be called when no loggers are registered
++ *       without crashing.
++ */
++static int OutputTxLogTestShutdownEmpty(void)
++{
++    OutputTxShutdown();
++    OutputTxShutdown();
++
++    FAIL_IF(OutputTxLoggerGetActiveCount() != 0);
++
++    PASS;
++}
++
++/**
++ * \test Verify that after shutdown, new loggers can be registered
++ *       (clean re-registration cycle).
++ */
++static int OutputTxLogTestReRegisterAfterShutdown(void)
++{
++    OutputTxShutdown();
++
++    OutputRegisterTxLogger(LOGGER_JSON_HTTP, "first-round",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++
++    FAIL_IF(OutputTxLoggerGetActiveCount() != 1);
++
++    OutputTxShutdown();
++    FAIL_IF(OutputTxLoggerGetActiveCount() != 0);
++
++    OutputRegisterTxLogger(LOGGER_JSON_HTTP, "second-round",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++
++    FAIL_IF(OutputTxLoggerGetActiveCount() != 1);
++
++    OutputTxShutdown();
++    PASS;
++}
++
++/**
++ * \test Verify that thread init creates per-thread data for
++ *       registered loggers and thread deinit cleans up.
++ */
++static int OutputTxLogTestThreadInitDeinit(void)
++{
++    OutputTxShutdown();
++
++    OutputRegisterTxLogger(LOGGER_JSON_HTTP, "thread-test",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++
++    ThreadVars tv;
++    memset(&tv, 0, sizeof(tv));
++    void *thread_data = NULL;
++
++    TmEcode r = OutputTxLogThreadInit(&tv, NULL, &thread_data);
++    FAIL_IF(r != TM_ECODE_OK);
++    FAIL_IF_NULL(thread_data);
++
++    OutputTxLogExitPrintStats(&tv, thread_data);
++
++    r = OutputTxLogThreadDeinit(&tv, thread_data);
++    FAIL_IF(r != TM_ECODE_OK);
++
++    OutputTxShutdown();
++    PASS;
++}
++
++/**
++ * \test Verify that thread init and deinit work correctly when
++ *       multiple wildcard loggers are registered (exercises per-thread
++ *       store chaining for the same protocol slot).
++ */
++static int OutputTxLogTestThreadInitMultipleLoggers(void)
++{
++    OutputTxShutdown();
++
++    OutputRegisterTxLogger(LOGGER_JSON_HTTP, "wildcard-a",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++
++    OutputRegisterTxLogger(LOGGER_JSON_HTTP, "wildcard-b",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++
++    FAIL_IF(OutputTxLoggerGetActiveCount() != 2);
++
++    ThreadVars tv;
++    memset(&tv, 0, sizeof(tv));
++    void *thread_data = NULL;
++
++    TmEcode r = OutputTxLogThreadInit(&tv, NULL, &thread_data);
++    FAIL_IF(r != TM_ECODE_OK);
++    FAIL_IF_NULL(thread_data);
++
++    OutputTxLogExitPrintStats(&tv, thread_data);
++
++    r = OutputTxLogThreadDeinit(&tv, thread_data);
++    FAIL_IF(r != TM_ECODE_OK);
++
++    OutputTxShutdown();
++    PASS;
++}
++
++/**
++ * \test Verify that the main logging function bails early when
++ *       there is no flow.
++ */
++static int OutputTxLogTestNoFlow(void)
++{
++    OutputTxShutdown();
++
++    Packet p;
++    memset(&p, 0, sizeof(p));
++    p.flow = NULL;
++
++    OutputLoggerThreadData td;
++    memset(&td, 0, sizeof(td));
++
++    TmEcode r = OutputTxLog(NULL, &p, &td);
++    FAIL_IF(r != TM_ECODE_OK);
++
++    OutputTxShutdown();
++    PASS;
++}
++
++/**
++ * \test Verify that the main logging function bails early when
++ *       no loggers are registered for the flow's protocol and
++ *       no wildcard loggers exist.
++ */
++static int OutputTxLogTestNoLoggersRegistered(void)
++{
++    OutputTxShutdown();
++
++    Flow f;
++    memset(&f, 0, sizeof(f));
++    f.proto = IPPROTO_TCP;
++    f.alproto = ALPROTO_HTTP;
++
++    Packet p;
++    memset(&p, 0, sizeof(p));
++    p.flow = &f;
++
++    OutputLoggerThreadData td;
++    memset(&td, 0, sizeof(td));
++
++    TmEcode r = OutputTxLog(NULL, &p, &td);
++    FAIL_IF(r != TM_ECODE_OK);
++
++    OutputTxShutdown();
++    PASS;
++}
++
++/**
++ * \test Verify that the full thread lifecycle works when mixing
++ *       a wildcard logger and a second wildcard: init allocates
++ *       per-thread state for both, stats prints without crash, and
++ *       deinit frees everything cleanly.
++ */
++static int OutputTxLogTestThreadLifecycleMixed(void)
++{
++    OutputTxShutdown();
++
++    OutputRegisterTxLogger(LOGGER_JSON_HTTP, "mixed-wc-1",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++
++    OutputRegisterTxLogger(LOGGER_JSON_HTTP, "mixed-wc-2",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++
++    FAIL_IF(OutputTxLoggerGetActiveCount() != 2);
++
++    ThreadVars tv;
++    memset(&tv, 0, sizeof(tv));
++    void *thread_data = NULL;
++
++    TmEcode r = OutputTxLogThreadInit(&tv, NULL, &thread_data);
++    FAIL_IF(r != TM_ECODE_OK);
++    FAIL_IF_NULL(thread_data);
++
++    OutputTxLogExitPrintStats(&tv, thread_data);
++
++    r = OutputTxLogThreadDeinit(&tv, thread_data);
++    FAIL_IF(r != TM_ECODE_OK);
++
++    OutputTxShutdown();
++    FAIL_IF(OutputTxLoggerGetActiveCount() != 0);
++
++    PASS;
++}
++
++/**
++ * \test Verify that wildcard loggers are stored in the ALPROTO_UNKNOWN
++ *       slot and that per-thread state is correctly allocated for them.
++ */
++static int OutputTxLogTestWildcardLoggerInvocation(void)
++{
++    OutputTxShutdown();
++
++    OutputRegisterTxLogger(LOGGER_JSON_HTTP, "counting-wc-1",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++
++    OutputRegisterTxLogger(LOGGER_JSON_HTTP, "counting-wc-2",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++
++    FAIL_IF(OutputTxLoggerGetActiveCount() != 2);
++
++    ThreadVars tv;
++    memset(&tv, 0, sizeof(tv));
++    void *thread_data = NULL;
++
++    TmEcode r = OutputTxLogThreadInit(&tv, NULL, &thread_data);
++    FAIL_IF(r != TM_ECODE_OK);
++    FAIL_IF_NULL(thread_data);
++
++    OutputLoggerThreadData *op = (OutputLoggerThreadData *)thread_data;
++    FAIL_IF_NULL(op->store[ALPROTO_UNKNOWN]);
++
++    Flow f;
++    memset(&f, 0, sizeof(f));
++    f.proto = IPPROTO_TCP;
++    f.alproto = ALPROTO_HTTP;
++
++    Packet p;
++    memset(&p, 0, sizeof(p));
++    p.flow = &f;
++
++    r = OutputTxLog(&tv, &p, thread_data);
++    FAIL_IF(r != TM_ECODE_OK);
++
++    r = OutputTxLogThreadDeinit(&tv, thread_data);
++    FAIL_IF(r != TM_ECODE_OK);
++
++    OutputTxShutdown();
++    PASS;
++}
++
++/**
++ * \test Verify that OutputTxLog proceeds past the early exit check when
++ *       a wildcard logger is registered, even if no protocol-specific
++ *       loggers exist for the flow's protocol.
++ */
++static int OutputTxLogTestEarlyExitWithWildcard(void)
++{
++    OutputTxShutdown();
++
++    OutputRegisterTxLogger(LOGGER_JSON_HTTP, "wildcard-for-exit-test",
++            ALPROTO_UNKNOWN, DummyTxLogger, NULL, -1, -1, NULL,
++            DummyTxLogThreadInit, DummyTxLogThreadDeinit,
++            DummyTxLogExitPrintStats);
++
++    Flow f;
++    memset(&f, 0, sizeof(f));
++    f.proto = IPPROTO_TCP;
++    f.alproto = ALPROTO_HTTP;
++
++    Packet p;
++    memset(&p, 0, sizeof(p));
++    p.flow = &f;
++
++    OutputLoggerThreadData td;
++    memset(&td, 0, sizeof(td));
++
++    TmEcode r = OutputTxLog(NULL, &p, &td);
++    FAIL_IF(r != TM_ECODE_OK);
++
++    OutputTxShutdown();
++    PASS;
++}
++
++void OutputTxRegisterTests(void)
++{
++    UtRegisterTest("OutputTxLogTestRegisterWildcard",
++                   OutputTxLogTestRegisterWildcard);
++    UtRegisterTest("OutputTxLogTestRegisterMultipleWildcards",
++                   OutputTxLogTestRegisterMultipleWildcards);
++    UtRegisterTest("OutputTxLogTestShutdownClearsAll",
++                   OutputTxLogTestShutdownClearsAll);
++    UtRegisterTest("OutputTxLogTestRegisterCountShutdownCycle",
++                   OutputTxLogTestRegisterCountShutdownCycle);
++    UtRegisterTest("OutputTxLogTestShutdownEmpty",
++                   OutputTxLogTestShutdownEmpty);
++    UtRegisterTest("OutputTxLogTestReRegisterAfterShutdown",
++                   OutputTxLogTestReRegisterAfterShutdown);
++    UtRegisterTest("OutputTxLogTestThreadInitDeinit",
++                   OutputTxLogTestThreadInitDeinit);
++    UtRegisterTest("OutputTxLogTestThreadInitMultipleLoggers",
++                   OutputTxLogTestThreadInitMultipleLoggers);
++    UtRegisterTest("OutputTxLogTestNoFlow",
++                   OutputTxLogTestNoFlow);
++    UtRegisterTest("OutputTxLogTestNoLoggersRegistered",
++                   OutputTxLogTestNoLoggersRegistered);
++    UtRegisterTest("OutputTxLogTestThreadLifecycleMixed",
++                   OutputTxLogTestThreadLifecycleMixed);
++    UtRegisterTest("OutputTxLogTestWildcardLoggerInvocation",
++                   OutputTxLogTestWildcardLoggerInvocation);
++    UtRegisterTest("OutputTxLogTestEarlyExitWithWildcard",
++                   OutputTxLogTestEarlyExitWithWildcard);
++}
+diff --git a/src/output-tx.c b/src/output-tx.c
+--- a/src/output-tx.c
++++ b/src/output-tx.c
+@@ -439,3 +439,7 @@ void OutputTxShutdown(void)
+         list[alproto] = NULL;
+     }
+ }
++
++#ifdef UNITTESTS
++#include "tests/output-tx.c"
++#endif
+diff --git a/src/runmode-unittests.c b/src/runmode-unittests.c
+--- a/src/runmode-unittests.c
++++ b/src/runmode-unittests.c
+@@ -124,6 +124,7 @@
+ #endif /* UNITTESTS */
+ 
+ void TmqhSetup (void);
++void OutputTxRegisterTests(void);
+ 
+ #ifdef UNITTESTS
+ static void RegisterUnittests(void)
+@@ -200,6 +201,7 @@
+     AppLayerUnittestsRegister();
+     MimeDecRegisterTests();
+     StreamingBufferRegisterTests();
++    OutputTxRegisterTests();
+ #ifdef OS_WIN32
+     Win32SyscallRegisterTests();
+ #endif

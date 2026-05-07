@@ -1,0 +1,91 @@
+{
+  "tests": [
+    {
+      "name": "baseAPI > BASE_URL > does not have a leading slash"
+    },
+    {
+      "name": "baseAPI > BASE_URL > ends with the namespace segment"
+    },
+    {
+      "name": "baseAPI > BASE_URL > includes the configured namespace"
+    },
+    {
+      "name": "baseAPI > BASE_URL > is a string containing the provisioning API path"
+    },
+    {
+      "name": "loadDashboardFromProvisioning > calls the provisioning API with repo and path"
+    },
+    {
+      "name": "loadDashboardFromProvisioning > creates annotations object if metadata has none"
+    },
+    {
+      "name": "loadDashboardFromProvisioning > does not pass ref parameter when not in URL"
+    },
+    {
+      "name": "loadDashboardFromProvisioning > includes k8s metadata in the returned meta"
+    },
+    {
+      "name": "loadDashboardFromProvisioning > passes ref query parameter when present in URL"
+    },
+    {
+      "name": "loadDashboardFromProvisioning > rejects when apiVersion does not start with dashboard.grafana.app"
+    },
+    {
+      "name": "loadDashboardFromProvisioning > rejects when dryRun is missing"
+    },
+    {
+      "name": "loadDashboardFromProvisioning > returns a DashboardDTO with expected meta fields"
+    },
+    {
+      "name": "loadDashboardFromProvisioning > returns the dashboard spec as the dashboard data"
+    },
+    {
+      "name": "loadDashboardFromProvisioning > sets AnnoKeyRepoName annotation to the repo parameter"
+    },
+    {
+      "name": "loadDashboardFromProvisioning > sets AnnoKeyRepoPath annotation to the path parameter"
+    },
+    {
+      "name": "loadDashboardFromProvisioning > uses BASE_URL in the request URL"
+    },
+    {
+      "name": "SaveProvisionedDashboard > allows editing the comment field"
+    },
+    {
+      "name": "SaveProvisionedDashboard > allows editing the path field"
+    },
+    {
+      "name": "SaveProvisionedDashboard > calls onClose when Cancel is clicked"
+    },
+    {
+      "name": "SaveProvisionedDashboard > calls PUT to provisioning API on save"
+    },
+    {
+      "name": "SaveProvisionedDashboard > handles missing annotations gracefully"
+    },
+    {
+      "name": "SaveProvisionedDashboard > handles missing k8s metadata gracefully"
+    },
+    {
+      "name": "SaveProvisionedDashboard > includes comment param in save request when comment is provided"
+    },
+    {
+      "name": "SaveProvisionedDashboard > includes ref param in save request when branch is set"
+    },
+    {
+      "name": "SaveProvisionedDashboard > populates path from k8s annotations"
+    },
+    {
+      "name": "SaveProvisionedDashboard > populates repo name from k8s annotations"
+    },
+    {
+      "name": "SaveProvisionedDashboard > renders Save and Cancel buttons"
+    },
+    {
+      "name": "SaveProvisionedDashboard > renders the form with repository, path, branch, and comment fields"
+    },
+    {
+      "name": "SaveProvisionedDashboard > serializes changedSaveModel as JSON body"
+    }
+  ]
+}

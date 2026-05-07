@@ -1,0 +1,13 @@
+{
+  "files": [
+    {
+      "name": "lib/modules/manager/pep621/extract.spec.ts"
+    },
+    {
+      "name": "lib/modules/manager/pep621/processors/pdm.spec.ts"
+    },
+    {
+      "name": "lib/modules/manager/pep621/processors/uv.spec.ts"
+    }
+  ]
+}

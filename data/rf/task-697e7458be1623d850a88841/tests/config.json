@@ -1,0 +1,9 @@
+{
+  "task_id": "697e7458be1623d850a88841",
+  "repo": "trufflesecurity_trufflehog",
+  "base_commit": "de535071e1ea0528736a4adb1f28601312db0d35",
+  "language": "Go",
+  "mount_path": "/app",
+  "initial_complexity": "Mid",
+  "uid": "0f1a823e-3191-4800-a0ea-b9cfccb19f64"
+}

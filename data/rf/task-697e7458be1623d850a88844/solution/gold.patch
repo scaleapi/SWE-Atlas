@@ -1,0 +1,1375 @@
+diff --git a/pkg/detectors/abbysale/abbysale.go b/pkg/detectors/abbysale/abbysale.go
+index 7f816d40f..0bea49261 100644
+--- a/pkg/detectors/abbysale/abbysale.go
++++ b/pkg/detectors/abbysale/abbysale.go
+@@ -2,22 +2,28 @@ package abbysale
+ 
+ import (
+ 	"context"
+-	regexp "github.com/wasilibs/go-re2"
++	"fmt"
+ 	"net/http"
+ 	"strings"
+ 
++	regexp "github.com/wasilibs/go-re2"
++
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/detectors"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
+ )
+ 
+-type Scanner struct{}
++type Scanner struct {
++	client *http.Client
++}
+ 
+-// Ensure the Scanner satisfies the interface at compile time.
+-var _ detectors.Detector = (*Scanner)(nil)
++const abbysaleURL = "https://api.abyssale.com"
+ 
+ var (
+-	client = common.SaneHttpClient()
++	// Ensure the Scanner satisfies the interface at compile time.
++	_ detectors.Detector = (*Scanner)(nil)
++
++	defaultClient = common.SaneHttpClient()
+ 
+ 	// Make sure that your group is surrounded in boundary characters such as below to reduce false positives.
+ 	keyPat = regexp.MustCompile(detectors.PrefixRegex([]string{"abbysale"}) + `\b([a-z0-9A-Z]{40})\b`)
+@@ -29,6 +35,13 @@ func (s Scanner) Keywords() []string {
+ 	return []string{"abbysale"}
+ }
+ 
++func (s Scanner) getClient() *http.Client {
++	if s.client != nil {
++		return s.client
++	}
++	return defaultClient
++}
++
+ // FromData will find and optionally verify Abbysale secrets in a given set of bytes.
+ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (results []detectors.Result, err error) {
+ 	dataStr := string(data)
+@@ -47,23 +60,15 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 		}
+ 
+ 		if verify {
+-			req, err := http.NewRequestWithContext(ctx, "GET", "https://api.abyssale.com/ready", nil)
+-			if err != nil {
+-				continue
+-			}
+-			req.Header.Add("x-api-key", resMatch)
+-			res, err := client.Do(req)
+-			if err == nil {
+-				defer res.Body.Close()
+-				if res.StatusCode >= 200 && res.StatusCode < 300 {
+-					s1.Verified = true
+-				} else {
+-					// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
+-					if detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
+-						continue
+-					}
+-				}
+-			}
++			client := s.getClient()
++			isVerified, verificationErr := verifyAbbysale(ctx, client, resMatch)
++			s1.Verified = isVerified
++			s1.SetVerificationError(verificationErr, resMatch)
++		}
++
++		// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
++		if !s1.Verified && detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
++			continue
+ 		}
+ 
+ 		results = append(results, s1)
+@@ -72,6 +77,29 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 	return results, nil
+ }
+ 
++func verifyAbbysale(ctx context.Context, client *http.Client, resMatch string) (bool, error) {
++	// https://developers.abyssale.com/rest-api/authentication
++	req, err := http.NewRequestWithContext(ctx, http.MethodGet, abbysaleURL+"/ready", nil)
++	if err != nil {
++		return false, err
++	}
++	req.Header.Add("x-api-key", resMatch)
++	res, err := client.Do(req)
++	if err != nil {
++		return false, err
++	}
++	defer res.Body.Close()
++
++	switch res.StatusCode {
++	case http.StatusOK:
++		return true, nil
++	case http.StatusForbidden:
++		return false, nil
++	default:
++		return false, fmt.Errorf("unexpected HTTP response status %d", res.StatusCode)
++	}
++}
++
+ func (s Scanner) Type() detectorspb.DetectorType {
+ 	return detectorspb.DetectorType_Abbysale
+ }
+diff --git a/pkg/detectors/abstract/abstract.go b/pkg/detectors/abstract/abstract.go
+index 0005e6326..b88883a7b 100644
+--- a/pkg/detectors/abstract/abstract.go
++++ b/pkg/detectors/abstract/abstract.go
+@@ -12,13 +12,17 @@ import (
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
+ )
+ 
+-type Scanner struct{}
++type Scanner struct {
++	client *http.Client
++}
+ 
+-// Ensure the Scanner satisfies the interface at compile time.
+-var _ detectors.Detector = (*Scanner)(nil)
++const abstractURL = "https://exchange-rates.abstractapi.com"
+ 
+ var (
+-	client = common.SaneHttpClient()
++	// Ensure the Scanner satisfies the interface at compile time.
++	_ detectors.Detector = (*Scanner)(nil)
++
++	defaultClient = common.SaneHttpClient()
+ 
+ 	// Make sure that your group is surrounded in boundary characters such as below to reduce false positives.
+ 	keyPat = regexp.MustCompile(detectors.PrefixRegex([]string{"abstract"}) + `\b([0-9a-z]{32})\b`)
+@@ -30,6 +34,13 @@ func (s Scanner) Keywords() []string {
+ 	return []string{"abstract"}
+ }
+ 
++func (s Scanner) getClient() *http.Client {
++	if s.client != nil {
++		return s.client
++	}
++	return defaultClient
++}
++
+ // FromData will find and optionally verify Abstract secrets in a given set of bytes.
+ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (results []detectors.Result, err error) {
+ 	dataStr := string(data)
+@@ -48,23 +59,15 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 		}
+ 
+ 		if verify {
+-			req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://exchange-rates.abstractapi.com/v1/live/?api_key=%s&base=USD", resMatch), nil)
+-			if err != nil {
+-				continue
+-			}
+-			req.Header.Add("Content-Type", "application/json")
+-			res, err := client.Do(req)
+-			if err == nil {
+-				defer res.Body.Close()
+-				if res.StatusCode >= 200 && res.StatusCode < 300 {
+-					s1.Verified = true
+-				} else {
+-					// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
+-					if detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
+-						continue
+-					}
+-				}
+-			}
++			client := s.getClient()
++			isVerified, verificationErr := verifyAbstract(ctx, client, resMatch)
++			s1.Verified = isVerified
++			s1.SetVerificationError(verificationErr, resMatch)
++		}
++
++		// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
++		if !s1.Verified && detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
++			continue
+ 		}
+ 
+ 		results = append(results, s1)
+@@ -73,6 +76,30 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 	return results, nil
+ }
+ 
++func verifyAbstract(ctx context.Context, client *http.Client, resMatch string) (bool, error) {
++	// https://docs.abstractapi.com/exchange-rates#response-and-error-codes
++	req, err := http.NewRequestWithContext(ctx, http.MethodGet, abstractURL+fmt.Sprintf("/v1/live/?api_key=%s&base=USD", resMatch), nil)
++	if err != nil {
++		return false, err
++	}
++	req.Header.Add("Content-Type", "application/json")
++	res, err := client.Do(req)
++	if err != nil {
++		return false, err
++	}
++	defer res.Body.Close()
++
++	// https://docs.abstractapi.com/exchange-rates#response-and-error-codes
++	switch res.StatusCode {
++	case http.StatusOK:
++		return true, nil
++	case http.StatusUnauthorized:
++		return false, nil
++	default:
++		return false, fmt.Errorf("unexpected HTTP response status %d", res.StatusCode)
++	}
++}
++
+ func (s Scanner) Type() detectorspb.DetectorType {
+ 	return detectorspb.DetectorType_Abstract
+ }
+diff --git a/pkg/detectors/abuseipdb/abuseipdb.go b/pkg/detectors/abuseipdb/abuseipdb.go
+index dfb40ec6e..83febcd13 100644
+--- a/pkg/detectors/abuseipdb/abuseipdb.go
++++ b/pkg/detectors/abuseipdb/abuseipdb.go
+@@ -1,25 +1,31 @@
+ package abuseipdb
+ 
+ import (
++	"bytes"
+ 	"context"
++	"fmt"
+ 	"io"
+ 	"net/http"
+-	// "log"
+-	regexp "github.com/wasilibs/go-re2"
+ 	"strings"
+ 
++	regexp "github.com/wasilibs/go-re2"
++
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/detectors"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
+ )
+ 
+-type Scanner struct{}
++type Scanner struct {
++	client *http.Client
++}
+ 
+-// Ensure the Scanner satisfies the interface at compile time.
+-var _ detectors.Detector = (*Scanner)(nil)
++const abuseipdbURL = "https://api.abuseipdb.com"
+ 
+ var (
+-	client = common.SaneHttpClient()
++	// Ensure the Scanner satisfies the interface at compile time.
++	_ detectors.Detector = (*Scanner)(nil)
++
++	defaultClient = common.SaneHttpClient()
+ 
+ 	// Make sure that your group is surrounded in boundary characters such as below to reduce false positives.
+ 	keyPat = regexp.MustCompile(detectors.PrefixRegex([]string{"abuseipdb"}) + `\b([a-z0-9]{80})\b`)
+@@ -31,6 +37,13 @@ func (s Scanner) Keywords() []string {
+ 	return []string{"abuseipdb"}
+ }
+ 
++func (s Scanner) getClient() *http.Client {
++	if s.client != nil {
++		return s.client
++	}
++	return defaultClient
++}
++
+ // FromData will find and optionally verify AbuseIPDB secrets in a given set of bytes.
+ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (results []detectors.Result, err error) {
+ 	dataStr := string(data)
+@@ -49,41 +62,55 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 		}
+ 
+ 		if verify {
+-			req, err := http.NewRequestWithContext(ctx, "GET", "https://api.abuseipdb.com/api/v2/check?ipAddress=118.25.6.39", nil)
+-			if err != nil {
+-				continue
+-			}
+-			req.Header.Add("Key", resMatch)
+-			res, err := client.Do(req)
+-			if err == nil {
+-				bodyBytes, err := io.ReadAll(res.Body)
+-				if err == nil {
+-					bodyString := string(bodyBytes)
+-					validResponse := strings.Contains(bodyString, `ipAddress`)
+-					// errCode := strings.Contains(bodyString, `AbuseIPDB APIv2 Server.`)
+-
+-					defer res.Body.Close()
+-					if res.StatusCode >= 200 && res.StatusCode < 300 {
+-						if validResponse {
+-							s1.Verified = true
+-						} else {
+-							s1.Verified = false
+-						}
+-					} else {
+-						// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
+-						if detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
+-							continue
+-						}
+-					}
+-				}
+-			}
++			client := s.getClient()
++			isVerified, verificationErr := verifyAbuseIPDB(ctx, client, resMatch)
++			s1.Verified = isVerified
++			s1.SetVerificationError(verificationErr, resMatch)
++		}
++
++		// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
++		if !s1.Verified && detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
++			continue
+ 		}
++
+ 		results = append(results, s1)
+ 	}
+ 
+ 	return results, nil
+ }
+ 
++func verifyAbuseIPDB(ctx context.Context, client *http.Client, resMatch string) (bool, error) {
++	// https://docs.abuseipdb.com/#check-endpoint
++	req, err := http.NewRequestWithContext(ctx, http.MethodGet, abuseipdbURL+"/api/v2/check?ipAddress=8.8.8.8", nil)
++	if err != nil {
++		return false, err
++	}
++	req.Header.Add("Key", resMatch)
++	res, err := client.Do(req)
++	if err != nil {
++		return false, err
++	}
++	defer res.Body.Close()
++
++	switch res.StatusCode {
++	case http.StatusOK:
++		bodyBytes, err := io.ReadAll(res.Body)
++		if err != nil {
++			return false, err
++		}
++		validResponse := bytes.Contains(bodyBytes, []byte("ipAddress"))
++		if validResponse {
++			return true, nil
++		} else {
++			return false, nil
++		}
++	case http.StatusUnauthorized:
++		return false, nil
++	default:
++		return false, fmt.Errorf("unexpected HTTP response status %d", res.StatusCode)
++	}
++}
++
+ func (s Scanner) Type() detectorspb.DetectorType {
+ 	return detectorspb.DetectorType_AbuseIPDB
+ }
+diff --git a/pkg/detectors/accuweather/accuweather.go b/pkg/detectors/accuweather/accuweather.go
+index 77ad25430..e7ebadae6 100644
+--- a/pkg/detectors/accuweather/accuweather.go
++++ b/pkg/detectors/accuweather/accuweather.go
+@@ -2,22 +2,28 @@ package accuweather
+ 
+ import (
+ 	"context"
+-	regexp "github.com/wasilibs/go-re2"
++	"fmt"
+ 	"net/http"
+ 	"strings"
+ 
++	regexp "github.com/wasilibs/go-re2"
++
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/detectors"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
+ )
+ 
+-type Scanner struct{}
++type Scanner struct {
++	client *http.Client
++}
+ 
+-// Ensure the Scanner satisfies the interface at compile time.
+-var _ detectors.Detector = (*Scanner)(nil)
++const accuweatherURL = "https://dataservice.accuweather.com"
+ 
+ var (
+-	client = common.SaneHttpClient()
++	// Ensure the Scanner satisfies the interface at compile time.
++	_ detectors.Detector = (*Scanner)(nil)
++
++	defaultClient = common.SaneHttpClient()
+ 
+ 	// Make sure that your group is surrounded in boundary characters such as below to reduce false positives.
+ 	keyPat = regexp.MustCompile(detectors.PrefixRegex([]string{"accuweather"}) + `([a-z0-9A-Z\%]{35})\b`)
+@@ -29,6 +35,13 @@ func (s Scanner) Keywords() []string {
+ 	return []string{"accuweather"}
+ }
+ 
++func (s Scanner) getClient() *http.Client {
++	if s.client != nil {
++		return s.client
++	}
++	return defaultClient
++}
++
+ // FromData will find and optionally verify Accuweather secrets in a given set of bytes.
+ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (results []detectors.Result, err error) {
+ 	dataStr := string(data)
+@@ -47,22 +60,15 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 		}
+ 
+ 		if verify {
+-			req, err := http.NewRequestWithContext(ctx, "GET", "https://dataservice.accuweather.com/locations/v1/cities/autocomplete?apikey="+resMatch+"&q=----&language=en-us", nil)
+-			if err != nil {
+-				continue
+-			}
+-			res, err := client.Do(req)
+-			if err == nil {
+-				defer res.Body.Close()
+-				if res.StatusCode >= 200 && res.StatusCode < 300 {
+-					s1.Verified = true
+-				} else {
+-					// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
+-					if detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
+-						continue
+-					}
+-				}
+-			}
++			client := s.getClient()
++			isVerified, verificationErr := verifyAccuweather(ctx, client, resMatch)
++			s1.Verified = isVerified
++			s1.SetVerificationError(verificationErr, resMatch)
++		}
++
++		// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
++		if !s1.Verified && detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
++			continue
+ 		}
+ 
+ 		results = append(results, s1)
+@@ -71,6 +77,29 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 	return results, nil
+ }
+ 
++func verifyAccuweather(ctx context.Context, client *http.Client, resMatch string) (bool, error) {
++	req, err := http.NewRequestWithContext(ctx, http.MethodGet, accuweatherURL+"/locations/v1/cities/autocomplete?apikey="+resMatch+"&q=----&language=en-us", nil)
++	if err != nil {
++		return false, err
++	}
++	res, err := client.Do(req)
++	if err != nil {
++		return false, err
++	}
++	defer res.Body.Close()
++
++	// https://developer.accuweather.com/accuweather-locations-api/apis/get/locations/v1/cities/autocomplete
++	switch res.StatusCode {
++	case http.StatusOK, http.StatusForbidden:
++		// 403 indicates lack of permission, but valid token
++		return true, nil
++	case http.StatusUnauthorized:
++		return false, nil
++	default:
++		return false, fmt.Errorf("unexpected HTTP response status %d", res.StatusCode)
++	}
++}
++
+ func (s Scanner) Type() detectorspb.DetectorType {
+ 	return detectorspb.DetectorType_Accuweather
+ }
+diff --git a/pkg/detectors/adafruitio/adafruitio.go b/pkg/detectors/adafruitio/adafruitio.go
+index b699af6bd..d38a579bc 100644
+--- a/pkg/detectors/adafruitio/adafruitio.go
++++ b/pkg/detectors/adafruitio/adafruitio.go
+@@ -2,22 +2,28 @@ package adafruitio
+ 
+ import (
+ 	"context"
+-	regexp "github.com/wasilibs/go-re2"
++	"fmt"
+ 	"net/http"
+ 	"strings"
+ 
++	regexp "github.com/wasilibs/go-re2"
++
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/detectors"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
+ )
+ 
+-type Scanner struct{}
++type Scanner struct {
++	client *http.Client
++}
+ 
+-// Ensure the Scanner satisfies the interface at compile time.
+-var _ detectors.Detector = (*Scanner)(nil)
++const adafruitioURL = "https://io.adafruit.com"
+ 
+ var (
+-	client = common.SaneHttpClient()
++	// Ensure the Scanner satisfies the interface at compile time.
++	_ detectors.Detector = (*Scanner)(nil)
++
++	defaultClient = common.SaneHttpClient()
+ 
+ 	// Make sure that your group is surrounded in boundary characters such as below to reduce false positives.
+ 	keyPat = regexp.MustCompile(`\b(aio\_[a-zA-Z0-9]{28})\b`)
+@@ -29,6 +35,13 @@ func (s Scanner) Keywords() []string {
+ 	return []string{"aio_"}
+ }
+ 
++func (s Scanner) getClient() *http.Client {
++	if s.client != nil {
++		return s.client
++	}
++	return defaultClient
++}
++
+ // FromData will find and optionally verify AdafruitIO secrets in a given set of bytes.
+ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (results []detectors.Result, err error) {
+ 	dataStr := string(data)
+@@ -47,22 +60,15 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 		}
+ 
+ 		if verify {
+-			req, err := http.NewRequestWithContext(ctx, "GET", "https://io.adafruit.com/api/v2/ladybugtest/feeds/?x-aio-key="+resMatch, nil)
+-			if err != nil {
+-				continue
+-			}
+-			res, err := client.Do(req)
+-			if err == nil {
+-				defer res.Body.Close()
+-				if res.StatusCode >= 200 && res.StatusCode < 300 {
+-					s1.Verified = true
+-				} else {
+-					// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
+-					if detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
+-						continue
+-					}
+-				}
+-			}
++			client := s.getClient()
++			isVerified, verificationErr := verifyAdafruitIO(ctx, client, resMatch)
++			s1.Verified = isVerified
++			s1.SetVerificationError(verificationErr, resMatch)
++		}
++
++		// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
++		if !s1.Verified && detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
++			continue
+ 		}
+ 
+ 		results = append(results, s1)
+@@ -71,6 +77,28 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 	return results, nil
+ }
+ 
++func verifyAdafruitIO(ctx context.Context, client *http.Client, resMatch string) (bool, error) {
++	req, err := http.NewRequestWithContext(ctx, http.MethodGet, adafruitioURL+"/api/v2/ladybugtest/feeds/?x-aio-key="+resMatch, nil)
++	if err != nil {
++		return false, err
++	}
++	res, err := client.Do(req)
++	if err != nil {
++		return false, err
++	}
++	defer res.Body.Close()
++
++	// https://learn.adafruit.com/adafruit-io/http-status-codes
++	switch res.StatusCode {
++	case http.StatusOK:
++		return true, nil
++	case http.StatusUnauthorized:
++		return false, nil
++	default:
++		return false, fmt.Errorf("unexpected HTTP response status %d", res.StatusCode)
++	}
++}
++
+ func (s Scanner) Type() detectorspb.DetectorType {
+ 	return detectorspb.DetectorType_AdafruitIO
+ }
+diff --git a/pkg/detectors/adzuna/adzuna.go b/pkg/detectors/adzuna/adzuna.go
+index adf07c597..eb13aad41 100644
+--- a/pkg/detectors/adzuna/adzuna.go
++++ b/pkg/detectors/adzuna/adzuna.go
+@@ -12,13 +12,17 @@ import (
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
+ )
+ 
+-type Scanner struct{}
++type Scanner struct {
++	client *http.Client
++}
+ 
+-// Ensure the Scanner satisfies the interface at compile time.
+-var _ detectors.Detector = (*Scanner)(nil)
++const adzunaURL = "https://api.adzuna.com"
+ 
+ var (
+-	client = common.SaneHttpClient()
++	// Ensure the Scanner satisfies the interface at compile time.
++	_ detectors.Detector = (*Scanner)(nil)
++
++	defaultClient = common.SaneHttpClient()
+ 
+ 	// Make sure that your group is surrounded in boundary characters such as below to reduce false positives.
+ 	keyPat = regexp.MustCompile(detectors.PrefixRegex([]string{"adzuna"}) + `\b([a-z0-9]{32})\b`)
+@@ -31,6 +35,13 @@ func (s Scanner) Keywords() []string {
+ 	return []string{"adzuna"}
+ }
+ 
++func (s Scanner) getClient() *http.Client {
++	if s.client != nil {
++		return s.client
++	}
++	return defaultClient
++}
++
+ // FromData will find and optionally verify Adzuna secrets in a given set of bytes.
+ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (results []detectors.Result, err error) {
+ 	dataStr := string(data)
+@@ -56,22 +67,15 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 			}
+ 
+ 			if verify {
+-				req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://api.adzuna.com/v1/api/jobs/gb/search/1?app_id=%s&app_key=%s", resIdMatch, resMatch), nil)
+-				if err != nil {
+-					continue
+-				}
+-				res, err := client.Do(req)
+-				if err == nil {
+-					defer res.Body.Close()
+-					if res.StatusCode >= 200 && res.StatusCode < 300 {
+-						s1.Verified = true
+-					} else {
+-						// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
+-						if detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
+-							continue
+-						}
+-					}
+-				}
++				client := s.getClient()
++				isVerified, verificationErr := verifyAdzuna(ctx, client, resMatch, resIdMatch)
++				s1.Verified = isVerified
++				s1.SetVerificationError(verificationErr, resMatch)
++			}
++
++			// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
++			if !s1.Verified && detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
++				continue
+ 			}
+ 
+ 			results = append(results, s1)
+@@ -81,6 +85,30 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 	return results, nil
+ }
+ 
++func verifyAdzuna(ctx context.Context, client *http.Client, resMatch, resIdMatch string) (bool, error) {
++	// https://developer.adzuna.com/activedocs#!/adzuna/search
++	req, err := http.NewRequestWithContext(ctx, http.MethodGet, adzunaURL+fmt.Sprintf("/v1/api/jobs/us/search/1?app_id=%s&app_key=%s", resIdMatch, resMatch), nil)
++	if err != nil {
++		return false, err
++	}
++
++	res, err := client.Do(req)
++	if err != nil {
++		return false, err
++	}
++	defer res.Body.Close()
++
++	// https://developer.adzuna.com/overview
++	switch res.StatusCode {
++	case http.StatusOK:
++		return true, nil
++	case http.StatusUnauthorized:
++		return false, nil
++	default:
++		return false, fmt.Errorf("unexpected HTTP response status %d", res.StatusCode)
++	}
++}
++
+ func (s Scanner) Type() detectorspb.DetectorType {
+ 	return detectorspb.DetectorType_Adzuna
+ }
+diff --git a/pkg/detectors/aeroworkflow/aeroworkflow.go b/pkg/detectors/aeroworkflow/aeroworkflow.go
+index ef534924a..780a78265 100644
+--- a/pkg/detectors/aeroworkflow/aeroworkflow.go
++++ b/pkg/detectors/aeroworkflow/aeroworkflow.go
+@@ -2,25 +2,31 @@ package aeroworkflow
+ 
+ import (
+ 	"context"
+-	regexp "github.com/wasilibs/go-re2"
++	"fmt"
+ 	"net/http"
+ 	"strings"
+ 
++	regexp "github.com/wasilibs/go-re2"
++
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/detectors"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
+ )
+ 
+-type Scanner struct{}
++type Scanner struct {
++	client *http.Client
++}
+ 
+-// Ensure the Scanner satisfies the interface at compile time.
+-var _ detectors.Detector = (*Scanner)(nil)
++const aeroworkflowURL = "https://api.aeroworkflow.com"
+ 
+ var (
+-	client = common.SaneHttpClient()
++	// Ensure the Scanner satisfies the interface at compile time.
++	_ detectors.Detector = (*Scanner)(nil)
++
++	defaultClient = common.SaneHttpClient()
+ 
+ 	// Make sure that your group is surrounded in boundary characters such as below to reduce false positives.
+-	keyPat = regexp.MustCompile(detectors.PrefixRegex([]string{"aeroworkflow"}) + `\b([a-zA-Z0-9^!]{20})\b`)
++	keyPat = regexp.MustCompile(detectors.PrefixRegex([]string{"aeroworkflow"}) + `([a-zA-Z0-9^!?#:*;]{20})\b`)
+ 	idPat  = regexp.MustCompile(detectors.PrefixRegex([]string{"aeroworkflow"}) + `\b([0-9]{1,})\b`)
+ )
+ 
+@@ -30,6 +36,13 @@ func (s Scanner) Keywords() []string {
+ 	return []string{"aeroworkflow"}
+ }
+ 
++func (s Scanner) getClient() *http.Client {
++	if s.client != nil {
++		return s.client
++	}
++	return defaultClient
++}
++
+ // FromData will find and optionally verify Aeroworkflow secrets in a given set of bytes.
+ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (results []detectors.Result, err error) {
+ 	dataStr := string(data)
+@@ -56,26 +69,16 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 			}
+ 
+ 			if verify {
+-				req, err := http.NewRequest("GET", "https://api.aeroworkflow.com/api/"+resIdMatch+"/v1/AeroAppointments", nil)
+-				if err != nil {
+-					continue
+-				}
+-				req.Header.Add("Accept", "application/json")
+-				req.Header.Add("apikey", resMatch)
+-				res, err := client.Do(req)
+-				if err == nil {
+-					defer res.Body.Close()
+-					if res.StatusCode >= 200 && res.StatusCode < 300 {
+-						s1.Verified = true
+-					} else {
+-						// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
+-						if detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
+-							continue
+-						}
+-					}
+-				}
++				client := s.getClient()
++				isVerified, verificationErr := verifyAeroworkflow(ctx, client, resMatch, resIdMatch)
++				s1.Verified = isVerified
++				s1.SetVerificationError(verificationErr, resMatch)
+ 			}
+ 
++			// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
++			if !s1.Verified && detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
++				continue
++			}
+ 			results = append(results, s1)
+ 		}
+ 
+@@ -84,6 +87,32 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 	return results, nil
+ }
+ 
++func verifyAeroworkflow(ctx context.Context, client *http.Client, resMatch, resIdMatch string) (bool, error) {
++	req, err := http.NewRequest(http.MethodGet, aeroworkflowURL+"/api/"+resIdMatch+"/v1/AeroAppointments", nil)
++	if err != nil {
++		return false, err
++	}
++	req.Header.Add("Accept", "application/json")
++	req.Header.Add("apikey", resMatch)
++	res, err := client.Do(req)
++	if err != nil {
++		return false, err
++	}
++	defer res.Body.Close()
++
++	// https://api.aeroworkflow.com/swagger/index.html
++	switch res.StatusCode {
++	case http.StatusOK:
++		return true, nil
++	case http.StatusUnauthorized, http.StatusForbidden:
++		// 401 for invalid API key
++		// 403 for invalid Account ID
++		return false, nil
++	default:
++		return false, fmt.Errorf("unexpected HTTP response status %d", res.StatusCode)
++	}
++}
++
+ func (s Scanner) Type() detectorspb.DetectorType {
+ 	return detectorspb.DetectorType_Aeroworkflow
+ }
+diff --git a/pkg/detectors/agora/agora.go b/pkg/detectors/agora/agora.go
+index 132274a17..ce1e101b8 100644
+--- a/pkg/detectors/agora/agora.go
++++ b/pkg/detectors/agora/agora.go
+@@ -2,22 +2,28 @@ package agora
+ 
+ import (
+ 	"context"
+-	regexp "github.com/wasilibs/go-re2"
++	"fmt"
+ 	"net/http"
+ 	"strings"
+ 
++	regexp "github.com/wasilibs/go-re2"
++
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/detectors"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
+ )
+ 
+-type Scanner struct{}
++type Scanner struct {
++	client *http.Client
++}
+ 
+-// Ensure the Scanner satisfies the interface at compile time.
+-var _ detectors.Detector = (*Scanner)(nil)
++const agoraURL = "https://api.agora.io"
+ 
+ var (
+-	client = common.SaneHttpClient()
++	// Ensure the Scanner satisfies the interface at compile time.
++	_ detectors.Detector = (*Scanner)(nil)
++
++	defaultClient = common.SaneHttpClient()
+ 
+ 	// Make sure that your group is surrounded in boundary characters such as below to reduce false positives.
+ 	keyPat    = regexp.MustCompile(detectors.PrefixRegex([]string{"agora"}) + `\b([a-z0-9]{32})\b`)
+@@ -30,6 +36,13 @@ func (s Scanner) Keywords() []string {
+ 	return []string{"agora"}
+ }
+ 
++func (s Scanner) getClient() *http.Client {
++	if s.client != nil {
++		return s.client
++	}
++	return defaultClient
++}
++
+ // FromData will find and optionally verify Agora secrets in a given set of bytes.
+ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (results []detectors.Result, err error) {
+ 	dataStr := string(data)
+@@ -57,24 +70,15 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 			}
+ 
+ 			if verify {
+-				req, err := http.NewRequestWithContext(ctx, "GET", "https://api.agora.io/dev/v1/projects", nil)
+-				if err != nil {
+-					continue
+-				}
+-				req.SetBasicAuth(resSecret, resMatch)
+-				res, err := client.Do(req)
+-
+-				if err == nil {
+-					defer res.Body.Close()
+-					if res.StatusCode >= 200 && res.StatusCode < 300 {
+-						s1.Verified = true
+-					} else {
+-						// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
+-						if detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
+-							continue
+-						}
+-					}
+-				}
++				client := s.getClient()
++				isVerified, verificationErr := verifyAgora(ctx, client, resMatch, resSecret)
++				s1.Verified = isVerified
++				s1.SetVerificationError(verificationErr, resMatch)
++			}
++
++			// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
++			if !s1.Verified && detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
++				continue
+ 			}
+ 
+ 			results = append(results, s1)
+@@ -84,6 +88,30 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 	return results, nil
+ }
+ 
++func verifyAgora(ctx context.Context, client *http.Client, resMatch, resSecret string) (bool, error) {
++	req, err := http.NewRequestWithContext(ctx, http.MethodGet, agoraURL+"/dev/v1/projects", nil)
++	if err != nil {
++		return false, err
++	}
++	req.SetBasicAuth(resSecret, resMatch)
++	res, err := client.Do(req)
++
++	if err != nil {
++		return false, err
++	}
++	defer res.Body.Close()
++
++	// https://docs.agora.io/en/voice-calling/reference/agora-console-rest-api#get-all-projects
++	switch res.StatusCode {
++	case http.StatusOK, http.StatusCreated:
++		return true, nil
++	case http.StatusUnauthorized, http.StatusForbidden:
++		return false, nil
++	default:
++		return false, fmt.Errorf("unexpected HTTP response status %d", res.StatusCode)
++	}
++}
++
+ func (s Scanner) Type() detectorspb.DetectorType {
+ 	return detectorspb.DetectorType_Agora
+ }
+diff --git a/pkg/detectors/aha/aha.go b/pkg/detectors/aha/aha.go
+index 27659d21a..41aa29c0e 100644
+--- a/pkg/detectors/aha/aha.go
++++ b/pkg/detectors/aha/aha.go
+@@ -3,25 +3,29 @@ package aha
+ import (
+ 	"context"
+ 	"fmt"
+-	regexp "github.com/wasilibs/go-re2"
+ 	"net/http"
+ 	"strings"
+ 
++	regexp "github.com/wasilibs/go-re2"
++
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/detectors"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
+ )
+ 
+-type Scanner struct{}
+-
+-// Ensure the Scanner satisfies the interface at compile time.
+-var _ detectors.Detector = (*Scanner)(nil)
++type Scanner struct {
++	client *http.Client
++}
+ 
+ var (
+-	client = common.SaneHttpClient()
++	// Ensure the Scanner satisfies the interface at compile time.
++	_ detectors.Detector = (*Scanner)(nil)
++
++	defaultClient = common.SaneHttpClient()
+ 
+ 	// Make sure that your group is surrounded in boundary characters such as below to reduce false positives.
+ 	keyPat = regexp.MustCompile(detectors.PrefixRegex([]string{"aha"}) + `\b([0-9a-f]{64})\b`)
++	URLPat = regexp.MustCompile(`\b([A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])\.aha\.io)`)
+ )
+ 
+ // Keywords are used for efficiently pre-filtering chunks.
+@@ -30,11 +34,26 @@ func (s Scanner) Keywords() []string {
+ 	return []string{"aha"}
+ }
+ 
++func (s Scanner) getClient() *http.Client {
++	if s.client != nil {
++		return s.client
++	}
++	return defaultClient
++}
++
+ // FromData will find and optionally verify Aha secrets in a given set of bytes.
+ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (results []detectors.Result, err error) {
+ 	dataStr := string(data)
+-
+ 	matches := keyPat.FindAllStringSubmatch(dataStr, -1)
++	URLmatches := URLPat.FindAllStringSubmatch(dataStr, -1)
++
++	resURLMatch := "aha.io"
++	for _, URLmatch := range URLmatches {
++		if len(URLmatch) != 2 {
++			continue
++		}
++		resURLMatch = strings.TrimSpace(URLmatch[1])
++	}
+ 
+ 	for _, match := range matches {
+ 		if len(match) != 2 {
+@@ -48,24 +67,15 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 		}
+ 
+ 		if verify {
+-			req, err := http.NewRequestWithContext(ctx, "GET", "https://company.aha.io/api/v1/me", nil)
+-			if err != nil {
+-				continue
+-			}
+-			req.Header.Add("Accept", "application/vnd.aha+json; version=3")
+-			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", resMatch))
+-			res, err := client.Do(req)
+-			if err == nil {
+-				defer res.Body.Close()
+-				if res.StatusCode >= 200 && res.StatusCode < 300 {
+-					s1.Verified = true
+-				} else {
+-					// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
+-					if detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
+-						continue
+-					}
+-				}
+-			}
++			client := s.getClient()
++			isVerified, verificationErr := verifyAha(ctx, client, resMatch, resURLMatch)
++			s1.Verified = isVerified
++			s1.SetVerificationError(verificationErr, resMatch)
++		}
++
++		// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
++		if !s1.Verified && detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
++			continue
+ 		}
+ 
+ 		results = append(results, s1)
+@@ -74,6 +84,32 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 	return results, nil
+ }
+ 
++func verifyAha(ctx context.Context, client *http.Client, resMatch, resURLMatch string) (bool, error) {
++	url := fmt.Sprintf("https://%s/api/v1/me", resURLMatch)
++	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
++	if err != nil {
++		return false, err
++	}
++	req.Header.Add("Accept", "application/vnd.aha+json; version=3")
++	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", resMatch))
++	res, err := client.Do(req)
++	if err != nil {
++		return false, err
++	}
++	defer res.Body.Close()
++
++	// https://www.aha.io/api
++	switch res.StatusCode {
++	case http.StatusOK:
++		return true, nil
++	case http.StatusUnauthorized, http.StatusNotFound, http.StatusForbidden:
++		// 403 is a known case where an account is inactive bc of a trial ending or payment issue
++		return false, nil
++	default:
++		return false, fmt.Errorf("unexpected HTTP response status %d", res.StatusCode)
++	}
++}
++
+ func (s Scanner) Type() detectorspb.DetectorType {
+ 	return detectorspb.DetectorType_Aha
+ }
+diff --git a/pkg/detectors/alibaba/alibaba.go b/pkg/detectors/alibaba/alibaba.go
+index 2e03009aa..26570c647 100644
+--- a/pkg/detectors/alibaba/alibaba.go
++++ b/pkg/detectors/alibaba/alibaba.go
+@@ -6,25 +6,40 @@ import (
+ 	"crypto/rand"
+ 	"crypto/sha1"
+ 	"encoding/base64"
+-	regexp "github.com/wasilibs/go-re2"
++	"encoding/json"
++	"fmt"
+ 	"net/http"
+ 	"net/url"
+ 	"strconv"
+ 	"strings"
+ 	"time"
+ 
++	regexp "github.com/wasilibs/go-re2"
++
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/detectors"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
+ )
+ 
+-type Scanner struct{}
++type Scanner struct {
++	client *http.Client
++}
++
++type alibabaResp struct {
++	RequestId string `json:"RequestId"`
++	Message   string `json:"Message"`
++	Recommend string `json:"Recommend"`
++	HostId    string `json:"HostId"`
++	Code      string `json:"Code"`
++}
+ 
+-// Ensure the Scanner satisfies the interface at compile time.
+-var _ detectors.Detector = (*Scanner)(nil)
++const alibabaURL = "https://ecs.aliyuncs.com"
+ 
+ var (
+-	client = common.SaneHttpClient()
++	// Ensure the Scanner satisfies the interface at compile time.
++	_ detectors.Detector = (*Scanner)(nil)
++
++	defaultClient = common.SaneHttpClient()
+ 
+ 	// Make sure that your group is surrounded in boundary characters such as below to reduce false positives.
+ 	keyPat = regexp.MustCompile(`\b([a-zA-Z0-9]{30})\b`)
+@@ -53,6 +68,7 @@ func GetSignature(input, key string) string {
+ 	h.Write([]byte(input))
+ 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+ }
++
+ func buildStringToSign(method, input string) string {
+ 	filter := strings.Replace(input, "+", "%20", -1)
+ 	filter = strings.Replace(filter, "%7E", "~", -1)
+@@ -61,6 +77,13 @@ func buildStringToSign(method, input string) string {
+ 	return filter
+ }
+ 
++func (s Scanner) getClient() *http.Client {
++	if s.client != nil {
++		return s.client
++	}
++	return defaultClient
++}
++
+ // FromData will find and optionally verify Alibaba secrets in a given set of bytes.
+ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (results []detectors.Result, err error) {
+ 	dataStr := string(data)
+@@ -87,42 +110,16 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 			}
+ 
+ 			if verify {
+-				req, err := http.NewRequestWithContext(ctx, "GET", "https://ecs.aliyuncs.com/?", nil)
+-				if err != nil {
+-					continue
+-				}
+-				dateISO := time.Now().UTC().Format("2006-01-02T15:04:05Z07:00")
+-				params := req.URL.Query()
+-				params.Add("AccessKeyId", resIdMatch)
+-				params.Add("Action", "DescribeRegions")
+-				params.Add("Format", "JSON")
+-				params.Add("SignatureMethod", "HMAC-SHA1")
+-				params.Add("SignatureNonce", randString(16))
+-				params.Add("SignatureVersion", "1.0")
+-				params.Add("Timestamp", dateISO)
+-				params.Add("Version", "2014-05-26")
+-
+-				stringToSign := buildStringToSign(req.Method, params.Encode())
+-				signature := GetSignature(stringToSign, resMatch+"&") // Get Signature HMAC SHA1
+-				params.Add("Signature", signature)
+-				req.URL.RawQuery = params.Encode()
+-
+-				req.Header.Add("Content-Type", "text/xml;charset=utf-8")
+-				req.Header.Add("Content-Length", strconv.Itoa(len(params.Encode())))
+-				res, err := client.Do(req)
+-				if err == nil {
+-					defer res.Body.Close()
+-					if res.StatusCode >= 200 && res.StatusCode < 300 {
+-						s1.Verified = true
+-					} else {
+-						// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
+-						if detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
+-							continue
+-						}
+-					}
+-				}
++				client := s.getClient()
++				isVerified, verificationErr := verifyAlibaba(ctx, client, resIdMatch, resMatch)
++				s1.Verified = isVerified
++				s1.SetVerificationError(verificationErr, resMatch)
+ 			}
+ 
++			// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
++			if !s1.Verified && detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
++				continue
++			}
+ 			results = append(results, s1)
+ 		}
+ 	}
+@@ -130,6 +127,58 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 	return results, nil
+ }
+ 
++func verifyAlibaba(ctx context.Context, client *http.Client, resIdMatch, resMatch string) (bool, error) {
++	req, err := http.NewRequestWithContext(ctx, http.MethodGet, alibabaURL, nil)
++	if err != nil {
++		return false, err
++	}
++
++	dateISO := time.Now().UTC().Format("2006-01-02T15:04:05Z07:00")
++	params := req.URL.Query()
++	params.Add("AccessKeyId", resIdMatch)
++	params.Add("Action", "DescribeRegions")
++	params.Add("Format", "JSON")
++	params.Add("SignatureMethod", "HMAC-SHA1")
++	params.Add("SignatureNonce", randString(16))
++	params.Add("SignatureVersion", "1.0")
++	params.Add("Timestamp", dateISO)
++	params.Add("Version", "2014-05-26")
++
++	stringToSign := buildStringToSign(req.Method, params.Encode())
++	signature := GetSignature(stringToSign, resMatch+"&") // Get Signature HMAC SHA1
++	params.Add("Signature", signature)
++	req.URL.RawQuery = params.Encode()
++
++	req.Header.Add("Content-Type", "text/xml;charset=utf-8")
++	req.Header.Add("Content-Length", strconv.Itoa(len(params.Encode())))
++
++	res, err := client.Do(req)
++	if err != nil {
++		return false, err
++	}
++	defer res.Body.Close()
++
++	var alibabaResp alibabaResp
++	if err = json.NewDecoder(res.Body).Decode(&alibabaResp); err != nil {
++		return false, err
++	}
++
++	switch res.StatusCode {
++	case http.StatusOK:
++		return true, nil
++	case http.StatusNotFound, http.StatusBadRequest:
++		// 400 used for most of error cases
++		// 404 used if the AccessKeyId is not valid
++		return false, nil
++	default:
++		err := fmt.Errorf("unexpected HTTP response status %d", res.StatusCode)
++		if alibabaResp.Message != "" {
++			err = fmt.Errorf("%s: %s, %s", err, alibabaResp.Message, alibabaResp.Code)
++		}
++		return false, err
++	}
++}
++
+ func (s Scanner) Type() detectorspb.DetectorType {
+ 	return detectorspb.DetectorType_Alibaba
+ }
+diff --git a/pkg/detectors/artifactory/artifactory.go b/pkg/detectors/artifactory/artifactory.go
+index a5bf88994..accdc385e 100644
+--- a/pkg/detectors/artifactory/artifactory.go
++++ b/pkg/detectors/artifactory/artifactory.go
+@@ -2,25 +2,29 @@ package artifactory
+ 
+ import (
+ 	"context"
+-	regexp "github.com/wasilibs/go-re2"
++	"fmt"
+ 	"net/http"
+ 	"strings"
+ 
++	regexp "github.com/wasilibs/go-re2"
++
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/common"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/detectors"
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
+ )
+ 
+-type Scanner struct{}
+-
+-// Ensure the Scanner satisfies the interface at compile time.
+-var _ detectors.Detector = (*Scanner)(nil)
++type Scanner struct {
++	client *http.Client
++}
+ 
+ var (
+-	client = common.SaneHttpClient()
++	// Ensure the Scanner satisfies the interface at compile time.
++	_ detectors.Detector = (*Scanner)(nil)
++
++	defaultClient = common.SaneHttpClient()
+ 
+ 	// Make sure that your group is surrounded in boundary characters such as below to reduce false positives.
+-	keyPat = regexp.MustCompile(`\b([a-zA-Z0-9]{73})`)
++	keyPat = regexp.MustCompile(`\b([a-zA-Z0-9]{73}|\b[a-zA-Z0-9]{64})`)
+ 	URLPat = regexp.MustCompile(`\b([A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])\.jfrog\.io)`)
+ )
+ 
+@@ -30,6 +34,13 @@ func (s Scanner) Keywords() []string {
+ 	return []string{"artifactory"}
+ }
+ 
++func (s Scanner) getClient() *http.Client {
++	if s.client != nil {
++		return s.client
++	}
++	return defaultClient
++}
++
+ // FromData will find and optionally verify Artifactory secrets in a given set of bytes.
+ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (results []detectors.Result, err error) {
+ 	dataStr := string(data)
+@@ -42,7 +53,6 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 			continue
+ 		}
+ 		resURLMatch = strings.TrimSpace(URLmatch[1])
+-
+ 	}
+ 
+ 	for _, match := range matches {
+@@ -58,32 +68,46 @@ func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) (result
+ 		}
+ 
+ 		if verify {
+-			req, err := http.NewRequestWithContext(ctx, "GET", "https://"+resURLMatch+"/artifactory/api/storageinfo", nil)
+-			if err != nil {
+-				continue
+-			}
+-
+-			req.Header.Add("X-JFrog-Art-Api", resMatch)
+-			res, err := client.Do(req)
+-			if err == nil {
+-				defer res.Body.Close()
+-				if res.StatusCode >= 200 && res.StatusCode < 300 {
+-					s1.Verified = true
+-				} else {
+-					// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
+-					if detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
+-						continue
+-					}
+-				}
+-			}
++			client := s.getClient()
++			isVerified, verificationErr := verifyArtifactory(ctx, client, resURLMatch, resMatch)
++			s1.Verified = isVerified
++			s1.SetVerificationError(verificationErr, resMatch)
+ 		}
+ 
++		// This function will check false positives for common test words, but also it will make sure the key appears 'random' enough to be a real key.
++		if !s1.Verified && detectors.IsKnownFalsePositive(resMatch, detectors.DefaultFalsePositives, true) {
++			continue
++		}
+ 		results = append(results, s1)
+ 	}
+ 
+ 	return results, nil
+ }
+ 
++func verifyArtifactory(ctx context.Context, client *http.Client, resURLMatch, resMatch string) (bool, error) {
++	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://"+resURLMatch+"/artifactory/api/storageinfo", nil)
++	if err != nil {
++		return false, err
++	}
++
++	req.Header.Add("X-JFrog-Art-Api", resMatch)
++	res, err := client.Do(req)
++	if err != nil {
++		return false, err
++	}
++	defer res.Body.Close()
++
++	switch res.StatusCode {
++	case http.StatusOK:
++		return true, nil
++	case http.StatusForbidden:
++		// https://jfrog.com/help/r/jfrog-rest-apis/error-responses
++		return false, nil
++	default:
++		return false, fmt.Errorf("unexpected HTTP response status %d", res.StatusCode)
++	}
++}
++
+ func (s Scanner) Type() detectorspb.DetectorType {
+ 	return detectorspb.DetectorType_ArtifactoryAccessToken
+ }

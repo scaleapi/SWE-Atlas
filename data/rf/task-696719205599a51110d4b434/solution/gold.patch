@@ -1,0 +1,530 @@
+diff --git a/client/dashboard/sites/overview-card/card.stories.tsx b/client/dashboard/components/overview-card/card.stories.tsx
+similarity index 100%
+rename from client/dashboard/sites/overview-card/card.stories.tsx
+rename to client/dashboard/components/overview-card/card.stories.tsx
+diff --git a/client/dashboard/sites/overview-card/index.tsx b/client/dashboard/components/overview-card/index.tsx
+similarity index 97%
+rename from client/dashboard/sites/overview-card/index.tsx
+rename to client/dashboard/components/overview-card/index.tsx
+index 7f622c7b381..395b132ae52 100644
+--- a/client/dashboard/sites/overview-card/index.tsx
++++ b/client/dashboard/components/overview-card/index.tsx
+@@ -14,10 +14,10 @@ import { __ } from '@wordpress/i18n';
+ import { chevronRight } from '@wordpress/icons';
+ import clsx from 'clsx';
+ import { useAnalytics } from '../../app/analytics';
+-import ComponentViewTracker from '../../components/component-view-tracker';
+-import { Text } from '../../components/text';
+-import { TextSkeleton } from '../../components/text-skeleton';
+ import { isRelativeUrl } from '../../utils/url';
++import ComponentViewTracker from '../component-view-tracker';
++import { Text } from '../text';
++import { TextSkeleton } from '../text-skeleton';
+ import type { ComponentProps, ReactElement, ReactNode } from 'react';
+ import './style.scss';
+ 
+diff --git a/client/dashboard/sites/overview-card/style.scss b/client/dashboard/components/overview-card/style.scss
+similarity index 100%
+rename from client/dashboard/sites/overview-card/style.scss
+rename to client/dashboard/components/overview-card/style.scss
+diff --git a/client/dashboard/sites/overview-card/style.stories.scss b/client/dashboard/components/overview-card/style.stories.scss
+similarity index 100%
+rename from client/dashboard/sites/overview-card/style.stories.scss
+rename to client/dashboard/components/overview-card/style.stories.scss
+diff --git a/client/dashboard/domains/domain-overview/featured-card-emails.tsx b/client/dashboard/domains/domain-overview/featured-card-emails.tsx
+index 43909635683..5419a844432 100644
+--- a/client/dashboard/domains/domain-overview/featured-card-emails.tsx
++++ b/client/dashboard/domains/domain-overview/featured-card-emails.tsx
+@@ -6,7 +6,7 @@ import { Icon } from '@wordpress/components';
+ import { __, sprintf } from '@wordpress/i18n';
+ import { envelope } from '@wordpress/icons';
+ import { emailsRoute } from '../../app/router/emails';
+-import OverviewCard from '../../sites/overview-card';
++import OverviewCard from '../../components/overview-card';
+ import type { EmailProvider, Mailbox } from '@automattic/api-core';
+ 
+ const getAccountTypeLabel = ( accountType: EmailProvider ) => {
+diff --git a/client/dashboard/domains/domain-overview/featured-card-privacy.tsx b/client/dashboard/domains/domain-overview/featured-card-privacy.tsx
+index 82d73971ead..f24ccf45535 100644
+--- a/client/dashboard/domains/domain-overview/featured-card-privacy.tsx
++++ b/client/dashboard/domains/domain-overview/featured-card-privacy.tsx
+@@ -3,7 +3,7 @@ import { PRIVACY_PROTECTION } from '@automattic/urls';
+ import { Icon } from '@wordpress/components';
+ import { __ } from '@wordpress/i18n';
+ import { unseen } from '@wordpress/icons';
+-import OverviewCard from '../../sites/overview-card';
++import OverviewCard from '../../components/overview-card';
+ 
+ interface Props {
+ 	domain: Domain;
+diff --git a/client/dashboard/domains/domain-overview/featured-card-renew.tsx b/client/dashboard/domains/domain-overview/featured-card-renew.tsx
+index 430945f8fa2..521f1f5dd79 100644
+--- a/client/dashboard/domains/domain-overview/featured-card-renew.tsx
++++ b/client/dashboard/domains/domain-overview/featured-card-renew.tsx
+@@ -3,8 +3,8 @@ import { Icon } from '@wordpress/components';
+ import { __ } from '@wordpress/i18n';
+ import { calendar } from '@wordpress/icons';
+ import { useLocale } from '../../app/locale';
++import OverviewCard from '../../components/overview-card';
+ import { getPurchaseUrlForId } from '../../me/billing-purchases/urls';
+-import OverviewCard from '../../sites/overview-card';
+ import { formatDate } from '../../utils/datetime';
+ 
+ interface Props {
+diff --git a/client/dashboard/domains/domain-overview/featured-card-site.tsx b/client/dashboard/domains/domain-overview/featured-card-site.tsx
+index 73032d34489..35406fd0eaa 100644
+--- a/client/dashboard/domains/domain-overview/featured-card-site.tsx
++++ b/client/dashboard/domains/domain-overview/featured-card-site.tsx
+@@ -4,7 +4,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
+ import { Icon } from '@wordpress/components';
+ import { __ } from '@wordpress/i18n';
+ import { layout } from '@wordpress/icons';
+-import OverviewCard from '../../sites/overview-card';
++import OverviewCard from '../../components/overview-card';
+ import SiteIcon from '../../sites/site-icon';
+ 
+ interface Props {
+diff --git a/client/dashboard/me/billing-purchases/purchase-settings/index.tsx b/client/dashboard/me/billing-purchases/purchase-settings/index.tsx
+index fc45ce0a86e..4b678785bfe 100644
+--- a/client/dashboard/me/billing-purchases/purchase-settings/index.tsx
++++ b/client/dashboard/me/billing-purchases/purchase-settings/index.tsx
+@@ -23,17 +23,15 @@ import { INCOMING_DOMAIN_TRANSFER_STATUSES_IN_PROGRESS } from '@automattic/urls'
+ import { useQuery, useMutation } from '@tanstack/react-query';
+ import { Link } from '@tanstack/react-router';
+ import {
++	__experimentalGrid as Grid,
+ 	__experimentalText as Text,
+ 	__experimentalVStack as VStack,
+-	__experimentalHStack as HStack,
+-	__experimentalHeading as Heading,
+ 	DropdownMenu,
+ 	MenuGroup,
+ 	MenuItem,
+ 	Card,
+ 	CardBody,
+ 	Button,
+-	Icon,
+ 	ToggleControl,
+ 	Notice,
+ 	ExternalLink,
+@@ -44,7 +42,6 @@ import { __, _n, sprintf } from '@wordpress/i18n';
+ import {
+ 	moreVertical,
+ 	calendar,
+-	chevronRight,
+ 	currencyDollar,
+ 	siteLogo,
+ 	commentAuthorAvatar,
+@@ -58,6 +55,7 @@ import { purchaseSettingsRoute } from '../../../app/router/me';
+ import { ActionList } from '../../../components/action-list';
+ import ClipboardInputControl from '../../../components/clipboard-input-control';
+ import { useFormattedTime } from '../../../components/formatted-time';
++import OverviewCard from '../../../components/overview-card';
+ import { PageHeader } from '../../../components/page-header';
+ import PageLayout from '../../../components/page-layout';
+ import { formatDate } from '../../../utils/datetime';
+@@ -84,7 +82,6 @@ import { getPurchaseUrlForId } from '../urls';
+ import { PurchaseNotice } from './purchase-notice';
+ import type { User, Purchase } from '@automattic/api-core';
+ import type { Field } from '@wordpress/dataviews';
+-import type { ReactNode, ReactElement } from 'react';
+ 
+ import './style.scss';
+ 
+@@ -238,23 +235,6 @@ function PurchaseActionMenu( { purchase }: { purchase: Purchase } ) {
+ 	);
+ }
+ 
+-function PurchaseSettingsCardLinkWrapper( {
+-	link,
+-	children,
+-}: {
+-	link?: string;
+-	children: ReactNode;
+-} ) {
+-	if ( link ) {
+-		return (
+-			<Link to={ link } className="purchase-settings-card__link">
+-				{ children }
+-			</Link>
+-		);
+-	}
+-	return children;
+-}
+-
+ function CancelOrRemoveActionButton( { purchase }: { purchase: Purchase } ) {
+ 	// FIXME: render renderWordAdsEligibilityWarningDialog for refund/cancel
+ 	// FIXME: render renderNonPrimaryDomainWarningDialog for refund/cancel
+@@ -476,63 +456,6 @@ function PurchaseSettingsActions( { purchase }: { purchase: Purchase } ) {
+ 	);
+ }
+ 
+-export function PurchaseSettingsCard( {
+-	icon,
+-	title,
+-	heading,
+-	description,
+-	link,
+-}: {
+-	icon?: ReactElement;
+-	title: ReactNode;
+-	heading?: ReactNode;
+-	description?: ReactNode;
+-	link?: string;
+-} ) {
+-	return (
+-		<PurchaseSettingsCardLinkWrapper link={ link }>
+-			<Card className="purchase-settings-card">
+-				<CardBody>
+-					<VStack>
+-						<HStack justify="space-between">
+-							<HStack spacing={ 2 } justify="flex-start" alignment="center">
+-								{ icon && <Icon className="dashboard-overview-card__icon" icon={ icon } /> }
+-								<Text
+-									className="dashboard-overview-card__title"
+-									variant="muted"
+-									lineHeight="16px"
+-									size={ 11 }
+-									weight={ 500 }
+-									upperCase
+-								>
+-									{ title }
+-								</Text>
+-							</HStack>
+-							{ link && (
+-								<Icon className="dashboard-overview-card__link-icon" icon={ chevronRight } />
+-							) }
+-						</HStack>
+-						<HStack spacing={ 2 } justify="flex-start" alignment="center">
+-							<VStack>
+-								{ heading && (
+-									<Heading level={ 2 } size={ 20 } weight={ 500 }>
+-										{ heading }
+-									</Heading>
+-								) }
+-								{ description && (
+-									<Text variant="muted" lineHeight="16px" size={ 12 }>
+-										{ description }
+-									</Text>
+-								) }
+-							</VStack>
+-						</HStack>
+-					</VStack>
+-				</CardBody>
+-			</Card>
+-		</PurchaseSettingsCardLinkWrapper>
+-	);
+-}
+-
+ function getFields( {
+ 	isMutationPending,
+ 	user,
+@@ -639,7 +562,7 @@ function ManageSubscriptionCard( { purchase }: { purchase: Purchase } ) {
+ function PurchasePriceCard( { purchase }: { purchase: Purchase } ) {
+ 	if ( purchase.partner_name ) {
+ 		return (
+-			<PurchaseSettingsCard
++			<OverviewCard
+ 				icon={ currencyDollar }
+ 				title={
+ 					// translators: partnerName is the name of a business partner through which this product was sold
+@@ -652,7 +575,7 @@ function PurchasePriceCard( { purchase }: { purchase: Purchase } ) {
+ 	}
+ 	if ( isOneTimePurchase( purchase ) ) {
+ 		return (
+-			<PurchaseSettingsCard
++			<OverviewCard
+ 				icon={ currencyDollar }
+ 				title={ __( 'Price' ) }
+ 				heading={ formatCurrency( purchase.regular_price_integer, purchase.currency_code, {
+@@ -663,7 +586,7 @@ function PurchasePriceCard( { purchase }: { purchase: Purchase } ) {
+ 		);
+ 	}
+ 	return (
+-		<PurchaseSettingsCard
++		<OverviewCard
+ 			icon={ currencyDollar }
+ 			title={ __( 'Renewal price' ) }
+ 			heading={ formatCurrency( purchase.price_integer, purchase.currency_code, {
+@@ -1108,8 +1031,8 @@ export default function PurchaseSettings() {
+ 		>
+ 			<VStack spacing={ 6 }>
+ 				<PurchaseNotice purchase={ purchase } />
+-				<HStack spacing={ 6 } justify="flex-start" alignment="center">
+-					<PurchaseSettingsCard
++				<Grid columns={ 2 } rows={ 2 } gap={ 6 }>
++					<OverviewCard
+ 						icon={ calendar }
+ 						title={ expiryDateTitle }
+ 						heading={ ( () => {
+@@ -1139,10 +1062,8 @@ export default function PurchaseSettings() {
+ 						} )() }
+ 					/>
+ 					<PurchasePriceCard purchase={ purchase } />
+-				</HStack>
+-				<HStack spacing={ 6 } justify="flex-start" alignment="center">
+ 					{ site && (
+-						<PurchaseSettingsCard
++						<OverviewCard
+ 							icon={ siteLogo }
+ 							title={ __( 'Site' ) }
+ 							heading={ site.name }
+@@ -1150,7 +1071,7 @@ export default function PurchaseSettings() {
+ 							link={ `/v2/sites/${ purchase.site_slug }` }
+ 						/>
+ 					) }
+-					<PurchaseSettingsCard
++					<OverviewCard
+ 						icon={ commentAuthorAvatar }
+ 						title={ __( 'Owner' ) }
+ 						heading={
+@@ -1162,7 +1083,7 @@ export default function PurchaseSettings() {
+ 							String( user.ID ) === String( purchase.user_id ) ? user.email : undefined
+ 						}
+ 					/>
+-				</HStack>
++				</Grid>
+ 				<ManageSubscriptionCard purchase={ purchase } />
+ 				<PurchaseSettingsActions purchase={ purchase } />
+ 			</VStack>
+diff --git a/client/dashboard/me/billing-purchases/purchase-settings/style.scss b/client/dashboard/me/billing-purchases/purchase-settings/style.scss
+index 9135bdf51f5..dfc87c5d2e0 100644
+--- a/client/dashboard/me/billing-purchases/purchase-settings/style.scss
++++ b/client/dashboard/me/billing-purchases/purchase-settings/style.scss
+@@ -1,13 +1,3 @@
+-.purchase-settings-card__link {
+-	text-decoration: none;
+-	flex-grow: 1;
+-	max-width: 318px;
+-}
+-.purchase-settings-card {
+-	flex-grow: 1;
+-	max-width: 318px;
+-}
+-
+ // ConfirmDialog sets the z-index so high that the Popover used by DataViews
+ // actions does not show up so we have to set this lower.
+ // @see https://github.com/wordpress/gutenberg/issues/71463
+diff --git a/client/dashboard/me/monetize-subscriptions/monetize-subscription.tsx b/client/dashboard/me/monetize-subscriptions/monetize-subscription.tsx
+index ed23fd09732..acba8ed520b 100644
+--- a/client/dashboard/me/monetize-subscriptions/monetize-subscription.tsx
++++ b/client/dashboard/me/monetize-subscriptions/monetize-subscription.tsx
+@@ -11,8 +11,8 @@ import { CALYPSO_CONTACT } from '@automattic/urls';
+ import { useMutation, useQuery } from '@tanstack/react-query';
+ import { useNavigate } from '@tanstack/react-router';
+ import {
++	__experimentalGrid as Grid,
+ 	__experimentalVStack as VStack,
+-	__experimentalHStack as HStack,
+ 	Card,
+ 	Button,
+ 	Notice,
+@@ -29,11 +29,11 @@ import { monetizeSubscriptionRoute } from '../../app/router/me';
+ import ActionList from '../../components/action-list';
+ import { addFlashMessage } from '../../components/flash-message';
+ import { useFormattedTime } from '../../components/formatted-time';
++import OverviewCard from '../../components/overview-card';
+ import { PageHeader } from '../../components/page-header';
+ import PageLayout from '../../components/page-layout';
+ import { getMonetizeSubscriptionsUrl } from '../../me/monetize-subscriptions/urls';
+ import { formatDate } from '../../utils/datetime';
+-import { PurchaseSettingsCard } from '../billing-purchases/purchase-settings';
+ 
+ function AutoRenewButton( {
+ 	disableAutoRenew,
+@@ -261,16 +261,16 @@ export default function MonetizeSubscriptionDetails() {
+ 			) }
+ 			{ isUpdating && <Notice status="info">{ __( 'Updating subscription auto-renew' ) }</Notice> }
+ 			{ subscription && (
+-				<VStack spacing={ 4 }>
+-					<HStack spacing={ 6 } justify="flex-start" alignment="center">
+-						<PurchaseSettingsCard
++				<VStack spacing={ 6 }>
++					<Grid columns={ 2 } rows={ 2 } gap={ 6 }>
++						<OverviewCard
+ 							icon={ siteLogo }
+ 							title={ __( 'Site' ) }
+ 							heading={ subscription.site_title }
+ 							description={ subscription.site_url }
+ 							link={ subscription.site_url }
+ 						/>
+-						<PurchaseSettingsCard
++						<OverviewCard
+ 							icon={ calendar }
+ 							title={ expiryDateTitle }
+ 							heading={ ( () => {
+@@ -289,10 +289,9 @@ export default function MonetizeSubscriptionDetails() {
+ 								return __( 'Auto-renew is disabled.' );
+ 							} )() }
+ 						/>
+-					</HStack>
+-					<HStack spacing={ 6 } justify="flex-start" alignment="center">
++
+ 						{ isOneTimePurchase && (
+-							<PurchaseSettingsCard
++							<OverviewCard
+ 								icon={ currencyDollar }
+ 								title={ __( 'Price' ) }
+ 								heading={ formatCurrency(
+@@ -307,7 +306,7 @@ export default function MonetizeSubscriptionDetails() {
+ 						) }
+ 
+ 						{ ! isOneTimePurchase && (
+-							<PurchaseSettingsCard
++							<OverviewCard
+ 								icon={ currencyDollar }
+ 								title={ __( 'Renewal price' ) }
+ 								heading={ formatCurrency(
+@@ -319,12 +318,12 @@ export default function MonetizeSubscriptionDetails() {
+ 								) }
+ 							/>
+ 						) }
+-						<PurchaseSettingsCard
++						<OverviewCard
+ 							icon={ rotateRight }
+ 							title={ __( 'Renewal interval' ) }
+ 							heading={ subscription.renew_interval || '-' }
+ 						/>
+-					</HStack>
++					</Grid>
+ 
+ 					{ isRenewable && (
+ 						<AutoRenewButton
+diff --git a/client/dashboard/sites/hosting-feature-gated-with-overview-card/index.tsx b/client/dashboard/sites/hosting-feature-gated-with-overview-card/index.tsx
+index cecefaa0d08..5bed8b5d197 100644
+--- a/client/dashboard/sites/hosting-feature-gated-with-overview-card/index.tsx
++++ b/client/dashboard/sites/hosting-feature-gated-with-overview-card/index.tsx
+@@ -1,9 +1,9 @@
+ import { __ } from '@wordpress/i18n';
+ import { upsell } from '../../components/icons';
++import OverviewCard from '../../components/overview-card';
+ import HostingFeatureGate from '../hosting-feature-gate';
+-import OverviewCard from '../overview-card';
++import type { OverviewCardProps } from '../../components/overview-card';
+ import type { HostingFeatureGateProps } from '../hosting-feature-gate';
+-import type { OverviewCardProps } from '../overview-card';
+ 
+ interface HostingFeatureGatedWithOverviewCardProps
+ 	extends Omit< HostingFeatureGateProps, 'renderUpsellComponent' | 'renderActivationComponent' > {
+diff --git a/client/dashboard/sites/overview-agency-site-share-card/index.tsx b/client/dashboard/sites/overview-agency-site-share-card/index.tsx
+index e7d4ba5ecd0..1fef16c8e38 100644
+--- a/client/dashboard/sites/overview-agency-site-share-card/index.tsx
++++ b/client/dashboard/sites/overview-agency-site-share-card/index.tsx
+@@ -2,7 +2,7 @@ import { sitePreviewLinksQuery } from '@automattic/api-queries';
+ import { useQuery } from '@tanstack/react-query';
+ import { __ } from '@wordpress/i18n';
+ import { link } from '@wordpress/icons';
+-import OverviewCard from '../overview-card';
++import OverviewCard from '../../components/overview-card';
+ import type { Site } from '@automattic/api-core';
+ 
+ export default function AgencySiteShareCard( { site }: { site: Site } ) {
+diff --git a/client/dashboard/sites/overview-backup-card/index.tsx b/client/dashboard/sites/overview-backup-card/index.tsx
+index 48b18540d59..18e2828b95c 100644
+--- a/client/dashboard/sites/overview-backup-card/index.tsx
++++ b/client/dashboard/sites/overview-backup-card/index.tsx
+@@ -4,10 +4,10 @@ import { useQuery } from '@tanstack/react-query';
+ import { __, sprintf } from '@wordpress/i18n';
+ import { backup } from '@wordpress/icons';
+ import { useFormattedTime } from '../../components/formatted-time';
++import OverviewCard from '../../components/overview-card';
+ import { useTimeSince } from '../../components/time-since';
+ import { getBackupUrl } from '../../utils/site-backup';
+ import HostingFeatureGatedWithOverviewCard from '../hosting-feature-gated-with-overview-card';
+-import OverviewCard from '../overview-card';
+ import type { Site, SiteActivityLog } from '@automattic/api-core';
+ 
+ const CARD_PROPS = {
+diff --git a/client/dashboard/sites/overview-migrate-site-card/index.tsx b/client/dashboard/sites/overview-migrate-site-card/index.tsx
+index 9e392e5f88d..07d908fb911 100644
+--- a/client/dashboard/sites/overview-migrate-site-card/index.tsx
++++ b/client/dashboard/sites/overview-migrate-site-card/index.tsx
+@@ -1,7 +1,7 @@
+ import { __ } from '@wordpress/i18n';
+ import { shuffle } from '@wordpress/icons';
+ import { addQueryArgs } from '@wordpress/url';
+-import OverviewCard from '../overview-card';
++import OverviewCard from '../../components/overview-card';
+ import type { Site } from '@automattic/api-core';
+ 
+ export default function MigrateSiteCard( { site }: { site: Site } ) {
+diff --git a/client/dashboard/sites/overview-performance-card/index.tsx b/client/dashboard/sites/overview-performance-card/index.tsx
+index e2eec1cfaf5..db5eacd30e2 100644
+--- a/client/dashboard/sites/overview-performance-card/index.tsx
++++ b/client/dashboard/sites/overview-performance-card/index.tsx
+@@ -4,11 +4,11 @@ import { useQuery } from '@tanstack/react-query';
+ import { __, _n, sprintf } from '@wordpress/i18n';
+ import { chartBar } from '@wordpress/icons';
+ import { addQueryArgs } from '@wordpress/url';
++import OverviewCard from '../../components/overview-card';
+ import { useTimeSince } from '../../components/time-since';
+ import { isDashboardBackport } from '../../utils/is-dashboard-backport';
+ import { getPerformanceStatus, getStatusIntent, getStatusText } from '../../utils/site-performance';
+ import HostingFeatureGatedWithOverviewCard from '../hosting-feature-gated-with-overview-card';
+-import OverviewCard from '../overview-card';
+ import { useSitePerformanceData } from '../performance/use-site-performance-data';
+ import type { SitePerformanceReport, Site } from '@automattic/api-core';
+ 
+diff --git a/client/dashboard/sites/overview-plan-card/index.tsx b/client/dashboard/sites/overview-plan-card/index.tsx
+index 2adef3442c8..20e70e82491 100644
+--- a/client/dashboard/sites/overview-plan-card/index.tsx
++++ b/client/dashboard/sites/overview-plan-card/index.tsx
+@@ -12,6 +12,7 @@ import {
+ import { __, sprintf } from '@wordpress/i18n';
+ import { wordpress } from '@wordpress/icons';
+ import { commerceGardenPlan } from '../../components/icons';
++import OverviewCard from '../../components/overview-card';
+ import { PurchaseExpiryStatus } from '../../components/purchase-expiry-status';
+ import { getPurchaseUrlForId } from '../../me/billing-purchases/urls';
+ import { isDashboardBackport } from '../../utils/is-dashboard-backport';
+@@ -21,7 +22,6 @@ import {
+ 	JETPACK_PRODUCTS,
+ } from '../../utils/site-plan';
+ import { isSelfHostedJetpackConnected, isCommerceGarden } from '../../utils/site-types';
+-import OverviewCard from '../overview-card';
+ import SiteBandwidthStat from './site-bandwidth-stat';
+ import SiteStorageStat from './site-storage-stat';
+ import type { Purchase, Site } from '@automattic/api-core';
+diff --git a/client/dashboard/sites/overview-scan-card/index.tsx b/client/dashboard/sites/overview-scan-card/index.tsx
+index d9d0a534b16..71137363535 100644
+--- a/client/dashboard/sites/overview-scan-card/index.tsx
++++ b/client/dashboard/sites/overview-scan-card/index.tsx
+@@ -3,11 +3,11 @@ import { siteScanQuery } from '@automattic/api-queries';
+ import { useQuery } from '@tanstack/react-query';
+ import { __, _n, sprintf } from '@wordpress/i18n';
+ import { shield } from '@wordpress/icons';
++import OverviewCard from '../../components/overview-card';
+ import { useTimeSince } from '../../components/time-since';
+ import { isDashboardBackport } from '../../utils/is-dashboard-backport';
+ import { isSelfHostedJetpackConnected } from '../../utils/site-types';
+ import HostingFeatureGatedWithOverviewCard from '../hosting-feature-gated-with-overview-card';
+-import OverviewCard from '../overview-card';
+ import type { SiteScan, Site } from '@automattic/api-core';
+ 
+ const CARD_PROPS = {
+diff --git a/client/dashboard/sites/overview-subscribers-card/index.tsx b/client/dashboard/sites/overview-subscribers-card/index.tsx
+index 7e35ebf6f25..8eb79469274 100644
+--- a/client/dashboard/sites/overview-subscribers-card/index.tsx
++++ b/client/dashboard/sites/overview-subscribers-card/index.tsx
+@@ -1,6 +1,6 @@
+ import { __ } from '@wordpress/i18n';
+ import { people } from '@wordpress/icons';
+-import OverviewCard from '../overview-card';
++import OverviewCard from '../../components/overview-card';
+ import type { Site } from '@automattic/api-core';
+ 
+ export default function SubscribersCard( { site }: { site: Site } ) {
+diff --git a/client/dashboard/sites/overview-visibility-card/index.tsx b/client/dashboard/sites/overview-visibility-card/index.tsx
+index 8e8236e54cc..6ab5c14ae46 100644
+--- a/client/dashboard/sites/overview-visibility-card/index.tsx
++++ b/client/dashboard/sites/overview-visibility-card/index.tsx
+@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
+ import { __ } from '@wordpress/i18n';
+ import { lockOutline, published } from '@wordpress/icons';
+ import { launch } from '../../components/icons';
++import OverviewCard from '../../components/overview-card';
+ import { isSelfHostedJetpackConnected } from '../../utils/site-types';
+-import OverviewCard from '../overview-card';
+ import type { Site } from '@automattic/api-core';
+ 
+ const CARD_PROPS = {

@@ -1,0 +1,13 @@
+{
+  "files": [
+    {
+      "name": "test/benchmark/dissection_and_build.py"
+    },
+    {
+      "name": "test/regression.uts"
+    },
+    {
+      "name": "test/test_random_cleanups.py"
+    }
+  ]
+}

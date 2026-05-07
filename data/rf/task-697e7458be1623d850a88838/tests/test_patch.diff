@@ -1,0 +1,369 @@
+diff --git a/test/contrib/automotive/scanner/enumerator.uts b/test/contrib/automotive/scanner/enumerator.uts
+index 39592e86..45bab465 100644
+--- a/test/contrib/automotive/scanner/enumerator.uts
++++ b/test/contrib/automotive/scanner/enumerator.uts
+@@ -1048,4 +1048,361 @@ assert len(args) == 2
+ assert args["req"] == UDS()/UDS_DSC(b"\x03")
+ assert "diagnosticSessionType" in args["desc"] and "extendedDiagnosticSession" in args["desc"]
+ 
+-assert not tce.enter_state(EcuState(session=1), EcuState(session=3))
+\ No newline at end of file
++assert not tce.enter_state(EcuState(session=1), EcuState(session=3))
++
++
+++ ServiceEnumerator robustness tests
++
++= ServiceEnumerator raises exception when socket closes during scan
++
++~ closed_socket_test
++
++def _make_closing_socket():
++    _state = [0]
++    class _CS(object):
++        @property
++        def closed(self):
++            return _state[0] > 0
++        def sr1(self, *args, **kwargs):
++            _state[0] += 1
++            return UDS(b"\x7f\x01\x10")
++    return _CS()
++
++_e_close = MyTestCase()
++_raised = False
++try:
++    _e_close.execute(_make_closing_socket(), EcuState(session=1))
++except Exception:
++    _raised = True
++
++assert _raised, "Expected exception when socket closes during scan"
++
++= ServiceEnumerator negative and positive response properties only include entries with responses
++
++~ response_filter_test
++
++def _test_response_filtering():
++    e = MyTestCase()
++    r1 = UDS(b"\x20abcd")
++    r1.time = 1.0
++    r1.sent_time = 1.0
++    rn = UDS(b"\x7f\x20\x10")
++    rn.time = 1.1
++    e._store_result(EcuState(session=1), r1, rn)
++    r2 = UDS(b"\x21abcd")
++    r2.time = 2.0
++    r2.sent_time = 2.0
++    e._store_result(EcuState(session=1), r2, None)
++    r3 = UDS(b"\x22abcd")
++    r3.time = 3.0
++    r3.sent_time = 3.0
++    rp = UDS(b"\x62abcd")
++    rp.time = 3.1
++    e._store_result(EcuState(session=1), r3, rp)
++    neg = e.results_with_negative_response
++    pos = e.results_with_positive_response
++    resp = e.results_with_response
++    for x in neg:
++        assert x in resp, "Negative response entry must be in results_with_response"
++    for x in pos:
++        assert x in resp, "Positive response entry must be in results_with_response"
++    assert len(neg) == 1
++    assert len(pos) == 1
++    assert len(resp) == 2
++    assert len(e.results_without_response) == 1
++
++_test_response_filtering()
++
++= ServiceEnumerator retry on None produces more debug output than no-retry baseline
++
++~ retry_none_log_test
++
++import logging
++from scapy.error import log_interactive
++
++def _test_retry_none_log():
++    _records = []
++    class _H(logging.Handler):
++        def emit(self, record):
++            _records.append(record)
++    h = _H()
++    h.setLevel(logging.DEBUG)
++    log_interactive.addHandler(h)
++    old = log_interactive.level
++    log_interactive.setLevel(logging.DEBUG)
++    try:
++        s1 = MockISOTPSocket()
++        s1.rcvd_queue.put(UDS(b"\x7f\x01\x10"))
++        e1 = MyTestCase()
++        e1.execute(s1, EcuState(session=1), timeout=0.01)
++        b = len([r for r in _records if r.levelno == logging.DEBUG])
++        _records[:] = []
++        s2 = MockISOTPSocket()
++        s2.rcvd_queue.put(UDS(b"\x7f\x01\x10"))
++        e2 = MyTestCase()
++        e2.execute(s2, EcuState(session=1), retry_if_none_received=True, timeout=0.01)
++        a = len([r for r in _records if r.levelno == logging.DEBUG])
++    finally:
++        log_interactive.removeHandler(h)
++        log_interactive.setLevel(old)
++    return a, b
++
++_retry_a, _retry_b = _test_retry_none_log()
++assert _retry_a > _retry_b, "Retries should produce more debug log output than baseline (%d vs %d)" % (_retry_a, _retry_b)
++
++= ServiceEnumerator retry on busy NRC 0x21 produces more debug output than no-retry baseline
++
++~ retry_busy_log_test
++
++def _test_retry_busy_log():
++    _records = []
++    class _H(logging.Handler):
++        def emit(self, record):
++            _records.append(record)
++    h = _H()
++    h.setLevel(logging.DEBUG)
++    log_interactive.addHandler(h)
++    old = log_interactive.level
++    log_interactive.setLevel(logging.DEBUG)
++    try:
++        s1 = MockISOTPSocket()
++        s1.rcvd_queue.put(UDS(b"\x7f\x01\x21"))
++        s1.rcvd_queue.put(UDS(b"\x7f\x01\x10"))
++        e1 = MyTestCase()
++        e1.execute(s1, EcuState(session=1), retry_if_busy_returncode=False, timeout=0.01)
++        b = len([r for r in _records if r.levelno == logging.DEBUG])
++        _records[:] = []
++        s2 = MockISOTPSocket()
++        s2.rcvd_queue.put(UDS(b"\x7f\x01\x21"))
++        s2.rcvd_queue.put(UDS(b"\x7f\x01\x10"))
++        e2 = MyTestCase()
++        e2.execute(s2, EcuState(session=1), retry_if_busy_returncode=True, timeout=0.01)
++        e2.execute(s2, EcuState(session=1), retry_if_busy_returncode=True, timeout=0.01)
++        a = len([r for r in _records if r.levelno == logging.DEBUG])
++    finally:
++        log_interactive.removeHandler(h)
++        log_interactive.setLevel(old)
++    return a, b
++
++_retry_a, _retry_b = _test_retry_busy_log()
++assert _retry_a > _retry_b, "Busy retries should produce more debug log output than baseline (%d vs %d)" % (_retry_a, _retry_b)
++
++
+++ OBD_Service_Enumerator robustness tests
++
++= OBD get_supported handles non-iterable PID fields without crashing
++
++import queue as _queue
++from scapy.contrib.automotive.obd.obd import OBD, OBD_S01, OBD_S01_PR, OBD_S01_PR_Record, OBD_PID00, OBD_PID03, OBD_PID0B, OBD_PID0F, OBD_NR
++from scapy.contrib.automotive.obd.scanner import OBD_S01_Enumerator
++
++class _OBDMockSocket:
++    def __init__(self, responses):
++        self.q = _queue.Queue()
++        for r in responses:
++            self.q.put(r)
++        self.closed = False
++    def sr1(self, pkt, timeout=None, verbose=None):
++        try:
++            return self.q.get(timeout=0.1)
++        except _queue.Empty:
++            return None
++    def close(self):
++        self.closed = True
++
++def _test_get_supported_handles_type_error():
++    responses = [OBD(service=65)/OBD_S01_PR(data_records=[OBD_S01_PR_Record(pid=0)/OBD_PID00(supported_pids="PID03+PID0B+PID0F")]), OBD(service=65)/OBD_S01_PR(data_records=[OBD_S01_PR_Record(pid=0x20)]), OBD(service=127)/OBD_NR(request_service_id=1, response_code=0x12)]
++    sock = _OBDMockSocket(responses)
++    e = OBD_S01_Enumerator()
++    result = e.get_supported(sock, EcuState(session=1))
++    assert 3 in result
++    assert 11 in result
++    assert 15 in result
++    assert len(result) == len(set(result))
++
++_test_get_supported_handles_type_error()
++
++= OBD get_supported returns deduplicated PID values
++
++def _test_get_supported_dedup():
++    responses = [OBD(service=65)/OBD_S01_PR(data_records=[OBD_S01_PR_Record(pid=0)/OBD_PID00(supported_pids="PID03+PID0B+PID0F")]), OBD(service=127)/OBD_NR(request_service_id=1, response_code=0x12)]
++    sock = _OBDMockSocket(responses)
++    e = OBD_S01_Enumerator()
++    result = e.get_supported(sock, EcuState(session=1))
++    assert len(result) == len(set(result)), "Supported PIDs must be unique"
++    assert 3 in result
++    assert 11 in result
++    assert 15 in result
++
++_test_get_supported_dedup()
++
++
+++ obdscanner module structure tests
++
++= obdscanner exposes get_can_socket, get_isotp_socket, and run_scan
++
++import scapy.tools.automotive.obdscanner as _obdmod
++import inspect as _inspect
++
++assert hasattr(_obdmod, "get_can_socket"), "obdscanner must expose get_can_socket"
++assert callable(_obdmod.get_can_socket)
++assert hasattr(_obdmod, "get_isotp_socket"), "obdscanner must expose get_isotp_socket"
++assert callable(_obdmod.get_isotp_socket)
++assert hasattr(_obdmod, "run_scan"), "obdscanner must expose run_scan"
++assert callable(_obdmod.run_scan)
++
++= get_can_socket, get_isotp_socket, run_scan have correct parameter counts
++
++_gcs_params = list(_inspect.signature(_obdmod.get_can_socket).parameters.keys())
++assert len(_gcs_params) == 3, "get_can_socket should accept 3 parameters, got %d" % len(_gcs_params)
++
++_gis_params = list(_inspect.signature(_obdmod.get_isotp_socket).parameters.keys())
++assert len(_gis_params) == 3, "get_isotp_socket should accept 3 parameters, got %d" % len(_gis_params)
++
++_rs_params = list(_inspect.signature(_obdmod.run_scan).parameters.keys())
++assert len(_rs_params) == 5, "run_scan should accept 5 parameters, got %d" % len(_rs_params)
++
++= get_can_socket returns a socket for native backend
++
++def _test_get_can_socket_native():
++    _orig = _obdmod.PYTHON_CAN
++    try:
++        _obdmod.PYTHON_CAN = False
++        from unittest.mock import MagicMock, patch
++        with patch.object(_obdmod, 'CANSocket', return_value=MagicMock()) as mock_cs:
++            result = _obdmod.get_can_socket("vcan0", None, None)
++            mock_cs.assert_called_once()
++            call_args = mock_cs.call_args
++            all_vals = list(call_args[0]) + list(call_args[1].values())
++            assert "vcan0" in all_vals, "get_can_socket must forward the channel to CANSocket"
++            assert result is not None
++    finally:
++        _obdmod.PYTHON_CAN = _orig
++
++_test_get_can_socket_native()
++
++= get_can_socket with python-can backend and no extra args
++
++def _test_get_can_socket_pycan():
++    _orig = _obdmod.PYTHON_CAN
++    try:
++        _obdmod.PYTHON_CAN = True
++        from unittest.mock import MagicMock, patch
++        with patch.object(_obdmod, 'CANSocket', return_value=MagicMock()) as mock_cs:
++            result = _obdmod.get_can_socket("can0", "socketcan", None)
++            mock_cs.assert_called_once()
++            call_args = mock_cs.call_args
++            all_vals = list(call_args[0]) + list(call_args[1].values())
++            assert "can0" in all_vals, "get_can_socket must forward the channel"
++            assert "socketcan" in all_vals, "get_can_socket must forward the interface"
++            assert result is not None
++    finally:
++        _obdmod.PYTHON_CAN = _orig
++
++_test_get_can_socket_pycan()
++
++= get_can_socket with python-can backend parses extra args
++
++def _test_get_can_socket_pycan_args():
++    _orig = _obdmod.PYTHON_CAN
++    try:
++        _obdmod.PYTHON_CAN = True
++        from unittest.mock import MagicMock, patch
++        with patch.object(_obdmod, 'CANSocket', return_value=MagicMock()) as mock_cs:
++            result = _obdmod.get_can_socket("can0", "socketcan", "bitrate=500000,fd=True")
++            mock_cs.assert_called_once()
++            call_args = mock_cs.call_args
++            all_vals = list(call_args[0]) + list(call_args[1].values())
++            assert "can0" in all_vals, "get_can_socket must forward the channel"
++            assert "socketcan" in all_vals, "get_can_socket must forward the interface"
++            assert 500000 in all_vals or "500000" in [str(v) for v in all_vals], "get_can_socket must parse and forward bitrate"
++            assert result is not None
++    finally:
++        _obdmod.PYTHON_CAN = _orig
++
++_test_get_can_socket_pycan_args()
++
++= get_isotp_socket wraps CAN socket into ISOTP socket with padding
++
++def _test_get_isotp_socket():
++    from unittest.mock import MagicMock, patch
++    mock_csock = MagicMock()
++    with patch.object(_obdmod, 'ISOTPSocket', return_value=MagicMock()) as mock_isock:
++        result = _obdmod.get_isotp_socket(mock_csock, 0x7e0, 0x7e8)
++        mock_isock.assert_called_once()
++        call_kwargs = mock_isock.call_args
++        assert call_kwargs[0][0] is mock_csock, "get_isotp_socket must pass the CAN socket"
++        assert call_kwargs[1].get("padding") == True, "get_isotp_socket must enable padding"
++        assert result is not None
++
++_test_get_isotp_socket()
++
++= run_scan creates scanner and runs scan
++
++def _test_run_scan_mock():
++    from unittest.mock import MagicMock, patch
++    mock_isock = MagicMock()
++    mock_scanner_instance = MagicMock()
++    with patch.object(_obdmod, 'OBD_Scanner', return_value=mock_scanner_instance) as mock_scanner_cls:
++        _obdmod.run_scan(mock_isock, [_obdmod.OBD_S01_Enumerator], full_scan=False, verbose=True, timeout=0.5)
++        mock_scanner_cls.assert_called_once()
++        call_args = mock_scanner_cls.call_args
++        assert call_args[0][0] is mock_isock, "run_scan must pass the socket to OBD_Scanner"
++        mock_scanner_instance.scan.assert_called_once()
++
++_test_run_scan_mock()
++
++= main() cleans up sockets in finally block even on failure
++
++def _test_main_cleanup_on_failure():
++    from unittest.mock import MagicMock, patch
++    import sys as _sys
++    import signal as _signal
++    mock_csock = MagicMock()
++    mock_isock = MagicMock()
++    _saved = _sys.argv[:]
++    _sys.argv = ['obdscanner', '-c', 'vcan0', '-s', '7e0', '-d', '7e8', '-1']
++    try:
++        with patch.object(_obdmod, 'get_can_socket', return_value=mock_csock), \
++             patch.object(_obdmod, 'get_isotp_socket', return_value=mock_isock), \
++             patch.object(_obdmod, 'run_scan', side_effect=Exception("test error")), \
++             patch.object(_signal, 'signal'):
++            try:
++                _obdmod.main()
++            except SystemExit:
++                pass
++        mock_isock.close.assert_called_once()
++        mock_csock.close.assert_called_once()
++    finally:
++        _sys.argv = _saved
++
++_test_main_cleanup_on_failure()
++
++= main() runs full flow with mocked sockets
++
++def _test_main_full_flow():
++    from unittest.mock import MagicMock, patch
++    import sys as _sys
++    import signal as _signal
++    mock_csock = MagicMock()
++    mock_isock = MagicMock()
++    _saved = _sys.argv[:]
++    _sys.argv = ['obdscanner', '-c', 'vcan0', '-s', '7e0', '-d', '7e8', '-1', '-t', '0.1']
++    try:
++        with patch.object(_obdmod, 'get_can_socket', return_value=mock_csock) as mock_gcs, \
++             patch.object(_obdmod, 'get_isotp_socket', return_value=mock_isock) as mock_gis, \
++             patch.object(_obdmod, 'run_scan') as mock_rs, \
++             patch.object(_signal, 'signal'):
++            try:
++                _obdmod.main()
++            except SystemExit:
++                pass
++        mock_gcs.assert_called_once()
++        mock_gis.assert_called_once()
++        mock_rs.assert_called_once()
++        mock_isock.close.assert_called_once()
++        mock_csock.close.assert_called_once()
++    finally:
++        _sys.argv = _saved
++
++_test_main_full_flow()
+\ No newline at end of file

@@ -1,0 +1,19 @@
+{
+  "tests": [
+    {
+      "name": "innodb.flst_validate"
+    },
+    {
+      "name": "innodb.sys_defragment"
+    },
+    {
+      "name": "innodb.sys_defragment_fail"
+    },
+    {
+      "name": "innodb.sys_truncate"
+    },
+    {
+      "name": "innodb.sys_truncate_debug"
+    }
+  ]
+}

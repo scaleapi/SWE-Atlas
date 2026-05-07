@@ -1,0 +1,5 @@
+[
+  "mysql-test/suite/sys_vars/r/sysvars_innodb.result",
+  "mysql-test/suite/innodb/t/lsn_alloc_refactor.test",
+  "mysql-test/suite/innodb/r/lsn_alloc_refactor.result"
+]

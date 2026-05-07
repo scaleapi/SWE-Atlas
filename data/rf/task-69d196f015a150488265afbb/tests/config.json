@@ -1,0 +1,9 @@
+{
+  "task_id": "69d196f015a150488265afbb",
+  "repo": "grafana_grafana",
+  "base_commit": "d4c5171f4a5b379abc9968f82b90c94b4ffc5c96",
+  "language": "TypeScript",
+  "mount_path": "/grafana",
+  "initial_complexity": "Mid",
+  "uid": "0f1a823e-3191-4800-a0ea-b9cfccb19f64"
+}

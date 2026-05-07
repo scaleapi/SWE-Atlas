@@ -1,0 +1,953 @@
+diff --git a/client/a8c-for-agencies/components/sidebar-menu/hooks/use-main-menu-items.tsx b/client/a8c-for-agencies/components/sidebar-menu/hooks/use-main-menu-items.tsx
+index 69601f5e1f1..79b1082aa24 100644
+--- a/client/a8c-for-agencies/components/sidebar-menu/hooks/use-main-menu-items.tsx
++++ b/client/a8c-for-agencies/components/sidebar-menu/hooks/use-main-menu-items.tsx
+@@ -1,4 +1,3 @@
+-import config from '@automattic/calypso-config';
+ import { Badge } from '@automattic/components';
+ import {
+ 	category,
+@@ -51,7 +50,6 @@ const useMainMenuItems = ( path: string ) => {
+ 	const translate = useTranslate();
+ 
+ 	const agency = useSelector( getActiveAgency );
+-	const isTiersRevampEnabled = config.isEnabled( 'tiers-revamp' );
+ 
+ 	const menuItems = useMemo( () => {
+ 		let referralItems = [] as any[];
+@@ -94,19 +92,15 @@ const useMainMenuItems = ( path: string ) => {
+ 					menu_item: 'Automattic for Agencies / Overview',
+ 				},
+ 			},
+-			...( isTiersRevampEnabled
+-				? [
+-						{
+-							icon: starEmpty,
+-							path: '/',
+-							link: A4A_AGENCY_TIER_LINK,
+-							title: translate( 'Agency tier' ),
+-							trackEventProps: {
+-								menu_item: 'Automattic for Agencies / Agency Tier',
+-							},
+-						},
+-				  ]
+-				: [] ),
++			{
++				icon: starEmpty,
++				path: '/',
++				link: A4A_AGENCY_TIER_LINK,
++				title: translate( 'Agency Tier' ),
++				trackEventProps: {
++					menu_item: 'Automattic for Agencies / Agency Tier',
++				},
++			},
+ 			{
+ 				icon: box,
+ 				path: '/',
+@@ -236,23 +230,10 @@ const useMainMenuItems = ( path: string ) => {
+ 						},
+ 				  ]
+ 				: [] ),
+-			...( ! isTiersRevampEnabled
+-				? [
+-						{
+-							icon: starEmpty,
+-							path: '/',
+-							link: A4A_AGENCY_TIER_LINK,
+-							title: translate( 'Agency Tiers' ),
+-							trackEventProps: {
+-								menu_item: 'Automattic for Agencies / Agency Tier',
+-							},
+-						},
+-				  ]
+-				: [] ),
+ 		]
+ 			.map( ( item ) => createItem( item, path ) )
+ 			.filter( ( item ) => isPathAllowed( item.link, agency ) );
+-	}, [ agency, isTiersRevampEnabled, path, translate ] );
++	}, [ agency, path, translate ] );
+ 	return menuItems;
+ };
+ 
+diff --git a/client/a8c-for-agencies/sections/agency-tier/controller.tsx b/client/a8c-for-agencies/sections/agency-tier/controller.tsx
+index 5d519b91367..afdc9cbb1db 100644
+--- a/client/a8c-for-agencies/sections/agency-tier/controller.tsx
++++ b/client/a8c-for-agencies/sections/agency-tier/controller.tsx
+@@ -1,16 +1,13 @@
+-import { isEnabled } from '@automattic/calypso-config';
+ import { type Callback } from '@automattic/calypso-router';
+ import PageViewTracker from 'calypso/a8c-for-agencies/components/a4a-page-view-tracker';
+ import MainSidebar from 'calypso/a8c-for-agencies/components/sidebar-menu/main';
+ import AgencyTierOverview from './primary/agency-tier-overview';
+-import AgencyTierOverviewV2 from './primary/agency-tier-overview-v2';
+ 
+ export const agencyTierContext: Callback = ( context, next ) => {
+-	const isTiersRevampEnabled = isEnabled( 'tiers-revamp' );
+ 	context.primary = (
+ 		<>
+ 			<PageViewTracker title="Agency Tier" path={ context.path } />
+-			{ isTiersRevampEnabled ? <AgencyTierOverviewV2 /> : <AgencyTierOverview /> }
++			<AgencyTierOverview />
+ 		</>
+ 	);
+ 	context.secondary = <MainSidebar path={ context.path } />;
+diff --git a/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview-v2/index.tsx b/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview-v2/index.tsx
+deleted file mode 100644
+index 6c89c530e8b..00000000000
+--- a/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview-v2/index.tsx
++++ /dev/null
+@@ -1,47 +0,0 @@
+-import { useTranslate } from 'i18n-calypso';
+-import { LayoutWithGuidedTour as Layout } from 'calypso/a8c-for-agencies/components/layout/layout-with-guided-tour';
+-import LayoutTop from 'calypso/a8c-for-agencies/components/layout/layout-with-payment-notification';
+-import MobileSidebarNavigation from 'calypso/a8c-for-agencies/components/sidebar/mobile-sidebar-navigation';
+-import LayoutBody from 'calypso/layout/hosting-dashboard/body';
+-import LayoutHeader, {
+-	LayoutHeaderTitle as Title,
+-	LayoutHeaderActions as Actions,
+-} from 'calypso/layout/hosting-dashboard/header';
+-import { useSelector } from 'calypso/state';
+-import { getActiveAgency } from 'calypso/state/a8c-for-agencies/agency/selectors';
+-import AgencyTierOverviewContent from '../../overview-content';
+-
+-import './style.scss';
+-
+-export default function AgencyTierOverviewV2() {
+-	const translate = useTranslate();
+-
+-	const agency = useSelector( getActiveAgency );
+-
+-	const title = translate( 'Your agency tier and benefits' );
+-
+-	const currentAgencyTierId = agency?.tier?.id;
+-	const totalInfluencedRevenue = agency?.influenced_revenue ?? 0;
+-	const isEarlyAccess = agency?.tier?.is_early_access ?? false;
+-
+-	return (
+-		<Layout title={ title } wide>
+-			<LayoutTop>
+-				<LayoutHeader>
+-					<Title>{ title }</Title>
+-					<Actions>
+-						<MobileSidebarNavigation />
+-					</Actions>
+-				</LayoutHeader>
+-			</LayoutTop>
+-
+-			<LayoutBody>
+-				<AgencyTierOverviewContent
+-					currentAgencyTierId={ currentAgencyTierId }
+-					totalInfluencedRevenue={ totalInfluencedRevenue }
+-					isEarlyAccess={ isEarlyAccess }
+-				/>
+-			</LayoutBody>
+-		</Layout>
+-	);
+-}
+diff --git a/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview-v2/style.scss b/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview-v2/style.scss
+deleted file mode 100644
+index adc01ba1c54..00000000000
+--- a/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview-v2/style.scss
++++ /dev/null
+@@ -1 +0,0 @@
+-@import '@wordpress/dataviews/build-style/style.css';
+diff --git a/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview/index.tsx b/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview/index.tsx
+index 87c3d17693e..a5c827f44c5 100644
+--- a/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview/index.tsx
++++ b/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview/index.tsx
+@@ -1,6 +1,3 @@
+-import { Card, Badge } from '@automattic/components';
+-import { Icon, check } from '@wordpress/icons';
+-import { clsx } from 'clsx';
+ import { useTranslate } from 'i18n-calypso';
+ import { LayoutWithGuidedTour as Layout } from 'calypso/a8c-for-agencies/components/layout/layout-with-guided-tour';
+ import LayoutTop from 'calypso/a8c-for-agencies/components/layout/layout-with-payment-notification';
+@@ -10,202 +7,40 @@ import LayoutHeader, {
+ 	LayoutHeaderTitle as Title,
+ 	LayoutHeaderActions as Actions,
+ } from 'calypso/layout/hosting-dashboard/header';
+-import { useSelector, useDispatch } from 'calypso/state';
++import { useSelector } from 'calypso/state';
+ import { getActiveAgency } from 'calypso/state/a8c-for-agencies/agency/selectors';
+-import { recordTracksEvent } from 'calypso/state/analytics/actions';
+-import DownloadBadges from '../../download-badges';
+-import getAgencyTierInfo from '../../lib/get-agency-tier-info';
+-import getTierBenefits from '../../lib/get-tier-benefits';
+-import { AgencyTier } from '../../types';
++import AgencyTierOverviewContent from '../../overview-content';
+ 
+ import './style.scss';
+ 
+ export default function AgencyTierOverview() {
+ 	const translate = useTranslate();
+-	const dispatch = useDispatch();
+ 
+ 	const agency = useSelector( getActiveAgency );
+ 
+-	const title = translate( 'Agency tiers and benefits' );
+-	const benefits = getTierBenefits( translate );
++	const title = translate( 'Your agency tier and benefits' );
+ 
+-	const currentAgencyTier = agency?.tier?.id;
+-	const currentAgencyTierInfo = getAgencyTierInfo( currentAgencyTier, translate );
+-
+-	// Base tiers that are always available
+-	// regardless of the current agency tier.
+-	const baseTiers: AgencyTier[] = [ 'emerging-partner', 'agency-partner', 'pro-agency-partner' ];
+-
+-	// All tiers available to the current agency.
+-	// If the current agency tier is 'premier-partner',
+-	// include it in the list of tiers.
+-	const ALL_TIERS: AgencyTier[] =
+-		currentAgencyTier === 'premier-partner' ? [ ...baseTiers, 'premier-partner' ] : baseTiers;
+-
+-	// Show download badges button for Agency Partner, Pro Agency Partner, and Premier Partner tiers
+-	const showDownloadBadges =
+-		currentAgencyTier &&
+-		[ 'agency-partner', 'pro-agency-partner', 'premier-partner' ].includes( currentAgencyTier );
++	const currentAgencyTierId = agency?.tier?.id;
++	const totalInfluencedRevenue = agency?.influenced_revenue ?? 0;
++	const isEarlyAccess = agency?.tier?.is_early_access ?? false;
+ 
+ 	return (
+-		<Layout className="agency-tier-overview" title={ title } wide>
++		<Layout title={ title } wide>
+ 			<LayoutTop>
+ 				<LayoutHeader>
+-					<Title>{ title } </Title>
++					<Title>{ title }</Title>
+ 					<Actions>
+ 						<MobileSidebarNavigation />
+-						{ showDownloadBadges && <DownloadBadges /> }
+ 					</Actions>
+ 				</LayoutHeader>
+ 			</LayoutTop>
+ 
+ 			<LayoutBody>
+-				{ currentAgencyTierInfo && (
+-					<div className="agency-tier-overview__top-content">
+-						<div className="agency-tier-overview__top-content-left">
+-							<div className="agency-tier-overview__current-tier-container">
+-								<div
+-									className={ clsx(
+-										'agency-tier-overview__current-tier-badge',
+-										currentAgencyTierInfo.id,
+-										{
+-											'is-default': ! currentAgencyTier,
+-										}
+-									) }
+-								>
+-									<div className="agency-tier-overview__current-agency-tier">
+-										{ currentAgencyTierInfo.fullTitle }
+-									</div>
+-								</div>
+-								<div className="agency-tier-overview__current-tier-aside">
+-									<div>{ currentAgencyTierInfo.subtitle }</div>
+-									{ translate( '{{a}}Learn more{{/a}} ↗', {
+-										components: {
+-											a: (
+-												<a
+-													target="_blank"
+-													href={ currentAgencyTierInfo.learnMoreLink }
+-													onClick={ () => {
+-														dispatch(
+-															recordTracksEvent( 'calypso_a4a_agency_tier_badge_learn_more_click', {
+-																agency_tier: currentAgencyTier,
+-															} )
+-														);
+-													} }
+-													rel="noopener noreferrer"
+-												/>
+-											),
+-										},
+-									} ) }
+-								</div>
+-							</div>
+-						</div>
+-						<div className="agency-tier-overview__top-content-right">
+-							<Card className="agency-tier-overview__benefit-card" compact>
+-								<div className="agency-tier-overview__benefit-card-title">
+-									{ translate( 'Level up with Automattic!' ) }
+-								</div>
+-								<div className="agency-tier-overview__benefit-card-items">
+-									{ ALL_TIERS.map( ( tier ) => {
+-										const { title, logo, id } = getAgencyTierInfo( tier, translate );
+-										const currentTierInfo = getAgencyTierInfo(
+-											currentAgencyTierInfo.id,
+-											translate
+-										);
+-										const isCurrentTier = currentTierInfo.includedTiers.includes( tier );
+-										return (
+-											<div
+-												key={ tier }
+-												className={ clsx( 'agency-tier-overview__benefit-card-item', {
+-													'is-opacity-50': ! isCurrentTier,
+-												} ) }
+-											>
+-												<div className="agency-tier-overview__benefit-card-item-icon">
+-													<img src={ logo } alt={ tier } />
+-													{ isCurrentTier && (
+-														<span
+-															className={ clsx(
+-																'agency-tier-overview__benefit-card-item-icon-check',
+-																id
+-															) }
+-														>
+-															<span>
+-																<Icon icon={ check } size={ 24 } />
+-															</span>
+-														</span>
+-													) }
+-												</div>
+-												<span className="agency-tier-overview__benefit-card-item-title">
+-													{ title }
+-												</span>
+-											</div>
+-										);
+-									} ) }
+-								</div>
+-							</Card>
+-						</div>
+-					</div>
+-				) }
+-				<div className="agency-tier-overview__bottom-content">
+-					<div className="agency-tier-overview__bottom-content-subheading">
+-						{ translate( 'Take a closer look' ) }
+-					</div>
+-					<div className="agency-tier-overview__bottom-content-heading">
+-						{ translate( 'Experience the benefits of being an Automattic Agency Partner' ) }
+-					</div>
+-					<div className="agency-tier-overview__bottom-content-cards">
+-						{ benefits.map( ( benefit ) => (
+-							<Card key={ benefit.title } className="agency-tier-overview__benefit-card" compact>
+-								<div className="agency-tier-overview__benefit-card-content">
+-									<div className="agency-tier-overview__benefit-card-header">
+-										<div className="agency-tier-overview__benefit-card-icons">
+-											{ benefit.availableTiers
+-												.filter( ( tier ) => {
+-													// Hide Premier Partner tier from users who are not Premier Partner
+-													return (
+-														tier !== 'premier-partner' || currentAgencyTier === 'premier-partner'
+-													);
+-												} )
+-												.map( ( tier ) => {
+-													const { logo } = getAgencyTierInfo( tier, translate );
+-													return (
+-														<img
+-															key={ tier }
+-															src={ logo }
+-															alt={ tier }
+-															className="agency-tier-overview__benefit-card-icon"
+-														/>
+-													);
+-												} ) }
+-										</div>
+-
+-										{ benefit.isComingSoon && (
+-											<div className="agency-tier-overview__benefit-card-coming-soon">
+-												<Badge type="info">{ translate( 'Coming Soon' ) }</Badge>
+-											</div>
+-										) }
+-									</div>
+-									<div>
+-										<div className="agency-tier-overview__benefit-card-title">
+-											{ benefit.title }
+-										</div>
+-										<div className="agency-tier-overview__benefit-card-desciption">
+-											{ benefit.description }
+-										</div>
+-									</div>
+-
+-									{ benefit.features.length > 0 && (
+-										<ul className="agency-tier-overview__benefit-card-features">
+-											{ benefit.features.map( ( feature ) => (
+-												<li key={ feature }>{ feature }</li>
+-											) ) }
+-										</ul>
+-									) }
+-								</div>
+-							</Card>
+-						) ) }
+-					</div>
+-				</div>
++				<AgencyTierOverviewContent
++					currentAgencyTierId={ currentAgencyTierId }
++					totalInfluencedRevenue={ totalInfluencedRevenue }
++					isEarlyAccess={ isEarlyAccess }
++				/>
+ 			</LayoutBody>
+ 		</Layout>
+ 	);
+diff --git a/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview/style.scss b/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview/style.scss
+index 8f5f13fedaa..adc01ba1c54 100644
+--- a/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview/style.scss
++++ b/client/a8c-for-agencies/sections/agency-tier/primary/agency-tier-overview/style.scss
+@@ -1,417 +1 @@
+-@import '@wordpress/base-styles/breakpoints';
+-@import '@wordpress/base-styles/mixins';
+-@import '@wordpress/base-styles/variables';
+-
+-$color-pink: #f4b1ff;
+-$dark-blue: #022836;
+-$light-blue: #5ab7e8;
+-$dark-green: #104e30;
+-$light-green: #53dc81;
+-$dark-golden-beige: #d8a45f;
+-$light-golden-beige: #f2d6b0;
+-
+-.agency-tier-overview {
+-	.hosting-dashboard-layout__header-actions {
+-		display: flex;
+-		flex-direction: column;
+-		align-items: normal;
+-		justify-content: normal;
+-	}
+-}
+-
+-.agency-tier-overview__top-content {
+-	display: grid;
+-	gap: 14px;
+-	padding-block: 16px;
+-
+-	@include break-wide {
+-		grid-template-columns: 2fr 1fr;
+-		align-items: stretch;
+-	}
+-}
+-
+-.agency-tier-overview__top-content-left {
+-	.agency-tier-overview__current-tier-container {
+-		display: flex;
+-		height: 100%;
+-
+-		@include break-medium {
+-			min-height: 180px;
+-		}
+-
+-		@include break-xlarge {
+-			min-height: 220px;
+-			background-color: var( --color-neutral-0 );
+-			border-radius: 8px;
+-			border: 1px solid var( --color-gray-5 );
+-		}
+-
+-		@include break-wide {
+-			min-height: 230px;
+-		}
+-	}
+-
+-	.agency-tier-overview__current-tier-badge {
+-		position: relative;
+-		z-index: 1;
+-		border-radius: 8px 200px 200px 8px; /* stylelint-disable-line scales/radii */
+-		padding: 24px;
+-		overflow: hidden;
+-		box-sizing: border-box;
+-		width: 100%;
+-		background-color: $color-pink;
+-		min-height: 150px;
+-
+-		@include break-xlarge {
+-			flex: 0 0 70%;
+-		}
+-
+-		&::before {
+-			content: '';
+-			display: inline-block;
+-			position: absolute;
+-			right: -25%;
+-			top: 15px;
+-			width: 100%;
+-			height: 100%;
+-			transform: scale( 0.8 );
+-
+-			@include break-large {
+-				transform: unset;
+-				right: -30%;
+-				top: unset;
+-			}
+-
+-			@include break-xlarge {
+-				right: -25%;
+-			}
+-
+-			@include break-wide {
+-				right: -15%;
+-			}
+-
+-			@include break-huge {
+-				right: -24%;
+-			}
+-		}
+-
+-		.agency-tier-overview__current-agency-tier {
+-			width: 65%;
+-
+-			@include break-xlarge {
+-				width: 50%;
+-			}
+-
+-			@include break-huge {
+-				width: 55%;
+-			}
+-		}
+-
+-		.agency-tier-overview__current-agency-tier-label {
+-			@include body-small;
+-			text-transform: uppercase;
+-			opacity: 0.7;
+-			text-wrap: balance;
+-
+-			@include break-xlarge {
+-				@include heading-medium;
+-			}
+-		}
+-
+-		.agency-tier-overview__current-agency-tier-title {
+-			@include heading-x-large;
+-
+-			@include break-xlarge {
+-				@include heading-2x-large;
+-			}
+-		}
+-
+-		&.is-default {
+-			.agency-tier-overview__current-agency-tier-title {
+-				@include body-small;
+-				text-transform: uppercase;
+-
+-				@include break-xlarge {
+-					@include heading-medium;
+-				}
+-				opacity: 0.7;
+-			}
+-
+-			&::before {
+-				background: url( calypso/assets/images/a8c-for-agencies/agency-tier/no-tier-logo.svg )
+-					no-repeat center/contain;
+-				right: -20%;
+-				top: 15px;
+-
+-				@include break-large {
+-					top: 0;
+-				}
+-			}
+-		}
+-
+-		&.emerging-partner {
+-			&::before {
+-				background: url( calypso/assets/images/a8c-for-agencies/agency-tier/emerging-partner-logo.svg )
+-					no-repeat center/contain;
+-			}
+-		}
+-
+-		&.agency-partner {
+-			background-color: $dark-blue;
+-
+-			&::before {
+-				background: url( calypso/assets/images/a8c-for-agencies/agency-tier/agency-partner-logo.svg )
+-					no-repeat center/contain;
+-				right: -70px;
+-				top: 15px;
+-
+-				@include break-large {
+-					right: -95px;
+-					top: 5px;
+-				}
+-			}
+-		}
+-
+-		&.pro-agency-partner {
+-			background-color: $dark-green;
+-
+-			&::before {
+-				background: url( calypso/assets/images/a8c-for-agencies/agency-tier/pro-agency-partner-logo.svg )
+-					no-repeat center/contain;
+-			}
+-		}
+-
+-		&.premier-partner {
+-			background: $dark-golden-beige;
+-
+-			&::before {
+-				background: url( calypso/assets/images/a8c-for-agencies/agency-tier/premier-partner-logo.svg )
+-					no-repeat center/contain;
+-			}
+-
+-			.agency-tier-overview__current-agency-tier-label,
+-			.agency-tier-overview__current-agency-tier-title {
+-				color: var( --color-text-black );
+-			}
+-		}
+-
+-		&.agency-partner,
+-		&.pro-agency-partner {
+-			.agency-tier-overview__current-agency-tier-label,
+-			.agency-tier-overview__current-agency-tier-title {
+-				color: var( --color-text-white );
+-			}
+-		}
+-	}
+-
+-	.agency-tier-overview__current-tier-aside {
+-		box-sizing: border-box;
+-		margin: auto;
+-		padding: 24px;
+-		display: none;
+-
+-		@include break-xlarge {
+-			flex: 0 0 30%;
+-			display: block;
+-		}
+-
+-		div {
+-			@include body-large;
+-			margin-block-end: 8px;
+-		}
+-
+-		a {
+-			@include body-large;
+-			padding: 0;
+-			text-decoration: underline;
+-			color: var( --color-text-black );
+-		}
+-	}
+-}
+-
+-.agency-tier-overview__top-content-right {
+-	@include break-wide {
+-		margin-inline-start: 12px;
+-	}
+-}
+-
+-.agency-tier-overview__bottom-content {
+-	padding-block-start: 24px;
+-
+-	@include break-large {
+-		padding-block-start: 40px;
+-	}
+-}
+-
+-.agency-tier-overview__bottom-content-subheading {
+-	@include body-medium;
+-}
+-
+-.agency-tier-overview__bottom-content-heading {
+-	@include heading-2x-large;
+-}
+-
+-.agency-tier-overview__bottom-content-cards {
+-	display: grid;
+-	gap: 24px;
+-	padding-block-start: 40px;
+-
+-	.card.agency-tier-overview__benefit-card {
+-		min-height: 300px;
+-	}
+-
+-	@include break-large {
+-		grid-template-columns: repeat( 2, 1fr );
+-	}
+-
+-	@include break-wide {
+-		grid-template-columns: repeat( 3, 1fr );
+-	}
+-}
+-
+-.card.agency-tier-overview__benefit-card {
+-	margin-inline: 0;
+-	padding: 24px;
+-	border-radius: 8px;
+-}
+-
+-.agency-tier-overview__benefit-card-icons {
+-	display: flex;
+-	align-items: center;
+-
+-	.agency-tier-overview__benefit-card-icon {
+-		margin-inline-end: 4px;
+-	}
+-}
+-
+-.agency-tier-overview__benefit-card-header {
+-	display: grid;
+-	grid-template-columns: 50% 50%;
+-	padding-block-end: 24px;
+-}
+-
+-.agency-tier-overview__benefit-card-title {
+-	@include heading-large;
+-	padding-block-end: 4px;
+-}
+-
+-.agency-tier-overview__benefit-card-desciption {
+-	@include body-medium;
+-	padding-block-end: 24px;
+-}
+-
+-.agency-tier-overview__benefit-card-features {
+-	display: grid;
+-	gap: 8px;
+-	margin: 0 0 0 0.8rem;
+-	list-style-image: url( calypso/assets/images/a8c-for-agencies/agency-tier/list-icon.svg );
+-
+-	li {
+-		@include body-small;
+-		padding-inline-start: 8px;
+-	}
+-}
+-
+-.agency-tier-overview__benefit-card-coming-soon {
+-	display: flex;
+-	align-items: center;
+-	justify-content: flex-end;
+-	width: 100%;
+-
+-	.badge {
+-		@include body-small;
+-		display: flex;
+-		align-items: center;
+-	}
+-}
+-
+-.agency-tier-overview__benefit-card-items {
+-	padding-block-start: 24px;
+-	display: flex;
+-	flex-direction: column;
+-	gap: 16px;
+-
+-	.agency-tier-overview__benefit-card-item {
+-		.agency-tier-overview__benefit-card-item-icon {
+-			position: relative;
+-			display: inline-flex;
+-
+-			img {
+-				transform: scale( 1.5 );
+-			}
+-
+-			.agency-tier-overview__benefit-card-item-icon-check {
+-				position: absolute;
+-				background: var( --color-text-white );
+-				border-radius: 50%;
+-				width: 23px;
+-				height: 23px;
+-				display: flex;
+-				justify-content: center;
+-				align-items: center;
+-				top: 11.5px;
+-				left: 24px;
+-
+-				span {
+-					padding: 4px;
+-					border-radius: 50%;
+-					width: 10px;
+-					height: 10px;
+-					display: flex;
+-					justify-content: center;
+-					align-items: center;
+-
+-					svg {
+-						transform: scale( 1.7 );
+-					}
+-				}
+-
+-				&.emerging-partner {
+-					span {
+-						background: $color-pink;
+-					}
+-					svg {
+-						stroke: $dark-blue;
+-					}
+-				}
+-
+-				&.agency-partner {
+-					span {
+-						background: $dark-blue;
+-					}
+-					svg {
+-						fill: var( --color-text-white );
+-						stroke: $light-blue;
+-					}
+-				}
+-
+-				&.pro-agency-partner {
+-					span {
+-						background: $dark-green;
+-					}
+-					svg {
+-						fill: var( --color-text-white );
+-						stroke: $light-green;
+-					}
+-				}
+-
+-				&.premier-partner {
+-					span {
+-						background: $dark-golden-beige;
+-					}
+-					svg {
+-						fill: var( --color-text-white );
+-						stroke: $light-golden-beige;
+-					}
+-				}
+-			}
+-		}
+-
+-		.agency-tier-overview__benefit-card-item-title {
+-			@include heading-medium;
+-			position: relative;
+-			top: -6px;
+-			left: 24px;
+-		}
+-	}
+-}
++@import '@wordpress/dataviews/build-style/style.css';
+diff --git a/client/a8c-for-agencies/sections/overview/sidebar/agency-tier/index.tsx b/client/a8c-for-agencies/sections/overview/sidebar/agency-tier/index.tsx
+index baa0409fd4a..13b0ec144f7 100644
+--- a/client/a8c-for-agencies/sections/overview/sidebar/agency-tier/index.tsx
++++ b/client/a8c-for-agencies/sections/overview/sidebar/agency-tier/index.tsx
+@@ -1,23 +1,13 @@
+-import { isEnabled } from '@automattic/calypso-config';
+-import { Card, FoldableCard } from '@automattic/components';
+-import { Button } from '@wordpress/components';
+-import { Icon, arrowRight } from '@wordpress/icons';
+-import { clsx } from 'clsx';
+ import { useTranslate } from 'i18n-calypso';
+-import { A4A_AGENCY_TIER_LINK } from 'calypso/a8c-for-agencies/components/sidebar-menu/lib/constants';
+ import getAgencyTierInfo from 'calypso/a8c-for-agencies/sections/agency-tier/lib/get-agency-tier-info';
+ import AgencyTierProgressCard from 'calypso/a8c-for-agencies/sections/agency-tier/progress-card';
+-import { preventWidows } from 'calypso/lib/formatting';
+-import { useSelector, useDispatch } from 'calypso/state';
++import { useSelector } from 'calypso/state';
+ import { getActiveAgency } from 'calypso/state/a8c-for-agencies/agency/selectors';
+-import { recordTracksEvent } from 'calypso/state/analytics/actions';
+-import AgencyTierCelebrationModal from './celebration-modal';
+ 
+ import './style.scss';
+ 
+ export default function OverviewSidebarAgencyTier() {
+ 	const translate = useTranslate();
+-	const dispatch = useDispatch();
+ 
+ 	const agency = useSelector( getActiveAgency );
+ 
+@@ -30,63 +20,11 @@ export default function OverviewSidebarAgencyTier() {
+ 		return null;
+ 	}
+ 
+-	const isTiersRevampEnabled = isEnabled( 'tiers-revamp' );
+-
+-	return isTiersRevampEnabled ? (
++	return (
+ 		<AgencyTierProgressCard
+ 			currentAgencyTierId={ currentAgencyTierId }
+ 			influencedRevenue={ influencedRevenue ?? 0 }
+ 			isEarlyAccess={ !! isEarlyAccess }
+ 		/>
+-	) : (
+-		<>
+-			<AgencyTierCelebrationModal
+-				agencyTierInfo={ currentAgencyTierInfo }
+-				currentAgencyTier={ currentAgencyTierId }
+-			/>
+-
+-			<Card className="agency-tier__card">
+-				<FoldableCard
+-					className="foldable-nav"
+-					header={ translate( 'Your progress' ) }
+-					expanded
+-					compact
+-					iconSize={ 18 }
+-				>
+-					<div className="agency-tier__bottom-content">
+-						<div
+-							className={ clsx( 'agency-tier__current-agency-tier-header', {
+-								'is-default': ! currentAgencyTierId,
+-							} ) }
+-						>
+-							<span className="agency-tier__current-agency-tier-icon">
+-								<img src={ currentAgencyTierInfo.logo } alt={ currentAgencyTierInfo.id } />
+-							</span>
+-							<span className="agency-tier__current-agency-tier-title">
+-								{ preventWidows( currentAgencyTierInfo.title ) }
+-							</span>
+-						</div>
+-						{ currentAgencyTierInfo && (
+-							<div className="agency-tier__current-agency-tier-description">
+-								{ currentAgencyTierInfo.description }
+-							</div>
+-						) }
+-						<Button
+-							href={ A4A_AGENCY_TIER_LINK }
+-							onClick={ () =>
+-								dispatch(
+-									recordTracksEvent( 'calypso_a4a_agency_tier_explore_tiers_and_benefits_click', {
+-										agency_tier: currentAgencyTierId,
+-									} )
+-								)
+-							}
+-						>
+-							<Icon icon={ arrowRight } size={ 18 } />
+-							{ translate( 'Explore Tiers and benefits' ) }
+-						</Button>
+-					</div>
+-				</FoldableCard>
+-			</Card>
+-		</>
+ 	);
+ }
+diff --git a/config/a8c-for-agencies-development.json b/config/a8c-for-agencies-development.json
+index f01542838d5..74ba6a28783 100644
+--- a/config/a8c-for-agencies-development.json
++++ b/config/a8c-for-agencies-development.json
+@@ -49,8 +49,7 @@
+ 		"a4a-bd-checkout": false,
+ 		"a4a-vip-partner-opportunity-referrals": true,
+ 		"jetpack/crm-downloads": true,
+-		"upgrades/redirect-payments": true,
+-		"tiers-revamp": true
++		"upgrades/redirect-payments": true
+ 	},
+ 	"enable_all_sections": false,
+ 	"sections": {
+diff --git a/config/a8c-for-agencies-horizon.json b/config/a8c-for-agencies-horizon.json
+index 65758fb8ba8..55c8f9bc9b8 100644
+--- a/config/a8c-for-agencies-horizon.json
++++ b/config/a8c-for-agencies-horizon.json
+@@ -42,8 +42,7 @@
+ 		"a4a-bd-checkout": false,
+ 		"a4a-vip-partner-opportunity-referrals": true,
+ 		"jetpack/crm-downloads": true,
+-		"upgrades/redirect-payments": true,
+-		"tiers-revamp": true
++		"upgrades/redirect-payments": true
+ 	},
+ 	"enable_all_sections": false,
+ 	"sections": {
+diff --git a/config/a8c-for-agencies-production.json b/config/a8c-for-agencies-production.json
+index 9e8f2533778..cbd7497862d 100644
+--- a/config/a8c-for-agencies-production.json
++++ b/config/a8c-for-agencies-production.json
+@@ -42,8 +42,7 @@
+ 		"a4a-bd-checkout": false,
+ 		"a4a-vip-partner-opportunity-referrals": true,
+ 		"jetpack/crm-downloads": true,
+-		"upgrades/redirect-payments": true,
+-		"tiers-revamp": true
++		"upgrades/redirect-payments": true
+ 	},
+ 	"enable_all_sections": false,
+ 	"sections": {
+diff --git a/config/a8c-for-agencies-stage.json b/config/a8c-for-agencies-stage.json
+index 9f33ce61bc2..7703cede723 100644
+--- a/config/a8c-for-agencies-stage.json
++++ b/config/a8c-for-agencies-stage.json
+@@ -44,8 +44,7 @@
+ 		"a4a-bd-checkout": false,
+ 		"a4a-vip-partner-opportunity-referrals": true,
+ 		"jetpack/crm-downloads": true,
+-		"upgrades/redirect-payments": true,
+-		"tiers-revamp": true
++		"upgrades/redirect-payments": true
+ 	},
+ 	"enable_all_sections": false,
+ 	"sections": {

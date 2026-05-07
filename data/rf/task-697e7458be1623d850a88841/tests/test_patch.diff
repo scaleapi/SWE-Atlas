@@ -1,0 +1,523 @@
+diff --git a/pkg/tui/common/utils_test.go b/pkg/tui/common/utils_test.go
+new file mode 100644
+index 000000000..3f2452ab5
+--- /dev/null
++++ b/pkg/tui/common/utils_test.go
+@@ -0,0 +1,56 @@
++package common
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/tui/components/textinputs"
++)
++
++func TestSummarizeSource_AcceptsInputStructMap(t *testing.T) {
++	keys := []string{"key1"}
++	inputs := map[string]textinputs.Input{
++		"key1": {Value: "value1", IsDefault: false},
++	}
++	labels := map[string]string{
++		"key1": "Label 1",
++	}
++
++	result := SummarizeSource(keys, inputs, labels)
++
++	assert.Contains(t, result, "value1")
++}
++
++func TestSummarizeSource_IncludesNonEmptyValues(t *testing.T) {
++	keys := []string{"key1", "key2"}
++	inputs := map[string]textinputs.Input{
++		"key1": {Value: "value1"},
++		"key2": {Value: "value2"},
++	}
++	labels := map[string]string{
++		"key1": "Label 1",
++		"key2": "Label 2",
++	}
++
++	result := SummarizeSource(keys, inputs, labels)
++
++	assert.Contains(t, result, "value1")
++	assert.Contains(t, result, "value2")
++}
++
++func TestSummarizeSource_SkipsEmptyValues(t *testing.T) {
++	keys := []string{"key1", "key2"}
++	inputs := map[string]textinputs.Input{
++		"key1": {Value: "value1"},
++		"key2": {Value: ""},
++	}
++	labels := map[string]string{
++		"key1": "Label 1",
++		"key2": "Label 2",
++	}
++
++	result := SummarizeSource(keys, inputs, labels)
++
++	assert.Contains(t, result, "value1")
++	assert.NotContains(t, result, "Label 2")
++}
+diff --git a/pkg/tui/components/textinputs/textinputs_test.go b/pkg/tui/components/textinputs/textinputs_test.go
+new file mode 100644
+index 000000000..926969506
+--- /dev/null
++++ b/pkg/tui/components/textinputs/textinputs_test.go
+@@ -0,0 +1,63 @@
++package textinputs
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++func TestInput_HasValueAndIsDefaultFields(t *testing.T) {
++	input := Input{
++		Value:     "test-value",
++		IsDefault: true,
++	}
++	assert.Equal(t, "test-value", input.Value)
++	assert.True(t, input.IsDefault)
++}
++
++func TestGetInputs_RequiredEmptyField_UsesPlaceholderAndSetsIsDefault(t *testing.T) {
++	config := []InputConfig{
++		{
++			Key:         "required_key",
++			Required:    true,
++			Placeholder: "default-value",
++		},
++	}
++	model := New(config)
++
++	inputs := model.GetInputs()
++
++	assert.Equal(t, "default-value", inputs["required_key"].Value)
++	assert.True(t, inputs["required_key"].IsDefault)
++}
++
++func TestGetInputs_NonRequiredEmptyField_RemainsEmptyWithIsDefaultFalse(t *testing.T) {
++	config := []InputConfig{
++		{
++			Key:         "optional_key",
++			Required:    false,
++			Placeholder: "placeholder",
++		},
++	}
++	model := New(config)
++
++	inputs := model.GetInputs()
++
++	assert.Equal(t, "", inputs["optional_key"].Value)
++	assert.False(t, inputs["optional_key"].IsDefault)
++}
++
++func TestGetInputs_MixedRequiredAndOptional(t *testing.T) {
++	config := []InputConfig{
++		{Key: "required", Required: true, Placeholder: "req-default"},
++		{Key: "optional", Required: false, Placeholder: "opt-placeholder"},
++	}
++	model := New(config)
++
++	inputs := model.GetInputs()
++
++	assert.Equal(t, "req-default", inputs["required"].Value)
++	assert.True(t, inputs["required"].IsDefault)
++	assert.Equal(t, "", inputs["optional"].Value)
++	assert.False(t, inputs["optional"].IsDefault)
++}
+diff --git a/pkg/tui/sources/circleci/circleci_test.go b/pkg/tui/sources/circleci/circleci_test.go
+new file mode 100644
+index 000000000..b4c4713d3
+--- /dev/null
++++ b/pkg/tui/sources/circleci/circleci_test.go
+@@ -0,0 +1,26 @@
++package circleci
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++func TestGetFields_RequiredFieldDefaults(t *testing.T) {
++	model := GetFields()
++	inputs := model.GetInputs()
++
++	token, exists := inputs["token"]
++	assert.True(t, exists, "should have 'token' key")
++	assert.True(t, token.IsDefault, "required empty field should be default")
++	assert.NotEmpty(t, token.Value, "required field should have non-empty default value")
++}
++
++func TestCmd_IncludesTokenFlag(t *testing.T) {
++	model := GetFields()
++	cmd := model.Cmd()
++
++	assert.Contains(t, cmd, "trufflehog")
++	assert.Contains(t, cmd, "circleci")
++	assert.Contains(t, cmd, "--token=")
++}
+diff --git a/pkg/tui/sources/docker/docker_test.go b/pkg/tui/sources/docker/docker_test.go
+new file mode 100644
+index 000000000..a85c7fdb6
+--- /dev/null
++++ b/pkg/tui/sources/docker/docker_test.go
+@@ -0,0 +1,26 @@
++package docker
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++func TestGetFields_RequiredFieldDefaults(t *testing.T) {
++	model := GetFields()
++	inputs := model.GetInputs()
++
++	images, exists := inputs["images"]
++	assert.True(t, exists, "should have 'images' key")
++	assert.True(t, images.IsDefault, "required empty field should be default")
++	assert.NotEmpty(t, images.Value, "required field should have non-empty default value")
++}
++
++func TestCmd_IncludesImageFlag(t *testing.T) {
++	model := GetFields()
++	cmd := model.Cmd()
++
++	assert.Contains(t, cmd, "trufflehog")
++	assert.Contains(t, cmd, "docker")
++	assert.Contains(t, cmd, "--image=")
++}
+diff --git a/pkg/tui/sources/filesystem/filesystem_test.go b/pkg/tui/sources/filesystem/filesystem_test.go
+new file mode 100644
+index 000000000..aec7f8375
+--- /dev/null
++++ b/pkg/tui/sources/filesystem/filesystem_test.go
+@@ -0,0 +1,28 @@
++package filesystem
++
++import (
++	"strings"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++func TestGetFields_RequiredFieldDefaults(t *testing.T) {
++	model := GetFields()
++	inputs := model.GetInputs()
++
++	path, exists := inputs["path"]
++	assert.True(t, exists, "should have 'path' key")
++	assert.True(t, path.IsDefault, "required empty field should be default")
++	assert.NotEmpty(t, path.Value, "required field should have non-empty default value")
++}
++
++func TestCmd_IncludesPathValue(t *testing.T) {
++	model := GetFields()
++	cmd := model.Cmd()
++
++	assert.Contains(t, cmd, "trufflehog")
++	assert.Contains(t, cmd, "filesystem")
++	parts := strings.Fields(cmd)
++	assert.Greater(t, len(parts), 2, "command should include a path value after 'trufflehog filesystem'")
++}
+diff --git a/pkg/tui/sources/gcs/gcs_test.go b/pkg/tui/sources/gcs/gcs_test.go
+new file mode 100644
+index 000000000..1dd7a16d8
+--- /dev/null
++++ b/pkg/tui/sources/gcs/gcs_test.go
+@@ -0,0 +1,38 @@
++package gcs
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++func TestGetFields_RequiredFieldDefaults(t *testing.T) {
++	model := GetFields()
++	inputs := model.GetInputs()
++
++	proj, exists := inputs["project-id"]
++	assert.True(t, exists, "should have 'project-id' key")
++	assert.True(t, proj.IsDefault, "required empty field should be default")
++	assert.NotEmpty(t, proj.Value, "required field should have non-empty default value")
++}
++
++func TestGetFields_UsesHyphenatedKey(t *testing.T) {
++	model := GetFields()
++	inputs := model.GetInputs()
++
++	_, exists := inputs["project-id"]
++	assert.True(t, exists, "should use 'project-id' key (with hyphen)")
++
++	_, oldExists := inputs["project_id"]
++	assert.False(t, oldExists, "should not use old 'project_id' key (with underscore)")
++}
++
++func TestCmd_UsesHyphenatedFlag(t *testing.T) {
++	model := GetFields()
++	cmd := model.Cmd()
++
++	assert.Contains(t, cmd, "trufflehog")
++	assert.Contains(t, cmd, "gcs")
++	assert.Contains(t, cmd, "--project-id=")
++	assert.Contains(t, cmd, "--cloud-environment")
++}
+diff --git a/pkg/tui/sources/git/git_test.go b/pkg/tui/sources/git/git_test.go
+new file mode 100644
+index 000000000..91fce2061
+--- /dev/null
++++ b/pkg/tui/sources/git/git_test.go
+@@ -0,0 +1,28 @@
++package git
++
++import (
++	"strings"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++func TestGetFields_RequiredFieldDefaults(t *testing.T) {
++	model := GetFields()
++	inputs := model.GetInputs()
++
++	uri, exists := inputs["uri"]
++	assert.True(t, exists, "should have 'uri' key")
++	assert.True(t, uri.IsDefault, "required empty field should be default")
++	assert.NotEmpty(t, uri.Value, "required field should have non-empty default value")
++}
++
++func TestCmd_IncludesURIValue(t *testing.T) {
++	model := GetFields()
++	cmd := model.Cmd()
++
++	assert.Contains(t, cmd, "trufflehog")
++	assert.Contains(t, cmd, "git")
++	parts := strings.Fields(cmd)
++	assert.Greater(t, len(parts), 2, "command should include a URI after 'trufflehog git'")
++}
+diff --git a/pkg/tui/sources/github/github_test.go b/pkg/tui/sources/github/github_test.go
+new file mode 100644
+index 000000000..fd3c83d8e
+--- /dev/null
++++ b/pkg/tui/sources/github/github_test.go
+@@ -0,0 +1,44 @@
++package github
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++func TestGetFields_OrgAndRepoAreRequired(t *testing.T) {
++	model := GetFields()
++	inputs := model.GetInputs()
++
++	org, orgExists := inputs["org"]
++	assert.True(t, orgExists, "should have 'org' key")
++	assert.True(t, org.IsDefault, "org should be required and default when empty")
++	assert.NotEmpty(t, org.Value, "org should have non-empty default value")
++
++	repo, repoExists := inputs["repo"]
++	assert.True(t, repoExists, "should have 'repo' key")
++	assert.True(t, repo.IsDefault, "repo should be required and default when empty")
++	assert.NotEmpty(t, repo.Value, "repo should have non-empty default value")
++}
++
++func TestGetSpecialInputs_BothDefault_RetainsBothWithValues(t *testing.T) {
++	model := GetFields()
++	inputs := model.GetSpecialInputs()
++
++	org, orgExists := inputs["org"]
++	repo, repoExists := inputs["repo"]
++	assert.True(t, orgExists, "org should be present when both are default")
++	assert.True(t, repoExists, "repo should be present when both are default")
++	assert.NotEmpty(t, org.Value, "org should have non-empty default value")
++	assert.NotEmpty(t, repo.Value, "repo should have non-empty default value")
++}
++
++func TestCmd_WithBothDefaults_IncludesBothFlags(t *testing.T) {
++	model := GetFields()
++	cmd := model.Cmd()
++
++	assert.Contains(t, cmd, "trufflehog")
++	assert.Contains(t, cmd, "github")
++	assert.Contains(t, cmd, "--org=")
++	assert.Contains(t, cmd, "--repo=")
++}
+diff --git a/pkg/tui/sources/gitlab/gitlab_test.go b/pkg/tui/sources/gitlab/gitlab_test.go
+new file mode 100644
+index 000000000..99616f297
+--- /dev/null
++++ b/pkg/tui/sources/gitlab/gitlab_test.go
+@@ -0,0 +1,26 @@
++package gitlab
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++func TestGetFields_RequiredFieldDefaults(t *testing.T) {
++	model := GetFields()
++	inputs := model.GetInputs()
++
++	token, exists := inputs["token"]
++	assert.True(t, exists, "should have 'token' key")
++	assert.True(t, token.IsDefault, "required empty field should be default")
++	assert.NotEmpty(t, token.Value, "required field should have non-empty default value")
++}
++
++func TestCmd_IncludesTokenFlag(t *testing.T) {
++	model := GetFields()
++	cmd := model.Cmd()
++
++	assert.Contains(t, cmd, "trufflehog")
++	assert.Contains(t, cmd, "gitlab")
++	assert.Contains(t, cmd, "--token=")
++}
+diff --git a/pkg/tui/sources/s3/s3_test.go b/pkg/tui/sources/s3/s3_test.go
+new file mode 100644
+index 000000000..74e1773b0
+--- /dev/null
++++ b/pkg/tui/sources/s3/s3_test.go
+@@ -0,0 +1,26 @@
++package s3
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++func TestGetFields_RequiredFieldDefaults(t *testing.T) {
++	model := GetFields()
++	inputs := model.GetInputs()
++
++	buckets, exists := inputs["buckets"]
++	assert.True(t, exists, "should have 'buckets' key")
++	assert.True(t, buckets.IsDefault, "required empty field should be default")
++	assert.NotEmpty(t, buckets.Value, "required field should have non-empty default value")
++}
++
++func TestCmd_IncludesBucketFlag(t *testing.T) {
++	model := GetFields()
++	cmd := model.Cmd()
++
++	assert.Contains(t, cmd, "trufflehog")
++	assert.Contains(t, cmd, "s3")
++	assert.Contains(t, cmd, "--bucket=")
++}
+diff --git a/pkg/tui/sources/syslog/syslog_test.go b/pkg/tui/sources/syslog/syslog_test.go
+new file mode 100644
+index 000000000..67fb0e0a4
+--- /dev/null
++++ b/pkg/tui/sources/syslog/syslog_test.go
+@@ -0,0 +1,32 @@
++package syslog
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++func TestGetFields_RequiredFieldDefaults(t *testing.T) {
++	model := GetFields()
++	inputs := model.GetInputs()
++
++	for _, key := range []string{"address", "protocol", "cert", "key", "format"} {
++		field, exists := inputs[key]
++		assert.True(t, exists, "should have '%s' key", key)
++		assert.True(t, field.IsDefault, "'%s' required empty field should be default", key)
++		assert.NotEmpty(t, field.Value, "'%s' required field should have non-empty default value", key)
++	}
++}
++
++func TestCmd_IncludesAllRequiredFlags(t *testing.T) {
++	model := GetFields()
++	cmd := model.Cmd()
++
++	assert.Contains(t, cmd, "trufflehog")
++	assert.Contains(t, cmd, "syslog")
++	assert.Contains(t, cmd, "--address=")
++	assert.Contains(t, cmd, "--protocol=")
++	assert.Contains(t, cmd, "--cert=")
++	assert.Contains(t, cmd, "--key=")
++	assert.Contains(t, cmd, "--format=")
++}
+diff --git a/pkg/tui/pages/source_configure/trufflehog_configure_test.go b/pkg/tui/pages/source_configure/trufflehog_configure_test.go
+new file mode 100644
+index 000000000..000000001
+--- /dev/null
++++ b/pkg/tui/pages/source_configure/trufflehog_configure_test.go
+@@ -0,0 +1,28 @@
++package source_configure
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++func TestGetTrufflehogConfiguration_AllFieldsOptional(t *testing.T) {
++	model := GetTrufflehogConfiguration()
++	inputs := model.GetInputs()
++
++	for _, key := range []string{"json", "no-verification", "only-verified", "exclude_detectors", "concurrency"} {
++		assert.False(t, inputs[key].IsDefault, "'%s' is optional and should not be default", key)
++	}
++}
++
++func TestCmd_WithNoInput_ReturnsEmpty(t *testing.T) {
++	model := GetTrufflehogConfiguration()
++	cmd := model.Cmd()
++	assert.Equal(t, "", cmd)
++}
++
++func TestSummary_WithNoInput_IndicatesDefaults(t *testing.T) {
++	model := GetTrufflehogConfiguration()
++	summary := model.Summary()
++	assert.Contains(t, summary, "Running with defaults")
++}
+diff --git a/pkg/tui/pages/source_select/source_select_test.go b/pkg/tui/pages/source_select/source_select_test.go
+new file mode 100644
+index 000000000..000000002
+--- /dev/null
++++ b/pkg/tui/pages/source_select/source_select_test.go
+@@ -0,0 +1,24 @@
++package source_select
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/tui/common"
++)
++
++func TestNew_IncludesAzureRepos(t *testing.T) {
++	c := common.Common{}
++	ss := New(c)
++	items := ss.sourcesList.Items()
++
++	found := false
++	for _, item := range items {
++		if si, ok := item.(SourceItem); ok && si.title == "Azure Repos" {
++			found = true
++			assert.True(t, si.enterprise, "Azure Repos should be an enterprise source")
++			break
++		}
++	}
++	assert.True(t, found, "Azure Repos should be in the source list")
++}

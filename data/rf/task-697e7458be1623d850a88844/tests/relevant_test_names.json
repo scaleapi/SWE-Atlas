@@ -1,0 +1,37 @@
+{
+  "tests": [
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/abbysale/TestAbbysale_Mock"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/abstract/TestAbstract_Mock"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/abuseipdb/TestAbuseIPDB_Mock"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/accuweather/TestAccuweather_Mock"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/adafruitio/TestAdafruitIO_Mock"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/adzuna/TestAdzuna_Mock"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/aeroworkflow/TestAeroworkflow_Mock"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/agora/TestAgora_Mock"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/aha/TestAha_Mock"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/alibaba/TestAlibaba_Mock"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/detectors/artifactory/TestArtifactory_Mock"
+    }
+  ]
+}

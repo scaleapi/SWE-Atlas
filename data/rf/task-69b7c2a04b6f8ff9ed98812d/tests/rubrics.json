@@ -1,0 +1,170 @@
+[
+  {
+    "id": "8a9318679bdb26719276055ef4c84d3e",
+    "title": "Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "07d46f723840435832f6787ac8e592e8",
+    "title": "1.1: Refactors is_page_doublewritebuffer to use actual doublewrite block locations instead of hardcoded page range",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7233c160464db9292daed3c600f8d112",
+    "title": "1.2: Reads doublewrite block positions from the TRX_SYS page",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8a15781b82586857aa7f33691e79ca81",
+    "title": "1.3: Restricts doublewrite buffer detection to the system tablespace",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b6e7f1606ab53f6bb97bd0d5b10bf9e8",
+    "title": "1.4: Skips doublewrite buffer pages in parse_page when skip_freed_pages is enabled",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4a312bc41d4c2212afe7aadfa17edad4",
+    "title": "1.5: Skips checksum rewriting based on doublewrite buffer detection during page-by-page processing",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d901d48ea886d5d4612dbb452c744c12",
+    "title": "1.6: Adds a --tablespace-flags command line option to innochecksum",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "09cc036850a7dc2e3313e1ddf3935782",
+    "title": "1.7: Rejects invalid tablespace flag values",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "89210f356f3719d516de1e37ab7abc2f",
+    "title": "1.8: Reports a helpful error suggesting --tablespace-flags for non-page-0 files without user-provided flags",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a5d476909a1decac8790ec7e328b3775",
+    "title": "1.9: Extracts page 0 reading and initialization logic into a separate function",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "694766a99b763809b94fa7ced0563114",
+    "title": "1.10: Refactors init_page_size to accept flags as a parameter",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "60b07d4f06117c81ed4656c9a3e826f6",
+    "title": "1.11: Adjusts all 3 UNIV_INNOCHECKSUM preprocessor guards (trx0sys.h, fsp0types.h, trx0undo.h) so doublewrite definitions are visible to innochecksum",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "24abe19842b96c688acce0c7bf043e6a",
+    "title": "1.12: Makes parse_page static",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4f3cd00011c71b7a822f2fd38595ef05",
+    "title": "1.13: Removes the page buffer parameter from is_page_doublewritebuffer",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f7a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6",
+    "title": "1.14: Processes non-page-0 files when --tablespace-flags is provided",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    "title": "1.15: Warns about flag mismatch when provided flags differ from stored flags on page 0",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c3a8f210b7e94d5a8b1c6f2e3d4a5b6c",
+    "title": "Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "d4b9e321c8fa5e6b9c2d7f3e4a5b6c7d",
+    "title": "Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0248934eb1b30de7faea157dd07d4b5d",
+    "title": "Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "05e956f0b190cf3bd71c05320a06927b",
+    "title": "4.1: Removes existing innochecksum command line options (such as --skip-freed-pages) or their functionality",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9150602d8cd145a11a4530c37fc7df18",
+    "title": "4.2: Breaks existing checksum verification or page processing for non-doublewrite pages by incorrectly passing flags or skipping normal pages",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

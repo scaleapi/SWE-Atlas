@@ -1,0 +1,170 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c4a44e1274abb7d5f3c814f55fd31e88",
+    "title": "1.1: Adds a method on ModuleResolver in js/modules/resolution.go that resolves the module dependency tree without executing code",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9ff148125f3fd47e9fb5ca49d802d3d9",
+    "title": "1.2: Updates NewBundle in internal/js/bundle.go to accept a pre-built ModuleResolver parameter",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8efb4b0316eb5c2914990b86a0a566be",
+    "title": "1.3: Updates NewBundleFromArchive in internal/js/bundle.go to accept a pre-built ModuleResolver parameter",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "bc5ef00884135aa90bceec78e2365ab2",
+    "title": "1.4: Updates New in internal/js/runner.go to accept a pre-built ModuleResolver parameter",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "570e56173f83f30790dfd5808482ab12",
+    "title": "1.5: Updates NewFromArchive in internal/js/runner.go to accept a pre-built ModuleResolver parameter",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1d6f9e41c7c09bae85621038b4207f93",
+    "title": "1.6: Replaces internal ModuleResolver creation with the externally provided resolver in internal/js/bundle.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "82ca43ee9b5329d927673b0bb1de6df8",
+    "title": "1.7: Adds a NewModuleResolver factory function in internal/js/bundle.go that creates a ModuleResolver independently before bundle creation",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9bb5ef4cd4fc21061d6b3e5ac529541d",
+    "title": "1.8: Updates both call sites in internal/cmd/test_load.go (the JS path calling js.New, the archive path calling js.NewFromArchive) to create a ModuleResolver externally and pass it to the runner",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1ab3fac625c5f77c9ed946a8170b4d4b",
+    "title": "1.9: Calls LoadMainModule at both call sites in internal/cmd/test_load.go (the JS path, the archive path) to pre-load the module tree before passing the resolver to the runner",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b14b99722307800f7c411b00e19fd9d3",
+    "title": "1.10: Removes the CompatibilityMode field from the compiler Options struct in internal/js/compiler/compiler.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4617bededfc6b81f8070bc77cedbe2da",
+    "title": "1.11: Removes the compatibilityMode field from the parsingState struct in internal/js/compiler/compiler.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "78b52729067705a52234177018fffc9d",
+    "title": "1.12: Decouples both internal helpers in internal/js/bundle.go (newCompiler, generateFileLoad) from the Bundle struct so they accept explicit parameters instead",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "deb2013afb92f57f53d593b5f6b2f72d",
+    "title": "1.13: Updates RunSourceData in ModuleSystem in js/modules/resolution.go to reuse the new module loading method instead of inline resolution",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a21acad5a3e97e8217b7b766fb0fc0a4",
+    "title": "1.14: Fixes the 'ComaptibilityMode' typo to 'CompatibilityMode' in the deprecation warning in internal/cmd/test_load.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3df1cbb07e3dc55021c84decf2167d47",
+    "title": "1.15: Removes the compatibility mode override logic from NewBundleFromArchive in internal/js/bundle.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "91d5e250fc85332909f731662f635fce",
+    "title": "4.1: Duplicates the pwd nil-check from newBundle into test_load.go instead of using the source URL's parent directory directly",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8461e03effdf728a2b1f6b75d4ca4f22",
+    "title": "4.2: Inlines the compiler creation logic into NewModuleResolver instead of keeping newCompiler as a separate standalone function",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

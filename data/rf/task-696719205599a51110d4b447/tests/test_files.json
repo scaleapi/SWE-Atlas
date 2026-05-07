@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "name": "output/cloud/bench_test.go"
+    },
+    {
+      "name": "output/cloud/data_test.go"
+    },
+    {
+      "name": "output/cloud/output_test.go"
+    },
+    {
+      "name": "output/cloud/v1/bench_test.go"
+    },
+    {
+      "name": "output/cloud/v1/data_test.go"
+    },
+    {
+      "name": "output/cloud/v1/output_test.go"
+    }
+  ]
+}

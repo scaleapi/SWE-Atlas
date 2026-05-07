@@ -1,0 +1,115 @@
+{
+  "tests": [
+    {
+      "name": "TestLocatorMethodBehavior"
+    },
+    {
+      "name": "TestLocatorMethodBehavior/checkbox_cycle"
+    },
+    {
+      "name": "TestLocatorMethodBehavior/click_and_dblclick"
+    },
+    {
+      "name": "TestLocatorMethodBehavior/dispatch_event"
+    },
+    {
+      "name": "TestLocatorMethodBehavior/element_state_queries"
+    },
+    {
+      "name": "TestLocatorMethodBehavior/fill_clear_inputvalue"
+    },
+    {
+      "name": "TestLocatorMethodBehavior/focus"
+    },
+    {
+      "name": "TestLocatorMethodBehavior/get_attribute"
+    },
+    {
+      "name": "TestLocatorMethodBehavior/hover"
+    },
+    {
+      "name": "TestLocatorMethodBehavior/innerHTML_innerText_textContent"
+    },
+    {
+      "name": "TestLocatorMethodBehavior/select_option"
+    },
+    {
+      "name": "TestLocatorMethodBehavior/type_and_press"
+    },
+    {
+      "name": "TestLocatorMethodBehavior/wait_for"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/Check"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/Clear"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/Click"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/Dblclick"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/DispatchEvent"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/Fill"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/Focus"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/GetAttribute"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/Hover"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/InnerHTML"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/InnerText"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/InputValue"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/IsChecked"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/IsDisabled"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/IsEditable"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/IsEnabled"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/Press"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/SelectOption"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/SetChecked"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/TextContent"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/Type"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/Uncheck"
+    },
+    {
+      "name": "TestLocatorStrictModeEnforcement/WaitFor"
+    }
+  ]
+}

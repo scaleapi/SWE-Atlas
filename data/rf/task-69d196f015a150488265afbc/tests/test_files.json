@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "name": "pkg/registry/apis/provisioning/utils_test.go"
+    },
+    {
+      "name": "public/app/features/dashboard-scene/saving/SaveDashboardDrawer.test.tsx"
+    },
+    {
+      "name": "public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.test.tsx"
+    },
+    {
+      "name": "public/app/features/provisioning/api/baseAPI.test.ts"
+    },
+    {
+      "name": "public/app/features/provisioning/dashboard.test.ts"
+    }
+  ]
+}

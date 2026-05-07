@@ -1,0 +1,360 @@
+diff --git a/public/app/core/components/PanelTypeFilter/PanelTypeFilter.test.tsx b/public/app/core/components/PanelTypeFilter/PanelTypeFilter.test.tsx
+new file mode 100644
+index 00000000000..043dd1fd0b5
+--- /dev/null
++++ b/public/app/core/components/PanelTypeFilter/PanelTypeFilter.test.tsx
+@@ -0,0 +1,35 @@
++import { render, screen } from '@testing-library/react';
++
++import { PanelTypeFilter } from './PanelTypeFilter';
++
++const allPlugins = [
++  { id: 'timeseries', name: 'Time series', sort: 1, info: { logos: { small: '' } } },
++  { id: 'text', name: 'Text', sort: 2, skipDataQuery: true, info: { logos: { small: '' } } },
++  { id: 'gauge', name: 'Gauge', sort: 3, info: { logos: { small: '' } } },
++];
++
++jest.mock('app/features/panel/state/util', () => ({
++  getAllPanelPluginMeta: () => allPlugins,
++  getVizPluginMeta: () => allPlugins.filter((p: any) => !p.skipDataQuery),
++  getWidgetPluginMeta: () => allPlugins.filter((p: any) => p.skipDataQuery),
++}));
++
++describe('PanelTypeFilter', () => {
++  it('should render the panel type filter with all plugins available', () => {
++    const onChange = jest.fn();
++    render(<PanelTypeFilter onChange={onChange} />);
++    expect(screen.getByLabelText('Panel Type filter')).toBeInTheDocument();
++  });
++
++  it('should provide all panel plugins as options without widget filtering', () => {
++    const onChange = jest.fn();
++    render(<PanelTypeFilter onChange={onChange} />);
++    const filter = screen.getByLabelText('Panel Type filter');
++    expect(filter).toBeInTheDocument();
++  });
++
++  it('should render without requiring an isWidget prop', () => {
++    const { container } = render(<PanelTypeFilter onChange={jest.fn()} />);
++    expect(container.firstChild).toBeTruthy();
++  });
++});
+diff --git a/public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.test.tsx b/public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.test.tsx
+new file mode 100644
+index 00000000000..262be17b08e
+--- /dev/null
++++ b/public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.test.tsx
+@@ -0,0 +1,47 @@
++import { render, screen } from '@testing-library/react';
++
++import { PanelVizTypePicker } from './PanelVizTypePicker';
++
++jest.mock('@grafana/runtime', () => ({
++  ...jest.requireActual('@grafana/runtime'),
++  reportInteraction: jest.fn(),
++}));
++
++jest.mock('../utils/PanelModelCompatibilityWrapper', () => ({
++  PanelModelCompatibilityWrapper: jest.fn().mockImplementation(() => ({
++    type: 'timeseries',
++  })),
++}));
++
++jest.mock('app/features/panel/components/VizTypePicker/VizTypePicker', () => ({
++  VizTypePicker: () => <div data-testid="viz-type-picker">MockedVizTypePicker</div>,
++}));
++
++jest.mock('app/features/panel/components/VizTypePicker/VisualizationSuggestions', () => ({
++  VisualizationSuggestions: () => <div data-testid="viz-suggestions">MockedSuggestions</div>,
++}));
++
++jest.mock('./interaction', () => ({
++  INTERACTION_EVENT_NAME: 'test_event',
++  INTERACTION_ITEM: { SEARCH: 'search', CHANGE_TAB: 'change_tab' },
++}));
++
++describe('PanelVizTypePicker', () => {
++  const mockPanel = { state: { pluginId: 'timeseries' } } as any;
++
++  it('should render with Visualizations and Suggestions tabs only', () => {
++    render(
++      <PanelVizTypePicker panel={mockPanel} onChange={jest.fn()} onClose={jest.fn()} />
++    );
++    expect(screen.getByText('Visualizations')).toBeInTheDocument();
++    expect(screen.getByText('Suggestions')).toBeInTheDocument();
++    expect(screen.queryByText('Widgets')).not.toBeInTheDocument();
++  });
++
++  it('should default to showing the visualization picker', () => {
++    render(
++      <PanelVizTypePicker panel={mockPanel} onChange={jest.fn()} onClose={jest.fn()} />
++    );
++    expect(screen.getByTestId('viz-type-picker')).toBeInTheDocument();
++  });
++});
+diff --git a/public/app/features/dashboard/components/AddPanelButton/AddPanelMenu.test.tsx b/public/app/features/dashboard/components/AddPanelButton/AddPanelMenu.test.tsx
+index e30e856600d..8b634dab7f0 100644
+--- a/public/app/features/dashboard/components/AddPanelButton/AddPanelMenu.test.tsx
++++ b/public/app/features/dashboard/components/AddPanelButton/AddPanelMenu.test.tsx
+@@ -3,7 +3,6 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
+ import { PluginType } from '@grafana/data';
+ import { locationService, reportInteraction } from '@grafana/runtime';
+ import { defaultDashboard } from '@grafana/schema';
+-import config from 'app/core/config';
+ import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
+ import {
+   onCreateNewPanel,
+@@ -45,7 +44,6 @@ function setup() {
+ }
+ 
+ beforeEach(() => {
+-  config.featureToggles = { vizAndWidgetSplit: false };
+   jest.clearAllMocks();
+ });
+ 
+@@ -141,10 +139,3 @@ it('renders menu list without Widget button when feature flag is disabled', () =
+   setup();
+   expect(screen.queryByText('Widget')).not.toBeInTheDocument();
+ });
+-
+-it('renders menu list with Widget button when feature flag is enabled', () => {
+-  config.featureToggles.vizAndWidgetSplit = true;
+-  setup();
+-
+-  expect(screen.getByText('Widget')).toBeInTheDocument();
+-});
+diff --git a/public/app/features/dashboard/components/PanelEditor/VisualizationSelectPane.test.tsx b/public/app/features/dashboard/components/PanelEditor/VisualizationSelectPane.test.tsx
+new file mode 100644
+index 00000000000..83dbf9402d6
+--- /dev/null
++++ b/public/app/features/dashboard/components/PanelEditor/VisualizationSelectPane.test.tsx
+@@ -0,0 +1,63 @@
++import { render, screen } from '@testing-library/react';
++
++import { VisualizationSelectPane } from './VisualizationSelectPane';
++
++jest.mock('app/types', () => ({
++  ...jest.requireActual('app/types'),
++  useDispatch: () => jest.fn(),
++  useSelector: () => ({
++    meta: { id: 'timeseries', skipDataQuery: false },
++  }),
++}));
++
++jest.mock('@grafana/runtime', () => ({
++  ...jest.requireActual('@grafana/runtime'),
++  config: { featureToggles: {} },
++}));
++
++jest.mock('../../../panel/components/VizTypePicker/VizTypePicker', () => ({
++  VizTypePicker: () => <div data-testid="viz-type-picker">MockedVizTypePicker</div>,
++}));
++
++jest.mock('../../../panel/components/VizTypePicker/VisualizationSuggestions', () => ({
++  VisualizationSuggestions: () => <div data-testid="viz-suggestions">MockedSuggestions</div>,
++}));
++
++jest.mock('app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup', () => ({
++  PanelLibraryOptionsGroup: () => <div data-testid="library-panels">MockedLibraryPanels</div>,
++}));
++
++jest.mock('../../../panel/state/actions', () => ({
++  changePanelPlugin: jest.fn(),
++}));
++
++jest.mock('./state/reducers', () => ({
++  toggleVizPicker: jest.fn(),
++}));
++
++jest.mock('../../state/selectors', () => ({
++  getPanelPluginWithFallback: () => () => ({
++    meta: { id: 'timeseries', skipDataQuery: false },
++  }),
++}));
++
++describe('VisualizationSelectPane', () => {
++  const mockPanel = { type: 'timeseries' } as any;
++
++  it('should render with Visualizations, Suggestions, and Library panels tabs', () => {
++    render(<VisualizationSelectPane panel={mockPanel} />);
++    expect(screen.getByText('Visualizations')).toBeInTheDocument();
++    expect(screen.getByText('Suggestions')).toBeInTheDocument();
++    expect(screen.getByText('Library panels')).toBeInTheDocument();
++  });
++
++  it('should not render a Widgets tab option', () => {
++    render(<VisualizationSelectPane panel={mockPanel} />);
++    expect(screen.queryByText('Widgets')).not.toBeInTheDocument();
++  });
++
++  it('should default to showing the visualization type picker', () => {
++    render(<VisualizationSelectPane panel={mockPanel} />);
++    expect(screen.getByTestId('viz-type-picker')).toBeInTheDocument();
++  });
++});
+diff --git a/public/app/features/dashboard/components/PanelEditor/types.test.ts b/public/app/features/dashboard/components/PanelEditor/types.test.ts
+new file mode 100644
+index 00000000000..a8963a6e7b6
+--- /dev/null
++++ b/public/app/features/dashboard/components/PanelEditor/types.test.ts
+@@ -0,0 +1,9 @@
++import { VisualizationSelectPaneTab } from './types';
++
++describe('VisualizationSelectPaneTab', () => {
++  it('should provide Visualizations, LibraryPanels, and Suggestions tabs', () => {
++    expect(VisualizationSelectPaneTab.Visualizations).toBeDefined();
++    expect(VisualizationSelectPaneTab.LibraryPanels).toBeDefined();
++    expect(VisualizationSelectPaneTab.Suggestions).toBeDefined();
++  });
++});
+diff --git a/public/app/features/dashboard/dashgrid/DashboardEmpty.test.tsx b/public/app/features/dashboard/dashgrid/DashboardEmpty.test.tsx
+index 4490d3ae84f..d18120fc5f0 100644
+--- a/public/app/features/dashboard/dashgrid/DashboardEmpty.test.tsx
++++ b/public/app/features/dashboard/dashgrid/DashboardEmpty.test.tsx
+@@ -2,7 +2,6 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
+ 
+ import { locationService, reportInteraction } from '@grafana/runtime';
+ import { defaultDashboard } from '@grafana/schema';
+-import config from 'app/core/config';
+ 
+ import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
+ import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../utils/dashboard';
+@@ -40,7 +39,6 @@ function setup(options?: Partial<Props>) {
+ }
+ 
+ beforeEach(() => {
+-  config.featureToggles = { vizAndWidgetSplit: false };
+   jest.clearAllMocks();
+ });
+ 
+@@ -110,13 +108,3 @@ it('renders page without Add Widget button when feature flag is disabled', () =>
+   expect(screen.getByRole('button', { name: 'Add library panel' })).toBeInTheDocument();
+   expect(screen.queryByRole('button', { name: 'Add widget' })).not.toBeInTheDocument();
+ });
+-
+-it('renders page with Add Widget button when feature flag is enabled', () => {
+-  config.featureToggles.vizAndWidgetSplit = true;
+-  setup();
+-
+-  expect(screen.getByRole('button', { name: 'Add visualization' })).toBeInTheDocument();
+-  expect(screen.getByRole('button', { name: 'Import dashboard' })).toBeInTheDocument();
+-  expect(screen.getByRole('button', { name: 'Add library panel' })).toBeInTheDocument();
+-  expect(screen.getByRole('button', { name: 'Add widget' })).toBeInTheDocument();
+-});
+diff --git a/public/app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup.test.tsx b/public/app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup.test.tsx
+new file mode 100644
+index 00000000000..2d52e51cce7
+--- /dev/null
++++ b/public/app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup.test.tsx
+@@ -0,0 +1,58 @@
++import { render, screen } from '@testing-library/react';
++
++import { PanelLibraryOptionsGroup } from './PanelLibraryOptionsGroup';
++
++jest.mock('app/types', () => ({
++  ...jest.requireActual('app/types'),
++  useDispatch: () => jest.fn(),
++}));
++
++jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
++  getDashboardSrv: () => ({
++    getCurrent: () => ({ meta: {} }),
++  }),
++}));
++
++jest.mock('../../../../core/components/PanelTypeFilter/PanelTypeFilter', () => ({
++  PanelTypeFilter: ({ onChange, isWidget }: any) => (
++    <div data-testid="panel-type-filter" data-is-widget={isWidget?.toString()}>
++      MockedPanelTypeFilter
++    </div>
++  ),
++}));
++
++jest.mock('../LibraryPanelsView/LibraryPanelsView', () => ({
++  LibraryPanelsView: ({ isWidget }: any) => (
++    <div data-testid="library-panels-view" data-is-widget={isWidget?.toString()}>
++      MockedLibraryPanelsView
++    </div>
++  ),
++}));
++
++jest.mock('app/features/panel/state/actions', () => ({
++  changeToLibraryPanel: jest.fn(),
++}));
++
++jest.mock('../AddLibraryPanelModal/AddLibraryPanelModal', () => ({
++  AddLibraryPanelModal: () => null,
++}));
++
++jest.mock('../ChangeLibraryPanelModal/ChangeLibraryPanelModal', () => ({
++  ChangeLibraryPanelModal: () => null,
++}));
++
++describe('PanelLibraryOptionsGroup', () => {
++  const mockPanel = { type: 'timeseries' } as any;
++
++  it('should render PanelTypeFilter and LibraryPanelsView without isWidget', () => {
++    render(<PanelLibraryOptionsGroup panel={mockPanel} searchQuery="" />);
++    expect(screen.getByTestId('panel-type-filter')).toBeInTheDocument();
++    expect(screen.getByTestId('library-panels-view')).toBeInTheDocument();
++  });
++
++  it('should not pass isWidget=true to child components', () => {
++    render(<PanelLibraryOptionsGroup panel={mockPanel} searchQuery="" />);
++    expect(screen.getByTestId('panel-type-filter').getAttribute('data-is-widget')).not.toBe('true');
++    expect(screen.getByTestId('library-panels-view').getAttribute('data-is-widget')).not.toBe('true');
++  });
++});
+diff --git a/public/app/features/panel/components/VizTypePicker/VizTypePicker.test.tsx b/public/app/features/panel/components/VizTypePicker/VizTypePicker.test.tsx
+new file mode 100644
+index 00000000000..8c123abfaba
+--- /dev/null
++++ b/public/app/features/panel/components/VizTypePicker/VizTypePicker.test.tsx
+@@ -0,0 +1,47 @@
++import { render, screen } from '@testing-library/react';
++
++import { VizTypePicker } from './VizTypePicker';
++
++const vizPlugin = {
++  id: 'timeseries',
++  name: 'Time series',
++  sort: 1,
++  info: { logos: { small: '' }, description: 'Time series charts' },
++};
++
++const widgetPlugin = {
++  id: 'text',
++  name: 'Text',
++  sort: 2,
++  skipDataQuery: true,
++  info: { logos: { small: '' }, description: 'Text panel' },
++};
++
++const allPlugins = [vizPlugin, widgetPlugin];
++
++jest.mock('../../state/util', () => ({
++  getAllPanelPluginMeta: () => allPlugins,
++  getVizPluginMeta: () => allPlugins.filter((p: any) => !p.skipDataQuery),
++  getWidgetPluginMeta: () => allPlugins.filter((p: any) => p.skipDataQuery),
++  filterPluginList: (plugins: any[]) => plugins,
++}));
++
++describe('VizTypePicker', () => {
++  it('should display all panel plugins in a single list without separating by skipDataQuery', () => {
++    render(
++      <VizTypePicker pluginId="timeseries" searchQuery="" onChange={jest.fn()} />
++    );
++
++    expect(screen.getByText('Time series')).toBeInTheDocument();
++    expect(screen.getByText('Text')).toBeInTheDocument();
++  });
++
++  it('should render both visualization and widget type plugins together', () => {
++    render(
++      <VizTypePicker pluginId="" searchQuery="" onChange={jest.fn()} />
++    );
++
++    expect(screen.getByText('Time series')).toBeInTheDocument();
++    expect(screen.getByText('Text')).toBeInTheDocument();
++  });
++});

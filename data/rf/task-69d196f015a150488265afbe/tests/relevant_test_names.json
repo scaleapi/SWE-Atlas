@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "ChecklistCard > renders the title"
+    },
+    {
+      "name": "ChecklistCard > renders all provided item texts"
+    },
+    {
+      "name": "ChecklistCard > renders with a single item"
+    },
+    {
+      "name": "ChecklistCard > renders with an empty items array"
+    },
+    {
+      "name": "Authorization benefits section > renders the benefits heading"
+    },
+    {
+      "name": "Authorization benefits section > renders the uninterrupted service benefit"
+    },
+    {
+      "name": "Authorization benefits section > renders the reliability benefit"
+    },
+    {
+      "name": "Authorization benefits section > renders the security benefit"
+    }
+  ]
+}

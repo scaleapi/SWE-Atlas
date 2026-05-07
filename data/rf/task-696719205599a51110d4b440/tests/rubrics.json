@@ -1,0 +1,98 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ac5b27262c82a0f9e534a7d6ff1ce84a",
+    "title": "1.1: Creates Compiler.Parse(src, filename string, wrap bool) in js/compiler/compiler.go returning (*ast.Program, string, error)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a97c94558487167df307478a9759a2cf",
+    "title": "1.2: Updates the CommonJS module loader call site in js/modules/cjsmodule.go to use Parse followed by sobek.CompileAST",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d7092d966fcd612777e1333420b9fe3b",
+    "title": "1.3: Separates parsing logic from compilation in js/compiler/compiler.go by returning AST instead of compiled program",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b8f3e2a1c4d5678901234567890abcde",
+    "title": "1.4: Corrects `sourcemappingurl` to `sourceMappingURL` in the inline source map directive in js/compiler/compiler.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c9e4f3b2d5a6789012345678901bcdef",
+    "title": "1.5: Adds the directive's starting index to the relative newline offset in the slice calculation in `updateInlineSourceMap` in js/compiler/compiler.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "295f2ae16584d6dc1adf70ea835fc747",
+    "title": "2.1: Adds documentation comment for the Parse method in js/compiler/compiler.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "a1b2c3d4e5f6789012345678901abcde",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "22794dcb27cd846f61aef7ac5114abd6",
+    "title": "4.1: Removes the Transform method from js/compiler/compiler.go",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "284432adf8631f731014d211699b6f0b",
+    "title": "4.2: Removes the CommonJS module wrapping functionality from js/compiler/compiler.go",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

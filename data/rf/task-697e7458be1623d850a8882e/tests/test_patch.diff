@@ -1,0 +1,303 @@
+diff --git a/pkg/sources/s3/s3_unit_test.go b/pkg/sources/s3/s3_unit_test.go
+new file mode 100644
+index 000000000..4863c2e5a
+--- /dev/null
++++ b/pkg/sources/s3/s3_unit_test.go
+@@ -0,0 +1,297 @@
++package s3
++
++import (
++	"net/http"
++	"net/http/httptest"
++	"strings"
++	"sync"
++	"testing"
++
++	"github.com/aws/aws-sdk-go/aws"
++	"github.com/aws/aws-sdk-go/aws/credentials"
++	"github.com/aws/aws-sdk-go/aws/session"
++	awss3 "github.com/aws/aws-sdk-go/service/s3"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/context"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/credentialspb"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/sourcespb"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/sources"
++	"golang.org/x/sync/errgroup"
++
++	"github.com/go-logr/logr"
++)
++
++func newTestSource(conn *sourcespb.S3) *Source {
++	g := new(errgroup.Group)
++	g.SetLimit(1)
++	return &Source{
++		name:       "test-source",
++		conn:       conn,
++		log:        logr.Discard(),
++		errorCount: &sync.Map{},
++		jobPool:    g,
++	}
++}
++
++func TestNewClient_Unauthenticated(t *testing.T) {
++	conn := &sourcespb.S3{
++		Credential: &sourcespb.S3_Unauthenticated{
++			Unauthenticated: &credentialspb.Unauthenticated{},
++		},
++	}
++	s := newTestSource(conn)
++	client, err := s.newClient("us-east-1", "")
++	assert.NoError(t, err)
++	assert.NotNil(t, client)
++}
++
++func TestNewClient_AccessKey(t *testing.T) {
++	conn := &sourcespb.S3{
++		Credential: &sourcespb.S3_AccessKey{
++			AccessKey: &credentialspb.KeySecret{
++				Key:    "AKIAIOSFODNN7EXAMPLE",
++				Secret: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
++			},
++		},
++	}
++	s := newTestSource(conn)
++	client, err := s.newClient("us-east-1", "")
++	assert.NoError(t, err)
++	assert.NotNil(t, client)
++}
++
++func TestNewClient_SessionToken(t *testing.T) {
++	conn := &sourcespb.S3{
++		Credential: &sourcespb.S3_SessionToken{
++			SessionToken: &credentialspb.AWSSessionTokenSecret{
++				Key:          "AKIAIOSFODNN7EXAMPLE",
++				Secret:       "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
++				SessionToken: "FwoGZXIvYXdzEBYaDNHBHX",
++			},
++		},
++	}
++	s := newTestSource(conn)
++	client, err := s.newClient("us-east-1", "")
++	assert.NoError(t, err)
++	assert.NotNil(t, client)
++}
++
++func TestNewClient_CloudEnvironment(t *testing.T) {
++	conn := &sourcespb.S3{
++		Credential: &sourcespb.S3_CloudEnvironment{
++			CloudEnvironment: &credentialspb.CloudEnvironment{},
++		},
++	}
++	s := newTestSource(conn)
++	client, err := s.newClient("us-east-1", "")
++	assert.NoError(t, err)
++	assert.NotNil(t, client)
++}
++
++func TestNewClient_InvalidCredential(t *testing.T) {
++	conn := &sourcespb.S3{
++		Credential: nil,
++	}
++	s := newTestSource(conn)
++	client, err := s.newClient("us-east-1", "")
++	assert.Error(t, err)
++	assert.Nil(t, client)
++	assert.Contains(t, err.Error(), "invalid configuration given for")
++}
++
++func TestNewClient_WithRoleArn(t *testing.T) {
++	conn := &sourcespb.S3{
++		Credential: &sourcespb.S3_CloudEnvironment{
++			CloudEnvironment: &credentialspb.CloudEnvironment{},
++		},
++	}
++	s := newTestSource(conn)
++	client, err := s.newClient("us-east-1", "arn:aws:iam::123456789012:role/TestRole")
++	assert.NoError(t, err)
++	assert.NotNil(t, client)
++}
++
++func TestNewClient_DifferentRegions(t *testing.T) {
++	conn := &sourcespb.S3{
++		Credential: &sourcespb.S3_Unauthenticated{
++			Unauthenticated: &credentialspb.Unauthenticated{},
++		},
++	}
++	s := newTestSource(conn)
++
++	regions := []string{"us-east-1", "us-west-2", "eu-west-1"}
++	for _, region := range regions {
++		client, err := s.newClient(region, "")
++		assert.NoError(t, err)
++		assert.NotNil(t, client)
++	}
++}
++
++func TestNewClient_WithRoleArnDifferentRegion(t *testing.T) {
++	conn := &sourcespb.S3{
++		Credential: &sourcespb.S3_CloudEnvironment{
++			CloudEnvironment: &credentialspb.CloudEnvironment{},
++		},
++	}
++	s := newTestSource(conn)
++	client, err := s.newClient("eu-west-1", "arn:aws:iam::123456789012:role/TestRole")
++	assert.NoError(t, err)
++	assert.NotNil(t, client)
++}
++
++func TestChunks_NoRoles_InvalidCredentials(t *testing.T) {
++	conn := &sourcespb.S3{
++		Credential: nil,
++		Buckets:    []string{"test-bucket"},
++	}
++	s := newTestSource(conn)
++	ctx := context.Background()
++	chunksChan := make(chan *sources.Chunk, 1)
++	err := s.Chunks(ctx, chunksChan)
++	assert.Error(t, err)
++	assert.Contains(t, err.Error(), "could not create s3 client")
++}
++
++func TestChunks_NoRoles_Unauthenticated(t *testing.T) {
++	conn := &sourcespb.S3{
++		Credential: &sourcespb.S3_Unauthenticated{
++			Unauthenticated: &credentialspb.Unauthenticated{},
++		},
++		Buckets: []string{"fake-bucket-name"},
++	}
++	s := newTestSource(conn)
++	ctx := context.Background()
++	chunksChan := make(chan *sources.Chunk, 1)
++	err := s.Chunks(ctx, chunksChan)
++	assert.NoError(t, err)
++}
++
++func TestChunks_WithRoles_NilCredentials(t *testing.T) {
++	conn := &sourcespb.S3{
++		Credential: nil,
++		Roles:      []string{"arn:aws:iam::123456789012:role/TestRole"},
++		Buckets:    []string{"fake-bucket-name"},
++	}
++	s := newTestSource(conn)
++	ctx := context.Background()
++	chunksChan := make(chan *sources.Chunk, 1)
++	err := s.Chunks(ctx, chunksChan)
++	assert.NoError(t, err)
++}
++
++func TestChunks_WithRoles_CloudEnv(t *testing.T) {
++	conn := &sourcespb.S3{
++		Credential: &sourcespb.S3_CloudEnvironment{
++			CloudEnvironment: &credentialspb.CloudEnvironment{},
++		},
++		Roles:   []string{"arn:aws:iam::123456789012:role/TestRole"},
++		Buckets: []string{"fake-bucket-name"},
++	}
++	s := newTestSource(conn)
++	ctx := context.Background()
++	chunksChan := make(chan *sources.Chunk, 1)
++	err := s.Chunks(ctx, chunksChan)
++	assert.NoError(t, err)
++}
++
++func TestChunks_MultipleRoles(t *testing.T) {
++	conn := &sourcespb.S3{
++		Credential: &sourcespb.S3_CloudEnvironment{
++			CloudEnvironment: &credentialspb.CloudEnvironment{},
++		},
++		Roles:   []string{"arn:aws:iam::123456789012:role/RoleA", "arn:aws:iam::123456789012:role/RoleB"},
++		Buckets: []string{"fake-bucket-name"},
++	}
++	s := newTestSource(conn)
++	ctx := context.Background()
++	chunksChan := make(chan *sources.Chunk, 1)
++	err := s.Chunks(ctx, chunksChan)
++	assert.NoError(t, err)
++}
++
++// TestScanBuckets_SkipsBucketOnRegionalClientError covers the bug fix where scanBuckets must
++// continue when creating a regional S3 client fails (non-default region from HeadBucket response).
++// GetBucketRegionWithClient is exercised against a local server; newClient fails because the
++// source has no valid static credential for the non-role path.
++func TestScanBuckets_SkipsBucketOnRegionalClientError(t *testing.T) {
++	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		if r.Method == http.MethodHead {
++			w.Header().Set("X-Amz-Bucket-Region", "eu-west-1")
++			w.WriteHeader(http.StatusOK)
++			return
++		}
++		t.Fatalf("unexpected %s %s", r.Method, r.URL.Path)
++	}))
++	t.Cleanup(server.Close)
++
++	sess, err := session.NewSession(&aws.Config{
++		Region:      aws.String("us-east-1"),
++		Endpoint:    aws.String(server.URL),
++		DisableSSL:  aws.Bool(true),
++		Credentials: credentials.AnonymousCredentials,
++	})
++	require.NoError(t, err)
++	client := awss3.New(sess)
++
++	conn := &sourcespb.S3{
++		Credential: nil,
++		Buckets:    []string{"any-bucket"},
++	}
++	s := newTestSource(conn)
++	ctx := context.Background()
++	chunksChan := make(chan *sources.Chunk, 1)
++
++	err = s.scanBuckets(ctx, client, "", []string{"any-bucket"}, chunksChan)
++	assert.NoError(t, err)
++}
++
++// TestScanBuckets_SkipsRegionalFailureThenContinues verifies that after skipping a bucket whose
++// regional client cannot be built, scanBuckets still processes a later us-east-1 bucket.
++func TestScanBuckets_SkipsRegionalFailureThenContinues(t *testing.T) {
++	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		path := strings.TrimPrefix(r.URL.Path, "/")
++		bucket := strings.Split(path, "/")[0]
++
++		if r.Method == http.MethodHead {
++			if bucket == "bucket-eu" {
++				w.Header().Set("X-Amz-Bucket-Region", "eu-west-1")
++			} else {
++				w.Header().Set("X-Amz-Bucket-Region", "us-east-1")
++			}
++			w.WriteHeader(http.StatusOK)
++			return
++		}
++		if r.Method == http.MethodGet && strings.Contains(r.URL.Query().Get("list-type"), "2") {
++			_, _ = w.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?>
++<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
++  <Name>` + bucket + `</Name>
++  <KeyCount>0</KeyCount>
++  <IsTruncated>false</IsTruncated>
++</ListBucketResult>`))
++			return
++		}
++		http.NotFound(w, r)
++	}))
++	t.Cleanup(server.Close)
++
++	sess, err := session.NewSession(&aws.Config{
++		Region:      aws.String("us-east-1"),
++		Endpoint:    aws.String(server.URL),
++		DisableSSL:  aws.Bool(true),
++		Credentials: credentials.AnonymousCredentials,
++	})
++	require.NoError(t, err)
++	client := awss3.New(sess)
++
++	conn := &sourcespb.S3{
++		Credential: nil,
++		Buckets:    []string{"bucket-eu", "bucket-us"},
++	}
++	s := newTestSource(conn)
++	ctx := context.Background()
++	chunksChan := make(chan *sources.Chunk, 1)
++
++	err = s.scanBuckets(ctx, client, "", []string{"bucket-eu", "bucket-us"}, chunksChan)
++	assert.NoError(t, err)
++}

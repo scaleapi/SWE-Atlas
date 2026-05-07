@@ -1,0 +1,77 @@
+diff --git a/src/detect-filename.c b/src/detect-filename.c
+index 5ad4109a4..8d1cfe443 100644
+--- a/src/detect-filename.c
++++ b/src/detect-filename.c
+@@ -343,11 +343,72 @@ static int DetectFilenameSignatureParseTest01(void)
+     //FAIL_IF_NOT(UTHParseSignature("alert tls any any -> any any (flow:to_client; file.name; content:\"abc\"; sid:1;)", false));
+     PASS;
+ }
++static int DetectFileextSignatureParseTest01(void)
++{
++    FAIL_IF_NOT(UTHParseSignature(
++            "alert http any any -> any any (fileext:\"pdf\"; sid:1;)", true));
++    FAIL_IF_NOT(UTHParseSignature(
++            "alert http any any -> any any (fileext:\"doc\"; sid:1;)", true));
++    FAIL_IF_NOT(UTHParseSignature(
++            "alert http any any -> any any (fileext:\"tar.gz\"; sid:1;)", true));
++    FAIL_IF_NOT(UTHParseSignature(
++            "alert http any any -> any any (fileext:\"exe\"; sid:1;)", true));
++    PASS;
++}
++
++static int DetectFileextSignatureParseTest02(void)
++{
++    FAIL_IF_NOT(UTHParseSignature(
++            "alert http any any -> any any (fileext:!\"pdf\"; sid:1;)", true));
++    FAIL_IF_NOT(UTHParseSignature(
++            "alert http any any -> any any (fileext:!\"exe\"; sid:1;)", true));
++    PASS;
++}
++
++static int DetectFileextSignatureParseTest03(void)
++{
++    FAIL_IF_NOT(UTHParseSignature(
++            "alert http any any -> any any (fileext:\"pdf\"; content:\"test\"; sid:1;)", true));
++    FAIL_IF_NOT(UTHParseSignature(
++            "alert http any any -> any any (fileext:\"jpg\"; fileext:\"png\"; sid:1;)", true));
++    PASS;
++}
++
++static int DetectFileextSignatureParseTest04(void)
++{
++    FAIL_IF_NOT(UTHParseSignature(
++            "alert http any any -> any any (fileext:\"|\"; sid:1;)", false));
++    FAIL_IF_NOT(UTHParseSignature(
++            "alert http any any -> any any (fileext:\"|ff\"; sid:1;)", false));
++    PASS;
++}
++
++static int DetectFileextSignatureParseTest05(void)
++{
++    DetectEngineCtx *de_ctx = DetectEngineCtxInit();
++    FAIL_IF_NULL(de_ctx);
++    de_ctx->flags |= DE_QUIET;
++
++    Signature *s = DetectEngineAppendSig(de_ctx,
++            "alert http any any -> any any (fileext:\"pdf\"; sid:1;)");
++    FAIL_IF_NULL(s);
++    FAIL_IF_NOT(s->file_flags & FILE_SIG_NEED_FILE);
++    FAIL_IF_NOT(s->file_flags & FILE_SIG_NEED_FILENAME);
++
++    DetectEngineCtxFree(de_ctx);
++    PASS;
++}
++
+ /**
+  * \brief this function registers unit tests for DetectFilename
+  */
+ void DetectFilenameRegisterTests(void)
+ {
+     UtRegisterTest("DetectFilenameSignatureParseTest01", DetectFilenameSignatureParseTest01);
++    UtRegisterTest("DetectFileextSignatureParseTest01", DetectFileextSignatureParseTest01);
++    UtRegisterTest("DetectFileextSignatureParseTest02", DetectFileextSignatureParseTest02);
++    UtRegisterTest("DetectFileextSignatureParseTest03", DetectFileextSignatureParseTest03);
++    UtRegisterTest("DetectFileextSignatureParseTest04", DetectFileextSignatureParseTest04);
++    UtRegisterTest("DetectFileextSignatureParseTest05", DetectFileextSignatureParseTest05);
+ }
+ #endif /* UNITTESTS */

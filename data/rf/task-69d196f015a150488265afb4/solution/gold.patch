@@ -1,0 +1,129 @@
+diff --git a/app/dashboard/views/mailbox.py b/app/dashboard/views/mailbox.py
+index 7e7fa26f..bf0ca832 100644
+--- a/app/dashboard/views/mailbox.py
++++ b/app/dashboard/views/mailbox.py
+@@ -9,7 +9,7 @@ from itsdangerous import TimestampSigner
+ from wtforms import validators, IntegerField
+ from wtforms.fields.html5 import EmailField
+ 
+-from app import parallel_limiter, mailbox_utils
++from app import parallel_limiter, mailbox_utils, user_settings
+ from app.config import MAILBOX_SECRET
+ from app.dashboard.base import dashboard_bp
+ from app.db import Session
+@@ -72,8 +72,8 @@ def mailbox_route():
+                 return redirect(request.url)
+             try:
+                 mailbox_id = request.form.get("mailbox_id")
+-                mailbox = mailbox_utils.set_default_mailbox(current_user, mailbox_id)
+-            except mailbox_utils.MailboxError as e:
++                mailbox = user_settings.set_default_mailbox(current_user, mailbox_id)
++            except user_settings.CannotSetMailbox as e:
+                 flash(e.msg, "warning")
+                 return redirect(url_for("dashboard.mailbox_route"))
+ 
+diff --git a/app/mailbox_utils.py b/app/mailbox_utils.py
+index 94f9695c..c4a00ebe 100644
+--- a/app/mailbox_utils.py
++++ b/app/mailbox_utils.py
+@@ -32,16 +32,24 @@ def create_mailbox(
+     send_verification_link: bool = True,
+ ) -> Mailbox:
+     if not user.is_premium():
+-        LOG.i(f"User {user} has created mailbox with {email} but is not premium")
++        LOG.i(
++            f"User {user} has tried to create mailbox with {email} but is not premium"
++        )
+         raise MailboxError("Only premium plan can add additional mailbox")
+     if not is_valid_email(email):
+-        LOG.i(f"User {user} has created mailbox with {email} but is not valid email")
++        LOG.i(
++            f"User {user} has tried to create mailbox with {email} but is not valid email"
++        )
+         raise MailboxError("Invalid email")
+     elif mailbox_already_used(email, user):
+-        LOG.i(f"User {user} has created mailbox with {email} but email is already used")
++        LOG.i(
++            f"User {user} has tried to create mailbox with {email} but email is already used"
++        )
+         raise MailboxError("Email already used")
+     elif not email_can_be_used_as_mailbox(email):
+-        LOG.i(f"User {user} has created mailbox with {email} but email is invalid")
++        LOG.i(
++            f"User {user} has tried to create mailbox with {email} but email is invalid"
++        )
+         raise MailboxError("Invalid email")
+     new_mailbox = Mailbox.create(email=email, user_id=user.id, commit=True)
+ 
+@@ -109,24 +117,6 @@ def delete_mailbox(
+     return mailbox
+ 
+ 
+-def set_default_mailbox(user: User, mailbox_id: int) -> Mailbox:
+-    mailbox = Mailbox.get(mailbox_id)
+-
+-    if not mailbox or mailbox.user_id != user.id:
+-        raise MailboxError("Invalid mailbox")
+-
+-    if not mailbox.verified:
+-        raise MailboxError("This is mailbox is not verified")
+-
+-    if mailbox.id == user.default_mailbox_id:
+-        return mailbox
+-    LOG.i(f"User {user} has set mailbox {mailbox} as his default one")
+-
+-    user.default_mailbox_id = mailbox.id
+-    Session.commit()
+-    return mailbox
+-
+-
+ def clear_activation_codes_for_mailbox(mailbox: Mailbox):
+     Session.query(MailboxActivation).filter(
+         MailboxActivation.mailbox_id == mailbox.id
+diff --git a/app/user_settings.py b/app/user_settings.py
+index f9bbb967..cef224dd 100644
+--- a/app/user_settings.py
++++ b/app/user_settings.py
+@@ -2,7 +2,7 @@ from typing import Optional
+ 
+ from app.db import Session
+ from app.log import LOG
+-from app.models import User, SLDomain, CustomDomain
++from app.models import User, SLDomain, CustomDomain, Mailbox
+ 
+ 
+ class CannotSetAlias(Exception):
+@@ -10,6 +10,11 @@ class CannotSetAlias(Exception):
+         self.msg = msg
+ 
+ 
++class CannotSetMailbox(Exception):
++    def __init__(self, msg: str):
++        self.msg = msg
++
++
+ def set_default_alias_domain(user: User, domain_name: Optional[str]):
+     if domain_name is None:
+         LOG.i(f"User {user} has set no domain as default domain")
+@@ -45,3 +50,21 @@ def set_default_alias_domain(user: User, domain_name: Optional[str]):
+     user.default_alias_public_domain_id = None
+     user.default_alias_custom_domain_id = custom_domain.id
+     Session.flush()
++
++
++def set_default_mailbox(user: User, mailbox_id: int) -> Mailbox:
++    mailbox = Mailbox.get(mailbox_id)
++
++    if not mailbox or mailbox.user_id != user.id:
++        raise CannotSetMailbox("Invalid mailbox")
++
++    if not mailbox.verified:
++        raise CannotSetMailbox("This is mailbox is not verified")
++
++    if mailbox.id == user.default_mailbox_id:
++        return mailbox
++    LOG.i(f"User {user} has set mailbox {mailbox} as his default one")
++
++    user.default_mailbox_id = mailbox.id
++    Session.commit()
++    return mailbox

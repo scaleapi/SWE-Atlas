@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "github.com/grafana/grafana/pkg/services/ngalert/state/Test_getOrAdd"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/services/ngalert/state/Test_getOrAdd/add_new_state"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/services/ngalert/state/Test_getOrAdd/retrieve_existing_state"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/services/ngalert/state/Test_getOrAdd_multipleCacheIDsSameRule"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/services/ngalert/state/Test_getOrAdd_multipleOrgs"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/services/ngalert/state/Test_getOrAdd_multipleRulesSameOrg"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/services/ngalert/state/Test_getOrAdd_retrievable_via_get"
+    }
+  ]
+}

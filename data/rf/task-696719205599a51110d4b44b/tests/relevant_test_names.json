@@ -1,0 +1,91 @@
+{
+  "tests": [
+    {
+      "name": "go.k6.io/k6/js/TestConsoleLogWithGojaNativeObject"
+    },
+    {
+      "name": "go.k6.io/k6/js/TestConsoleLogObjectsWithGoTypes"
+    },
+    {
+      "name": "go.k6.io/k6/js/modules/k6/http/TestAsyncRequestErrors"
+    },
+    {
+      "name": "go.k6.io/k6/js/modules/k6/http/TestBatchError"
+    },
+    {
+      "name": "go.k6.io/k6/js/modules/k6/http/TestBatchErrorNoPanic"
+    },
+    {
+      "name": "go.k6.io/k6/js/modules/k6/http/TestRequest"
+    },
+    {
+      "name": "go.k6.io/k6/js/modules/k6/http/TestRequestCancellation"
+    },
+    {
+      "name": "go.k6.io/k6/js/modules/k6/http/TestRequestCompression"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestOutputFlushMetricsTimeSeriesWarning"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestTestPreInitStateLoggerAcceptsFieldLogger"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestTestPreInitStateLoggerAcceptsEntry"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestStateLoggerAcceptsFieldLogger"
+    },
+    {
+      "name": "go.k6.io/k6/lib/TestStateLoggerAcceptsEntry"
+    },
+    {
+      "name": "go.k6.io/k6/lib/testutils/TestNewLogHookDefaultLevels"
+    },
+    {
+      "name": "go.k6.io/k6/lib/testutils/TestNewLogHookSpecificLevels"
+    },
+    {
+      "name": "go.k6.io/k6/lib/testutils/TestSimpleLogrusHookLastEntryEmpty"
+    },
+    {
+      "name": "go.k6.io/k6/lib/testutils/TestSimpleLogrusHookLastEntry"
+    },
+    {
+      "name": "go.k6.io/k6/lib/testutils/TestSimpleLogrusHookReset"
+    },
+    {
+      "name": "go.k6.io/k6/lib/testutils/TestSimpleLogrusHookDrainAfterReset"
+    },
+    {
+      "name": "go.k6.io/k6/lib/testutils/TestNewLoggerReturnsFieldLogger"
+    },
+    {
+      "name": "go.k6.io/k6/lib/testutils/TestNewLoggerNilTB"
+    },
+    {
+      "name": "go.k6.io/k6/lib/testutils/TestNewLoggerWithHookDefaultLevels"
+    },
+    {
+      "name": "go.k6.io/k6/lib/testutils/TestNewLoggerWithHookSpecificLevels"
+    },
+    {
+      "name": "go.k6.io/k6/lib/testutils/TestNewLoggerWithHookNilTB"
+    },
+    {
+      "name": "go.k6.io/k6/lib/testutils/TestNewLoggerWithHookCapturesAtCorrectLevel"
+    },
+    {
+      "name": "go.k6.io/k6/output/csv/TestParseArgAcceptsFieldLogger"
+    },
+    {
+      "name": "go.k6.io/k6/output/csv/TestParseArgAcceptsLogEntry"
+    },
+    {
+      "name": "go.k6.io/k6/output/csv/TestGetConsolidatedConfigAcceptsFieldLogger"
+    },
+    {
+      "name": "go.k6.io/k6/output/csv/TestGetConsolidatedConfigAcceptsLogEntry"
+    }
+  ]
+}

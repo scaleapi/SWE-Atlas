@@ -1,0 +1,708 @@
+diff --git a/output/cloud/expv2/collect_test.go b/output/cloud/expv2/collect_test.go
+index 5b5bf28ea..0fa013a1f 100644
+--- a/output/cloud/expv2/collect_test.go
++++ b/output/cloud/expv2/collect_test.go
+@@ -1,16 +1,12 @@
+ package expv2
+ 
+ import (
+-	"sync"
+ 	"testing"
+ 	"time"
+ 
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
+ 
+-	"go.k6.io/k6/cloudapi/insights"
+-	"go.k6.io/k6/lib/netext"
+-	"go.k6.io/k6/lib/netext/httpext"
+ 	"go.k6.io/k6/metrics"
+ )
+ 
+@@ -312,137 +308,3 @@ func TestBucketQPushPopConcurrency(t *testing.T) {
+ 		}
+ 	}
+ }
+-
+-func Test_requestMetadatasCollector_CollectRequestMetadatas_DoesNothingWithEmptyData(t *testing.T) {
+-	t.Parallel()
+-
+-	// Given
+-	testRunID := int64(1337)
+-	col := newRequestMetadatasCollector(testRunID)
+-	var data []metrics.SampleContainer
+-
+-	// When
+-	col.CollectRequestMetadatas(data)
+-
+-	// Then
+-	require.Empty(t, col.buffer)
+-}
+-
+-func Test_requestMetadatasCollector_CollectRequestMetadatas_FiltersAndStoresHTTPTrailsAsRequestMetadatas(t *testing.T) {
+-	t.Parallel()
+-
+-	// Given
+-	testRunID := int64(1337)
+-	col := newRequestMetadatasCollector(testRunID)
+-	data := []metrics.SampleContainer{
+-		&httpext.Trail{
+-			EndTime:  time.Unix(10, 0),
+-			Duration: time.Second,
+-			Tags: metrics.NewRegistry().RootTagSet().
+-				With(scenarioTag, "test-scenario-1").
+-				With(groupTag, "test-group-1").
+-				With(nameTag, "test-url-1").
+-				With(methodTag, "test-method-1").
+-				With(statusTag, "200"),
+-			Metadata: map[string]string{
+-				metadataTraceIDKey: "test-trace-id-1",
+-			},
+-		},
+-		&httpext.Trail{
+-			// HTTP trail without trace ID should be ignored
+-		},
+-		&netext.NetTrail{
+-			// Net trail should be ignored
+-		},
+-		&httpext.Trail{
+-			EndTime:  time.Unix(20, 0),
+-			Duration: time.Second,
+-			Tags: metrics.NewRegistry().RootTagSet().
+-				With(scenarioTag, "test-scenario-2").
+-				With(groupTag, "test-group-2").
+-				With(nameTag, "test-url-2").
+-				With(methodTag, "test-method-2").
+-				With(statusTag, "401"),
+-			Metadata: map[string]string{
+-				metadataTraceIDKey: "test-trace-id-2",
+-			},
+-		},
+-		&httpext.Trail{
+-			EndTime:  time.Unix(20, 0),
+-			Duration: time.Second,
+-			Tags:     metrics.NewRegistry().RootTagSet(),
+-			// HTTP trail without `trace_id` metadata key should be ignored
+-			Metadata: map[string]string{},
+-		},
+-		&httpext.Trail{
+-			EndTime:  time.Unix(20, 0),
+-			Duration: time.Second,
+-			// If no tags are present, output should be set to `unknown`
+-			Tags: metrics.NewRegistry().RootTagSet(),
+-			Metadata: map[string]string{
+-				metadataTraceIDKey: "test-trace-id-3",
+-			},
+-		},
+-	}
+-
+-	// When
+-	col.CollectRequestMetadatas(data)
+-
+-	// Then
+-	require.Len(t, col.buffer, 3)
+-	require.Contains(t, col.buffer, insights.RequestMetadata{
+-		TraceID:        "test-trace-id-1",
+-		Start:          time.Unix(9, 0),
+-		End:            time.Unix(10, 0),
+-		TestRunLabels:  insights.TestRunLabels{ID: 1337, Scenario: "test-scenario-1", Group: "test-group-1"},
+-		ProtocolLabels: insights.ProtocolHTTPLabels{URL: "test-url-1", Method: "test-method-1", StatusCode: 200},
+-	})
+-	require.Contains(t, col.buffer, insights.RequestMetadata{
+-		TraceID:        "test-trace-id-2",
+-		Start:          time.Unix(19, 0),
+-		End:            time.Unix(20, 0),
+-		TestRunLabels:  insights.TestRunLabels{ID: 1337, Scenario: "test-scenario-2", Group: "test-group-2"},
+-		ProtocolLabels: insights.ProtocolHTTPLabels{URL: "test-url-2", Method: "test-method-2", StatusCode: 401},
+-	})
+-	require.Contains(t, col.buffer, insights.RequestMetadata{
+-		TraceID:        "test-trace-id-3",
+-		Start:          time.Unix(19, 0),
+-		End:            time.Unix(20, 0),
+-		TestRunLabels:  insights.TestRunLabels{ID: 1337, Scenario: "", Group: ""},
+-		ProtocolLabels: insights.ProtocolHTTPLabels{URL: "", Method: "", StatusCode: 0},
+-	})
+-}
+-
+-func Test_requestMetadatasCollector_PopAll_DoesNothingWithEmptyData(t *testing.T) {
+-	t.Parallel()
+-
+-	// Given
+-	data := insights.RequestMetadatas{
+-		{
+-			TraceID:        "test-trace-id-1",
+-			Start:          time.Unix(9, 0),
+-			End:            time.Unix(10, 0),
+-			TestRunLabels:  insights.TestRunLabels{ID: 1337, Scenario: "test-scenario-1", Group: "test-group-1"},
+-			ProtocolLabels: insights.ProtocolHTTPLabels{URL: "test-url-1", Method: "test-method-1", StatusCode: 200},
+-		},
+-		{
+-			TraceID:        "test-trace-id-2",
+-			Start:          time.Unix(19, 0),
+-			End:            time.Unix(20, 0),
+-			TestRunLabels:  insights.TestRunLabels{ID: 1337, Scenario: "unknown", Group: "unknown"},
+-			ProtocolLabels: insights.ProtocolHTTPLabels{URL: "unknown", Method: "unknown", StatusCode: 0},
+-		},
+-	}
+-	col := &rmCollector{
+-		buffer:   data,
+-		bufferMu: &sync.Mutex{},
+-	}
+-
+-	// When
+-	got := col.PopAll()
+-
+-	// Then
+-	require.Nil(t, col.buffer)
+-	require.Empty(t, col.buffer)
+-	require.Equal(t, data, got)
+-}
+diff --git a/output/cloud/expv2/flush_test.go b/output/cloud/expv2/flush_test.go
+index 1ad432ef6..35847ef8d 100644
+--- a/output/cloud/expv2/flush_test.go
++++ b/output/cloud/expv2/flush_test.go
+@@ -1,90 +1,18 @@
+ package expv2
+ 
+ import (
+-	"context"
+-	"errors"
+ 	"strconv"
+ 	"testing"
+-	"time"
+ 
+ 	"github.com/sirupsen/logrus"
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
+ 
+-	"go.k6.io/k6/cloudapi/insights"
+ 	"go.k6.io/k6/lib/testutils"
+ 	"go.k6.io/k6/metrics"
+ 	"go.k6.io/k6/output/cloud/expv2/pbcloud"
+ )
+ 
+-type mockWorkingInsightsClient struct {
+-	ingestRequestMetadatasBatchInvoked bool
+-	dataSent                           bool
+-	data                               insights.RequestMetadatas
+-}
+-
+-func (c *mockWorkingInsightsClient) IngestRequestMetadatasBatch(ctx context.Context, data insights.RequestMetadatas) error {
+-	c.ingestRequestMetadatasBatchInvoked = true
+-
+-	select {
+-	case <-ctx.Done():
+-		return ctx.Err()
+-	default:
+-	}
+-
+-	c.dataSent = true
+-	c.data = data
+-
+-	return nil
+-}
+-
+-func (c *mockWorkingInsightsClient) Close() error {
+-	return nil
+-}
+-
+-type mockFailingInsightsClient struct {
+-	err error
+-}
+-
+-func (c *mockFailingInsightsClient) IngestRequestMetadatasBatch(_ context.Context, _ insights.RequestMetadatas) error {
+-	return c.err
+-}
+-
+-func (c *mockFailingInsightsClient) Close() error {
+-	return nil
+-}
+-
+-type mockRequestMetadatasCollector struct {
+-	data insights.RequestMetadatas
+-}
+-
+-func (m *mockRequestMetadatasCollector) CollectRequestMetadatas(_ []metrics.SampleContainer) {
+-	panic("implement me")
+-}
+-
+-func (m *mockRequestMetadatasCollector) PopAll() insights.RequestMetadatas {
+-	return m.data
+-}
+-
+-func newMockRequestMetadatas() insights.RequestMetadatas {
+-	return insights.RequestMetadatas{
+-		{
+-			TraceID:        "test-trace-id-1",
+-			Start:          time.Unix(1337, 0),
+-			End:            time.Unix(1338, 0),
+-			TestRunLabels:  insights.TestRunLabels{ID: 1, Scenario: "test-scenario-1", Group: "test-group-1"},
+-			ProtocolLabels: insights.ProtocolHTTPLabels{URL: "test-url-1", Method: "test-method-1", StatusCode: 200},
+-		},
+-		{
+-			TraceID:        "test-trace-id-2",
+-			Start:          time.Unix(2337, 0),
+-			End:            time.Unix(2338, 0),
+-			TestRunLabels:  insights.TestRunLabels{ID: 1, Scenario: "test-scenario-2", Group: "test-group-2"},
+-			ProtocolLabels: insights.ProtocolHTTPLabels{URL: "test-url-2", Method: "test-method-2", StatusCode: 200},
+-		},
+-	}
+-}
+-
+ // TODO: additional case
+ // case: add when the metric already exist
+ // case: add when the metric and the timeseries already exist
+@@ -290,58 +218,3 @@ func (pm *pusherMock) push(ms *pbcloud.MetricSet) error {
+ 	pm.pushCalled++
+ 	return nil
+ }
+-
+-func Test_tracesFlusher_Flush_ReturnsNoErrorWithWorkingInsightsClientAndNonCancelledContextAndNoData(t *testing.T) {
+-	t.Parallel()
+-
+-	// Given
+-	data := insights.RequestMetadatas{}
+-	cli := &mockWorkingInsightsClient{}
+-	col := &mockRequestMetadatasCollector{data: data}
+-	flusher := newTracesFlusher(cli, col)
+-
+-	// When
+-	err := flusher.flush()
+-
+-	// Then
+-	require.NoError(t, err)
+-	require.False(t, cli.ingestRequestMetadatasBatchInvoked)
+-	require.False(t, cli.dataSent)
+-	require.Empty(t, cli.data)
+-}
+-
+-func Test_tracesFlusher_Flush_ReturnsNoErrorWithWorkingInsightsClientAndNonCancelledContextAndData(t *testing.T) {
+-	t.Parallel()
+-
+-	// Given
+-	data := newMockRequestMetadatas()
+-	cli := &mockWorkingInsightsClient{}
+-	col := &mockRequestMetadatasCollector{data: data}
+-	flusher := newTracesFlusher(cli, col)
+-
+-	// When
+-	err := flusher.flush()
+-
+-	// Then
+-	require.NoError(t, err)
+-	require.True(t, cli.ingestRequestMetadatasBatchInvoked)
+-	require.True(t, cli.dataSent)
+-	require.Equal(t, data, cli.data)
+-}
+-
+-func Test_tracesFlusher_Flush_ReturnsErrorWithFailingInsightsClientAndNonCancelledContext(t *testing.T) {
+-	t.Parallel()
+-
+-	// Given
+-	data := newMockRequestMetadatas()
+-	testErr := errors.New("test-error")
+-	cli := &mockFailingInsightsClient{err: testErr}
+-	col := &mockRequestMetadatasCollector{data: data}
+-	flusher := newTracesFlusher(cli, col)
+-
+-	// When
+-	err := flusher.flush()
+-
+-	// Then
+-	require.ErrorIs(t, err, testErr)
+-}
+diff --git a/output/cloud/expv2/output_test.go b/output/cloud/expv2/output_test.go
+index 852329baa..2ad87add7 100644
+--- a/output/cloud/expv2/output_test.go
++++ b/output/cloud/expv2/output_test.go
+@@ -11,11 +11,12 @@ import (
+ 
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
++	"gopkg.in/guregu/null.v3"
++
+ 	"go.k6.io/k6/cloudapi"
+ 	"go.k6.io/k6/lib/testutils"
+ 	"go.k6.io/k6/lib/types"
+ 	"go.k6.io/k6/metrics"
+-	"gopkg.in/guregu/null.v3"
+ )
+ 
+ func TestNew(t *testing.T) {
+@@ -496,6 +497,10 @@ func TestOutputFlushRequestMetadatasAbort(t *testing.T) {
+ 
+ type flusherFunc func()
+ 
++func (ff flusherFunc) Flush() error {
++	return ff.flush()
++}
++
+ func (ff flusherFunc) flush() error {
+ 	ff()
+ 	return nil
+diff --git a/output/cloud/insights/collect_test.go b/output/cloud/insights/collect_test.go
+new file mode 100644
+index 000000000..aeca952b9
+--- /dev/null
++++ b/output/cloud/insights/collect_test.go
+@@ -0,0 +1,148 @@
++package insights
++
++import (
++	"sync"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/require"
++
++	"go.k6.io/k6/cloudapi/insights"
++	"go.k6.io/k6/lib/netext"
++	"go.k6.io/k6/lib/netext/httpext"
++	"go.k6.io/k6/metrics"
++)
++
++func Test_Collector_CollectRequestMetadatas_DoesNothingWithEmptyData(t *testing.T) {
++	t.Parallel()
++
++	// Given
++	testRunID := int64(1337)
++	col := NewCollector(testRunID)
++	var data []metrics.SampleContainer
++
++	// When
++	col.CollectRequestMetadatas(data)
++
++	// Then
++	require.Empty(t, col.buffer)
++}
++
++func Test_Collector_CollectRequestMetadatas_FiltersAndStoresHTTPTrailsAsRequestMetadatas(t *testing.T) {
++	t.Parallel()
++
++	// Given
++	testRunID := int64(1337)
++	col := NewCollector(testRunID)
++	data := []metrics.SampleContainer{
++		&httpext.Trail{
++			EndTime:  time.Unix(10, 0),
++			Duration: time.Second,
++			Tags: metrics.NewRegistry().RootTagSet().
++				With(scenarioTag, "test-scenario-1").
++				With(groupTag, "test-group-1").
++				With(nameTag, "test-url-1").
++				With(methodTag, "test-method-1").
++				With(statusTag, "200"),
++			Metadata: map[string]string{
++				metadataTraceIDKey: "test-trace-id-1",
++			},
++		},
++		&httpext.Trail{
++			// HTTP trail without trace ID should be ignored
++		},
++		&netext.NetTrail{
++			// Net trail should be ignored
++		},
++		&httpext.Trail{
++			EndTime:  time.Unix(20, 0),
++			Duration: time.Second,
++			Tags: metrics.NewRegistry().RootTagSet().
++				With(scenarioTag, "test-scenario-2").
++				With(groupTag, "test-group-2").
++				With(nameTag, "test-url-2").
++				With(methodTag, "test-method-2").
++				With(statusTag, "401"),
++			Metadata: map[string]string{
++				metadataTraceIDKey: "test-trace-id-2",
++			},
++		},
++		&httpext.Trail{
++			EndTime:  time.Unix(20, 0),
++			Duration: time.Second,
++			Tags:     metrics.NewRegistry().RootTagSet(),
++			// HTTP trail without `trace_id` metadata key should be ignored
++			Metadata: map[string]string{},
++		},
++		&httpext.Trail{
++			EndTime:  time.Unix(20, 0),
++			Duration: time.Second,
++			// If no tags are present, output should be set to `unknown`
++			Tags: metrics.NewRegistry().RootTagSet(),
++			Metadata: map[string]string{
++				metadataTraceIDKey: "test-trace-id-3",
++			},
++		},
++	}
++
++	// When
++	col.CollectRequestMetadatas(data)
++
++	// Then
++	require.Len(t, col.buffer, 3)
++	require.Contains(t, col.buffer, insights.RequestMetadata{
++		TraceID:        "test-trace-id-1",
++		Start:          time.Unix(9, 0),
++		End:            time.Unix(10, 0),
++		TestRunLabels:  insights.TestRunLabels{ID: 1337, Scenario: "test-scenario-1", Group: "test-group-1"},
++		ProtocolLabels: insights.ProtocolHTTPLabels{URL: "test-url-1", Method: "test-method-1", StatusCode: 200},
++	})
++	require.Contains(t, col.buffer, insights.RequestMetadata{
++		TraceID:        "test-trace-id-2",
++		Start:          time.Unix(19, 0),
++		End:            time.Unix(20, 0),
++		TestRunLabels:  insights.TestRunLabels{ID: 1337, Scenario: "test-scenario-2", Group: "test-group-2"},
++		ProtocolLabels: insights.ProtocolHTTPLabels{URL: "test-url-2", Method: "test-method-2", StatusCode: 401},
++	})
++	require.Contains(t, col.buffer, insights.RequestMetadata{
++		TraceID:        "test-trace-id-3",
++		Start:          time.Unix(19, 0),
++		End:            time.Unix(20, 0),
++		TestRunLabels:  insights.TestRunLabels{ID: 1337, Scenario: "", Group: ""},
++		ProtocolLabels: insights.ProtocolHTTPLabels{URL: "", Method: "", StatusCode: 0},
++	})
++}
++
++func Test_Collector_PopAll_DoesNothingWithEmptyData(t *testing.T) {
++	t.Parallel()
++
++	// Given
++	data := insights.RequestMetadatas{
++		{
++			TraceID:        "test-trace-id-1",
++			Start:          time.Unix(9, 0),
++			End:            time.Unix(10, 0),
++			TestRunLabels:  insights.TestRunLabels{ID: 1337, Scenario: "test-scenario-1", Group: "test-group-1"},
++			ProtocolLabels: insights.ProtocolHTTPLabels{URL: "test-url-1", Method: "test-method-1", StatusCode: 200},
++		},
++		{
++			TraceID:        "test-trace-id-2",
++			Start:          time.Unix(19, 0),
++			End:            time.Unix(20, 0),
++			TestRunLabels:  insights.TestRunLabels{ID: 1337, Scenario: "unknown", Group: "unknown"},
++			ProtocolLabels: insights.ProtocolHTTPLabels{URL: "unknown", Method: "unknown", StatusCode: 0},
++		},
++	}
++	col := &Collector{
++		buffer:   data,
++		bufferMu: &sync.Mutex{},
++	}
++
++	// When
++	got := col.PopAll()
++
++	// Then
++	require.Nil(t, col.buffer)
++	require.Empty(t, col.buffer)
++	require.Equal(t, data, got)
++}
+diff --git a/output/cloud/insights/flush_test.go b/output/cloud/insights/flush_test.go
+new file mode 100644
+index 000000000..3ee049281
+--- /dev/null
++++ b/output/cloud/insights/flush_test.go
+@@ -0,0 +1,136 @@
++package insights
++
++import (
++	"context"
++	"errors"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/require"
++
++	"go.k6.io/k6/cloudapi/insights"
++	"go.k6.io/k6/metrics"
++)
++
++type mockWorkingInsightsClient struct {
++	ingestRequestMetadatasBatchInvoked bool
++	dataSent                           bool
++	data                               insights.RequestMetadatas
++}
++
++func (c *mockWorkingInsightsClient) IngestRequestMetadatasBatch(ctx context.Context, data insights.RequestMetadatas) error {
++	c.ingestRequestMetadatasBatchInvoked = true
++
++	select {
++	case <-ctx.Done():
++		return ctx.Err()
++	default:
++	}
++
++	c.dataSent = true
++	c.data = data
++
++	return nil
++}
++
++func (c *mockWorkingInsightsClient) Close() error {
++	return nil
++}
++
++type mockFailingInsightsClient struct {
++	err error
++}
++
++func (c *mockFailingInsightsClient) IngestRequestMetadatasBatch(_ context.Context, _ insights.RequestMetadatas) error {
++	return c.err
++}
++
++func (c *mockFailingInsightsClient) Close() error {
++	return nil
++}
++
++type mockRequestMetadatasCollector struct {
++	data insights.RequestMetadatas
++}
++
++func (m *mockRequestMetadatasCollector) CollectRequestMetadatas(_ []metrics.SampleContainer) {
++	panic("implement me")
++}
++
++func (m *mockRequestMetadatasCollector) PopAll() insights.RequestMetadatas {
++	return m.data
++}
++
++func newMockRequestMetadatas() insights.RequestMetadatas {
++	return insights.RequestMetadatas{
++		{
++			TraceID:        "test-trace-id-1",
++			Start:          time.Unix(1337, 0),
++			End:            time.Unix(1338, 0),
++			TestRunLabels:  insights.TestRunLabels{ID: 1, Scenario: "test-scenario-1", Group: "test-group-1"},
++			ProtocolLabels: insights.ProtocolHTTPLabels{URL: "test-url-1", Method: "test-method-1", StatusCode: 200},
++		},
++		{
++			TraceID:        "test-trace-id-2",
++			Start:          time.Unix(2337, 0),
++			End:            time.Unix(2338, 0),
++			TestRunLabels:  insights.TestRunLabels{ID: 1, Scenario: "test-scenario-2", Group: "test-group-2"},
++			ProtocolLabels: insights.ProtocolHTTPLabels{URL: "test-url-2", Method: "test-method-2", StatusCode: 200},
++		},
++	}
++}
++
++func Test_tracesFlusher_Flush_ReturnsNoErrorWithWorkingInsightsClientAndNonCancelledContextAndNoData(t *testing.T) {
++	t.Parallel()
++
++	// Given
++	data := insights.RequestMetadatas{}
++	cli := &mockWorkingInsightsClient{}
++	col := &mockRequestMetadatasCollector{data: data}
++	flusher := NewFlusher(cli, col)
++
++	// When
++	err := flusher.Flush()
++
++	// Then
++	require.NoError(t, err)
++	require.False(t, cli.ingestRequestMetadatasBatchInvoked)
++	require.False(t, cli.dataSent)
++	require.Empty(t, cli.data)
++}
++
++func Test_tracesFlusher_Flush_ReturnsNoErrorWithWorkingInsightsClientAndNonCancelledContextAndData(t *testing.T) {
++	t.Parallel()
++
++	// Given
++	data := newMockRequestMetadatas()
++	cli := &mockWorkingInsightsClient{}
++	col := &mockRequestMetadatasCollector{data: data}
++	flusher := NewFlusher(cli, col)
++
++	// When
++	err := flusher.Flush()
++
++	// Then
++	require.NoError(t, err)
++	require.True(t, cli.ingestRequestMetadatasBatchInvoked)
++	require.True(t, cli.dataSent)
++	require.Equal(t, data, cli.data)
++}
++
++func Test_tracesFlusher_Flush_ReturnsErrorWithFailingInsightsClientAndNonCancelledContext(t *testing.T) {
++	t.Parallel()
++
++	// Given
++	data := newMockRequestMetadatas()
++	testErr := errors.New("test-error")
++	cli := &mockFailingInsightsClient{err: testErr}
++	col := &mockRequestMetadatasCollector{data: data}
++	flusher := NewFlusher(cli, col)
++
++	// When
++	err := flusher.Flush()
++
++	// Then
++	require.ErrorIs(t, err, testErr)
++}
+diff --git a/output/cloud/insights/insights_extraction_test.go b/output/cloud/insights/insights_extraction_test.go
+new file mode 100644
+index 000000000..000000001
+--- /dev/null
++++ b/output/cloud/insights/insights_extraction_test.go
+@@ -0,0 +1,64 @@
++package insights
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++	"gopkg.in/guregu/null.v3"
++
++	"go.k6.io/k6/cloudapi"
++)
++
++func TestEnabledReturnsTrueWhenTracesEnabled(t *testing.T) {
++	t.Parallel()
++	config := cloudapi.Config{
++		TracesEnabled: null.BoolFrom(true),
++	}
++	assert.True(t, Enabled(config))
++}
++
++func TestEnabledReturnsFalseWhenTracesDisabled(t *testing.T) {
++	t.Parallel()
++	config := cloudapi.Config{
++		TracesEnabled: null.BoolFrom(false),
++	}
++	assert.False(t, Enabled(config))
++}
++
++func TestEnabledReturnsFalseWhenTracesNotSet(t *testing.T) {
++	t.Parallel()
++	config := cloudapi.Config{}
++	assert.False(t, Enabled(config))
++}
++
++func TestCollectorImplementsRequestMetadatasCollectorInterface(t *testing.T) {
++	t.Parallel()
++	var _ RequestMetadatasCollector = &Collector{}
++}
++
++func TestFlusherImplementsRequestMetadatasFlusherInterface(t *testing.T) {
++	t.Parallel()
++	var _ RequestMetadatasFlusher = &Flusher{}
++}
++
++func TestNewCollectorReturnsNonNil(t *testing.T) {
++	t.Parallel()
++	col := NewCollector(42)
++	require.NotNil(t, col)
++}
++
++func TestNewFlusherReturnsNonNil(t *testing.T) {
++	t.Parallel()
++	col := NewCollector(42)
++	cli := &mockWorkingInsightsClient{}
++	f := NewFlusher(cli, col)
++	require.NotNil(t, f)
++}
++
++func TestNewCollectorPopAllReturnsNilOnFreshCollector(t *testing.T) {
++	t.Parallel()
++	col := NewCollector(42)
++	result := col.PopAll()
++	assert.Nil(t, result)
++}

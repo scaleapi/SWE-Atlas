@@ -1,0 +1,175 @@
+diff --git a/pkg/sources/git/git_test.go b/pkg/sources/git/git_test.go
+index cc9d31756..e689e5aa8 100644
+--- a/pkg/sources/git/git_test.go
++++ b/pkg/sources/git/git_test.go
+@@ -3,6 +3,7 @@ package git
+ import (
+ 	"bytes"
+ 	"fmt"
++	"os"
+ 	"strings"
+ 	"testing"
+ 
+@@ -574,3 +575,162 @@ func TestChunkUnit(t *testing.T) {
+ 	assert.Equal(t, 11, len(reporter.Chunks))
+ 	assert.Equal(t, 1, len(reporter.ChunkErrs))
+ }
++
++// TestNormalizeConfig_BranchResolution tests that normalizeConfig properly resolves
++// branch names to commit hashes. This tests the behavior, not specific implementation.
++func TestNormalizeConfig_BranchResolution(t *testing.T) {
++	t.Parallel()
++	ctx := context.Background()
++
++	// Clone a test repo
++	repoPath, repo, err := CloneRepoUsingUnauthenticated(ctx, "https://github.com/dustin-decker/secretsandstuff.git")
++	if err != nil {
++		t.Fatalf("failed to clone test repo: %v", err)
++	}
++	defer os.RemoveAll(repoPath)
++
++	t.Run("branch names should be resolved to hashes", func(t *testing.T) {
++		opts := &ScanOptions{
++			BaseHash: "master",
++			HeadHash: "master",
++		}
++		err := normalizeConfig(opts, repo)
++		assert.NoError(t, err)
++		// After normalization, BaseHash should be a 40-char hex hash, not "master"
++		if opts.BaseHash == "master" {
++			t.Error("BaseHash was not resolved from branch name to hash")
++		}
++		if len(opts.BaseHash) != 40 {
++			t.Errorf("BaseHash should be a 40-char hash, got %d chars: %s", len(opts.BaseHash), opts.BaseHash)
++		}
++	})
++
++	t.Run("valid commit hashes should work", func(t *testing.T) {
++		const hash = "70001020fab32b1fcf2f1f0e5c66424eae649826"
++		opts := &ScanOptions{
++			BaseHash: hash,
++			HeadHash: hash,
++		}
++		err := normalizeConfig(opts, repo)
++		assert.NoError(t, err)
++		assert.Equal(t, hash, opts.BaseHash, "direct hash should be preserved")
++		assert.Equal(t, hash, opts.HeadHash, "direct hash should be preserved")
++	})
++
++	t.Run("empty options should not error", func(t *testing.T) {
++		opts := &ScanOptions{}
++		err := normalizeConfig(opts, repo)
++		assert.NoError(t, err)
++		assert.Empty(t, opts.BaseHash, "empty BaseHash should remain empty")
++		assert.Empty(t, opts.HeadHash, "empty HeadHash should remain empty")
++	})
++
++	t.Run("only base hash set should work", func(t *testing.T) {
++		const hash = "70001020fab32b1fcf2f1f0e5c66424eae649826"
++		opts := &ScanOptions{
++			BaseHash: hash,
++		}
++		err := normalizeConfig(opts, repo)
++		assert.NoError(t, err)
++		assert.Equal(t, hash, opts.BaseHash, "BaseHash should be preserved when head is absent")
++		assert.Empty(t, opts.HeadHash, "HeadHash should remain empty")
++	})
++
++	t.Run("only head hash set should work", func(t *testing.T) {
++		const hash = "70001020fab32b1fcf2f1f0e5c66424eae649826"
++		opts := &ScanOptions{
++			HeadHash: hash,
++		}
++		err := normalizeConfig(opts, repo)
++		assert.NoError(t, err)
++		assert.Equal(t, hash, opts.HeadHash, "HeadHash should be preserved when base is absent")
++		assert.Empty(t, opts.BaseHash, "BaseHash should remain empty")
++	})
++}
++
++// TestNormalizeConfig_ErrorHandling tests that normalizeConfig returns proper errors
++// for invalid inputs. This verifies the improved error handling requirement.
++func TestNormalizeConfig_ErrorHandling(t *testing.T) {
++	t.Parallel()
++	ctx := context.Background()
++
++	// Clone a test repo
++	repoPath, repo, err := CloneRepoUsingUnauthenticated(ctx, "https://github.com/dustin-decker/secretsandstuff.git")
++	if err != nil {
++		t.Fatalf("failed to clone test repo: %v", err)
++	}
++	defer os.RemoveAll(repoPath)
++
++	t.Run("invalid base ref should return error", func(t *testing.T) {
++		opts := &ScanOptions{
++			BaseHash: "nonexistent-branch-that-does-not-exist-xyz123",
++		}
++		err := normalizeConfig(opts, repo)
++		assert.Error(t, err, "should return error for invalid base ref")
++	})
++
++	t.Run("invalid head ref should return error", func(t *testing.T) {
++		opts := &ScanOptions{
++			HeadHash: "nonexistent-branch-that-does-not-exist-xyz123",
++		}
++		err := normalizeConfig(opts, repo)
++		assert.Error(t, err, "should return error for invalid head ref")
++	})
++
++	t.Run("nil repo should return error", func(t *testing.T) {
++		opts := &ScanOptions{
++			BaseHash: "master",
++		}
++		err := normalizeConfig(opts, nil)
++		assert.Error(t, err, "should return error for nil repo")
++	})
++}
++
++// TestNormalizeConfig_MergeBase tests that normalizeConfig properly finds
++// the merge base when both base and head are set.
++func TestNormalizeConfig_MergeBase(t *testing.T) {
++	t.Parallel()
++	ctx := context.Background()
++
++	// Clone a repo with branches for merge base testing
++	repoPath, repo, err := CloneRepoUsingUnauthenticated(ctx, "https://github.com/bill-rich/bad-secrets.git")
++	if err != nil {
++		t.Fatalf("failed to clone test repo: %v", err)
++	}
++	defer os.RemoveAll(repoPath)
++
++	t.Run("merge base should be found for divergent branches", func(t *testing.T) {
++		opts := &ScanOptions{
++			BaseHash: "master",
++			HeadHash: "some_branch",
++		}
++		err := normalizeConfig(opts, repo)
++		assert.NoError(t, err)
++		// BaseHash should now be the merge base commit hash
++		assert.Len(t, opts.BaseHash, 40, "BaseHash should be resolved to a 40-char hash")
++	})
++}
++
++// TestScanRepo_WithRemote verifies that ScanRepo completes without error on a
++// repository that has a remote, exercising the remote URL logging path introduced
++// by the refactor (repoUrl → repoURL rename and multi-line log format).
++func TestScanRepo_WithRemote(t *testing.T) {
++	t.Parallel()
++	ctx := context.Background()
++
++	repoPath, repo, err := CloneRepoUsingUnauthenticated(ctx, "https://github.com/dustin-decker/secretsandstuff.git")
++	if err != nil {
++		t.Fatalf("failed to clone test repo: %v", err)
++	}
++	defer os.RemoveAll(repoPath)
++
++	s := &Git{}
++	// Scope the scan to a single known commit to keep the test fast.
++	scanOptions := &ScanOptions{
++		BaseHash: "70001020fab32b1fcf2f1f0e5c66424eae649826",
++		HeadHash: "70001020fab32b1fcf2f1f0e5c66424eae649826",
++	}
++	reporter := &sourcestest.TestReporter{}
++	err = s.ScanRepo(ctx, repo, repoPath, scanOptions, reporter)
++	assert.NoError(t, err, "ScanRepo should complete without error on a repo with a remote")
++}

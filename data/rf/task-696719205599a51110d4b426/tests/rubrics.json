@@ -1,0 +1,122 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d4602e2af32a69a0ff959838680f9e70",
+    "title": "1.1: Removes the if ( items.length === 1 ) conditional check from getConfirmText function",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8e7175053ee86d6d51449d60ed04d1a2",
+    "title": "1.2: Removes the multi-select switch statement that used items.length for pluralization in getConfirmText",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "26ef965fa06371e096e3bca803ae0610",
+    "title": "1.3: Removes the if ( selected.length === 1 ) conditional check from buildSuccessPrefix function",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ffd2db11457e9f28a3a7ee6870f9ea90",
+    "title": "1.4: Removes the multi-select switch statement that used selected.length for pluralization in buildSuccessPrefix",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1706fa78948897cf5ae7288240de304c",
+    "title": "1.5: Removes the if ( selected.length === 1 ) conditional check from buildErrorPrefix function",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "42a181fa4420460991439d7f38bc0b16",
+    "title": "1.6: Removes the multi-select switch statement that used selected.length for pluralization in buildErrorPrefix",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "04490a7c5a1b5f67884740d97abd1fe7",
+    "title": "1.7: Returns confirmation messages for all six action types (activate, deactivate, update, enable-autoupdate, disable-autoupdate, delete) in getConfirmText",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f0742b0ef71bb538447bdd3874d7a606",
+    "title": "1.8: Returns all 4 context-specific delete confirmation messages based on the extraActions array in getConfirmText (deactivate+disable-autoupdate combined, deactivate-only, disable-autoupdate-only, default remove-only)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4346865f738c03554b6c243c263857c2",
+    "title": "1.9: Returns a fallback message for unrecognized actionId values in getConfirmText",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c022b5cac73cca967739ea0df07a0b95",
+    "title": "4.1: Alters the string 'You are about to activate the %1$s plugin on %2$d site' in getConfirmText",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "041f879d9ef647eb2870e3eb772c11ff",
+    "title": "4.2: Alters the string 'You are about to deactivate the %1$s plugin installed on %2$d site' in getConfirmText",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

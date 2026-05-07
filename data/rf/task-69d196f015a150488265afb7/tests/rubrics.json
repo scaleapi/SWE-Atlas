@@ -1,0 +1,218 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "480b32ffe334410d352067c5be69237d",
+    "title": "1.1: Adds a post_build method to IE_Base in scapy/contrib/gtp.py that auto-computes the length field when it is None",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "bf8d9eb37e75b3c2e862a21cc4eb531a",
+    "title": "1.2: Uses ShortField with a default of None for the length field in all 35 existing IE classes (including IE_IMSI, IE_Cause, IE_EPSBearerID, IE_MEI, IE_RAT, IE_FTEID, IE_PCO, IE_EPCO, IE_PAA, IE_ServingNetwork, ...) in scapy/contrib/gtp_v2.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "057603cf72c7456040dd74d9de747211",
+    "title": "1.3: Renames IE_IPv4 to IE_IP_Address in scapy/contrib/gtp_v2.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "16071ed16e889b07fa07dc09ab2b99a4",
+    "title": "1.4: Updates the IEType dictionary entry for type 74 to reflect the renamed IE_IP_Address class",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "25ba38af5a914e1129460b9fb560dfda",
+    "title": "1.5: Adds IPv6 support to IE_IP_Address with a conditional address6 field",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1c12ec2e782bb5d79b80f098fd068bde",
+    "title": "1.6: Adds IE_MMContext_EPS class with ietype 107 in scapy/contrib/gtp_v2.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b3dbfc4c10bb718c41e51f4f7d861e8b",
+    "title": "1.7: Adds IE_PDNConnection class with ietype 109 in scapy/contrib/gtp_v2.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "212a74a16fca37edb693944c488f5a7d",
+    "title": "1.8: Adds IE_FQDN class with ietype 136 in scapy/contrib/gtp_v2.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9cde0bd97ea03cae90d8a1d7d18f1220",
+    "title": "1.9: Adds GTPV2ContextRequest command class bound to GTPHeader with gtp_type 130",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c47266c2a56eb92cb75cacfae7029bb5",
+    "title": "1.10: Adds GTPV2ContextResponse command class bound to GTPHeader with gtp_type 131",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c3c536889fea9b98067bddaeee54eb91",
+    "title": "1.11: Adds GTPV2ContextAcknowledge command class bound to GTPHeader with gtp_type 132",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4962d613beff092eff06c02569df14a4",
+    "title": "1.12: Adds an extraPadding conditional field to GTPPDUSessionContainer in scapy/contrib/gtp.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3f61e6868ab43364e2255238182c288e",
+    "title": "1.13: Introduces a new PCO_Protocol base class in scapy/contrib/gtp_v2.py inheriting from Packet",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9c27ac7d336285d57fb4a7dca155ab6e",
+    "title": "1.14: Re-parents all 23 protocol-type PCO classes (including PCO_IPCP, PCO_PPP, PCO_DNS_Server_IPv4, PCO_DNS_Server_IPv6, PCO_SOF, PCO_S_Nssai, PCO_Session_AMBR, PCO_P_CSCF_IPv6_Address_Request, PCO_IM_CN_Subsystem_Signaling_Flag, PCO_IP_Allocation_via_NAS, ...) to inherit from PCO_Protocol instead of PCO_Option",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d1e2224b1948997e461eb6643038d25e",
+    "title": "1.15: Adds a post_build method to PCO_Option for auto-computing the length byte of option-type PCO entries",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1e3ad1eb68249df8dba1945eb857dd9c",
+    "title": "1.16: Reworks PCO_S_Nssai to use conditional fields SST, SD, Hplmn_Sst, Hplmn_Sd instead of a generic packet list",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "97a03208d6b1d5aecf4594482b8d68af",
+    "title": "1.17: Reworks PCO_Session_AMBR to use specific fields dlunit, dlambr, ulunit, ulambr instead of a generic packet list",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a7f3c2d1e8b94560123456789abcdef0",
+    "title": "1.18: Replaces the len_options callback with lambda pkt: pkt.length in all 4 PCO classes that used it (PCO_QoS_Rules_With_Support_Indicator, PCO_QoS_Flow_Descriptions_With_Support_Indicator, PCO_Qos_Rules, PCO_QoS_Flow_Descriptions) in scapy/contrib/gtp_v2.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "d99e7dcac70f6694316f7d46f6f5c806",
+    "title": "2.1: Adds a docstring to the LenField class in scapy/fields.py documenting its auto-fill behavior",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b5c95f5913cf99914597fce4c5dd8fca",
+    "title": "3.1: Removes the unused FieldLenField import from scapy/contrib/gtp_v2.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "274f06797484fc05384163734862d067",
+    "title": "4.1: Modifies test files in the repository",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b09c8e573475b7b55e0d09ea5efdf8f9",
+    "title": "4.2: Introduces syntax errors in modified source files",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6280ab7f10536462142ebb608c54c5b0",
+    "title": "4.3: Removes existing IE class definitions that were present before the refactor",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

@@ -1,0 +1,130 @@
+[
+  {
+    "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    "title": "Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6a1",
+    "title": "1.1: Moves OverviewCard component from `client/dashboard/sites/overview-card/` to `client/dashboard/components/overview-card/`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c3d4e5f6a7b8c9d0e1f2a3b4c5d6a1b2",
+    "title": "1.2: Updates all 3 internal relative imports (including ComponentViewTracker, Text, and TextSkeleton) inside the OverviewCard component to reflect its new directory location",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d4e5f6a7b8c9d0e1f2a3b4c5d6a1b2c3",
+    "title": "1.3: Updates all 13 existing OverviewCard consumer files (including featured-card-emails.tsx, featured-card-privacy.tsx, featured-card-renew.tsx, featured-card-site.tsx, hosting-feature-gated-with-overview-card/index.tsx, overview-agency-site-share-card/index.tsx, overview-backup-card/index.tsx, overview-migrate-site-card/index.tsx, overview-performance-card/index.tsx, overview-plan-card/index.tsx, ...) to import from `components/overview-card` instead of `sites/overview-card`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e5f6a7b8c9d0e1f2a3b4c5d6a1b2c3d4",
+    "title": "1.4: Removes the `PurchaseSettingsCard` component definition from `purchase-settings/index.tsx`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e5f6a7b8c9d0e1f2a3b4c5d6a1b2c3d5",
+    "title": "1.5: Removes the `PurchaseSettingsCardLinkWrapper` helper function from `purchase-settings/index.tsx`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f6a7b8c9d0e1f2a3b4c5d6a1b2c3d4e5",
+    "title": "1.6: Replaces all 6 `PurchaseSettingsCard` JSX usages (partner-name price card, one-time price card, renewal price card, expiry-date card, site card, owner card) with the shared `OverviewCard` in `purchase-settings/index.tsx`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a7b8c9d0e1f2a3b4c5d6a1b2c3d4e5f6",
+    "title": "1.7: Replaces all 5 `PurchaseSettingsCard` usages (site card, expiry-date card, one-time price card, renewal price card, renewal interval card) with `OverviewCard` in `monetize-subscription.tsx`, importing directly from shared components instead of billing",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b8c9d0e1f2a3b4c5d6a1b2c3d4e5f6a7",
+    "title": "1.8: Uses a grid layout instead of horizontal stacks for the card arrangement in `purchase-settings/index.tsx`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c9d0e1f2a3b4c5d6a1b2c3d4e5f6a7b8",
+    "title": "1.9: Uses a grid layout instead of horizontal stacks for the card arrangement in `monetize-subscription.tsx`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d0e1f2a3b4c5d6a1b2c3d4e5f6a7b8c9",
+    "title": "Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e1f2a3b4c5d6a1b2c3d4e5f6a7b8c9d0",
+    "title": "3.1: Removes both unused CSS rules (`.purchase-settings-card` and `.purchase-settings-card__link`) from `purchase-settings/style.scss`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f2a3b4c5d6a1b2c3d4e5f6a7b8c9d0e1",
+    "title": "3.2: Removes all 6 imports that become unused after the refactor in `purchase-settings/index.tsx` (HStack, Heading, Icon, chevronRight, ReactNode, ReactElement)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9",
+    "title": "3.3: Removes the unused `HStack` import from `monetize-subscription.tsx` after switching to grid layout",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a3b4c5d6a1b2c3d4e5f6a7b8c9d0e1f2",
+    "title": "Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b4c5d6a1b2c3d4e5f6a7b8c9d0e1f2a3",
+    "title": "4.1: Modifies test files or testing logic",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "name": "client/my-sites/plans-features-main/hooks/test/use-generate-action-callback-redirect.ts"
+    },
+    {
+      "name": "client/my-sites/plans-features-main/hooks/test/use-generate-action-hook-redirect.ts"
+    },
+    {
+      "name": "client/my-sites/plugins/plugin-details-CTA/test/cta-button-redirect.jsx"
+    },
+    {
+      "name": "client/my-sites/plugins/plugin-details-CTA/test/usps.tsx"
+    },
+    {
+      "name": "client/my-sites/plugins/use-is-plugin-available-on-all-plans/test/index.ts"
+    }
+  ]
+}

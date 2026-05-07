@@ -1,0 +1,424 @@
+diff --git a/test/test_ingestion_inlining.py b/test/test_ingestion_inlining.py
+new file mode 100644
+index 000000000..0eb5f7455
+--- /dev/null
++++ b/test/test_ingestion_inlining.py
+@@ -0,0 +1,418 @@
++#!/usr/bin/env python3
++"""
++Behavioral tests for metrics ingestion performance and streaming reliability.
++
++These tests verify prompt-level behavioral outcomes, not gold.patch specifics.
++A correct alternative implementation that satisfies the same prompt must pass.
++"""
++
++import os
++import re
++import unittest
++
++REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
++
++
++def read_file(relpath):
++    with open(os.path.join(REPO_ROOT, relpath), "r") as f:
++        return f.read()
++
++
++def has_forced_inlining(text):
++    """Check if text contains any form of forced inlining annotation."""
++    return bool(re.search(
++        r"ALWAYS_INLINE|__attribute__\s*\(\s*\(\s*always_inline|__forceinline",
++        text,
++    ))
++
++
++def count_forced_inline_functions(content):
++    """Count how many function definitions use forced inlining."""
++    return len(re.findall(
++        r"(?:ALWAYS_INLINE|__attribute__\s*\(\s*\(\s*always_inline|__forceinline)"
++        r"[^;{]*\w+\s*\([^)]*\)\s*\{",
++        content,
++        re.DOTALL,
++    ))
++
++
++def count_advisory_inline_functions(content):
++    """Count function definitions that still use advisory 'inline' only."""
++    all_inline = re.findall(
++        r"\binline\b[^;{]*\w+\s*\([^)]*\)\s*\{",
++        content,
++        re.DOTALL,
++    )
++    forced = re.findall(
++        r"(?:ALWAYS_INLINE|__attribute__\s*\(\s*\(\s*always_inline|__forceinline)"
++        r"[^;{]*\w+\s*\([^)]*\)\s*\{",
++        content,
++        re.DOTALL,
++    )
++    return len(all_inline) - len(forced)
++
++
++class TestHotPathForcedInlining(unittest.TestCase):
++    """
++    Prompt: "Functions on the hot path should use forced inlining instead of
++    the advisory keyword."
++
++    A valid solution uses any forced-inlining mechanism the codebase provides.
++    We check that hot-path files have the MAJORITY of their inline functions
++    converted, not that specific named functions use a specific macro.
++    """
++
++    def test_page_cache_uses_forced_inlining(self):
++        content = read_file("src/database/engine/cache.c")
++        forced = count_forced_inline_functions(content)
++        self.assertGreaterEqual(
++            forced, 5,
++            "Page cache (cache.c) should have multiple functions using "
++            "forced inlining on the data collection hot path",
++        )
++
++    def test_buffer_header_uses_forced_inlining(self):
++        content = read_file("src/libnetdata/buffer/buffer.h")
++        forced = count_forced_inline_functions(content)
++        advisory = count_advisory_inline_functions(content)
++        self.assertGreater(
++            forced, advisory,
++            "Buffer header should have more forced-inline functions than "
++            "advisory-inline functions on the hot path",
++        )
++
++    def test_buffer_source_uses_forced_inlining(self):
++        content = read_file("src/libnetdata/buffer/buffer.c")
++        self.assertTrue(
++            has_forced_inlining(content),
++            "Buffer source file should use forced inlining for hot-path functions",
++        )
++
++    def test_refcount_helpers_use_forced_inlining(self):
++        content = read_file("src/libnetdata/atomics/refcount.h")
++        forced = count_forced_inline_functions(content)
++        self.assertGreaterEqual(
++            forced, 3,
++            "Reference counting helpers should use forced inlining",
++        )
++
++    def test_pluginsd_parser_uses_forced_inlining(self):
++        content = read_file("src/plugins.d/pluginsd_parser.c")
++        self.assertTrue(
++            has_forced_inlining(content),
++            "Plugin data parser should use forced inlining on the hot path",
++        )
++
++    def test_pluginsd_replication_uses_forced_inlining(self):
++        content = read_file("src/plugins.d/pluginsd_replication.c")
++        self.assertTrue(
++            has_forced_inlining(content),
++            "Plugin replication handlers should use forced inlining",
++        )
++
++    def test_streaming_protocol_uses_forced_inlining(self):
++        content = read_file(
++            "src/streaming/protocol/command-begin-set-end-init.c"
++        )
++        self.assertTrue(
++            has_forced_inlining(content),
++            "Streaming protocol command handlers should use forced inlining",
++        )
++
++    def test_collection_completion_uses_forced_inlining(self):
++        content = read_file("src/database/rrddim-collection.c")
++        self.assertTrue(
++            has_forced_inlining(content),
++            "Metrics collection completion path should use forced inlining",
++        )
++
++    def test_ml_public_interface_uses_forced_inlining(self):
++        content = read_file("src/ml/ml_public.cc")
++        self.assertTrue(
++            has_forced_inlining(content),
++            "ML public interface should use forced inlining for hot-path entries",
++        )
++
++    def test_inlined_number_parsers_use_forced_inlining(self):
++        content = read_file("src/libnetdata/inlined.h")
++        self.assertTrue(
++            has_forced_inlining(content),
++            "Encoded number parsers (inlined.h) should use forced inlining",
++        )
++
++    def test_line_splitter_uses_forced_inlining(self):
++        content = read_file("src/libnetdata/line_splitter/line_splitter.h")
++        self.assertTrue(
++            has_forced_inlining(content),
++            "Line splitter should use forced inlining on the ingestion path",
++        )
++
++
++class TestVariadicFunctionsNotForceInlined(unittest.TestCase):
++    """
++    Prompt: "Functions that accept variadic arguments cannot be force-inlined
++    and should have the inline qualifier simply removed instead."
++
++    We check that va_list functions do not carry any inline annotation.
++    """
++
++    def test_variadic_buffer_functions_not_force_inlined(self):
++        content = read_file("src/libnetdata/buffer/buffer.c")
++        for match in re.finditer(
++            r"^[^\n]*\bva_list\b[^\n]*$", content, re.MULTILINE
++        ):
++            line = match.group(0)
++            func_region_start = max(0, match.start() - 200)
++            func_region = content[func_region_start:match.start()]
++            last_def = func_region.rfind("\n")
++            if last_def >= 0:
++                func_header = func_region[last_def:]
++            else:
++                func_header = func_region
++            self.assertNotIn(
++                "ALWAYS_INLINE", func_header + line,
++                "Functions using va_list cannot be force-inlined",
++            )
++
++    def test_buffer_vsprintf_has_no_inline_qualifier(self):
++        content = read_file("src/libnetdata/buffer/buffer.c")
++        match = re.search(
++            r"^[^\n]*\bbuffer_vsprintf\b[^\n]*\{", content, re.MULTILINE
++        )
++        self.assertIsNotNone(match, "buffer_vsprintf should exist")
++        defline = match.group(0)
++        self.assertNotRegex(
++            defline,
++            r"\binline\b",
++            "Variadic function buffer_vsprintf should not have inline qualifier",
++        )
++
++
++class TestConnectorHandlesBothConnectAndRemove(unittest.TestCase):
++    """
++    Prompt: "The connector thread should also be responsible for handling
++    permanent sender removal, so the stream thread can always hand off to
++    the connector after a disconnect instead of sometimes doing the teardown
++    itself."
++
++    We verify behavioral outcomes without assuming specific enum names or
++    function signatures from the gold patch.
++    """
++
++    def test_connector_thread_handles_removal(self):
++        content = read_file("src/streaming/stream-connector.c")
++        self.assertRegex(
++            content,
++            r"stream_sender_on_disconnect|on_disconnect|sender_remove|sender_cleanup",
++            "Connector thread should handle sender disconnect/removal operations",
++        )
++
++    def test_connector_thread_handles_both_operations(self):
++        content = read_file("src/streaming/stream-connector.c")
++        thread_func = re.search(
++            r"stream_connector_thread\b.*?return\s+NULL",
++            content,
++            re.DOTALL,
++        )
++        self.assertIsNotNone(
++            thread_func, "Connector thread function should exist"
++        )
++        body = thread_func.group(0)
++        has_connect = bool(re.search(r"stream_connect\b", body))
++        has_remove = bool(re.search(
++            r"stream_sender_on_disconnect|stream_sender_remove"
++            r"|disconnect|REMOVE|remove",
++            body,
++        ))
++        self.assertTrue(
++            has_connect,
++            "Connector thread should handle connection attempts",
++        )
++        self.assertTrue(
++            has_remove,
++            "Connector thread should handle sender removal/disconnect",
++        )
++
++    def test_stream_thread_does_not_remove_sender_inline(self):
++        content = read_file("src/streaming/stream-sender.c")
++        func_match = re.search(
++            r"stream_sender_move_running_to_connector_or_remove\b[^;]*\{.*?\n\}",
++            content,
++            re.DOTALL,
++        )
++        self.assertIsNotNone(
++            func_match,
++            "Sender disconnect handler should exist",
++        )
++        func_body = func_match.group(0)
++        direct_remove_calls = re.findall(
++            r"\bstream_sender_remove\s*\(", func_body
++        )
++        self.assertEqual(
++            len(direct_remove_calls), 0,
++            "Stream thread should not call stream_sender_remove directly "
++            "in the disconnect path (should delegate to connector)",
++        )
++
++
++class TestReceiverIndependenceFromSender(unittest.TestCase):
++    """
++    Prompt: "A sender socket error should not cause the receiver to disconnect."
++
++    The receiver's connection is independent of the sender.
++    """
++
++    def test_receiver_survives_sender_failure(self):
++        content = read_file("src/streaming/stream-receiver.c")
++        func_match = re.search(
++            r"stream_receiver_dequeue_senders\b.*?\n\}",
++            content,
++            re.DOTALL,
++        )
++        self.assertIsNotNone(
++            func_match, "stream_receiver_dequeue_senders should exist"
++        )
++        func_body = func_match.group(0)
++        sender_region = re.search(
++            r"host->sender.*?sender.*?send_data.*?\}",
++            func_body,
++            re.DOTALL,
++        )
++        self.assertIsNotNone(
++            sender_region,
++            "Dequeue should have a section that dispatches sender data",
++        )
++        sender_block = sender_region.group(0)
++        self.assertNotRegex(
++            sender_block,
++            r"return\s+false",
++            "Sender data dispatch should not return false on failure "
++            "(receiver must survive sender errors)",
++        )
++
++
++class TestReceiverExitReasonCentralized(unittest.TestCase):
++    """
++    Prompt: "The remove function should handle setting the exit reason
++    internally so callers do not need to do it. The exit reason setter
++    should also return the current reason."
++    """
++
++    def test_remove_function_sets_exit_reason_internally(self):
++        content = read_file("src/streaming/stream-receiver.c")
++        func_match = re.search(
++            r"static void stream_receiver_remove\b[^;]*\{(.*?)ND_LOG",
++            content,
++            re.DOTALL,
++        )
++        self.assertIsNotNone(
++            func_match,
++            "stream_receiver_remove function should exist",
++        )
++        preamble = func_match.group(1)
++        self.assertRegex(
++            preamble,
++            r"exit.reason|exit_reason|set_exit_reason",
++            "Remove function should set exit reason at entry "
++            "(before logging/cleanup)",
++        )
++
++    def test_exit_reason_setter_returns_value(self):
++        content = read_file("src/streaming/stream-receiver.c")
++        match = re.search(
++            r"^static\s+(\w+)\s+receiver_set_exit_reason\b",
++            content,
++            re.MULTILINE,
++        )
++        self.assertIsNotNone(
++            match, "receiver_set_exit_reason should exist"
++        )
++        return_type = match.group(1)
++        self.assertNotEqual(
++            return_type, "void",
++            "Exit reason setter should return the stored reason "
++            "(not void) so callers can use it",
++        )
++
++
++class TestMLPulseOutsideLock(unittest.TestCase):
++    """
++    Prompt: "A statistics reporting call is made while holding a spinlock.
++    It should happen after the lock is released."
++    """
++
++    def test_pulse_call_after_spinlock_release(self):
++        content = read_file("src/ml/ml.cc")
++        region = re.search(
++            r"anomaly_score\s*<.*?dimension_anomaly_score_threshold"
++            r".*?return\s+false",
++            content,
++            re.DOTALL,
++        )
++        self.assertIsNotNone(
++            region,
++            "Should find the early-return path in ML prediction",
++        )
++        text = region.group(0)
++        unlock_pos = text.find("spinlock_unlock")
++        pulse_pos = text.find("pulse_")
++        self.assertGreater(
++            unlock_pos, -1, "spinlock_unlock should exist in this path"
++        )
++        self.assertGreater(
++            pulse_pos, -1, "A pulse/statistics call should exist in this path"
++        )
++        self.assertLess(
++            unlock_pos, pulse_pos,
++            "Spinlock must be released BEFORE the statistics/pulse call",
++        )
++
++
++class TestSenderCleanupConsolidated(unittest.TestCase):
++    """
++    Prompt: "The cleanup logic that is common to both connecting and
++    disconnecting a sender should be shared rather than duplicated."
++    """
++
++    def test_disconnect_hook_is_callable_from_other_files(self):
++        content = read_file("src/streaming/stream-sender-internals.h")
++        self.assertRegex(
++            content,
++            r"stream_sender_on_disconnect\s*\(",
++            "Disconnect hook should be declared in a header so the "
++            "connector thread can call it",
++        )
++
++    def test_connect_and_disconnect_share_cleanup_logic(self):
++        content = read_file("src/streaming/stream-sender.c")
++        on_connect = re.search(
++            r"void stream_sender_on_connect\b.*?\n\}",
++            content,
++            re.DOTALL,
++        )
++        on_disconnect = re.search(
++            r"void stream_sender_on_disconnect\b.*?\n\}",
++            content,
++            re.DOTALL,
++        )
++        self.assertIsNotNone(on_connect)
++        self.assertIsNotNone(on_disconnect)
++
++        connect_calls = set(re.findall(r"\b(\w+)\s*\(", on_connect.group(0)))
++        disconnect_calls = set(re.findall(r"\b(\w+)\s*\(", on_disconnect.group(0)))
++
++        trivial = {"nd_log", "rrdhost_hostname", "if", "while", "for", "sizeof"}
++        connect_calls -= trivial
++        disconnect_calls -= trivial
++
++        shared = connect_calls & disconnect_calls
++        self.assertTrue(
++            len(shared) >= 1,
++            "Connect and disconnect should call at least one common cleanup "
++            f"function. Connect calls: {connect_calls}, "
++            f"Disconnect calls: {disconnect_calls}",
++        )
++
++
++if __name__ == "__main__":
++    unittest.main()

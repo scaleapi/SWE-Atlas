@@ -1,0 +1,202 @@
+diff --git a/test/contrib/opc_da.uts b/test/contrib/opc_da.uts
+index 89c09164..1d3b3ce3 100644
+@@ -9,10 +9,10 @@
+ OpcDaHeaderMessage (versionMajor=5,versionMinor=0,pduType=0, \
+     pfc_flags = 131,integerRepresentation='bigEndian',\
+     characterRepresentation='ascii',floatingPointRepresentation='ieee',\
+-    reservedForFutur=0)/ OpcDaHeaderN(fragLenght=100,authLenght=0,callID=21)\
++    res=0)/ OpcDaHeaderN(fragLength=100,authLength=0,callID=21)\
+     / OpcDaRequest(allocHint=60,contextId=6,opNum=5,\
+-    uuid=b'0000c41d-0a9c-0000-d702-8c761299f7bf',subData=RequestSubData(\
+-    versionMajor=0,versionMinor=0,subdata='')))
++    uuid=b'0000c41d-0a9c-0000-d702-8c761299f7bf',stubData=RequestStubData(\
++    versionMajor=0,versionMinor=0,stubdata='')))
+ elem2 = raw(opcdaRequestPacket_Build)
+ 
+ assert( elem1 == elem2 )
+@@ -25,11 +25,11 @@
+ OpcDaHeaderMessage (versionMajor=5,versionMinor=0,pduType=0, \
+     pfc_flags = 131,integerRepresentation='littleEndian',\
+     characterRepresentation='ascii',floatingPointRepresentation='ieee',\
+-    reservedForFutur=0)/ OpcDaHeaderNLE(fragLenght=100,authLenght=0,callID=21)\
++    res=0)/ OpcDaHeaderNLE(fragLength=100,authLength=0,callID=21)\
+     / OpcDaRequestLE (allocHint=60,contextId=6,opNum=5,\
+     uuid=b'0000c41d-0a9c-0000-d702-8c761299f7bf',\
+-    subData=RequestSubDataLE(versionMajor=0,versionMinor=0,flags=0,reserved=0,\
+-    subUuid=b'344e2d51-43ab-4914-a2cf-7784b21b3ea1',subdata='')))
++    stubData=RequestStubDataLE(versionMajor=0,versionMinor=0,\
++    stubdata=b'\x00\x00\x00\x00\x00\x00\x00\x00Q-N4\xabC\x14I\xa2\xcfw\x84\xb2\x1b>\xa1')))
+ elem2 = raw(opcdaRequestLEPacket_Build)
+ 
+ assert( elem1 == elem2 )
+@@ -44,7 +44,7 @@
+     OpcDaHeaderMessage (versionMajor=5,versionMinor=0,pduType=1, \
+     pfc_flags = 3,integerRepresentation='littleEndian',\
+     characterRepresentation='ascii',floatingPointRepresentation='ieee',\
+-    reservedForFutur=0)/ OpcDaHeaderNLE(fragLenght=100,authLenght=0,callID=21)\
++    res=0)/ OpcDaHeaderNLE(fragLength=100,authLength=0,callID=21)\
+     / OpcDaPing()) / '\x00'
+ elem2 = raw(opcdaPingPacket_Build)
+ 
+@@ -60,9 +60,9 @@
+     OpcDaHeaderMessage (versionMajor=5,versionMinor=0,pduType=2, \
+     pfc_flags = 3,integerRepresentation='bigEndian',\
+     characterRepresentation='ascii',floatingPointRepresentation='ieee',\
+-    reservedForFutur=0)/ OpcDaHeaderN(fragLenght=212,authLenght=0,callID=21)\
++    res=0)/ OpcDaHeaderN(fragLength=212,authLength=0,callID=21)\
+     / OpcDaResponse(allocHint=188,contextId=6,cancelCount=0,reserved=0,\
+-        subData=b'0'*(212-32)))
++        stubData=b'0'*(212-32)))
+ elem2 = raw(opcDaResponsePacket_Build)
+ 
+ assert( elem1 == elem2 )
+@@ -75,9 +75,9 @@
+     OpcDaHeaderMessage (versionMajor=5,versionMinor=0,pduType=2, \
+     pfc_flags = 3,integerRepresentation='littleEndian',\
+     characterRepresentation='ascii',floatingPointRepresentation='ieee',\
+-    reservedForFutur=0)/ OpcDaHeaderNLE(fragLenght=212,authLenght=0,callID=21)\
++    res=0)/ OpcDaHeaderNLE(fragLength=212,authLength=0,callID=21)\
+     / OpcDaResponseLE(allocHint=188,contextId=6,cancelCount=0,reserved=0,\
+-        subData=b'0'*(212-32)))
++        stubData=b'0'*(212-32)))
+ elem2 = raw(opcDaResponseLEPacket_Build)
+ 
+ assert( elem1 == elem2 )
+@@ -140,7 +140,7 @@
+     OpcDaHeaderMessage (versionMajor=5,versionMinor=0,pduType=14, \
+     pfc_flags = 3,integerRepresentation='bigEndian',\
+     characterRepresentation='ascii',floatingPointRepresentation='ieee',\
+-    reservedForFutur=0)/ OpcDaHeaderN(fragLenght=72,authLenght=0,callID=23)\
++    res=0)/ OpcDaHeaderN(fragLength=72,authLength=0,callID=23)\
+     / OpcDaAlter_context(maxXmitFrag=5840,maxRecvtFrag=5840,\
+         assocGroupId=534853)) \
+     / '\x00\x00\x00\x01\x07\x00\x01\x00\x01\x01\x00\x00\x00\x00\x00\x00\xc0'\
+@@ -156,7 +156,7 @@
+     OpcDaHeaderMessage (versionMajor=5,versionMinor=0,pduType=14, \
+     pfc_flags = 3,integerRepresentation='littleEndian',\
+     characterRepresentation='ascii',floatingPointRepresentation='ieee',\
+-    reservedForFutur=0)/ OpcDaHeaderNLE(fragLenght=72,authLenght=0,callID=23)\
++    res=0)/ OpcDaHeaderNLE(fragLength=72,authLength=0,callID=23)\
+     / OpcDaAlter_contextLE(maxXmitFrag=5840,maxRecvtFrag=5840,\
+         assocGroupId=534853)) \
+     / '\x01\x00\x00\x00\x07\x00\x01\x00\x01\x01\x00\x00\x00\x00\x00\x00\xc0'\
+@@ -168,6 +168,119 @@
+ = OpcDaAlter_Context_Resp
+ = OpcDaAlter_Context_RespLE
+ 
++= PDU dispatch: OpcDaFackLE dispatched for LE packets with pduType 9
++~ fack le dispatch
++
++header_le = OpcDaHeaderMessage(versionMajor=5, versionMinor=0, pduType=9,
++    pfc_flags=3, integerRepresentation='littleEndian',
++    characterRepresentation='ascii', floatingPointRepresentation='ieee',
++    res=0) / OpcDaHeaderNLE(fragLength=32, authLength=0, callID=1)
++pdu_class = header_le[OpcDaHeaderNLE].guess_payload_class(b"")
++assert pdu_class == OpcDaFackLE, "PDU type 9 with LE header should dispatch to OpcDaFackLE"
++
++= PDU dispatch: OpcDaBind_nakLE dispatched for LE packets with pduType 13
++~ bind_nak le dispatch
++
++header_le = OpcDaHeaderMessage(versionMajor=5, versionMinor=0, pduType=13,
++    pfc_flags=3, integerRepresentation='littleEndian',
++    characterRepresentation='ascii', floatingPointRepresentation='ieee',
++    res=0) / OpcDaHeaderNLE(fragLength=32, authLength=0, callID=1)
++pdu_class = header_le[OpcDaHeaderNLE].guess_payload_class(b"")
++assert pdu_class == OpcDaBind_nakLE, "PDU type 13 with LE header should dispatch to OpcDaBind_nakLE"
++
++= PDU dispatch: Big-endian header dispatches to BE PDU class
++~ pdu dispatch be
++
++header_be = OpcDaHeaderMessage(versionMajor=5, versionMinor=0, pduType=9,
++    pfc_flags=3, integerRepresentation='bigEndian',
++    characterRepresentation='ascii', floatingPointRepresentation='ieee',
++    res=0) / OpcDaHeaderN(fragLength=32, authLength=0, callID=1)
++pdu_class = header_be[OpcDaHeaderN].guess_payload_class(b"")
++assert pdu_class == OpcDaFack, "PDU type 9 with BE header should dispatch to OpcDaFack"
++
++= OpcDaBind_ack field name fix (pad2 instead of pda2)
++~ bind_ack typo
++
++bind_ack = OpcDaBind_ack()
++assert hasattr(bind_ack, 'pad2'), "OpcDaBind_ack should have 'pad2' field"
++
++= OpcDaAlter_Context_Resp field name fix (portSpec instead of portSPec)
++~ alter_context_resp typo
++
++alter_resp = OpcDaAlter_Context_Resp()
++assert hasattr(alter_resp, 'portSpec'), "OpcDaAlter_Context_Resp should have 'portSpec' field"
++assert hasattr(alter_resp, 'pad2'), "OpcDaAlter_Context_Resp should have 'pad2' field"
++assert hasattr(alter_resp, 'resultList'), "OpcDaAlter_Context_Resp should have 'resultList' field"
++assert hasattr(alter_resp, 'authentication'), "OpcDaAlter_Context_Resp should have 'authentication' field"
++
++= OpcDaFault has authentication field
++~ fault auth
++
++fault = OpcDaFault()
++assert hasattr(fault, 'authentication'), "OpcDaFault should have 'authentication' field"
++assert hasattr(fault, 'stubData'), "OpcDaFault should have 'stubData' field"
++fault_le = OpcDaFaultLE()
++assert hasattr(fault_le, 'authentication'), "OpcDaFaultLE should have 'authentication' field"
++
++= OpcDaReject uses stubData field name
++~ reject stubdata
++
++reject = OpcDaReject()
++assert hasattr(reject, 'stubData'), "OpcDaReject should have 'stubData' field"
++
++= AV_PAIR class with correct field names per MS-NLMP spec
++~ av_pair fields
++
++av_pair = AV_PAIR()
++assert hasattr(av_pair, 'avID'), "AV_PAIR should have 'avID' field"
++assert hasattr(av_pair, 'avLen'), "AV_PAIR should have 'avLen' field"
++assert hasattr(av_pair, 'value'), "AV_PAIR should have 'value' field"
++av_pair_le = AV_PAIRLE()
++assert hasattr(av_pair_le, 'avID'), "AV_PAIRLE should have 'avID' field"
++
++= ResultElement has reason field
++~ result element reason
++
++result = ResultElement(resultContextNegotiation=1, reason=0)
++assert hasattr(result, 'reason'), "ResultElement should have 'reason' field"
++
++= LenStringPacket has data field
++~ lenstringpacket
++pkt = LenStringPacket()
++assert hasattr(pkt, 'length'), "LenStringPacket should have 'length' field"
++assert hasattr(pkt, 'data'), "LenStringPacket should have 'data' field"
++
++= NTLMSSP packet with MS-NLMP specification field names
++~ ntlmssp ms-nlmp
++ntlm = NTLMSSP()
++assert hasattr(ntlm, 'lmChallengeResponseLen'), "NTLMSSP should have 'lmChallengeResponseLen'"
++assert hasattr(ntlm, 'ntChallengeResponseLen'), "NTLMSSP should have 'ntChallengeResponseLen'"
++assert hasattr(ntlm, 'workstationLen'), "NTLMSSP should have 'workstationLen'"
++assert hasattr(ntlm, 'encryptedRandomSessionKeyLen'), "NTLMSSP should have 'encryptedRandomSessionKeyLen'"
++assert hasattr(ntlm, 'productMajorVersion'), "NTLMSSP should have 'productMajorVersion'"
++assert hasattr(ntlm, 'productMinorVersion'), "NTLMSSP should have 'productMinorVersion'"
++assert hasattr(ntlm, 'NTLMRevisionCurrent'), "NTLMSSP should have 'NTLMRevisionCurrent'"
++assert hasattr(ntlm, 'lmChallengeResponse'), "NTLMSSP should have 'lmChallengeResponse'"
++assert hasattr(ntlm, 'ntChallengeResponse'), "NTLMSSP should have 'ntChallengeResponse'"
++assert hasattr(ntlm, 'workstation'), "NTLMSSP should have 'workstation'"
++assert hasattr(ntlm, 'encryptedRandomSessionKey'), "NTLMSSP should have 'encryptedRandomSessionKey'"
++
++= OpcDaRequest has uuid and stubData fields
++~ request fields
++
++request = OpcDaRequest()
++assert hasattr(request, 'uuid'), "OpcDaRequest should have 'uuid' field"
++assert hasattr(request, 'stubData'), "OpcDaRequest should have 'stubData' field"
++
++= RequestStubData class replaces RequestSubData
++~ request stubdata class
++
++stub = RequestStubData()
++assert stub.name == 'RequestStubData', "RequestStubData should have correct name"
++assert hasattr(stub, 'stubdata'), "RequestStubData should have 'stubdata' field"
++stub_le = RequestStubDataLE()
++assert hasattr(stub_le, 'stubdata'), "RequestStubDataLE should have 'stubdata' field"
++
+ # + Test Shutdown Packet
+ # No example yet
+ # OpcDaShutdown

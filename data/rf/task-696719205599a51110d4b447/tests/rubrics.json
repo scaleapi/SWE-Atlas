@@ -1,0 +1,138 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d7eb6927cbde0012a6ce4eae6262db61",
+    "title": "1.1: Organizes all 4 protocol-specific implementation files (cloud_easyjson.go, data.go, metrics_client.go, output.go) into a versioned v1/ subpackage under output/cloud/",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "910118fc6f17f2c882968e3f5743ab7a",
+    "title": "1.2: Exports a constructor function New in output/cloud/v1/output.go that accepts logger, config, and API client and returns a v1 Output",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "dad57be8afad9c517f6d746d0ba355bb",
+    "title": "1.3: Implements a SetReferenceID method on the v1 Output struct in output/cloud/v1/output.go that stores the reference ID for the cloud test run",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2931ca547aeefa68d20be95ec37a6a29",
+    "title": "1.4: Implements a Start method on the v1 Output struct in output/cloud/v1/output.go that initializes background goroutines for aggregating and flushing metric samples",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a29df208959e8554dee84eb6013d4938",
+    "title": "1.5: Implements a StopWithTestError method on the v1 Output struct in output/cloud/v1/output.go that gracefully stops aggregation and metric emission",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "081ddf956e392c257d9ed75f0391742d",
+    "title": "1.6: Implements a SetTestRunStopCallback method on the v1 Output struct in output/cloud/v1/output.go that receives the engine stop function",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f9b4ca8a1774c2a3c5b59a1659993d42",
+    "title": "1.7: Implements an AddMetricSamples method on the v1 Output struct in output/cloud/v1/output.go that receives metric samples and buffers them for asynchronous processing",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f74b3486f773954c30e62f303cbf0d59",
+    "title": "1.8: Moves all 9 aggregation-related symbols (startBackgroundProcesses, AddMetricSamples, aggregateHTTPTrails, flushHTTPTrails, shouldStopSendingMetrics, pushMetrics, ceilDiv, pushJob, expectedGzipRatio) from output/cloud/output.go into the versioned subpackage",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "79ca92480c2f22e703531ee71f6a9bbe",
+    "title": "1.9: Moves the MetricsClient from output/cloud/ to the versioned subpackage",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "715bf698d6afdb861ca20b08cbe8a051",
+    "title": "1.10: Moves all 4 data format types (Sample, SampleDataSingle, SampleDataMap, SampleDataAggregatedHTTPReqs) from output/cloud/ to the versioned subpackage",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a9266624c29f49cb411d8f7d2a8b700e",
+    "title": "1.11: Creates a v1 Output instance from the main output/cloud/output.go during startup to delegate metrics work to the versioned subpackage",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8c096de0c31d2f8277caf97a6063160a",
+    "title": "1.12: Retains all 3 test lifecycle responsibilities (test creation, threshold handling, test finalization) in the main output/cloud/output.go Output struct",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b5b99544dc1d64e7ae06ef1d9d9beda3",
+    "title": "1.13: Declares package cloud in all 4 v1 subpackage source files (v1/output.go, v1/cloud_easyjson.go, v1/data.go, v1/metrics_client.go) instead of package v1",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6759b7e9c662021cc55293609155a1c5",
+    "title": "4.1: Modifies any of the 6 existing public method signatures (Start, Stop, StopWithTestError, Description, SetThresholds, SetTestRunStopCallback) on the main Output struct in output/cloud/output.go",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9a8e42a5fa10f7268c72583262160992",
+    "title": "4.2: Deletes any of the 4 test files (output/cloud/output_test.go, output/cloud/v1/bench_test.go, output/cloud/v1/data_test.go, output/cloud/v1/output_test.go) without relocating them to the versioned subpackage",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

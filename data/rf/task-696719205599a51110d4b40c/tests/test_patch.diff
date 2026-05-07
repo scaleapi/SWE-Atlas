@@ -1,0 +1,213 @@
+diff --git a/pkg/engine/engine_test.go b/pkg/engine/engine_test.go
+index 4e9b2eda5..f7273e0d2 100644
+--- a/pkg/engine/engine_test.go
++++ b/pkg/engine/engine_test.go
+@@ -197,7 +197,8 @@ func TestEngine_DuplicatSecrets(t *testing.T) {
+ 	e, err := Start(ctx,
+ 		WithConcurrency(1),
+ 		WithDecoders(decoders.DefaultDecoders()...),
+-		WithDetectors(true, DefaultDetectors()...),
++		WithDetectors(DefaultDetectors()...),
++		WithVerify(true),
+ 		WithPrinter(new(discardPrinter)),
+ 	)
+ 	assert.Nil(t, err)
+diff --git a/pkg/engine/gcs_test.go b/pkg/engine/gcs_test.go
+index 4a7d2cae4..17375a14d 100644
+--- a/pkg/engine/gcs_test.go
++++ b/pkg/engine/gcs_test.go
+@@ -64,7 +64,8 @@ func TestScanGCS(t *testing.T) {
+ 			e, err := Start(ctx,
+ 				WithConcurrency(1),
+ 				WithDecoders(decoders.DefaultDecoders()...),
+-				WithDetectors(false, DefaultDetectors()...),
++				WithDetectors(DefaultDetectors()...),
++				WithVerify(false),
+ 			)
+ 			assert.Nil(t, err)
+ 
+diff --git a/pkg/engine/git_test.go b/pkg/engine/git_test.go
+index ecfd1b589..a44e7f797 100644
+--- a/pkg/engine/git_test.go
++++ b/pkg/engine/git_test.go
+@@ -69,7 +69,8 @@ func TestGitEngine(t *testing.T) {
+ 			e, err := Start(ctx,
+ 				WithConcurrency(1),
+ 				WithDecoders(decoders.DefaultDecoders()...),
+-				WithDetectors(true, DefaultDetectors()...),
++				WithDetectors(DefaultDetectors()...),
++				WithVerify(true),
+ 				WithPrinter(new(discardPrinter)),
+ 			)
+ 			assert.Nil(t, err)
+@@ -123,7 +124,8 @@ func BenchmarkGitEngine(b *testing.B) {
+ 	e, err := Start(ctx,
+ 		WithConcurrency(uint8(runtime.NumCPU())),
+ 		WithDecoders(decoders.DefaultDecoders()...),
+-		WithDetectors(false, DefaultDetectors()...),
++		WithDetectors(DefaultDetectors()...),
++		WithVerify(false),
+ 		WithPrinter(new(discardPrinter)),
+ 	)
+ 	assert.Nil(b, err)
+diff --git a/pkg/engine/ahocorasickcore_test.go b/pkg/engine/ahocorasickcore_test.go
+new file mode 100644
+index 000000000..000000001
+--- /dev/null
++++ b/pkg/engine/ahocorasickcore_test.go
+@@ -0,0 +1,155 @@
++package engine
++
++import (
++	"context"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/detectors"
++	"github.com/trufflesecurity/trufflehog/v3/pkg/pb/detectorspb"
++)
++
++type stubDetector struct {
++	detectorType detectorspb.DetectorType
++	keywords     []string
++}
++
++func (d *stubDetector) FromData(ctx context.Context, verify bool, data []byte) ([]detectors.Result, error) {
++	return nil, nil
++}
++func (d *stubDetector) Keywords() []string              { return d.keywords }
++func (d *stubDetector) Type() detectorspb.DetectorType { return d.detectorType }
++
++func TestNewAhoCorasickCore_AcceptsFlatSlice(t *testing.T) {
++	t.Parallel()
++	d1 := &stubDetector{detectorType: detectorspb.DetectorType_AWS, keywords: []string{"aws_access_key"}}
++	d2 := &stubDetector{detectorType: detectorspb.DetectorType_Github, keywords: []string{"ghp_"}}
++
++	ac := NewAhoCorasickCore([]detectors.Detector{d1, d2})
++	assert.NotNil(t, ac)
++
++	matches := ac.MatchString("contains aws_access_key and ghp_ tokens")
++	assert.GreaterOrEqual(t, len(matches), 2, "expected at least 2 keyword matches")
++}
++
++func TestNewAhoCorasickCore_EmptySlice(t *testing.T) {
++	t.Parallel()
++	ac := NewAhoCorasickCore([]detectors.Detector{})
++	assert.NotNil(t, ac)
++
++	matches := ac.MatchString("nothing to match here")
++	assert.Empty(t, matches)
++}
++
++func TestPopulateDetectorsByMatch_ReturnsDetectorDirectly(t *testing.T) {
++	t.Parallel()
++	d := &stubDetector{detectorType: detectorspb.DetectorType_AWS, keywords: []string{"aws"}}
++	ac := NewAhoCorasickCore([]detectors.Detector{d})
++
++	matches := ac.MatchString("aws")
++	assert.NotEmpty(t, matches, "expected at least one match for keyword 'aws'")
++
++	detectorMap := make(map[detectorspb.DetectorType]detectors.Detector)
++	found := ac.PopulateDetectorsByMatch(matches[0], detectorMap)
++
++	assert.True(t, found)
++	assert.Len(t, detectorMap, 1)
++	assert.Equal(t, detectorspb.DetectorType_AWS, detectorMap[detectorspb.DetectorType_AWS].Type())
++}
++
++func TestPopulateDetectorsByMatch_NoMatch(t *testing.T) {
++	t.Parallel()
++	d := &stubDetector{detectorType: detectorspb.DetectorType_AWS, keywords: []string{"aws"}}
++	ac := NewAhoCorasickCore([]detectors.Detector{d})
++
++	matches := ac.MatchString("nothing relevant here")
++	assert.Empty(t, matches)
++}
++
++func TestPopulateDetectorsByMatch_MultipleDetectorsSameKeyword(t *testing.T) {
++	t.Parallel()
++	d1 := &stubDetector{detectorType: detectorspb.DetectorType_AWS, keywords: []string{"token"}}
++	d2 := &stubDetector{detectorType: detectorspb.DetectorType_Github, keywords: []string{"token"}}
++	ac := NewAhoCorasickCore([]detectors.Detector{d1, d2})
++
++	matches := ac.MatchString("my token here")
++	assert.NotEmpty(t, matches)
++
++	detectorMap := make(map[detectorspb.DetectorType]detectors.Detector)
++	found := ac.PopulateDetectorsByMatch(matches[0], detectorMap)
++
++	assert.True(t, found)
++	assert.Len(t, detectorMap, 2)
++	assert.NotNil(t, detectorMap[detectorspb.DetectorType_AWS])
++	assert.NotNil(t, detectorMap[detectorspb.DetectorType_Github])
++}
++
++func TestWithDetectors_AppendsToFlatList(t *testing.T) {
++	t.Parallel()
++	e := &Engine{}
++	d1 := &stubDetector{detectorType: detectorspb.DetectorType_AWS, keywords: []string{"aws"}}
++	d2 := &stubDetector{detectorType: detectorspb.DetectorType_Github, keywords: []string{"github"}}
++
++	WithDetectors(d1)(e)
++	WithDetectors(d2)(e)
++
++	assert.Len(t, e.detectors, 2)
++}
++
++func TestWithDetectors_MultipleInSingleCall(t *testing.T) {
++	t.Parallel()
++	e := &Engine{}
++	d1 := &stubDetector{detectorType: detectorspb.DetectorType_AWS, keywords: []string{"aws"}}
++	d2 := &stubDetector{detectorType: detectorspb.DetectorType_Github, keywords: []string{"github"}}
++
++	WithDetectors(d1, d2)(e)
++
++	assert.Len(t, e.detectors, 2)
++}
++
++func TestWithVerify_SetsFlag(t *testing.T) {
++	t.Parallel()
++	e := &Engine{}
++
++	WithVerify(true)(e)
++	assert.True(t, e.verify)
++
++	WithVerify(false)(e)
++	assert.False(t, e.verify)
++}
++
++func TestWithFilterDetectors_FiltersSlice(t *testing.T) {
++	t.Parallel()
++	e := &Engine{}
++	d1 := &stubDetector{detectorType: detectorspb.DetectorType_AWS, keywords: []string{"aws"}}
++	d2 := &stubDetector{detectorType: detectorspb.DetectorType_Github, keywords: []string{"github"}}
++	d3 := &stubDetector{detectorType: detectorspb.DetectorType_Gitlab, keywords: []string{"gitlab"}}
++
++	WithDetectors(d1, d2, d3)(e)
++	assert.Len(t, e.detectors, 3)
++
++	filterFunc := func(d detectors.Detector) bool {
++		return d.Type() != detectorspb.DetectorType_Github
++	}
++	WithFilterDetectors(filterFunc)(e)
++
++	assert.Len(t, e.detectors, 2)
++	for _, d := range e.detectors {
++		assert.NotEqual(t, detectorspb.DetectorType_Github, d.Type())
++	}
++}
++
++func TestCoreIntegration_MatchAndPopulate(t *testing.T) {
++	t.Parallel()
++	d := &stubDetector{detectorType: detectorspb.DetectorType_AWS, keywords: []string{"AKIA"}}
++	ac := NewAhoCorasickCore([]detectors.Detector{d})
++
++	detectorMap := make(map[detectorspb.DetectorType]detectors.Detector)
++	for _, match := range ac.MatchString("found AKIA1234567890 in data") {
++		ac.PopulateDetectorsByMatch(match, detectorMap)
++	}
++
++	assert.Len(t, detectorMap, 1)
++	assert.Equal(t, detectorspb.DetectorType_AWS, detectorMap[detectorspb.DetectorType_AWS].Type())
++}

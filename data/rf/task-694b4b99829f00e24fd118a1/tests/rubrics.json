@@ -1,0 +1,98 @@
+[
+  {
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    },
+    "id": "5c2b96dd2baffe888a185189234368c6"
+  },
+  {
+    "title": "1.1: Creates a shared mixin class containing all 3 dump methods (psdump, pdfdump, svgdump)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "d8fa09f88268eba5b5302be38b6bfa1a"
+  },
+  {
+    "title": "1.2: Updates the Packet class in scapy/packet.py to inherit from the new shared mixin",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "9c4e47046e08b621580b25eafeaa0195"
+  },
+  {
+    "title": "1.3: Updates the PacketList class in scapy/plist.py to inherit from the new shared mixin",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "02a0e1bab085bec5332bb8501e1ebb87"
+  },
+  {
+    "title": "1.4: Provides svgdump capability to PacketList through the shared mixin",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "6059a4a2a3b5e9447c78c750a8ca4a8a"
+  },
+  {
+    "title": "1.5: Fixes socket close logic in scapy/supersocket.py to handle Windows where fileno() returns -1",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "beabcef761c53fc8339beafda8f65270"
+  },
+  {
+    "title": "1.6: Fixes RandString._fix() in scapy/volatile.py to handle both Python 2 and Python 3 character type differences",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "a2b4fb22f8e0eab94685b2808e256d53"
+  },
+  {
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    },
+    "id": "c6642a9807f00b7614004c35d9f752bf"
+  },
+  {
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    },
+    "id": "02ac6e6d0924c6a25576302676259010"
+  },
+  {
+    "title": "3.1: Removes all 5 original dump method definitions (psdump, pdfdump, svgdump from Packet; psdump, pdfdump from PacketList) after moving them to the shared mixin",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "ee61322d45832e822b8ddc64a968142a"
+  },
+  {
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    },
+    "id": "488ec8d58d9a5332a3e75a05212dde33"
+  },
+  {
+    "title": "4.1: Omits the mixin inheritance on Packet or PacketList for any of the 3 dump methods (psdump, pdfdump, svgdump)",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    },
+    "id": "b8c1c3493d878f8fcecf0d130035125b"
+  }
+]

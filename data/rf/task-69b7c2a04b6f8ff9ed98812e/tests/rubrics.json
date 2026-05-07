@@ -1,0 +1,170 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "040f7ffed1abbddbc0cfad72c92024e6",
+    "title": "1.1: Adds fil_space_t::defragment() method for system tablespace defragmentation",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b69ac02f81fe8db7aa3e7b762ab588f9",
+    "title": "1.2: Performs each page move atomically within a single mini-transaction",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a3f7c91d2e4b8a06d5c1e9f3b7d24a81",
+    "title": "1.3: Restores original page state on failure during page relocation",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6728da86b45fd61acc21d984c1104a8f",
+    "title": "1.4: Updates all 3 B-tree references (parent child pointer, left sibling next pointer, right sibling previous pointer) when relocating a page",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "60e4e624a7270363fae5c068ab5cb252",
+    "title": "1.5: Invokes defragmentation during server restart, not shutdown",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f2862d6cfdcef86f0ce6581c5c457615",
+    "title": "1.6: Skips defragmentation when user tables exist in system tablespace",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c7f9db24188ac20a79502f9563578636",
+    "title": "1.7: Defragments all 7 system dictionary tables (SYS_TABLES, SYS_COLUMNS, SYS_INDEXES, SYS_FIELDS, SYS_FOREIGN, SYS_FOREIGN_COLS, SYS_VIRTUAL)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ac7eda1652d2f14c8f10131e98e77bfc",
+    "title": "1.8: Modifies flst_validate() to return dberr_t error codes instead of using assertions",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "05a2da7449e7ec518a66cfd5c169b5be",
+    "title": "1.9: Makes flst_validate() available in release builds by removing debug-only guards",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d0fd30bd80a59e1cd27cc8113caf7955",
+    "title": "1.10: Calls fsp_tablespace_validate() to validate tablespace free-space lists during the defragmentation flow",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e7a3b19c4d2f8e56a0c1d9f4b7e32a85",
+    "title": "1.11: Validates index segment inode lists before and after defragmentation operations",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "935142da7bafab0edf2854e22014dcc2",
+    "title": "3.1: Refactors xdes_get_state() to use uint32_t with combined declaration-assignment for the state variable",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2f523aef8c6c83245b75294f10626988",
+    "title": "3.2: Tracks extent state to identify free and used extents",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e18f718e8a308efcba757a48c8d9b11e",
+    "title": "3.3: Traverses B-tree levels to relocate pages",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2a9a4051a3a8c21680f4c81814bd08f0",
+    "title": "3.4: Adds dict_sys_t::is_sys_table() to distinguish system tables from user tables",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "05bd955acc57a670a4b174c9e1814c08",
+    "title": "3.5: Implements atomic list manipulation for extent descriptor operations",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d8e4b12c7f9a3e56c0d1f8a4b6e29c73",
+    "title": "4.1: Breaks existing tablespace truncation logic in fsp_system_tablespace_truncate()",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

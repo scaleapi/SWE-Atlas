@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "name": "output/cloud/expv2/collect_test.go"
+    },
+    {
+      "name": "output/cloud/expv2/flush_test.go"
+    },
+    {
+      "name": "output/cloud/expv2/output_test.go"
+    },
+    {
+      "name": "output/cloud/insights/collect_test.go"
+    },
+    {
+      "name": "output/cloud/insights/flush_test.go"
+    },
+    {
+      "name": "output/cloud/insights/insights_extraction_test.go"
+    }
+  ]
+}

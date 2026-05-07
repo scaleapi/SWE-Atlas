@@ -1,0 +1,440 @@
+diff --git a/apps/investigations/Makefile b/apps/investigations/Makefile
+index aaac06377ca..bc8d6d30cb5 100644
+--- a/apps/investigations/Makefile
++++ b/apps/investigations/Makefile
+@@ -1,5 +1,10 @@
+ include ../sdk.mk
+ 
+-.PHONY: generate
++.PHONY: generate # Run Grafana App SDK code generation
+ generate: install-app-sdk update-app-sdk
+-	@$(APP_SDK_BIN) generate -g ./pkg/apis --grouping=group --postprocess --defencoding=none --useoldmanifestkinds
++	@$(APP_SDK_BIN) generate \
++		--source=./kinds/ \
++		--gogenpath=./pkg/apis \
++		--grouping=group \
++		--genoperatorstate=false \
++		--defencoding=none
+\ No newline at end of file
+diff --git a/apps/investigations/kinds/investigation.cue b/apps/investigations/kinds/investigation.cue
+index f1e9a69027f..1ade89416b9 100644
+--- a/apps/investigations/kinds/investigation.cue
++++ b/apps/investigations/kinds/investigation.cue
+@@ -1,39 +1,18 @@
+ package investigations
+ 
+-// This is our Investigation definition, which contains metadata about the kind, and the kind's schema
+-investigation: {
++investigationV0alpha1: {
+ 	kind:       "Investigation"
+-	group:      "investigations.grafana.app"
+-	apiResource: {
+-		groupOverride: "investigations.grafana.app"
+-	}
+ 	pluralName: "Investigations"
+-	current:    "v0alpha1"
+-	versions: {
+-		"v0alpha1": {
+-			codegen: {
+-				frontend: true
+-				backend:  true
+-				options: {
+-					generateObjectMeta: true
+-					generateClient:     true
+-					k8sLike:           true
+-					package:           "github.com/grafana/grafana/apps/investigations"
+-				}
+-			}
+-			schema: {
+-				// spec is the schema of our resource
+-				spec: {
+-					title:         string
+-					createdByProfile: #Person
+-					hasCustomName: bool
+-					isFavorite:    bool
+-					overviewNote:  string
+-					overviewNoteUpdatedAt: string
+-					collectables: [...#Collectable] // +listType=atomic
+-					viewMode:      #ViewMode
+-				}
+-			}
++	schema: {
++		spec: {
++			title:         string
++			createdByProfile: #Person
++			hasCustomName: bool
++			isFavorite:    bool
++			overviewNote:  string
++			overviewNoteUpdatedAt: string
++			collectables: [...#Collectable] // +listType=atomic
++			viewMode:      #ViewMode
+ 		}
+ 	}
+ }
+diff --git a/apps/investigations/kinds/investigationindex.cue b/apps/investigations/kinds/investigationindex.cue
+index 447e156be4f..65c5e3ae79f 100644
+--- a/apps/investigations/kinds/investigationindex.cue
++++ b/apps/investigations/kinds/investigationindex.cue
+@@ -1,37 +1,18 @@
+ package investigations
+ 
+-investigationIndex: {
++investigationIndexV0alpha1:{
+ 	kind:       "InvestigationIndex"
+-	group:      "investigations.grafana.app"
+-	apiResource: {
+-		groupOverride: "investigations.grafana.app"
+-	}
+ 	pluralName: "InvestigationIndexes"
+-	current:    "v0alpha1"
+-	versions: {
+-		"v0alpha1": {
+-			codegen: {
+-				frontend: true
+-				backend:  true
+-				options: {
+-					generateObjectMeta: true
+-					generateClient:     true
+-					k8sLike:           true
+-					package:           "github.com/grafana/grafana/apps/investigations"
+-				}
+-			}
+-			schema: {
+-				spec: {
+-					// Title of the index, e.g. 'Favorites' or 'My Investigations'
+-					title: string
++	schema: {
++		spec: {
++			// Title of the index, e.g. 'Favorites' or 'My Investigations'
++			title: string
+ 
+-					// The Person who owns this investigation index
+-					owner: #Person
++			// The Person who owns this investigation index
++			owner: #Person
+ 
+-					// Array of investigation summaries
+-					investigationSummaries: [...#InvestigationSummary] // +listType=atomic
+-				}
+-			}
++			// Array of investigation summaries
++			investigationSummaries: [...#InvestigationSummary] // +listType=atomic
+ 		}
+ 	}
+ }
+diff --git a/apps/investigations/kinds/manifest.cue b/apps/investigations/kinds/manifest.cue
+index d9e93b00061..947d84be482 100644
+--- a/apps/investigations/kinds/manifest.cue
++++ b/apps/investigations/kinds/manifest.cue
+@@ -3,8 +3,16 @@ package investigations
+ manifest: {
+ 	appName:       "investigations"
+ 	groupOverride: "investigations.grafana.app"
+-	kinds: [
+-		investigation,
+-		investigationIndex,
+-	]
+-}
++	versions: {
++		"v0alpha1": {
++			codegen: {
++				ts: {enabled: false}
++				go: {enabled: true}
++			}
++			kinds: [
++				investigationV0alpha1,
++				investigationIndexV0alpha1,
++			]
++		}
++	}
++}
+\ No newline at end of file
+diff --git a/apps/investigations/pkg/apis/investigations/v0alpha1/investigation_client_gen.go b/apps/investigations/pkg/apis/investigations/v0alpha1/investigation_client_gen.go
+index dc73a0301e9..dea4d71802d 100644
+--- a/apps/investigations/pkg/apis/investigations/v0alpha1/investigation_client_gen.go
++++ b/apps/investigations/pkg/apis/investigations/v0alpha1/investigation_client_gen.go
+@@ -4,7 +4,6 @@ import (
+ 	"context"
+ 
+ 	"github.com/grafana/grafana-app-sdk/resource"
+-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+ )
+ 
+ type InvestigationClient struct {
+@@ -76,24 +75,6 @@ func (c *InvestigationClient) Patch(ctx context.Context, identifier resource.Ide
+ 	return c.client.Patch(ctx, identifier, req, opts)
+ }
+ 
+-func (c *InvestigationClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus InvestigationStatus, opts resource.UpdateOptions) (*Investigation, error) {
+-	return c.client.Update(ctx, &Investigation{
+-		TypeMeta: metav1.TypeMeta{
+-			Kind:       InvestigationKind().Kind(),
+-			APIVersion: GroupVersion.Identifier(),
+-		},
+-		ObjectMeta: metav1.ObjectMeta{
+-			ResourceVersion: opts.ResourceVersion,
+-			Namespace:       identifier.Namespace,
+-			Name:            identifier.Name,
+-		},
+-		Status: newStatus,
+-	}, resource.UpdateOptions{
+-		Subresource:     "status",
+-		ResourceVersion: opts.ResourceVersion,
+-	})
+-}
+-
+ func (c *InvestigationClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
+ 	return c.client.Delete(ctx, identifier, opts)
+ }
+diff --git a/apps/investigations/pkg/apis/investigations/v0alpha1/investigation_object_gen.go b/apps/investigations/pkg/apis/investigations/v0alpha1/investigation_object_gen.go
+index eb819564176..f64d7b6e047 100644
+--- a/apps/investigations/pkg/apis/investigations/v0alpha1/investigation_object_gen.go
++++ b/apps/investigations/pkg/apis/investigations/v0alpha1/investigation_object_gen.go
+@@ -21,8 +21,6 @@ type Investigation struct {
+ 
+ 	// Spec is the spec of the Investigation
+ 	Spec InvestigationSpec `json:"spec" yaml:"spec"`
+-
+-	Status InvestigationStatus `json:"status" yaml:"status"`
+ }
+ 
+ func (o *Investigation) GetSpec() any {
+@@ -39,15 +37,11 @@ func (o *Investigation) SetSpec(spec any) error {
+ }
+ 
+ func (o *Investigation) GetSubresources() map[string]any {
+-	return map[string]any{
+-		"status": o.Status,
+-	}
++	return map[string]any{}
+ }
+ 
+ func (o *Investigation) GetSubresource(name string) (any, bool) {
+ 	switch name {
+-	case "status":
+-		return o.Status, true
+ 	default:
+ 		return nil, false
+ 	}
+@@ -55,13 +49,6 @@ func (o *Investigation) GetSubresource(name string) (any, bool) {
+ 
+ func (o *Investigation) SetSubresource(name string, value any) error {
+ 	switch name {
+-	case "status":
+-		cast, ok := value.(InvestigationStatus)
+-		if !ok {
+-			return fmt.Errorf("cannot set status type %#v, not of type InvestigationStatus", value)
+-		}
+-		o.Status = cast
+-		return nil
+ 	default:
+ 		return fmt.Errorf("subresource '%s' does not exist", name)
+ 	}
+@@ -233,7 +220,6 @@ func (o *Investigation) DeepCopyInto(dst *Investigation) {
+ 	dst.TypeMeta.Kind = o.TypeMeta.Kind
+ 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
+ 	o.Spec.DeepCopyInto(&dst.Spec)
+-	o.Status.DeepCopyInto(&dst.Status)
+ }
+ 
+ // Interface compliance compile-time check
+@@ -305,15 +291,3 @@ func (s *InvestigationSpec) DeepCopy() *InvestigationSpec {
+ func (s *InvestigationSpec) DeepCopyInto(dst *InvestigationSpec) {
+ 	resource.CopyObjectInto(dst, s)
+ }
+-
+-// DeepCopy creates a full deep copy of InvestigationStatus
+-func (s *InvestigationStatus) DeepCopy() *InvestigationStatus {
+-	cpy := &InvestigationStatus{}
+-	s.DeepCopyInto(cpy)
+-	return cpy
+-}
+-
+-// DeepCopyInto deep copies InvestigationStatus into another InvestigationStatus object
+-func (s *InvestigationStatus) DeepCopyInto(dst *InvestigationStatus) {
+-	resource.CopyObjectInto(dst, s)
+-}
+diff --git a/apps/investigations/pkg/apis/investigations/v0alpha1/investigation_spec_gen.go b/apps/investigations/pkg/apis/investigations/v0alpha1/investigation_spec_gen.go
+index d56124603a2..88d74be54eb 100644
+--- a/apps/investigations/pkg/apis/investigations/v0alpha1/investigation_spec_gen.go
++++ b/apps/investigations/pkg/apis/investigations/v0alpha1/investigation_spec_gen.go
+@@ -84,7 +84,6 @@ func NewInvestigationViewMode() *InvestigationViewMode {
+ 	return &InvestigationViewMode{}
+ }
+ 
+-// spec is the schema of our resource
+ // +k8s:openapi-gen=true
+ type InvestigationSpec struct {
+ 	Title                 string              `json:"title"`
+diff --git a/apps/investigations/pkg/apis/investigations/v0alpha1/investigation_status_gen.go b/apps/investigations/pkg/apis/investigations/v0alpha1/investigation_status_gen.go
+deleted file mode 100644
+index c70224b96e4..00000000000
+--- a/apps/investigations/pkg/apis/investigations/v0alpha1/investigation_status_gen.go
++++ /dev/null
+@@ -1,44 +0,0 @@
+-// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+-
+-package v0alpha1
+-
+-// +k8s:openapi-gen=true
+-type InvestigationstatusOperatorState struct {
+-	// lastEvaluation is the ResourceVersion last evaluated
+-	LastEvaluation string `json:"lastEvaluation"`
+-	// state describes the state of the lastEvaluation.
+-	// It is limited to three possible states for machine evaluation.
+-	State InvestigationStatusOperatorStateState `json:"state"`
+-	// descriptiveState is an optional more descriptive state field which has no requirements on format
+-	DescriptiveState *string `json:"descriptiveState,omitempty"`
+-	// details contains any extra information that is operator-specific
+-	Details map[string]interface{} `json:"details,omitempty"`
+-}
+-
+-// NewInvestigationstatusOperatorState creates a new InvestigationstatusOperatorState object.
+-func NewInvestigationstatusOperatorState() *InvestigationstatusOperatorState {
+-	return &InvestigationstatusOperatorState{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type InvestigationStatus struct {
+-	// operatorStates is a map of operator ID to operator state evaluations.
+-	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+-	OperatorStates map[string]InvestigationstatusOperatorState `json:"operatorStates,omitempty"`
+-	// additionalFields is reserved for future use
+-	AdditionalFields map[string]interface{} `json:"additionalFields,omitempty"`
+-}
+-
+-// NewInvestigationStatus creates a new InvestigationStatus object.
+-func NewInvestigationStatus() *InvestigationStatus {
+-	return &InvestigationStatus{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type InvestigationStatusOperatorStateState string
+-
+-const (
+-	InvestigationStatusOperatorStateStateSuccess    InvestigationStatusOperatorStateState = "success"
+-	InvestigationStatusOperatorStateStateInProgress InvestigationStatusOperatorStateState = "in_progress"
+-	InvestigationStatusOperatorStateStateFailed     InvestigationStatusOperatorStateState = "failed"
+-)
+diff --git a/apps/investigations/pkg/apis/investigations/v0alpha1/investigationindex_client_gen.go b/apps/investigations/pkg/apis/investigations/v0alpha1/investigationindex_client_gen.go
+index 573d743b3cf..dafe3e1012e 100644
+--- a/apps/investigations/pkg/apis/investigations/v0alpha1/investigationindex_client_gen.go
++++ b/apps/investigations/pkg/apis/investigations/v0alpha1/investigationindex_client_gen.go
+@@ -4,7 +4,6 @@ import (
+ 	"context"
+ 
+ 	"github.com/grafana/grafana-app-sdk/resource"
+-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+ )
+ 
+ type InvestigationIndexClient struct {
+@@ -76,24 +75,6 @@ func (c *InvestigationIndexClient) Patch(ctx context.Context, identifier resourc
+ 	return c.client.Patch(ctx, identifier, req, opts)
+ }
+ 
+-func (c *InvestigationIndexClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus InvestigationIndexStatus, opts resource.UpdateOptions) (*InvestigationIndex, error) {
+-	return c.client.Update(ctx, &InvestigationIndex{
+-		TypeMeta: metav1.TypeMeta{
+-			Kind:       InvestigationIndexKind().Kind(),
+-			APIVersion: GroupVersion.Identifier(),
+-		},
+-		ObjectMeta: metav1.ObjectMeta{
+-			ResourceVersion: opts.ResourceVersion,
+-			Namespace:       identifier.Namespace,
+-			Name:            identifier.Name,
+-		},
+-		Status: newStatus,
+-	}, resource.UpdateOptions{
+-		Subresource:     "status",
+-		ResourceVersion: opts.ResourceVersion,
+-	})
+-}
+-
+ func (c *InvestigationIndexClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
+ 	return c.client.Delete(ctx, identifier, opts)
+ }
+diff --git a/apps/investigations/pkg/apis/investigations/v0alpha1/investigationindex_object_gen.go b/apps/investigations/pkg/apis/investigations/v0alpha1/investigationindex_object_gen.go
+index 67493201f05..b8272b4fae7 100644
+--- a/apps/investigations/pkg/apis/investigations/v0alpha1/investigationindex_object_gen.go
++++ b/apps/investigations/pkg/apis/investigations/v0alpha1/investigationindex_object_gen.go
+@@ -21,8 +21,6 @@ type InvestigationIndex struct {
+ 
+ 	// Spec is the spec of the InvestigationIndex
+ 	Spec InvestigationIndexSpec `json:"spec" yaml:"spec"`
+-
+-	Status InvestigationIndexStatus `json:"status" yaml:"status"`
+ }
+ 
+ func (o *InvestigationIndex) GetSpec() any {
+@@ -39,15 +37,11 @@ func (o *InvestigationIndex) SetSpec(spec any) error {
+ }
+ 
+ func (o *InvestigationIndex) GetSubresources() map[string]any {
+-	return map[string]any{
+-		"status": o.Status,
+-	}
++	return map[string]any{}
+ }
+ 
+ func (o *InvestigationIndex) GetSubresource(name string) (any, bool) {
+ 	switch name {
+-	case "status":
+-		return o.Status, true
+ 	default:
+ 		return nil, false
+ 	}
+@@ -55,13 +49,6 @@ func (o *InvestigationIndex) GetSubresource(name string) (any, bool) {
+ 
+ func (o *InvestigationIndex) SetSubresource(name string, value any) error {
+ 	switch name {
+-	case "status":
+-		cast, ok := value.(InvestigationIndexStatus)
+-		if !ok {
+-			return fmt.Errorf("cannot set status type %#v, not of type InvestigationIndexStatus", value)
+-		}
+-		o.Status = cast
+-		return nil
+ 	default:
+ 		return fmt.Errorf("subresource '%s' does not exist", name)
+ 	}
+@@ -233,7 +220,6 @@ func (o *InvestigationIndex) DeepCopyInto(dst *InvestigationIndex) {
+ 	dst.TypeMeta.Kind = o.TypeMeta.Kind
+ 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
+ 	o.Spec.DeepCopyInto(&dst.Spec)
+-	o.Status.DeepCopyInto(&dst.Status)
+ }
+ 
+ // Interface compliance compile-time check
+@@ -305,15 +291,3 @@ func (s *InvestigationIndexSpec) DeepCopy() *InvestigationIndexSpec {
+ func (s *InvestigationIndexSpec) DeepCopyInto(dst *InvestigationIndexSpec) {
+ 	resource.CopyObjectInto(dst, s)
+ }
+-
+-// DeepCopy creates a full deep copy of InvestigationIndexStatus
+-func (s *InvestigationIndexStatus) DeepCopy() *InvestigationIndexStatus {
+-	cpy := &InvestigationIndexStatus{}
+-	s.DeepCopyInto(cpy)
+-	return cpy
+-}
+-
+-// DeepCopyInto deep copies InvestigationIndexStatus into another InvestigationIndexStatus object
+-func (s *InvestigationIndexStatus) DeepCopyInto(dst *InvestigationIndexStatus) {
+-	resource.CopyObjectInto(dst, s)
+-}
+diff --git a/apps/investigations/pkg/apis/investigations_manifest.go b/apps/investigations/pkg/apis/investigations_manifest.go
+index 2d3e9c7bdd3..249e9b49758 100644
+--- a/apps/investigations/pkg/apis/investigations_manifest.go
++++ b/apps/investigations/pkg/apis/investigations_manifest.go
+@@ -20,10 +20,10 @@ import (
+ )
+ 
+ var (
+-	rawSchemaInvestigationv0alpha1          = []byte(`{"Collectable":{"additionalProperties":false,"description":"Collectable represents an item collected during investigation","properties":{"createdAt":{"type":"string"},"datasource":{"$ref":"#/components/schemas/DatasourceRef"},"fieldConfig":{"type":"string"},"id":{"type":"string"},"logoPath":{"type":"string"},"note":{"type":"string"},"noteUpdatedAt":{"type":"string"},"origin":{"type":"string"},"queries":{"description":"+listType=atomic","items":{"type":"string"},"type":"array"},"timeRange":{"$ref":"#/components/schemas/TimeRange"},"title":{"type":"string"},"type":{"type":"string"},"url":{"type":"string"}},"required":["id","createdAt","title","origin","type","queries","timeRange","datasource","url","note","noteUpdatedAt","fieldConfig"],"type":"object"},"DatasourceRef":{"additionalProperties":false,"description":"DatasourceRef is a reference to a datasource","properties":{"uid":{"type":"string"}},"required":["uid"],"type":"object"},"Investigation":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"Person":{"additionalProperties":false,"description":"Person represents a user profile with basic information","properties":{"gravatarUrl":{"description":"URL to user's Gravatar image","type":"string"},"name":{"description":"Display name of the user","type":"string"},"uid":{"description":"Unique identifier for the user","type":"string"}},"required":["uid","name","gravatarUrl"],"type":"object"},"TimeRange":{"additionalProperties":false,"description":"TimeRange represents a time range with both absolute and relative values","properties":{"from":{"type":"string"},"raw":{"additionalProperties":false,"properties":{"from":{"type":"string"},"to":{"type":"string"}},"required":["from","to"],"type":"object"},"to":{"type":"string"}},"required":["from","to","raw"],"type":"object"},"ViewMode":{"additionalProperties":false,"properties":{"mode":{"enum":["compact","full"],"type":"string"},"showComments":{"type":"boolean"},"showTooltips":{"type":"boolean"}},"required":["mode","showComments","showTooltips"],"type":"object"},"spec":{"additionalProperties":false,"description":"spec is the schema of our resource","properties":{"collectables":{"description":"+listType=atomic","items":{"$ref":"#/components/schemas/Collectable"},"type":"array"},"createdByProfile":{"$ref":"#/components/schemas/Person"},"hasCustomName":{"type":"boolean"},"isFavorite":{"type":"boolean"},"overviewNote":{"type":"string"},"overviewNoteUpdatedAt":{"type":"string"},"title":{"type":"string"},"viewMode":{"$ref":"#/components/schemas/ViewMode"}},"required":["title","createdByProfile","hasCustomName","isFavorite","overviewNote","overviewNoteUpdatedAt","collectables","viewMode"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
++	rawSchemaInvestigationv0alpha1          = []byte(`{"Collectable":{"additionalProperties":false,"description":"Collectable represents an item collected during investigation","properties":{"createdAt":{"type":"string"},"datasource":{"$ref":"#/components/schemas/DatasourceRef"},"fieldConfig":{"type":"string"},"id":{"type":"string"},"logoPath":{"type":"string"},"note":{"type":"string"},"noteUpdatedAt":{"type":"string"},"origin":{"type":"string"},"queries":{"description":"+listType=atomic","items":{"type":"string"},"type":"array"},"timeRange":{"$ref":"#/components/schemas/TimeRange"},"title":{"type":"string"},"type":{"type":"string"},"url":{"type":"string"}},"required":["id","createdAt","title","origin","type","queries","timeRange","datasource","url","note","noteUpdatedAt","fieldConfig"],"type":"object"},"DatasourceRef":{"additionalProperties":false,"description":"DatasourceRef is a reference to a datasource","properties":{"uid":{"type":"string"}},"required":["uid"],"type":"object"},"Investigation":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"Person":{"additionalProperties":false,"description":"Person represents a user profile with basic information","properties":{"gravatarUrl":{"description":"URL to user's Gravatar image","type":"string"},"name":{"description":"Display name of the user","type":"string"},"uid":{"description":"Unique identifier for the user","type":"string"}},"required":["uid","name","gravatarUrl"],"type":"object"},"TimeRange":{"additionalProperties":false,"description":"TimeRange represents a time range with both absolute and relative values","properties":{"from":{"type":"string"},"raw":{"additionalProperties":false,"properties":{"from":{"type":"string"},"to":{"type":"string"}},"required":["from","to"],"type":"object"},"to":{"type":"string"}},"required":["from","to","raw"],"type":"object"},"ViewMode":{"additionalProperties":false,"properties":{"mode":{"enum":["compact","full"],"type":"string"},"showComments":{"type":"boolean"},"showTooltips":{"type":"boolean"}},"required":["mode","showComments","showTooltips"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"collectables":{"description":"+listType=atomic","items":{"$ref":"#/components/schemas/Collectable"},"type":"array"},"createdByProfile":{"$ref":"#/components/schemas/Person"},"hasCustomName":{"type":"boolean"},"isFavorite":{"type":"boolean"},"overviewNote":{"type":"string"},"overviewNoteUpdatedAt":{"type":"string"},"title":{"type":"string"},"viewMode":{"$ref":"#/components/schemas/ViewMode"}},"required":["title","createdByProfile","hasCustomName","isFavorite","overviewNote","overviewNoteUpdatedAt","collectables","viewMode"],"type":"object"}}`)
+ 	versionSchemaInvestigationv0alpha1      app.VersionSchema
+ 	_                                       = json.Unmarshal(rawSchemaInvestigationv0alpha1, &versionSchemaInvestigationv0alpha1)
+-	rawSchemaInvestigationIndexv0alpha1     = []byte(`{"CollectableSummary":{"additionalProperties":false,"properties":{"id":{"type":"string"},"logoPath":{"type":"string"},"origin":{"type":"string"},"title":{"type":"string"}},"required":["id","title","logoPath","origin"],"type":"object"},"InvestigationIndex":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"InvestigationSummary":{"additionalProperties":false,"description":"Type definition for investigation summaries","properties":{"collectableSummaries":{"description":"+listType=atomic","items":{"$ref":"#/components/schemas/CollectableSummary"},"type":"array"},"createdByProfile":{"$ref":"#/components/schemas/Person"},"hasCustomName":{"type":"boolean"},"isFavorite":{"type":"boolean"},"overviewNote":{"type":"string"},"overviewNoteUpdatedAt":{"type":"string"},"title":{"type":"string"},"viewMode":{"$ref":"#/components/schemas/ViewMode"}},"required":["title","createdByProfile","hasCustomName","isFavorite","overviewNote","overviewNoteUpdatedAt","viewMode","collectableSummaries"],"type":"object"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"Person":{"additionalProperties":false,"description":"Person represents a user profile with basic information","properties":{"gravatarUrl":{"description":"URL to user's Gravatar image","type":"string"},"name":{"description":"Display name of the user","type":"string"},"uid":{"description":"Unique identifier for the user","type":"string"}},"required":["uid","name","gravatarUrl"],"type":"object"},"ViewMode":{"additionalProperties":false,"properties":{"mode":{"enum":["compact","full"],"type":"string"},"showComments":{"type":"boolean"},"showTooltips":{"type":"boolean"}},"required":["mode","showComments","showTooltips"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"investigationSummaries":{"description":"Array of investigation summaries\n+listType=atomic","items":{"$ref":"#/components/schemas/InvestigationSummary"},"type":"array"},"owner":{"$ref":"#/components/schemas/Person","description":"The Person who owns this investigation index"},"title":{"description":"Title of the index, e.g. 'Favorites' or 'My Investigations'","type":"string"}},"required":["title","owner","investigationSummaries"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
++	rawSchemaInvestigationIndexv0alpha1     = []byte(`{"CollectableSummary":{"additionalProperties":false,"properties":{"id":{"type":"string"},"logoPath":{"type":"string"},"origin":{"type":"string"},"title":{"type":"string"}},"required":["id","title","logoPath","origin"],"type":"object"},"InvestigationIndex":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"InvestigationSummary":{"additionalProperties":false,"description":"Type definition for investigation summaries","properties":{"collectableSummaries":{"description":"+listType=atomic","items":{"$ref":"#/components/schemas/CollectableSummary"},"type":"array"},"createdByProfile":{"$ref":"#/components/schemas/Person"},"hasCustomName":{"type":"boolean"},"isFavorite":{"type":"boolean"},"overviewNote":{"type":"string"},"overviewNoteUpdatedAt":{"type":"string"},"title":{"type":"string"},"viewMode":{"$ref":"#/components/schemas/ViewMode"}},"required":["title","createdByProfile","hasCustomName","isFavorite","overviewNote","overviewNoteUpdatedAt","viewMode","collectableSummaries"],"type":"object"},"Person":{"additionalProperties":false,"description":"Person represents a user profile with basic information","properties":{"gravatarUrl":{"description":"URL to user's Gravatar image","type":"string"},"name":{"description":"Display name of the user","type":"string"},"uid":{"description":"Unique identifier for the user","type":"string"}},"required":["uid","name","gravatarUrl"],"type":"object"},"ViewMode":{"additionalProperties":false,"properties":{"mode":{"enum":["compact","full"],"type":"string"},"showComments":{"type":"boolean"},"showTooltips":{"type":"boolean"}},"required":["mode","showComments","showTooltips"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"investigationSummaries":{"description":"Array of investigation summaries\n+listType=atomic","items":{"$ref":"#/components/schemas/InvestigationSummary"},"type":"array"},"owner":{"$ref":"#/components/schemas/Person","description":"The Person who owns this investigation index"},"title":{"description":"Title of the index, e.g. 'Favorites' or 'My Investigations'","type":"string"}},"required":["title","owner","investigationSummaries"],"type":"object"}}`)
+ 	versionSchemaInvestigationIndexv0alpha1 app.VersionSchema
+ 	_                                       = json.Unmarshal(rawSchemaInvestigationIndexv0alpha1, &versionSchemaInvestigationIndexv0alpha1)
+ )

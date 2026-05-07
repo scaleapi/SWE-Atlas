@@ -1,0 +1,9 @@
+{
+  "task_id": "69d196f015a150488265afb6",
+  "repo": "secdev_scapy",
+  "base_commit": "0d7b970af5c15e079cec86ab370aacb7e43950d3",
+  "language": "Python",
+  "mount_path": "/app",
+  "initial_complexity": "Mid",
+  "uid": "0f1a823e-3191-4800-a0ea-b9cfccb19f64"
+}

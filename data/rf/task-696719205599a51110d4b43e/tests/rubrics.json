@@ -1,0 +1,146 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "da233a07b6db4041099aea24cd0206bf",
+    "title": "1.1: Renames the wrapped field in parsingState struct in js/compiler/compiler.go to indicate CommonJS module wrapping",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "bc338a135de74b572f86aef34f53402c",
+    "title": "1.2: Renames the wrap parameter in Parse function in js/compiler/compiler.go to indicate CommonJS module wrapping",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6d781901a870016c13aeb022163e9468",
+    "title": "1.3: Renames the wrap parameter in parseImpl function in js/compiler/compiler.go to indicate CommonJS module wrapping",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e8ddc417b8cb7613c243f15d9d04a249",
+    "title": "1.4: Removes the unused Strict field from the Options struct in js/compiler/compiler.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7119ce8ead1c92d7d790ff63bc22a009",
+    "title": "1.5: Removes the Strict field usage from compiler Options instantiation in js/bundle.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e38daf11f8ebd661041b41f0ce881b1d",
+    "title": "1.6: Renames the sourceMapURLFromBabel constant in js/compiler/compiler.go to remove the Babel reference",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8049bc94f7977d9665967ceaba4b391b",
+    "title": "1.7: Removes the Babel reference from user-facing compatibility mode help text in cmd/runtime_options.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d6e4cdfb1e406839d234709fd9a267c7",
+    "title": "1.8: Removes both Babel references from the package documentation in js/compiler/compiler.go (package doc comment, sourceMapLoader comment)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e8821eb2214270dba1a1f16267421841",
+    "title": "1.9: Removes both Babel references from compatibility mode comments in lib/runtime_options.go (CompatibilityModeExtended comment, RuntimeOptions CompatibilityMode comment)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "51d5c14f7ed5d9910c57efa08eddb968",
+    "title": "1.10: Removes both Babel references from js/tc39/README.md (\"Sobek+babel\" in introduction, \"k6 add babel to the mix\" in last paragraph)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6f0ccf8539336116c5f288d2e83d126d",
+    "title": "3.1: Removes the redundant logger field from parsingState struct in js/compiler/compiler.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e5332e0324c95d2f19a9db58c80bc576",
+    "title": "4.1: Deletes the Parse function from js/compiler/compiler.go entirely",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "25388e1a2d468f0189a05d02b0acef6b",
+    "title": "4.2: Deletes the sourceMapLoader method from js/compiler/compiler.go entirely",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0d3ba8153dac24442bb25550ad8610b1",
+    "title": "4.3: Deletes the wrap method from js/compiler/compiler.go entirely",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

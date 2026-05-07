@@ -1,0 +1,74 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7f7008839caae10ad3f6de77a4e085fc",
+    "title": "1.1: Creates a getOrAdd method on cache that handles both intermediate map levels (org-level and rule-level) internally when adding state",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b9e5bacb3d08d10d953bb9994b5b047e",
+    "title": "1.2: Refactors Warm() in manager.go to delegate state storage to the cache via getOrAdd for each alert instance loaded from the database",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "cb4de02b9ada45fd340edddf3a24404a",
+    "title": "1.3: Preserves get-or-add semantics in getOrAdd by returning the existing state when a state with the same cache identity already exists",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "21605bac5e69d19dad6154318a2cdcff",
+    "title": "3.1: Removes the unused setAllStates method from the cache after refactoring",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9635864803bc06d5c03da98642f3b791",
+    "title": "4.1: Drops or omits any of the 13 alert instance fields (AlertRuleUID, OrgID, CacheID, Labels, State, StateReason, StartsAt, EndsAt, LastEvaluationTime, Annotations, ...) during warmup restoration",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

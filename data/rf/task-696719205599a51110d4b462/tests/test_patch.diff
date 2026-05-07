@@ -1,0 +1,143 @@
+diff --git a/pkg/registry/apis/iam/register_test.go b/pkg/registry/apis/iam/register_test.go
+new file mode 100644
+index 00000000000..87cf06959de
+--- /dev/null
++++ b/pkg/registry/apis/iam/register_test.go
+@@ -0,0 +1,137 @@
++package iam
++
++import (
++	"reflect"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++
++	"github.com/grafana/grafana/pkg/infra/log"
++)
++
++func TestBuilderStandaloneMode_ZeroValue(t *testing.T) {
++	t.Parallel()
++	b := &IdentityAccessManagementAPIBuilder{
++		logger: log.NewNopLogger(),
++	}
++	require.NotNil(t, b)
++
++	assert.Nil(t, b.externalGroupMappingStorage,
++		"standalone builder should not require externalGroupMappingStorage")
++}
++
++func TestBuilderDoesNotHaveEnableDualWriterField(t *testing.T) {
++	t.Parallel()
++	rt := reflect.TypeOf(IdentityAccessManagementAPIBuilder{})
++	_, found := rt.FieldByName("enableDualWriter")
++	assert.False(t, found, "IdentityAccessManagementAPIBuilder should not have enableDualWriter field")
++}
++
++func TestBuilderHasLegacyStoreTracking(t *testing.T) {
++	t.Parallel()
++	rt := reflect.TypeOf(IdentityAccessManagementAPIBuilder{})
++
++	legacyStoreFieldCount := 0
++	for i := 0; i < rt.NumField(); i++ {
++		field := rt.Field(i)
++		if field.Type.Kind() == reflect.Ptr && field.Type.Elem().Kind() == reflect.Struct {
++			name := field.Type.Elem().Name()
++			if name == "LegacyStore" || name == "LegacyBindingStore" {
++				legacyStoreFieldCount++
++			}
++		}
++	}
++
++	assert.GreaterOrEqual(t, legacyStoreFieldCount, 3,
++		"builder should track at least 3 legacy stores for conditional dual-write")
++}
++
++func TestBuilderStandalone_NilLegacyStoresAllowed(t *testing.T) {
++	t.Parallel()
++	b := &IdentityAccessManagementAPIBuilder{
++		logger: log.NewNopLogger(),
++	}
++
++	rv := reflect.ValueOf(b).Elem()
++	rt := rv.Type()
++
++	for i := 0; i < rt.NumField(); i++ {
++		field := rt.Field(i)
++		if field.Type.Kind() == reflect.Ptr && field.Type.Elem().Kind() == reflect.Struct {
++			name := field.Type.Elem().Name()
++			if name == "LegacyStore" || name == "LegacyBindingStore" {
++				assert.True(t, rv.Field(i).IsNil(),
++					"legacy store field %q should be nil in standalone mode", field.Name)
++			}
++		}
++	}
++}
++
++func TestBuilderResourcePermissionsStorageOptional(t *testing.T) {
++	t.Parallel()
++	b := &IdentityAccessManagementAPIBuilder{
++		logger: log.NewNopLogger(),
++	}
++
++	assert.Nil(t, b.resourcePermissionsStorage,
++		"resourcePermissionsStorage should be nil when not configured")
++}
++
++func TestBuilderLegacyStoreFieldsArePointerTypes(t *testing.T) {
++	t.Parallel()
++	rt := reflect.TypeOf(IdentityAccessManagementAPIBuilder{})
++
++	for i := 0; i < rt.NumField(); i++ {
++		field := rt.Field(i)
++		if field.Type.Kind() == reflect.Ptr && field.Type.Elem().Kind() == reflect.Struct {
++			name := field.Type.Elem().Name()
++			if name == "LegacyStore" || name == "LegacyBindingStore" {
++				assert.Equal(t, reflect.Ptr, field.Type.Kind(),
++					"legacy store field %q should be a pointer type for nil-check conditional dual-write", field.Name)
++			}
++		}
++	}
++}
++
++func TestBuilderSSOLegacyStoreField(t *testing.T) {
++	t.Parallel()
++	rt := reflect.TypeOf(IdentityAccessManagementAPIBuilder{})
++
++	hasSSOLegacyStore := false
++	for i := 0; i < rt.NumField(); i++ {
++		field := rt.Field(i)
++		if field.Type.Kind() == reflect.Ptr && field.Type.Elem().Kind() == reflect.Struct {
++			if field.Type.Elem().Name() == "LegacyStore" &&
++				field.Type.Elem().PkgPath() == "github.com/grafana/grafana/pkg/registry/apis/iam/sso" {
++				hasSSOLegacyStore = true
++				break
++			}
++		}
++	}
++
++	assert.True(t, hasSSOLegacyStore,
++		"builder should have an SSO legacy store field from the sso package")
++}
++
++func TestUpdateResourcePermissionsAPIGroupSignature(t *testing.T) {
++	t.Parallel()
++	rt := reflect.TypeOf(&IdentityAccessManagementAPIBuilder{})
++
++	method, found := rt.MethodByName("UpdateResourcePermissionsAPIGroup")
++	require.True(t, found, "UpdateResourcePermissionsAPIGroup method should exist")
++
++	mt := method.Type
++	// reflect includes the receiver as the first parameter
++	// old signature: (receiver, apiGroupInfo, opts, storage, enableDualWriter, enableZanzanaSync) = 6
++	// new signature: (receiver, apiGroupInfo, opts, storage, enableZanzanaSync) = 5
++	assert.Equal(t, 5, mt.NumIn(),
++		"UpdateResourcePermissionsAPIGroup should have 4 parameters (excluding receiver); enableDualWriter should be removed")
++
++	for i := 1; i < mt.NumIn(); i++ {
++		if mt.In(i).Kind() == reflect.Bool {
++			assert.Equal(t, mt.NumIn()-1, i,
++				"the only bool parameter should be the last one (enableZanzanaSync), not an earlier enableDualWriter")
++		}
++	}
++}

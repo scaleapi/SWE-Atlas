@@ -1,0 +1,645 @@
+diff --git a/pkg/gitparse/gitparse_test.go b/pkg/gitparse/gitparse_test.go
+index df2cfbfd2..293973fc3 100644
+--- a/pkg/gitparse/gitparse_test.go
++++ b/pkg/gitparse/gitparse_test.go
+@@ -6,9 +6,8 @@ import (
+ 	"testing"
+ 	"time"
+ 
+-	"github.com/stretchr/testify/assert"
+-
+ 	"github.com/trufflesecurity/trufflehog/v3/pkg/context"
++	bufferwriter "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffer_writer"
+ 	bufferedfilewriter "github.com/trufflesecurity/trufflehog/v3/pkg/writers/buffered_file_writer"
+ )
+ 
+@@ -674,18 +673,20 @@ func TestCommitParsing(t *testing.T) {
+ }
+ 
+ func newBufferedFileWriterWithContent(content []byte) *bufferedfilewriter.BufferedFileWriter {
+-	b := bufferedfilewriter.New()
+-	_, err := b.Write(context.Background(), content) // Using Write method to add content
++	ctx := context.Background()
++	b := bufferedfilewriter.New(ctx)
++	_, err := b.Write(ctx, content) // Using Write method to add content
+ 	if err != nil {
+ 		panic(err)
+ 	}
+ 	return b
+ }
+ 
+-func newBufferWithContent(content []byte) *buffer {
+-	var b buffer
+-	_, _ = b.Write(context.Background(), content) // Using Write method to add content
+-	return &b
++func newBufferWithContent(content []byte) *bufferwriter.BufferWriter {
++	ctx := context.Background()
++	b := bufferwriter.New(ctx)
++	_, _ = b.Write(ctx, content) // Using Write method to add content
++	return b
+ }
+ 
+ func TestStagedDiffParsing(t *testing.T) {
+@@ -2292,32 +2293,3 @@ index 2ee133b..12b4843 100644
+ +output = json
+ +region = us-east-2
+ `
+-
+-func TestBufferWriterStateTransitionOnClose(t *testing.T) {
+-	t.Parallel()
+-	writer := new(buffer)
+-
+-	// Initially, the writer should be in write-only mode.
+-	assert.Equal(t, writeOnly, writer.state)
+-
+-	// Perform some write operation.
+-	_, err := writer.Write(context.Background(), []byte("test data"))
+-	assert.NoError(t, err)
+-
+-	// Close the writer.
+-	err = writer.CloseForWriting()
+-	assert.NoError(t, err)
+-
+-	// After closing, the writer should be in read-only mode.
+-	assert.Equal(t, readOnly, writer.state)
+-}
+-
+-func TestBufferWriterWriteInReadOnlyState(t *testing.T) {
+-	t.Parallel()
+-	writer := new(buffer)
+-	_ = writer.CloseForWriting() // Transition to read-only mode
+-
+-	// Attempt to write in read-only mode.
+-	_, err := writer.Write(context.Background(), []byte("should fail"))
+-	assert.Error(t, err)
+-}
+diff --git a/pkg/writers/buffer/buffer_test.go b/pkg/writers/buffer/buffer_test.go
+new file mode 100644
+index 000000000..da40e6ce0
+--- /dev/null
++++ b/pkg/writers/buffer/buffer_test.go
+@@ -0,0 +1,207 @@
++package buffer
++
++import (
++	"bytes"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/context"
++)
++
++func TestNewBufferPool(t *testing.T) {
++	t.Parallel()
++	tests := []struct {
++		name             string
++		opts             []PoolOpts
++		expectedBuffSize uint32
++	}{
++		{name: "Default pool size", expectedBuffSize: defaultBufferSize},
++		{
++			name:             "Custom pool size",
++			opts:             []PoolOpts{func(p *Pool) { p.bufferSize = 8 * 1024 }}, // 8KB
++			expectedBuffSize: 8 * 1024,
++		},
++	}
++
++	for _, tc := range tests {
++		tc := tc
++		t.Run(tc.name, func(t *testing.T) {
++			t.Parallel()
++			pool := NewBufferPool(tc.opts...)
++			assert.Equal(t, tc.expectedBuffSize, pool.bufferSize)
++		})
++	}
++}
++
++func TestBufferPoolGetPut(t *testing.T) {
++	t.Parallel()
++	tests := []struct {
++		name              string
++		preparePool       func(p *Pool) *Buffer // Prepare the pool and return an initial buffer to put if needed
++		expectedCapBefore int                   // Expected capacity before putting it back
++		expectedCapAfter  int                   // Expected capacity after retrieving it again
++	}{
++		{
++			name: "Get new buffer and put back without modification",
++			preparePool: func(_ *Pool) *Buffer {
++				return nil // No initial buffer to put
++			},
++			expectedCapBefore: int(defaultBufferSize),
++			expectedCapAfter:  int(defaultBufferSize),
++		},
++		{
++			name: "Put oversized buffer, expect shrink",
++			preparePool: func(p *Pool) *Buffer {
++				buf := &Buffer{Buffer: bytes.NewBuffer(make([]byte, 0, 3*defaultBufferSize))}
++				return buf
++			},
++			expectedCapBefore: int(defaultBufferSize),
++			expectedCapAfter:  int(defaultBufferSize), // Should shrink back to default
++		},
++	}
++
++	for _, tc := range tests {
++		tc := tc
++		t.Run(tc.name, func(t *testing.T) {
++			t.Parallel()
++			pool := NewBufferPool()
++			initialBuf := tc.preparePool(pool)
++			if initialBuf != nil {
++				pool.Put(initialBuf)
++			}
++
++			buf := pool.Get(context.Background())
++			assert.Equal(t, tc.expectedCapBefore, buf.Cap())
++
++			pool.Put(buf)
++
++			bufAfter := pool.Get(context.Background())
++			assert.Equal(t, tc.expectedCapAfter, bufAfter.Cap())
++		})
++	}
++}
++
++func TestBufferWrite(t *testing.T) {
++	t.Parallel()
++	tests := []struct {
++		name              string
++		initialCapacity   int
++		writeDataSequence [][]byte // Sequence of writes to simulate multiple writes
++		expectedSize      int
++		expectedCap       int
++	}{
++		{
++			name:            "Write to empty buffer",
++			initialCapacity: defaultBufferSize,
++			writeDataSequence: [][]byte{
++				[]byte("hello"),
++			},
++			expectedSize: 5,
++			expectedCap:  defaultBufferSize, // No growth for small data
++		},
++		{
++			name:            "Write causing growth",
++			initialCapacity: 10, // Small initial capacity to force growth
++			writeDataSequence: [][]byte{
++				[]byte("this is a longer string exceeding initial capacity"),
++			},
++			expectedSize: 50,
++			expectedCap:  50,
++		},
++		{
++			name:              "Write nil data",
++			initialCapacity:   defaultBufferSize,
++			writeDataSequence: [][]byte{nil},
++			expectedCap:       defaultBufferSize,
++		},
++		{
++			name:            "Repeated writes, cumulative growth",
++			initialCapacity: 20, // Set an initial capacity to test growth over multiple writes
++			writeDataSequence: [][]byte{
++				[]byte("first write, "),
++				[]byte("second write, "),
++				[]byte("third write exceeding the initial capacity."),
++			},
++			expectedSize: 70,
++			expectedCap:  70, // Expect capacity to grow to accommodate all writes
++		},
++		{
++			name:            "Write large single data to test significant growth",
++			initialCapacity: 50, // Set an initial capacity smaller than the data to be written
++			writeDataSequence: [][]byte{
++				bytes.Repeat([]byte("a"), 1024), // 1KB data to significantly exceed initial capacity
++			},
++			expectedSize: 1024,
++			expectedCap:  1024,
++		},
++	}
++
++	for _, tc := range tests {
++		tc := tc
++		t.Run(tc.name, func(t *testing.T) {
++			t.Parallel()
++			buf := &Buffer{Buffer: bytes.NewBuffer(make([]byte, 0, tc.initialCapacity))}
++			totalWritten := 0
++			for _, data := range tc.writeDataSequence {
++				n, err := buf.Write(context.Background(), data)
++				assert.NoError(t, err)
++
++				totalWritten += n
++			}
++			assert.Equal(t, tc.expectedSize, totalWritten)
++			assert.Equal(t, tc.expectedSize, buf.Len())
++			assert.GreaterOrEqual(t, buf.Cap(), tc.expectedCap)
++		})
++	}
++}
++
++func TestReadCloserClose(t *testing.T) {
++	t.Parallel()
++	onCloseCalled := false
++	rc := ReadCloser([]byte("data"), func() { onCloseCalled = true })
++
++	err := rc.Close()
++	assert.NoError(t, err)
++	assert.True(t, onCloseCalled, "onClose callback should be called upon Close")
++}
++
++func TestBufferGrow(t *testing.T) {
++	t.Parallel()
++	buf := NewBuffer()
++
++	buf.Grow(8192)
++	assert.GreaterOrEqual(t, buf.Cap(), 8192)
++}
++
++func TestBufferWriteWithNilBuffer(t *testing.T) {
++	t.Parallel()
++	buf := &Buffer{}
++	n, err := buf.Write(context.Background(), []byte("hello"))
++	assert.NoError(t, err)
++	assert.Equal(t, 5, n)
++	assert.Equal(t, 5, buf.Len())
++}
++
++func TestPoolPutShrinkOversized(t *testing.T) {
++	t.Parallel()
++	pool := NewBufferPool()
++	buf := pool.Get(context.Background())
++
++	largeData := bytes.Repeat([]byte("x"), 3*defaultBufferSize)
++	_, err := buf.Write(context.Background(), largeData)
++	assert.NoError(t, err)
++	assert.True(t, buf.Cap() > 2*defaultBufferSize)
++
++	pool.Put(buf)
++
++	newBuf := pool.Get(context.Background())
++	assert.Equal(t, int(defaultBufferSize), newBuf.Cap())
++}
++
++func TestReadCloserNilOnClose(t *testing.T) {
++	t.Parallel()
++	rc := ReadCloser([]byte("data"), nil)
++	err := rc.Close()
++	assert.NoError(t, err)
++}
+diff --git a/pkg/writers/buffer_writer/bufferwriter_test.go b/pkg/writers/buffer_writer/bufferwriter_test.go
+new file mode 100644
+index 000000000..8cb8376a8
+--- /dev/null
++++ b/pkg/writers/buffer_writer/bufferwriter_test.go
+@@ -0,0 +1,194 @@
++package bufferwriter
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/trufflesecurity/trufflehog/v3/pkg/context"
++)
++
++func TestBufferWriterWrite(t *testing.T) {
++	t.Parallel()
++	tests := []struct {
++		name          string
++		input         []byte
++		initialState  state
++		expectedError bool
++		expectedSize  int
++	}{
++		{
++			name:         "Write in writeOnly state with empty input",
++			input:        []byte(""),
++			initialState: writeOnly,
++		},
++		{
++			name:          "Write in writeOnly state with non-empty input",
++			input:         []byte("hello"),
++			initialState:  writeOnly,
++			expectedError: false,
++			expectedSize:  5,
++		},
++		{
++			name:          "Attempt to write in readOnly state",
++			input:         []byte("hello"),
++			initialState:  readOnly,
++			expectedError: true,
++		},
++	}
++
++	for _, tc := range tests {
++		tc := tc
++		t.Run(tc.name, func(t *testing.T) {
++			t.Parallel()
++			writer := New(context.Background())
++			writer.state = tc.initialState
++
++			_, err := writer.Write(context.Background(), tc.input)
++			if tc.expectedError {
++				assert.Error(t, err)
++			} else {
++				assert.NoError(t, err)
++				assert.Equal(t, tc.expectedSize, writer.Len())
++			}
++		})
++	}
++}
++
++func TestBufferWriterReadCloser(t *testing.T) {
++	t.Parallel()
++	tests := []struct {
++		name          string
++		initialState  state
++		expectedError bool
++	}{
++		{
++			name:          "Get ReadCloser in writeOnly state",
++			initialState:  writeOnly,
++			expectedError: true,
++		},
++		{
++			name:         "Get ReadCloser in readOnly state",
++			initialState: readOnly,
++		},
++	}
++
++	for _, tc := range tests {
++		tc := tc
++		t.Run(tc.name, func(t *testing.T) {
++			t.Parallel()
++			writer := New(context.Background())
++			writer.state = tc.initialState
++
++			rc, err := writer.ReadCloser()
++			if tc.expectedError {
++				assert.Error(t, err)
++			} else {
++				assert.NoError(t, err)
++				assert.NotNil(t, rc)
++
++				// Test that the ReadCloser can be closed.
++				err = rc.Close()
++				assert.NoError(t, err)
++			}
++		})
++	}
++}
++
++func TestBufferWriterCloseForWriting(t *testing.T) {
++	writer := New(context.Background())
++	err := writer.CloseForWriting()
++	assert.NoError(t, err)
++	assert.Equal(t, readOnly, writer.state)
++}
++
++func TestBufferWriterString(t *testing.T) {
++	t.Parallel()
++	tests := []struct {
++		name          string
++		prepareBuffer func(*BufferWriter) // Function to prepare the buffer with data or state
++		expectedStr   string
++		expectedError bool
++	}{
++		{
++			name: "String with no data",
++			prepareBuffer: func(_ *BufferWriter) {
++				// No preparation needed, buffer is empty by default
++			},
++			expectedStr:   "",
++			expectedError: false,
++		},
++		{
++			name: "String with data",
++			prepareBuffer: func(bw *BufferWriter) {
++				_, _ = bw.Write(context.Background(), []byte("test data"))
++			},
++			expectedStr:   "test data",
++			expectedError: false,
++		},
++		{
++			name: "Buffer is nil",
++			prepareBuffer: func(bw *BufferWriter) {
++				bw.buf = nil
++			},
++			expectedStr:   "",
++			expectedError: true,
++		},
++	}
++
++	for _, tc := range tests {
++		tc := tc
++		t.Run(tc.name, func(t *testing.T) {
++			t.Parallel()
++			writer := New(context.Background())
++			tc.prepareBuffer(writer)
++
++			result, err := writer.String()
++			if tc.expectedError {
++				assert.Error(t, err)
++			} else {
++				assert.NoError(t, err)
++				assert.Equal(t, tc.expectedStr, result)
++			}
++		})
++	}
++}
++
++func TestBufferWriterLen(t *testing.T) {
++	t.Parallel()
++	writer := New(context.Background())
++
++	_, err := writer.Write(context.Background(), []byte("hello"))
++	assert.NoError(t, err)
++	assert.Equal(t, 5, writer.Len())
++
++	_, err = writer.Write(context.Background(), []byte(" world"))
++	assert.NoError(t, err)
++	assert.Equal(t, 11, writer.Len())
++}
++
++func TestBufferWriterLifecycle(t *testing.T) {
++	t.Parallel()
++	ctx := context.Background()
++	writer := New(ctx)
++
++	data := []byte("lifecycle test data")
++	n, err := writer.Write(ctx, data)
++	assert.NoError(t, err)
++	assert.Equal(t, len(data), n)
++	assert.Equal(t, len(data), writer.Len())
++
++	str, err := writer.String()
++	assert.NoError(t, err)
++	assert.Equal(t, "lifecycle test data", str)
++
++	err = writer.CloseForWriting()
++	assert.NoError(t, err)
++
++	rc, err := writer.ReadCloser()
++	assert.NoError(t, err)
++	assert.NotNil(t, rc)
++
++	err = rc.Close()
++	assert.NoError(t, err)
++}
+diff --git a/pkg/writers/buffered_file_writer/bufferedfilewriter_test.go b/pkg/writers/buffered_file_writer/bufferedfilewriter_test.go
+index 1dcc07e69..9d6da38b8 100644
+--- a/pkg/writers/buffered_file_writer/bufferedfilewriter_test.go
++++ b/pkg/writers/buffered_file_writer/bufferedfilewriter_test.go
+@@ -32,7 +32,7 @@ func TestBufferedFileWriterNewThreshold(t *testing.T) {
+ 		tc := tc
+ 		t.Run(tc.name, func(t *testing.T) {
+ 			t.Parallel()
+-			writer := New(tc.options...)
++			writer := New(context.Background(), tc.options...)
+ 			assert.Equal(t, tc.expectedThreshold, writer.threshold)
+ 			// The state should always be writeOnly when created.
+ 			assert.Equal(t, writeOnly, writer.state)
+@@ -77,7 +77,7 @@ func TestBufferedFileWriterString(t *testing.T) {
+ 		t.Run(tc.name, func(t *testing.T) {
+ 			t.Parallel()
+ 			ctx := context.Background()
+-			writer := New(WithThreshold(tc.threshold))
++			writer := New(ctx, WithThreshold(tc.threshold))
+ 			// First write, should go to file if it exceeds the threshold.
+ 			_, err := writer.Write(ctx, tc.input)
+ 			assert.NoError(t, err)
+@@ -109,7 +109,7 @@ func BenchmarkBufferedFileWriterString_BufferOnly_Small(b *testing.B) {
+ 	data := bytes.Repeat([]byte("a"), smallBuffer)
+ 
+ 	ctx := context.Background()
+-	writer := New()
++	writer := New(ctx)
+ 
+ 	_, err := writer.Write(ctx, data)
+ 	assert.NoError(b, err)
+@@ -127,7 +127,7 @@ func BenchmarkBufferedFileWriterString_BufferOnly_Small(b *testing.B) {
+ func BenchmarkBufferedFileWriterString_BufferOnly_Medium(b *testing.B) {
+ 	data := bytes.Repeat([]byte("a"), mediumBuffer)
+ 	ctx := context.Background()
+-	writer := New()
++	writer := New(ctx)
+ 
+ 	_, err := writer.Write(ctx, data)
+ 	assert.NoError(b, err)
+@@ -146,7 +146,7 @@ func BenchmarkBufferedFileWriterString_OnlyFile_Small(b *testing.B) {
+ 	data := bytes.Repeat([]byte("a"), smallFile)
+ 
+ 	ctx := context.Background()
+-	writer := New()
++	writer := New(ctx)
+ 
+ 	_, err := writer.Write(ctx, data)
+ 	assert.NoError(b, err)
+@@ -165,7 +165,7 @@ func BenchmarkBufferedFileWriterString_OnlyFile_Medium(b *testing.B) {
+ 	data := bytes.Repeat([]byte("a"), mediumFile)
+ 
+ 	ctx := context.Background()
+-	writer := New()
++	writer := New(ctx)
+ 
+ 	_, err := writer.Write(ctx, data)
+ 	assert.NoError(b, err)
+@@ -184,7 +184,7 @@ func BenchmarkBufferedFileWriterString_BufferWithFile_Small(b *testing.B) {
+ 	data := bytes.Repeat([]byte("a"), smallFile)
+ 
+ 	ctx := context.Background()
+-	writer := New()
++	writer := New(ctx)
+ 
+ 	_, err := writer.Write(ctx, data)
+ 	assert.NoError(b, err)
+@@ -207,7 +207,7 @@ func BenchmarkBufferedFileWriterString_BufferWithFile_Medium(b *testing.B) {
+ 	data := bytes.Repeat([]byte("a"), mediumFile)
+ 
+ 	ctx := context.Background()
+-	writer := New()
++	writer := New(ctx)
+ 
+ 	_, err := writer.Write(ctx, data)
+ 	assert.NoError(b, err)
+@@ -252,7 +252,7 @@ func TestBufferedFileWriterLen(t *testing.T) {
+ 		tc := tc
+ 		t.Run(tc.name, func(t *testing.T) {
+ 			t.Parallel()
+-			writer := New()
++			writer := New(context.Background())
+ 			_, err := writer.Write(context.Background(), tc.input)
+ 			assert.NoError(t, err)
+ 
+@@ -270,7 +270,7 @@ func TestBufferedFileWriterWriteWithinThreshold(t *testing.T) {
+ 	ctx := context.Background()
+ 	data := []byte("hello world")
+ 
+-	writer := New(WithThreshold(64))
++	writer := New(ctx, WithThreshold(64))
+ 	_, err := writer.Write(ctx, data)
+ 	assert.NoError(t, err)
+ 
+@@ -285,7 +285,7 @@ func TestBufferedFileWriterWriteExceedsThreshold(t *testing.T) {
+ 	ctx := context.Background()
+ 	data := []byte("hello world")
+ 
+-	writer := New(WithThreshold(5))
++	writer := New(ctx, WithThreshold(5))
+ 	_, err := writer.Write(ctx, data)
+ 	assert.NoError(t, err)
+ 
+@@ -311,7 +311,7 @@ func TestBufferedFileWriterWriteAfterFlush(t *testing.T) {
+ 	subsequentData := []byte("subsequent data")
+ 
+ 	// Initialize writer with a threshold that initialData will exceed.
+-	writer := New(WithThreshold(uint64(len(initialData) - 1)))
++	writer := New(ctx, WithThreshold(uint64(len(initialData)-1)))
+ 	_, err := writer.Write(ctx, initialData)
+ 	assert.NoError(t, err)
+ 
+@@ -398,7 +398,7 @@ func TestBufferedFileWriterClose(t *testing.T) {
+ 		tc := tc
+ 		t.Run(tc.name, func(t *testing.T) {
+ 			t.Parallel()
+-			writer := New(WithThreshold(threshold))
++			writer := New(ctx, WithThreshold(threshold))
+ 
+ 			tc.prepareWriter(writer)
+ 
+@@ -420,7 +420,7 @@ func TestBufferedFileWriterClose(t *testing.T) {
+ 
+ func TestBufferedFileWriterStateTransitionOnClose(t *testing.T) {
+ 	t.Parallel()
+-	writer := New()
++	writer := New(context.Background())
+ 
+ 	// Initially, the writer should be in write-only mode.
+ 	assert.Equal(t, writeOnly, writer.state)
+@@ -439,7 +439,7 @@ func TestBufferedFileWriterStateTransitionOnClose(t *testing.T) {
+ 
+ func TestBufferedFileWriterWriteInReadOnlyState(t *testing.T) {
+ 	t.Parallel()
+-	writer := New()
++	writer := New(context.Background())
+ 	_ = writer.CloseForWriting() // Transition to read-only mode
+ 
+ 	// Attempt to write in read-only mode.
+@@ -458,7 +458,7 @@ func BenchmarkBufferedFileWriterWriteLarge(b *testing.B) {
+ 
+ 	for i := 0; i < b.N; i++ {
+ 		// Threshold is smaller than the data size, data should get flushed to the file.
+-		writer := New(WithThreshold(1024))
++		writer := New(ctx, WithThreshold(1024))
+ 
+ 		b.StartTimer()
+ 		{
+@@ -488,7 +488,7 @@ func BenchmarkBufferedFileWriterWriteSmall(b *testing.B) {
+ 
+ 	for i := 0; i < b.N; i++ {
+ 		// Threshold is the same as the buffer size, data should always be written to the buffer.
+-		writer := New(WithThreshold(1024 * 1024))
++		writer := New(ctx, WithThreshold(1024*1024))
+ 
+ 		b.StartTimer()
+ 		{

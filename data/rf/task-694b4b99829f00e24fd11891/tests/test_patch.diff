@@ -1,0 +1,295 @@
+diff --git a/client/components/full-width-section/test/index.jsx b/client/components/full-width-section/test/index.jsx
+new file mode 100644
+index 00000000000..0900d595aa9
+--- /dev/null
++++ b/client/components/full-width-section/test/index.jsx
+@@ -0,0 +1,67 @@
++/** @jest-environment jsdom */
++import { render } from '@testing-library/react';
++import FullWidthSection from '../';
++
++describe( 'FullWidthSection', () => {
++	it( 'returns children directly when enabled is false', () => {
++		const { container } = render(
++			<FullWidthSection enabled={ false }>
++				<span data-testid="child">Hello</span>
++			</FullWidthSection>
++		);
++		expect( container.querySelector( '.full-width-section' ) ).toBeNull();
++		expect( container.textContent ).toBe( 'Hello' );
++	} );
++
++	it( 'returns children directly when enabled is not provided (defaults to false)', () => {
++		const { container } = render(
++			<FullWidthSection>
++				<span>Content</span>
++			</FullWidthSection>
++		);
++		expect( container.querySelector( '.full-width-section' ) ).toBeNull();
++		expect( container.textContent ).toBe( 'Content' );
++	} );
++
++	it( 'wraps children in section div when enabled is true', () => {
++		const { container } = render(
++			<FullWidthSection enabled={ true }>
++				<span>Wrapped</span>
++			</FullWidthSection>
++		);
++		const section = container.querySelector( '.full-width-section' );
++		expect( section ).not.toBeNull();
++		expect( section.querySelector( '.full-width-section__content' ) ).not.toBeNull();
++		expect( container.textContent ).toBe( 'Wrapped' );
++	} );
++
++	it( 'applies custom className when enabled is true', () => {
++		const { container } = render(
++			<FullWidthSection enabled={ true } className="my-custom-class">
++				<span>Test</span>
++			</FullWidthSection>
++		);
++		const section = container.querySelector( '.full-width-section' );
++		expect( section.classList.contains( 'my-custom-class' ) ).toBe( true );
++	} );
++
++	it( 'does not apply className wrapper when enabled is false', () => {
++		const { container } = render(
++			<FullWidthSection enabled={ false } className="my-custom-class">
++				<span>Test</span>
++			</FullWidthSection>
++		);
++		expect( container.querySelector( '.my-custom-class' ) ).toBeNull();
++	} );
++
++	it( 'renders multiple children when enabled is true', () => {
++		const { container } = render(
++			<FullWidthSection enabled={ true }>
++				<span>One</span>
++				<span>Two</span>
++			</FullWidthSection>
++		);
++		const content = container.querySelector( '.full-width-section__content' );
++		expect( content.children.length ).toBe( 2 );
++	} );
++} );
+diff --git a/client/my-sites/plugins/categories/test/use-categories.test.tsx b/client/my-sites/plugins/categories/test/use-categories.test.tsx
+new file mode 100644
+index 00000000000..8d97804f205
+--- /dev/null
++++ b/client/my-sites/plugins/categories/test/use-categories.test.tsx
+@@ -0,0 +1,98 @@
++/**
++ * @jest-environment jsdom
++ */
++import { getCategories } from '../use-categories';
++
++describe( 'getCategories', () => {
++	it( 'returns a record of category objects with standard keys', () => {
++		const categories = getCategories();
++		expect( typeof categories ).toBe( 'object' );
++		expect( categories ).toHaveProperty( 'discover' );
++		expect( categories ).toHaveProperty( 'paid' );
++		expect( categories ).toHaveProperty( 'popular' );
++		expect( categories ).toHaveProperty( 'featured' );
++		expect( categories ).toHaveProperty( 'monetization' );
++		expect( categories ).toHaveProperty( 'business' );
++	} );
++
++	it( 'accepts a boolean parameter without throwing', () => {
++		expect( () => getCategories( true ) ).not.toThrow();
++		expect( () => getCategories( false ) ).not.toThrow();
++		expect( () => getCategories() ).not.toThrow();
++	} );
++
++	it( 'defaults to redesign disabled when called without arguments', () => {
++		const withDefault = getCategories();
++		const withFalse = getCategories( false );
++		expect( withDefault.paid.title ).toBe( withFalse.paid.title );
++		expect( withDefault.popular.title ).toBe( withFalse.popular.title );
++		expect( withDefault.featured.title ).toBe( withFalse.featured.title );
++	} );
++
++	it( 'returns different titles for paid category based on the parameter', () => {
++		const enabled = getCategories( true );
++		const disabled = getCategories( false );
++		expect( enabled.paid.title ).not.toBe( disabled.paid.title );
++	} );
++
++	it( 'returns different descriptions for paid category based on the parameter', () => {
++		const enabled = getCategories( true );
++		const disabled = getCategories( false );
++		expect( enabled.paid.description ).not.toBe( disabled.paid.description );
++	} );
++
++	it( 'returns different titles for popular category based on the parameter', () => {
++		const enabled = getCategories( true );
++		const disabled = getCategories( false );
++		expect( enabled.popular.title ).not.toBe( disabled.popular.title );
++	} );
++
++	it( 'returns different titles for featured category based on the parameter', () => {
++		const enabled = getCategories( true );
++		const disabled = getCategories( false );
++		expect( enabled.featured.title ).not.toBe( disabled.featured.title );
++	} );
++
++	it( 'returns different descriptions for featured category based on the parameter', () => {
++		const enabled = getCategories( true );
++		const disabled = getCategories( false );
++		expect( enabled.featured.description ).not.toBe( disabled.featured.description );
++	} );
++
++	it( 'returns different titles for monetization category based on the parameter', () => {
++		const enabled = getCategories( true );
++		const disabled = getCategories( false );
++		expect( enabled.monetization.title ).not.toBe( disabled.monetization.title );
++	} );
++
++	it( 'returns different descriptions for monetization category based on the parameter', () => {
++		const enabled = getCategories( true );
++		const disabled = getCategories( false );
++		expect( enabled.monetization.description ).not.toBe( disabled.monetization.description );
++	} );
++
++	it( 'returns different titles for business category based on the parameter', () => {
++		const enabled = getCategories( true );
++		const disabled = getCategories( false );
++		expect( enabled.business.title ).not.toBe( disabled.business.title );
++	} );
++
++	it( 'returns different descriptions for business category based on the parameter', () => {
++		const enabled = getCategories( true );
++		const disabled = getCategories( false );
++		expect( enabled.business.description ).not.toBe( disabled.business.description );
++	} );
++
++	it( 'each category has a slug property', () => {
++		const categories = getCategories( true );
++		for ( const key of Object.keys( categories ) ) {
++			expect( categories[ key ] ).toHaveProperty( 'slug' );
++		}
++	} );
++
++	it( 'categories that do not vary remain the same regardless of parameter', () => {
++		const enabled = getCategories( true );
++		const disabled = getCategories( false );
++		expect( enabled.discover.title ).toBe( disabled.discover.title );
++	} );
++} );
+diff --git a/client/my-sites/plugins/hooks/test/use-is-marketplace-redesign-enabled.test.ts b/client/my-sites/plugins/hooks/test/use-is-marketplace-redesign-enabled.test.ts
+new file mode 100644
+index 00000000000..843fe6390b0
+--- /dev/null
++++ b/client/my-sites/plugins/hooks/test/use-is-marketplace-redesign-enabled.test.ts
+@@ -0,0 +1,112 @@
++/**
++ * @jest-environment jsdom
++ */
++import { renderHook } from '@testing-library/react';
++import { useIsMarketplaceRedesignEnabled } from '../use-is-marketplace-redesign-enabled';
++
++let mockSiteId: number | null = null;
++let mockIsLoggedIn = false;
++let mockHostingOptIn = false;
++let mockFlagEnabled = true;
++
++jest.mock( '@automattic/calypso-config', () => ( {
++	isEnabled: jest.fn( () => mockFlagEnabled ),
++} ) );
++
++jest.mock( 'react-redux', () => ( {
++	...jest.requireActual( 'react-redux' ),
++	useSelector: jest.fn( ( selector ) => selector( {} ) ),
++} ) );
++
++jest.mock( 'calypso/state/ui/selectors', () => ( {
++	getSelectedSiteId: jest.fn( () => mockSiteId ),
++} ) );
++
++jest.mock( 'calypso/state/current-user/selectors', () => ( {
++	isUserLoggedIn: jest.fn( () => mockIsLoggedIn ),
++} ) );
++
++jest.mock( 'calypso/state/sites/selectors/has-hosting-dashboard-opt-in', () => ( {
++	hasHostingDashboardOptIn: jest.fn( () => mockHostingOptIn ),
++} ) );
++
++describe( 'useIsMarketplaceRedesignEnabled', () => {
++	beforeEach( () => {
++		mockSiteId = null;
++		mockIsLoggedIn = false;
++		mockHostingOptIn = false;
++		mockFlagEnabled = true;
++	} );
++
++	it( 'returns false when a site is selected, regardless of other conditions', () => {
++		mockSiteId = 123;
++		mockFlagEnabled = true;
++		mockIsLoggedIn = false;
++
++		const { result } = renderHook( () => useIsMarketplaceRedesignEnabled() );
++		expect( result.current ).toBe( false );
++	} );
++
++	it( 'returns false when a site is selected even with dashboard opt-in', () => {
++		mockSiteId = 456;
++		mockFlagEnabled = true;
++		mockIsLoggedIn = true;
++		mockHostingOptIn = true;
++
++		const { result } = renderHook( () => useIsMarketplaceRedesignEnabled() );
++		expect( result.current ).toBe( false );
++	} );
++
++	it( 'returns true for logged out users when no site is selected and flag is enabled', () => {
++		mockSiteId = null;
++		mockFlagEnabled = true;
++		mockIsLoggedIn = false;
++
++		const { result } = renderHook( () => useIsMarketplaceRedesignEnabled() );
++		expect( result.current ).toBe( true );
++	} );
++
++	it( 'returns true for logged in users with dashboard opt-in when no site is selected', () => {
++		mockSiteId = null;
++		mockFlagEnabled = true;
++		mockIsLoggedIn = true;
++		mockHostingOptIn = true;
++
++		const { result } = renderHook( () => useIsMarketplaceRedesignEnabled() );
++		expect( result.current ).toBe( true );
++	} );
++
++	it( 'returns false for logged in users without dashboard opt-in when no site is selected', () => {
++		mockSiteId = null;
++		mockFlagEnabled = true;
++		mockIsLoggedIn = true;
++		mockHostingOptIn = false;
++
++		const { result } = renderHook( () => useIsMarketplaceRedesignEnabled() );
++		expect( result.current ).toBe( false );
++	} );
++
++	it( 'returns false when the feature flag is disabled even for logged out users', () => {
++		mockSiteId = null;
++		mockFlagEnabled = false;
++		mockIsLoggedIn = false;
++
++		const { result } = renderHook( () => useIsMarketplaceRedesignEnabled() );
++		expect( result.current ).toBe( false );
++	} );
++
++	it( 'returns false when flag is disabled even with dashboard opt-in', () => {
++		mockSiteId = null;
++		mockFlagEnabled = false;
++		mockIsLoggedIn = true;
++		mockHostingOptIn = true;
++
++		const { result } = renderHook( () => useIsMarketplaceRedesignEnabled() );
++		expect( result.current ).toBe( false );
++	} );
++
++	it( 'returns a boolean value', () => {
++		const { result } = renderHook( () => useIsMarketplaceRedesignEnabled() );
++		expect( typeof result.current ).toBe( 'boolean' );
++	} );
++} );

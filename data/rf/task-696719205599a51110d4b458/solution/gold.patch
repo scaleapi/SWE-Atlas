@@ -1,0 +1,2424 @@
+diff --git a/apps/plugins/kinds/manifest.cue b/apps/plugins/kinds/manifest.cue
+index f9a08562cb0..f624dc117bc 100644
+--- a/apps/plugins/kinds/manifest.cue
++++ b/apps/plugins/kinds/manifest.cue
+@@ -16,6 +16,6 @@ v0alpha1Version: {
+ 	}
+ 	kinds: [
+ 		pluginV0Alpha1,
+-		pluginMetaV0Alpha1,
++		metaV0Alpha1,
+ 	]
+ }
+diff --git a/apps/plugins/kinds/pluginmeta.cue b/apps/plugins/kinds/meta.cue
+similarity index 98%
+rename from apps/plugins/kinds/pluginmeta.cue
+rename to apps/plugins/kinds/meta.cue
+index 03b1ff10ff2..34a7b9aaf12 100644
+--- a/apps/plugins/kinds/pluginmeta.cue
++++ b/apps/plugins/kinds/meta.cue
+@@ -1,8 +1,7 @@
+ package plugins
+ 
+-pluginMetaV0Alpha1: {
+-	kind: "PluginMeta"
+-	plural: "pluginsmeta"
++metaV0Alpha1: {
++	kind: "Meta"
+ 	scope: "Namespaced"
+ 	schema: {
+ 		spec: {
+diff --git a/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_client_gen.go b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_client_gen.go
+similarity index 50%
+rename from apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_client_gen.go
+rename to apps/plugins/pkg/apis/plugins/v0alpha1/meta_client_gen.go
+index e7788e27a33..4acc2b635e8 100644
+--- a/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_client_gen.go
++++ b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_client_gen.go
+@@ -7,33 +7,33 @@ import (
+ 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+ )
+ 
+-type PluginMetaClient struct {
+-	client *resource.TypedClient[*PluginMeta, *PluginMetaList]
++type MetaClient struct {
++	client *resource.TypedClient[*Meta, *MetaList]
+ }
+ 
+-func NewPluginMetaClient(client resource.Client) *PluginMetaClient {
+-	return &PluginMetaClient{
+-		client: resource.NewTypedClient[*PluginMeta, *PluginMetaList](client, PluginMetaKind()),
++func NewMetaClient(client resource.Client) *MetaClient {
++	return &MetaClient{
++		client: resource.NewTypedClient[*Meta, *MetaList](client, MetaKind()),
+ 	}
+ }
+ 
+-func NewPluginMetaClientFromGenerator(generator resource.ClientGenerator) (*PluginMetaClient, error) {
+-	c, err := generator.ClientFor(PluginMetaKind())
++func NewMetaClientFromGenerator(generator resource.ClientGenerator) (*MetaClient, error) {
++	c, err := generator.ClientFor(MetaKind())
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	return NewPluginMetaClient(c), nil
++	return NewMetaClient(c), nil
+ }
+ 
+-func (c *PluginMetaClient) Get(ctx context.Context, identifier resource.Identifier) (*PluginMeta, error) {
++func (c *MetaClient) Get(ctx context.Context, identifier resource.Identifier) (*Meta, error) {
+ 	return c.client.Get(ctx, identifier)
+ }
+ 
+-func (c *PluginMetaClient) List(ctx context.Context, namespace string, opts resource.ListOptions) (*PluginMetaList, error) {
++func (c *MetaClient) List(ctx context.Context, namespace string, opts resource.ListOptions) (*MetaList, error) {
+ 	return c.client.List(ctx, namespace, opts)
+ }
+ 
+-func (c *PluginMetaClient) ListAll(ctx context.Context, namespace string, opts resource.ListOptions) (*PluginMetaList, error) {
++func (c *MetaClient) ListAll(ctx context.Context, namespace string, opts resource.ListOptions) (*MetaList, error) {
+ 	resp, err := c.client.List(ctx, namespace, resource.ListOptions{
+ 		ResourceVersion: opts.ResourceVersion,
+ 		Limit:           opts.Limit,
+@@ -61,25 +61,25 @@ func (c *PluginMetaClient) ListAll(ctx context.Context, namespace string, opts r
+ 	return resp, nil
+ }
+ 
+-func (c *PluginMetaClient) Create(ctx context.Context, obj *PluginMeta, opts resource.CreateOptions) (*PluginMeta, error) {
++func (c *MetaClient) Create(ctx context.Context, obj *Meta, opts resource.CreateOptions) (*Meta, error) {
+ 	// Make sure apiVersion and kind are set
+ 	obj.APIVersion = GroupVersion.Identifier()
+-	obj.Kind = PluginMetaKind().Kind()
++	obj.Kind = MetaKind().Kind()
+ 	return c.client.Create(ctx, obj, opts)
+ }
+ 
+-func (c *PluginMetaClient) Update(ctx context.Context, obj *PluginMeta, opts resource.UpdateOptions) (*PluginMeta, error) {
++func (c *MetaClient) Update(ctx context.Context, obj *Meta, opts resource.UpdateOptions) (*Meta, error) {
+ 	return c.client.Update(ctx, obj, opts)
+ }
+ 
+-func (c *PluginMetaClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*PluginMeta, error) {
++func (c *MetaClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*Meta, error) {
+ 	return c.client.Patch(ctx, identifier, req, opts)
+ }
+ 
+-func (c *PluginMetaClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus PluginMetaStatus, opts resource.UpdateOptions) (*PluginMeta, error) {
+-	return c.client.Update(ctx, &PluginMeta{
++func (c *MetaClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus MetaStatus, opts resource.UpdateOptions) (*Meta, error) {
++	return c.client.Update(ctx, &Meta{
+ 		TypeMeta: metav1.TypeMeta{
+-			Kind:       PluginMetaKind().Kind(),
++			Kind:       MetaKind().Kind(),
+ 			APIVersion: GroupVersion.Identifier(),
+ 		},
+ 		ObjectMeta: metav1.ObjectMeta{
+@@ -94,6 +94,6 @@ func (c *PluginMetaClient) UpdateStatus(ctx context.Context, identifier resource
+ 	})
+ }
+ 
+-func (c *PluginMetaClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
++func (c *MetaClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
+ 	return c.client.Delete(ctx, identifier, opts)
+ }
+diff --git a/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_codec_gen.go b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_codec_gen.go
+similarity index 56%
+rename from apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_codec_gen.go
+rename to apps/plugins/pkg/apis/plugins/v0alpha1/meta_codec_gen.go
+index 77fb6f918a2..c152eb63e79 100644
+--- a/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_codec_gen.go
++++ b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_codec_gen.go
+@@ -11,18 +11,18 @@ import (
+ 	"github.com/grafana/grafana-app-sdk/resource"
+ )
+ 
+-// PluginMetaJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
+-type PluginMetaJSONCodec struct{}
++// MetaJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
++type MetaJSONCodec struct{}
+ 
+ // Read reads JSON-encoded bytes from `reader` and unmarshals them into `into`
+-func (*PluginMetaJSONCodec) Read(reader io.Reader, into resource.Object) error {
++func (*MetaJSONCodec) Read(reader io.Reader, into resource.Object) error {
+ 	return json.NewDecoder(reader).Decode(into)
+ }
+ 
+ // Write writes JSON-encoded bytes into `writer` marshaled from `from`
+-func (*PluginMetaJSONCodec) Write(writer io.Writer, from resource.Object) error {
++func (*MetaJSONCodec) Write(writer io.Writer, from resource.Object) error {
+ 	return json.NewEncoder(writer).Encode(from)
+ }
+ 
+ // Interface compliance checks
+-var _ resource.Codec = &PluginMetaJSONCodec{}
++var _ resource.Codec = &MetaJSONCodec{}
+diff --git a/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_metadata_gen.go b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_metadata_gen.go
+similarity index 85%
+rename from apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_metadata_gen.go
+rename to apps/plugins/pkg/apis/plugins/v0alpha1/meta_metadata_gen.go
+index 7d3b3c9c6b8..9de0658352f 100644
+--- a/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_metadata_gen.go
++++ b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_metadata_gen.go
+@@ -9,7 +9,7 @@ import (
+ // metadata contains embedded CommonMetadata and can be extended with custom string fields
+ // TODO: use CommonMetadata instead of redefining here; currently needs to be defined here
+ // without external reference as using the CommonMetadata reference breaks thema codegen.
+-type PluginMetaMetadata struct {
++type MetaMetadata struct {
+ 	UpdateTimestamp   time.Time         `json:"updateTimestamp"`
+ 	CreatedBy         string            `json:"createdBy"`
+ 	Uid               string            `json:"uid"`
+@@ -22,9 +22,9 @@ type PluginMetaMetadata struct {
+ 	Labels            map[string]string `json:"labels"`
+ }
+ 
+-// NewPluginMetaMetadata creates a new PluginMetaMetadata object.
+-func NewPluginMetaMetadata() *PluginMetaMetadata {
+-	return &PluginMetaMetadata{
++// NewMetaMetadata creates a new MetaMetadata object.
++func NewMetaMetadata() *MetaMetadata {
++	return &MetaMetadata{
+ 		Finalizers: []string{},
+ 		Labels:     map[string]string{},
+ 	}
+diff --git a/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_object_gen.go b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_object_gen.go
+similarity index 68%
+rename from apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_object_gen.go
+rename to apps/plugins/pkg/apis/plugins/v0alpha1/meta_object_gen.go
+index dac431ebf12..e42a1ad5d80 100644
+--- a/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_object_gen.go
++++ b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_object_gen.go
+@@ -15,22 +15,29 @@ import (
+ )
+ 
+ // +k8s:openapi-gen=true
+-type PluginMeta struct {
++type Meta struct {
+ 	metav1.TypeMeta   `json:",inline" yaml:",inline"`
+ 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
+ 
+-	// Spec is the spec of the PluginMeta
+-	Spec PluginMetaSpec `json:"spec" yaml:"spec"`
++	// Spec is the spec of the Meta
++	Spec MetaSpec `json:"spec" yaml:"spec"`
+ 
+-	Status PluginMetaStatus `json:"status" yaml:"status"`
++	Status MetaStatus `json:"status" yaml:"status"`
+ }
+ 
+-func (o *PluginMeta) GetSpec() any {
++func NewMeta() *Meta {
++	return &Meta{
++		Spec:   *NewMetaSpec(),
++		Status: *NewMetaStatus(),
++	}
++}
++
++func (o *Meta) GetSpec() any {
+ 	return o.Spec
+ }
+ 
+-func (o *PluginMeta) SetSpec(spec any) error {
+-	cast, ok := spec.(PluginMetaSpec)
++func (o *Meta) SetSpec(spec any) error {
++	cast, ok := spec.(MetaSpec)
+ 	if !ok {
+ 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
+ 	}
+@@ -38,13 +45,13 @@ func (o *PluginMeta) SetSpec(spec any) error {
+ 	return nil
+ }
+ 
+-func (o *PluginMeta) GetSubresources() map[string]any {
++func (o *Meta) GetSubresources() map[string]any {
+ 	return map[string]any{
+ 		"status": o.Status,
+ 	}
+ }
+ 
+-func (o *PluginMeta) GetSubresource(name string) (any, bool) {
++func (o *Meta) GetSubresource(name string) (any, bool) {
+ 	switch name {
+ 	case "status":
+ 		return o.Status, true
+@@ -53,12 +60,12 @@ func (o *PluginMeta) GetSubresource(name string) (any, bool) {
+ 	}
+ }
+ 
+-func (o *PluginMeta) SetSubresource(name string, value any) error {
++func (o *Meta) SetSubresource(name string, value any) error {
+ 	switch name {
+ 	case "status":
+-		cast, ok := value.(PluginMetaStatus)
++		cast, ok := value.(MetaStatus)
+ 		if !ok {
+-			return fmt.Errorf("cannot set status type %#v, not of type PluginMetaStatus", value)
++			return fmt.Errorf("cannot set status type %#v, not of type MetaStatus", value)
+ 		}
+ 		o.Status = cast
+ 		return nil
+@@ -67,7 +74,7 @@ func (o *PluginMeta) SetSubresource(name string, value any) error {
+ 	}
+ }
+ 
+-func (o *PluginMeta) GetStaticMetadata() resource.StaticMetadata {
++func (o *Meta) GetStaticMetadata() resource.StaticMetadata {
+ 	gvk := o.GroupVersionKind()
+ 	return resource.StaticMetadata{
+ 		Name:      o.ObjectMeta.Name,
+@@ -78,7 +85,7 @@ func (o *PluginMeta) GetStaticMetadata() resource.StaticMetadata {
+ 	}
+ }
+ 
+-func (o *PluginMeta) SetStaticMetadata(metadata resource.StaticMetadata) {
++func (o *Meta) SetStaticMetadata(metadata resource.StaticMetadata) {
+ 	o.Name = metadata.Name
+ 	o.Namespace = metadata.Namespace
+ 	o.SetGroupVersionKind(schema.GroupVersionKind{
+@@ -88,7 +95,7 @@ func (o *PluginMeta) SetStaticMetadata(metadata resource.StaticMetadata) {
+ 	})
+ }
+ 
+-func (o *PluginMeta) GetCommonMetadata() resource.CommonMetadata {
++func (o *Meta) GetCommonMetadata() resource.CommonMetadata {
+ 	dt := o.DeletionTimestamp
+ 	var deletionTimestamp *time.Time
+ 	if dt != nil {
+@@ -120,7 +127,7 @@ func (o *PluginMeta) GetCommonMetadata() resource.CommonMetadata {
+ 	}
+ }
+ 
+-func (o *PluginMeta) SetCommonMetadata(metadata resource.CommonMetadata) {
++func (o *Meta) SetCommonMetadata(metadata resource.CommonMetadata) {
+ 	o.UID = types.UID(metadata.UID)
+ 	o.ResourceVersion = metadata.ResourceVersion
+ 	o.Generation = metadata.Generation
+@@ -165,7 +172,7 @@ func (o *PluginMeta) SetCommonMetadata(metadata resource.CommonMetadata) {
+ 	}
+ }
+ 
+-func (o *PluginMeta) GetCreatedBy() string {
++func (o *Meta) GetCreatedBy() string {
+ 	if o.ObjectMeta.Annotations == nil {
+ 		o.ObjectMeta.Annotations = make(map[string]string)
+ 	}
+@@ -173,7 +180,7 @@ func (o *PluginMeta) GetCreatedBy() string {
+ 	return o.ObjectMeta.Annotations["grafana.com/createdBy"]
+ }
+ 
+-func (o *PluginMeta) SetCreatedBy(createdBy string) {
++func (o *Meta) SetCreatedBy(createdBy string) {
+ 	if o.ObjectMeta.Annotations == nil {
+ 		o.ObjectMeta.Annotations = make(map[string]string)
+ 	}
+@@ -181,7 +188,7 @@ func (o *PluginMeta) SetCreatedBy(createdBy string) {
+ 	o.ObjectMeta.Annotations["grafana.com/createdBy"] = createdBy
+ }
+ 
+-func (o *PluginMeta) GetUpdateTimestamp() time.Time {
++func (o *Meta) GetUpdateTimestamp() time.Time {
+ 	if o.ObjectMeta.Annotations == nil {
+ 		o.ObjectMeta.Annotations = make(map[string]string)
+ 	}
+@@ -190,7 +197,7 @@ func (o *PluginMeta) GetUpdateTimestamp() time.Time {
+ 	return parsed
+ }
+ 
+-func (o *PluginMeta) SetUpdateTimestamp(updateTimestamp time.Time) {
++func (o *Meta) SetUpdateTimestamp(updateTimestamp time.Time) {
+ 	if o.ObjectMeta.Annotations == nil {
+ 		o.ObjectMeta.Annotations = make(map[string]string)
+ 	}
+@@ -198,7 +205,7 @@ func (o *PluginMeta) SetUpdateTimestamp(updateTimestamp time.Time) {
+ 	o.ObjectMeta.Annotations["grafana.com/updateTimestamp"] = updateTimestamp.Format(time.RFC3339)
+ }
+ 
+-func (o *PluginMeta) GetUpdatedBy() string {
++func (o *Meta) GetUpdatedBy() string {
+ 	if o.ObjectMeta.Annotations == nil {
+ 		o.ObjectMeta.Annotations = make(map[string]string)
+ 	}
+@@ -206,7 +213,7 @@ func (o *PluginMeta) GetUpdatedBy() string {
+ 	return o.ObjectMeta.Annotations["grafana.com/updatedBy"]
+ }
+ 
+-func (o *PluginMeta) SetUpdatedBy(updatedBy string) {
++func (o *Meta) SetUpdatedBy(updatedBy string) {
+ 	if o.ObjectMeta.Annotations == nil {
+ 		o.ObjectMeta.Annotations = make(map[string]string)
+ 	}
+@@ -214,21 +221,21 @@ func (o *PluginMeta) SetUpdatedBy(updatedBy string) {
+ 	o.ObjectMeta.Annotations["grafana.com/updatedBy"] = updatedBy
+ }
+ 
+-func (o *PluginMeta) Copy() resource.Object {
++func (o *Meta) Copy() resource.Object {
+ 	return resource.CopyObject(o)
+ }
+ 
+-func (o *PluginMeta) DeepCopyObject() runtime.Object {
++func (o *Meta) DeepCopyObject() runtime.Object {
+ 	return o.Copy()
+ }
+ 
+-func (o *PluginMeta) DeepCopy() *PluginMeta {
+-	cpy := &PluginMeta{}
++func (o *Meta) DeepCopy() *Meta {
++	cpy := &Meta{}
+ 	o.DeepCopyInto(cpy)
+ 	return cpy
+ }
+ 
+-func (o *PluginMeta) DeepCopyInto(dst *PluginMeta) {
++func (o *Meta) DeepCopyInto(dst *Meta) {
+ 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
+ 	dst.TypeMeta.Kind = o.TypeMeta.Kind
+ 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
+@@ -237,34 +244,34 @@ func (o *PluginMeta) DeepCopyInto(dst *PluginMeta) {
+ }
+ 
+ // Interface compliance compile-time check
+-var _ resource.Object = &PluginMeta{}
++var _ resource.Object = &Meta{}
+ 
+ // +k8s:openapi-gen=true
+-type PluginMetaList struct {
++type MetaList struct {
+ 	metav1.TypeMeta `json:",inline" yaml:",inline"`
+ 	metav1.ListMeta `json:"metadata" yaml:"metadata"`
+-	Items           []PluginMeta `json:"items" yaml:"items"`
++	Items           []Meta `json:"items" yaml:"items"`
+ }
+ 
+-func (o *PluginMetaList) DeepCopyObject() runtime.Object {
++func (o *MetaList) DeepCopyObject() runtime.Object {
+ 	return o.Copy()
+ }
+ 
+-func (o *PluginMetaList) Copy() resource.ListObject {
+-	cpy := &PluginMetaList{
++func (o *MetaList) Copy() resource.ListObject {
++	cpy := &MetaList{
+ 		TypeMeta: o.TypeMeta,
+-		Items:    make([]PluginMeta, len(o.Items)),
++		Items:    make([]Meta, len(o.Items)),
+ 	}
+ 	o.ListMeta.DeepCopyInto(&cpy.ListMeta)
+ 	for i := 0; i < len(o.Items); i++ {
+-		if item, ok := o.Items[i].Copy().(*PluginMeta); ok {
++		if item, ok := o.Items[i].Copy().(*Meta); ok {
+ 			cpy.Items[i] = *item
+ 		}
+ 	}
+ 	return cpy
+ }
+ 
+-func (o *PluginMetaList) GetItems() []resource.Object {
++func (o *MetaList) GetItems() []resource.Object {
+ 	items := make([]resource.Object, len(o.Items))
+ 	for i := 0; i < len(o.Items); i++ {
+ 		items[i] = &o.Items[i]
+@@ -272,48 +279,48 @@ func (o *PluginMetaList) GetItems() []resource.Object {
+ 	return items
+ }
+ 
+-func (o *PluginMetaList) SetItems(items []resource.Object) {
+-	o.Items = make([]PluginMeta, len(items))
++func (o *MetaList) SetItems(items []resource.Object) {
++	o.Items = make([]Meta, len(items))
+ 	for i := 0; i < len(items); i++ {
+-		o.Items[i] = *items[i].(*PluginMeta)
++		o.Items[i] = *items[i].(*Meta)
+ 	}
+ }
+ 
+-func (o *PluginMetaList) DeepCopy() *PluginMetaList {
+-	cpy := &PluginMetaList{}
++func (o *MetaList) DeepCopy() *MetaList {
++	cpy := &MetaList{}
+ 	o.DeepCopyInto(cpy)
+ 	return cpy
+ }
+ 
+-func (o *PluginMetaList) DeepCopyInto(dst *PluginMetaList) {
++func (o *MetaList) DeepCopyInto(dst *MetaList) {
+ 	resource.CopyObjectInto(dst, o)
+ }
+ 
+ // Interface compliance compile-time check
+-var _ resource.ListObject = &PluginMetaList{}
++var _ resource.ListObject = &MetaList{}
+ 
+ // Copy methods for all subresource types
+ 
+ // DeepCopy creates a full deep copy of Spec
+-func (s *PluginMetaSpec) DeepCopy() *PluginMetaSpec {
+-	cpy := &PluginMetaSpec{}
++func (s *MetaSpec) DeepCopy() *MetaSpec {
++	cpy := &MetaSpec{}
+ 	s.DeepCopyInto(cpy)
+ 	return cpy
+ }
+ 
+ // DeepCopyInto deep copies Spec into another Spec object
+-func (s *PluginMetaSpec) DeepCopyInto(dst *PluginMetaSpec) {
++func (s *MetaSpec) DeepCopyInto(dst *MetaSpec) {
+ 	resource.CopyObjectInto(dst, s)
+ }
+ 
+-// DeepCopy creates a full deep copy of PluginMetaStatus
+-func (s *PluginMetaStatus) DeepCopy() *PluginMetaStatus {
+-	cpy := &PluginMetaStatus{}
++// DeepCopy creates a full deep copy of MetaStatus
++func (s *MetaStatus) DeepCopy() *MetaStatus {
++	cpy := &MetaStatus{}
+ 	s.DeepCopyInto(cpy)
+ 	return cpy
+ }
+ 
+-// DeepCopyInto deep copies PluginMetaStatus into another PluginMetaStatus object
+-func (s *PluginMetaStatus) DeepCopyInto(dst *PluginMetaStatus) {
++// DeepCopyInto deep copies MetaStatus into another MetaStatus object
++func (s *MetaStatus) DeepCopyInto(dst *MetaStatus) {
+ 	resource.CopyObjectInto(dst, s)
+ }
+diff --git a/apps/plugins/pkg/apis/plugins/v0alpha1/meta_schema_gen.go b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_schema_gen.go
+new file mode 100644
+index 00000000000..38b45140ff6
+--- /dev/null
++++ b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_schema_gen.go
+@@ -0,0 +1,34 @@
++//
++// Code generated by grafana-app-sdk. DO NOT EDIT.
++//
++
++package v0alpha1
++
++import (
++	"github.com/grafana/grafana-app-sdk/resource"
++)
++
++// schema is unexported to prevent accidental overwrites
++var (
++	schemaMeta = resource.NewSimpleSchema("plugins.grafana.app", "v0alpha1", NewMeta(), &MetaList{}, resource.WithKind("Meta"),
++		resource.WithPlural("metas"), resource.WithScope(resource.NamespacedScope))
++	kindMeta = resource.Kind{
++		Schema: schemaMeta,
++		Codecs: map[resource.KindEncoding]resource.Codec{
++			resource.KindEncodingJSON: &MetaJSONCodec{},
++		},
++	}
++)
++
++// Kind returns a resource.Kind for this Schema with a JSON codec
++func MetaKind() resource.Kind {
++	return kindMeta
++}
++
++// Schema returns a resource.SimpleSchema representation of Meta
++func MetaSchema() *resource.SimpleSchema {
++	return schemaMeta
++}
++
++// Interface compliance checks
++var _ resource.Schema = kindMeta
+diff --git a/apps/plugins/pkg/apis/plugins/v0alpha1/meta_spec_gen.go b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_spec_gen.go
+new file mode 100644
+index 00000000000..9598da22ef7
+--- /dev/null
++++ b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_spec_gen.go
+@@ -0,0 +1,474 @@
++// Code generated - EDITING IS FUTILE. DO NOT EDIT.
++
++package v0alpha1
++
++// JSON configuration schema for Grafana plugins
++// Converted from: https://github.com/grafana/grafana/blob/main/docs/sources/developers/plugins/plugin.schema.json
++// +k8s:openapi-gen=true
++type MetaJSONData struct {
++	// Unique name of the plugin
++	Id string `json:"id"`
++	// Plugin type
++	Type MetaJSONDataType `json:"type"`
++	// Human-readable name of the plugin
++	Name string `json:"name"`
++	// Metadata for the plugin
++	Info MetaInfo `json:"info"`
++	// Dependency information
++	Dependencies MetaDependencies `json:"dependencies"`
++	// Optional fields
++	Alerting           *bool                   `json:"alerting,omitempty"`
++	Annotations        *bool                   `json:"annotations,omitempty"`
++	AutoEnabled        *bool                   `json:"autoEnabled,omitempty"`
++	Backend            *bool                   `json:"backend,omitempty"`
++	BuildMode          *string                 `json:"buildMode,omitempty"`
++	BuiltIn            *bool                   `json:"builtIn,omitempty"`
++	Category           *MetaJSONDataCategory   `json:"category,omitempty"`
++	EnterpriseFeatures *MetaEnterpriseFeatures `json:"enterpriseFeatures,omitempty"`
++	Executable         *string                 `json:"executable,omitempty"`
++	HideFromList       *bool                   `json:"hideFromList,omitempty"`
++	// +listType=atomic
++	Includes                  []MetaInclude     `json:"includes,omitempty"`
++	Logs                      *bool             `json:"logs,omitempty"`
++	Metrics                   *bool             `json:"metrics,omitempty"`
++	MultiValueFilterOperators *bool             `json:"multiValueFilterOperators,omitempty"`
++	PascalName                *string           `json:"pascalName,omitempty"`
++	Preload                   *bool             `json:"preload,omitempty"`
++	QueryOptions              *MetaQueryOptions `json:"queryOptions,omitempty"`
++	// +listType=atomic
++	Routes        []MetaRoute        `json:"routes,omitempty"`
++	SkipDataQuery *bool              `json:"skipDataQuery,omitempty"`
++	State         *MetaJSONDataState `json:"state,omitempty"`
++	Streaming     *bool              `json:"streaming,omitempty"`
++	Suggestions   *bool              `json:"suggestions,omitempty"`
++	Tracing       *bool              `json:"tracing,omitempty"`
++	Iam           *MetaIAM           `json:"iam,omitempty"`
++	// +listType=atomic
++	Roles      []MetaRole      `json:"roles,omitempty"`
++	Extensions *MetaExtensions `json:"extensions,omitempty"`
++}
++
++// NewMetaJSONData creates a new MetaJSONData object.
++func NewMetaJSONData() *MetaJSONData {
++	return &MetaJSONData{
++		Info:         *NewMetaInfo(),
++		Dependencies: *NewMetaDependencies(),
++	}
++}
++
++// +k8s:openapi-gen=true
++type MetaInfo struct {
++	// Required fields
++	// +listType=set
++	Keywords []string              `json:"keywords"`
++	Logos    MetaV0alpha1InfoLogos `json:"logos"`
++	Updated  string                `json:"updated"`
++	Version  string                `json:"version"`
++	// Optional fields
++	Author      *MetaV0alpha1InfoAuthor `json:"author,omitempty"`
++	Description *string                 `json:"description,omitempty"`
++	// +listType=atomic
++	Links []MetaV0alpha1InfoLinks `json:"links,omitempty"`
++	// +listType=atomic
++	Screenshots []MetaV0alpha1InfoScreenshots `json:"screenshots,omitempty"`
++}
++
++// NewMetaInfo creates a new MetaInfo object.
++func NewMetaInfo() *MetaInfo {
++	return &MetaInfo{
++		Keywords: []string{},
++		Logos:    *NewMetaV0alpha1InfoLogos(),
++	}
++}
++
++// +k8s:openapi-gen=true
++type MetaDependencies struct {
++	// Required field
++	GrafanaDependency string `json:"grafanaDependency"`
++	// Optional fields
++	GrafanaVersion *string `json:"grafanaVersion,omitempty"`
++	// +listType=set
++	// +listMapKey=id
++	Plugins    []MetaV0alpha1DependenciesPlugins   `json:"plugins,omitempty"`
++	Extensions *MetaV0alpha1DependenciesExtensions `json:"extensions,omitempty"`
++}
++
++// NewMetaDependencies creates a new MetaDependencies object.
++func NewMetaDependencies() *MetaDependencies {
++	return &MetaDependencies{}
++}
++
++// +k8s:openapi-gen=true
++type MetaEnterpriseFeatures struct {
++	// Allow additional properties
++	HealthDiagnosticsErrors *bool `json:"healthDiagnosticsErrors,omitempty"`
++}
++
++// NewMetaEnterpriseFeatures creates a new MetaEnterpriseFeatures object.
++func NewMetaEnterpriseFeatures() *MetaEnterpriseFeatures {
++	return &MetaEnterpriseFeatures{
++		HealthDiagnosticsErrors: (func(input bool) *bool { return &input })(false),
++	}
++}
++
++// +k8s:openapi-gen=true
++type MetaInclude struct {
++	Uid        *string          `json:"uid,omitempty"`
++	Type       *MetaIncludeType `json:"type,omitempty"`
++	Name       *string          `json:"name,omitempty"`
++	Component  *string          `json:"component,omitempty"`
++	Role       *MetaIncludeRole `json:"role,omitempty"`
++	Action     *string          `json:"action,omitempty"`
++	Path       *string          `json:"path,omitempty"`
++	AddToNav   *bool            `json:"addToNav,omitempty"`
++	DefaultNav *bool            `json:"defaultNav,omitempty"`
++	Icon       *string          `json:"icon,omitempty"`
++}
++
++// NewMetaInclude creates a new MetaInclude object.
++func NewMetaInclude() *MetaInclude {
++	return &MetaInclude{}
++}
++
++// +k8s:openapi-gen=true
++type MetaQueryOptions struct {
++	MaxDataPoints *bool `json:"maxDataPoints,omitempty"`
++	MinInterval   *bool `json:"minInterval,omitempty"`
++	CacheTimeout  *bool `json:"cacheTimeout,omitempty"`
++}
++
++// NewMetaQueryOptions creates a new MetaQueryOptions object.
++func NewMetaQueryOptions() *MetaQueryOptions {
++	return &MetaQueryOptions{}
++}
++
++// +k8s:openapi-gen=true
++type MetaRoute struct {
++	Path        *string `json:"path,omitempty"`
++	Method      *string `json:"method,omitempty"`
++	Url         *string `json:"url,omitempty"`
++	ReqSignedIn *bool   `json:"reqSignedIn,omitempty"`
++	ReqRole     *string `json:"reqRole,omitempty"`
++	ReqAction   *string `json:"reqAction,omitempty"`
++	// +listType=atomic
++	Headers      []string                       `json:"headers,omitempty"`
++	Body         map[string]interface{}         `json:"body,omitempty"`
++	TokenAuth    *MetaV0alpha1RouteTokenAuth    `json:"tokenAuth,omitempty"`
++	JwtTokenAuth *MetaV0alpha1RouteJwtTokenAuth `json:"jwtTokenAuth,omitempty"`
++	// +listType=atomic
++	UrlParams []MetaV0alpha1RouteUrlParams `json:"urlParams,omitempty"`
++}
++
++// NewMetaRoute creates a new MetaRoute object.
++func NewMetaRoute() *MetaRoute {
++	return &MetaRoute{}
++}
++
++// +k8s:openapi-gen=true
++type MetaIAM struct {
++	// +listType=atomic
++	Permissions []MetaV0alpha1IAMPermissions `json:"permissions,omitempty"`
++}
++
++// NewMetaIAM creates a new MetaIAM object.
++func NewMetaIAM() *MetaIAM {
++	return &MetaIAM{}
++}
++
++// +k8s:openapi-gen=true
++type MetaRole struct {
++	Role *MetaV0alpha1RoleRole `json:"role,omitempty"`
++	// +listType=set
++	Grants []string `json:"grants,omitempty"`
++}
++
++// NewMetaRole creates a new MetaRole object.
++func NewMetaRole() *MetaRole {
++	return &MetaRole{}
++}
++
++// +k8s:openapi-gen=true
++type MetaExtensions struct {
++	// +listType=atomic
++	AddedComponents []MetaV0alpha1ExtensionsAddedComponents `json:"addedComponents,omitempty"`
++	// +listType=atomic
++	AddedLinks []MetaV0alpha1ExtensionsAddedLinks `json:"addedLinks,omitempty"`
++	// +listType=set
++	// +listMapKey=id
++	ExposedComponents []MetaV0alpha1ExtensionsExposedComponents `json:"exposedComponents,omitempty"`
++	// +listType=set
++	// +listMapKey=id
++	ExtensionPoints []MetaV0alpha1ExtensionsExtensionPoints `json:"extensionPoints,omitempty"`
++}
++
++// NewMetaExtensions creates a new MetaExtensions object.
++func NewMetaExtensions() *MetaExtensions {
++	return &MetaExtensions{}
++}
++
++// +k8s:openapi-gen=true
++type MetaSpec struct {
++	PluginJSON MetaJSONData `json:"pluginJSON"`
++}
++
++// NewMetaSpec creates a new MetaSpec object.
++func NewMetaSpec() *MetaSpec {
++	return &MetaSpec{
++		PluginJSON: *NewMetaJSONData(),
++	}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1InfoLogos struct {
++	Small string `json:"small"`
++	Large string `json:"large"`
++}
++
++// NewMetaV0alpha1InfoLogos creates a new MetaV0alpha1InfoLogos object.
++func NewMetaV0alpha1InfoLogos() *MetaV0alpha1InfoLogos {
++	return &MetaV0alpha1InfoLogos{}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1InfoAuthor struct {
++	Name  *string `json:"name,omitempty"`
++	Email *string `json:"email,omitempty"`
++	Url   *string `json:"url,omitempty"`
++}
++
++// NewMetaV0alpha1InfoAuthor creates a new MetaV0alpha1InfoAuthor object.
++func NewMetaV0alpha1InfoAuthor() *MetaV0alpha1InfoAuthor {
++	return &MetaV0alpha1InfoAuthor{}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1InfoLinks struct {
++	Name *string `json:"name,omitempty"`
++	Url  *string `json:"url,omitempty"`
++}
++
++// NewMetaV0alpha1InfoLinks creates a new MetaV0alpha1InfoLinks object.
++func NewMetaV0alpha1InfoLinks() *MetaV0alpha1InfoLinks {
++	return &MetaV0alpha1InfoLinks{}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1InfoScreenshots struct {
++	Name *string `json:"name,omitempty"`
++	Path *string `json:"path,omitempty"`
++}
++
++// NewMetaV0alpha1InfoScreenshots creates a new MetaV0alpha1InfoScreenshots object.
++func NewMetaV0alpha1InfoScreenshots() *MetaV0alpha1InfoScreenshots {
++	return &MetaV0alpha1InfoScreenshots{}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1DependenciesPlugins struct {
++	Id   string                              `json:"id"`
++	Type MetaV0alpha1DependenciesPluginsType `json:"type"`
++	Name string                              `json:"name"`
++}
++
++// NewMetaV0alpha1DependenciesPlugins creates a new MetaV0alpha1DependenciesPlugins object.
++func NewMetaV0alpha1DependenciesPlugins() *MetaV0alpha1DependenciesPlugins {
++	return &MetaV0alpha1DependenciesPlugins{}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1DependenciesExtensions struct {
++	// +listType=set
++	ExposedComponents []string `json:"exposedComponents,omitempty"`
++}
++
++// NewMetaV0alpha1DependenciesExtensions creates a new MetaV0alpha1DependenciesExtensions object.
++func NewMetaV0alpha1DependenciesExtensions() *MetaV0alpha1DependenciesExtensions {
++	return &MetaV0alpha1DependenciesExtensions{}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1RouteTokenAuth struct {
++	Url *string `json:"url,omitempty"`
++	// +listType=set
++	Scopes []string               `json:"scopes,omitempty"`
++	Params map[string]interface{} `json:"params,omitempty"`
++}
++
++// NewMetaV0alpha1RouteTokenAuth creates a new MetaV0alpha1RouteTokenAuth object.
++func NewMetaV0alpha1RouteTokenAuth() *MetaV0alpha1RouteTokenAuth {
++	return &MetaV0alpha1RouteTokenAuth{}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1RouteJwtTokenAuth struct {
++	Url *string `json:"url,omitempty"`
++	// +listType=set
++	Scopes []string               `json:"scopes,omitempty"`
++	Params map[string]interface{} `json:"params,omitempty"`
++}
++
++// NewMetaV0alpha1RouteJwtTokenAuth creates a new MetaV0alpha1RouteJwtTokenAuth object.
++func NewMetaV0alpha1RouteJwtTokenAuth() *MetaV0alpha1RouteJwtTokenAuth {
++	return &MetaV0alpha1RouteJwtTokenAuth{}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1RouteUrlParams struct {
++	Name    *string `json:"name,omitempty"`
++	Content *string `json:"content,omitempty"`
++}
++
++// NewMetaV0alpha1RouteUrlParams creates a new MetaV0alpha1RouteUrlParams object.
++func NewMetaV0alpha1RouteUrlParams() *MetaV0alpha1RouteUrlParams {
++	return &MetaV0alpha1RouteUrlParams{}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1IAMPermissions struct {
++	Action *string `json:"action,omitempty"`
++	Scope  *string `json:"scope,omitempty"`
++}
++
++// NewMetaV0alpha1IAMPermissions creates a new MetaV0alpha1IAMPermissions object.
++func NewMetaV0alpha1IAMPermissions() *MetaV0alpha1IAMPermissions {
++	return &MetaV0alpha1IAMPermissions{}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1RoleRolePermissions struct {
++	Action *string `json:"action,omitempty"`
++	Scope  *string `json:"scope,omitempty"`
++}
++
++// NewMetaV0alpha1RoleRolePermissions creates a new MetaV0alpha1RoleRolePermissions object.
++func NewMetaV0alpha1RoleRolePermissions() *MetaV0alpha1RoleRolePermissions {
++	return &MetaV0alpha1RoleRolePermissions{}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1RoleRole struct {
++	Name        *string `json:"name,omitempty"`
++	Description *string `json:"description,omitempty"`
++	// +listType=atomic
++	Permissions []MetaV0alpha1RoleRolePermissions `json:"permissions,omitempty"`
++}
++
++// NewMetaV0alpha1RoleRole creates a new MetaV0alpha1RoleRole object.
++func NewMetaV0alpha1RoleRole() *MetaV0alpha1RoleRole {
++	return &MetaV0alpha1RoleRole{}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1ExtensionsAddedComponents struct {
++	// +listType=set
++	Targets     []string `json:"targets"`
++	Title       string   `json:"title"`
++	Description *string  `json:"description,omitempty"`
++}
++
++// NewMetaV0alpha1ExtensionsAddedComponents creates a new MetaV0alpha1ExtensionsAddedComponents object.
++func NewMetaV0alpha1ExtensionsAddedComponents() *MetaV0alpha1ExtensionsAddedComponents {
++	return &MetaV0alpha1ExtensionsAddedComponents{
++		Targets: []string{},
++	}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1ExtensionsAddedLinks struct {
++	// +listType=set
++	Targets     []string `json:"targets"`
++	Title       string   `json:"title"`
++	Description *string  `json:"description,omitempty"`
++}
++
++// NewMetaV0alpha1ExtensionsAddedLinks creates a new MetaV0alpha1ExtensionsAddedLinks object.
++func NewMetaV0alpha1ExtensionsAddedLinks() *MetaV0alpha1ExtensionsAddedLinks {
++	return &MetaV0alpha1ExtensionsAddedLinks{
++		Targets: []string{},
++	}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1ExtensionsExposedComponents struct {
++	Id          string  `json:"id"`
++	Title       *string `json:"title,omitempty"`
++	Description *string `json:"description,omitempty"`
++}
++
++// NewMetaV0alpha1ExtensionsExposedComponents creates a new MetaV0alpha1ExtensionsExposedComponents object.
++func NewMetaV0alpha1ExtensionsExposedComponents() *MetaV0alpha1ExtensionsExposedComponents {
++	return &MetaV0alpha1ExtensionsExposedComponents{}
++}
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1ExtensionsExtensionPoints struct {
++	Id          string  `json:"id"`
++	Title       *string `json:"title,omitempty"`
++	Description *string `json:"description,omitempty"`
++}
++
++// NewMetaV0alpha1ExtensionsExtensionPoints creates a new MetaV0alpha1ExtensionsExtensionPoints object.
++func NewMetaV0alpha1ExtensionsExtensionPoints() *MetaV0alpha1ExtensionsExtensionPoints {
++	return &MetaV0alpha1ExtensionsExtensionPoints{}
++}
++
++// +k8s:openapi-gen=true
++type MetaJSONDataType string
++
++const (
++	MetaJSONDataTypeApp        MetaJSONDataType = "app"
++	MetaJSONDataTypeDatasource MetaJSONDataType = "datasource"
++	MetaJSONDataTypePanel      MetaJSONDataType = "panel"
++	MetaJSONDataTypeRenderer   MetaJSONDataType = "renderer"
++)
++
++// +k8s:openapi-gen=true
++type MetaJSONDataCategory string
++
++const (
++	MetaJSONDataCategoryTsdb       MetaJSONDataCategory = "tsdb"
++	MetaJSONDataCategoryLogging    MetaJSONDataCategory = "logging"
++	MetaJSONDataCategoryCloud      MetaJSONDataCategory = "cloud"
++	MetaJSONDataCategoryTracing    MetaJSONDataCategory = "tracing"
++	MetaJSONDataCategoryProfiling  MetaJSONDataCategory = "profiling"
++	MetaJSONDataCategorySql        MetaJSONDataCategory = "sql"
++	MetaJSONDataCategoryEnterprise MetaJSONDataCategory = "enterprise"
++	MetaJSONDataCategoryIot        MetaJSONDataCategory = "iot"
++	MetaJSONDataCategoryOther      MetaJSONDataCategory = "other"
++)
++
++// +k8s:openapi-gen=true
++type MetaJSONDataState string
++
++const (
++	MetaJSONDataStateAlpha MetaJSONDataState = "alpha"
++	MetaJSONDataStateBeta  MetaJSONDataState = "beta"
++)
++
++// +k8s:openapi-gen=true
++type MetaIncludeType string
++
++const (
++	MetaIncludeTypeDashboard  MetaIncludeType = "dashboard"
++	MetaIncludeTypePage       MetaIncludeType = "page"
++	MetaIncludeTypePanel      MetaIncludeType = "panel"
++	MetaIncludeTypeDatasource MetaIncludeType = "datasource"
++)
++
++// +k8s:openapi-gen=true
++type MetaIncludeRole string
++
++const (
++	MetaIncludeRoleAdmin  MetaIncludeRole = "Admin"
++	MetaIncludeRoleEditor MetaIncludeRole = "Editor"
++	MetaIncludeRoleViewer MetaIncludeRole = "Viewer"
++)
++
++// +k8s:openapi-gen=true
++type MetaV0alpha1DependenciesPluginsType string
++
++const (
++	MetaV0alpha1DependenciesPluginsTypeApp        MetaV0alpha1DependenciesPluginsType = "app"
++	MetaV0alpha1DependenciesPluginsTypeDatasource MetaV0alpha1DependenciesPluginsType = "datasource"
++	MetaV0alpha1DependenciesPluginsTypePanel      MetaV0alpha1DependenciesPluginsType = "panel"
++)
+diff --git a/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_status_gen.go b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_status_gen.go
+similarity index 52%
+rename from apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_status_gen.go
+rename to apps/plugins/pkg/apis/plugins/v0alpha1/meta_status_gen.go
+index 60fa37dbb32..5f37ac58fb7 100644
+--- a/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_status_gen.go
++++ b/apps/plugins/pkg/apis/plugins/v0alpha1/meta_status_gen.go
+@@ -3,42 +3,42 @@
+ package v0alpha1
+ 
+ // +k8s:openapi-gen=true
+-type PluginMetastatusOperatorState struct {
++type MetastatusOperatorState struct {
+ 	// lastEvaluation is the ResourceVersion last evaluated
+ 	LastEvaluation string `json:"lastEvaluation"`
+ 	// state describes the state of the lastEvaluation.
+ 	// It is limited to three possible states for machine evaluation.
+-	State PluginMetaStatusOperatorStateState `json:"state"`
++	State MetaStatusOperatorStateState `json:"state"`
+ 	// descriptiveState is an optional more descriptive state field which has no requirements on format
+ 	DescriptiveState *string `json:"descriptiveState,omitempty"`
+ 	// details contains any extra information that is operator-specific
+ 	Details map[string]interface{} `json:"details,omitempty"`
+ }
+ 
+-// NewPluginMetastatusOperatorState creates a new PluginMetastatusOperatorState object.
+-func NewPluginMetastatusOperatorState() *PluginMetastatusOperatorState {
+-	return &PluginMetastatusOperatorState{}
++// NewMetastatusOperatorState creates a new MetastatusOperatorState object.
++func NewMetastatusOperatorState() *MetastatusOperatorState {
++	return &MetastatusOperatorState{}
+ }
+ 
+ // +k8s:openapi-gen=true
+-type PluginMetaStatus struct {
++type MetaStatus struct {
+ 	// operatorStates is a map of operator ID to operator state evaluations.
+ 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+-	OperatorStates map[string]PluginMetastatusOperatorState `json:"operatorStates,omitempty"`
++	OperatorStates map[string]MetastatusOperatorState `json:"operatorStates,omitempty"`
+ 	// additionalFields is reserved for future use
+ 	AdditionalFields map[string]interface{} `json:"additionalFields,omitempty"`
+ }
+ 
+-// NewPluginMetaStatus creates a new PluginMetaStatus object.
+-func NewPluginMetaStatus() *PluginMetaStatus {
+-	return &PluginMetaStatus{}
++// NewMetaStatus creates a new MetaStatus object.
++func NewMetaStatus() *MetaStatus {
++	return &MetaStatus{}
+ }
+ 
+ // +k8s:openapi-gen=true
+-type PluginMetaStatusOperatorStateState string
++type MetaStatusOperatorStateState string
+ 
+ const (
+-	PluginMetaStatusOperatorStateStateSuccess    PluginMetaStatusOperatorStateState = "success"
+-	PluginMetaStatusOperatorStateStateInProgress PluginMetaStatusOperatorStateState = "in_progress"
+-	PluginMetaStatusOperatorStateStateFailed     PluginMetaStatusOperatorStateState = "failed"
++	MetaStatusOperatorStateStateSuccess    MetaStatusOperatorStateState = "success"
++	MetaStatusOperatorStateStateInProgress MetaStatusOperatorStateState = "in_progress"
++	MetaStatusOperatorStateStateFailed     MetaStatusOperatorStateState = "failed"
+ )
+diff --git a/apps/plugins/pkg/apis/plugins/v0alpha1/plugin_object_gen.go b/apps/plugins/pkg/apis/plugins/v0alpha1/plugin_object_gen.go
+index d2cdedba399..b92b11f4cba 100644
+--- a/apps/plugins/pkg/apis/plugins/v0alpha1/plugin_object_gen.go
++++ b/apps/plugins/pkg/apis/plugins/v0alpha1/plugin_object_gen.go
+@@ -25,6 +25,13 @@ type Plugin struct {
+ 	Status PluginStatus `json:"status" yaml:"status"`
+ }
+ 
++func NewPlugin() *Plugin {
++	return &Plugin{
++		Spec:   *NewPluginSpec(),
++		Status: *NewPluginStatus(),
++	}
++}
++
+ func (o *Plugin) GetSpec() any {
+ 	return o.Spec
+ }
+diff --git a/apps/plugins/pkg/apis/plugins/v0alpha1/plugin_schema_gen.go b/apps/plugins/pkg/apis/plugins/v0alpha1/plugin_schema_gen.go
+index 97024275a1c..144ddd5af89 100644
+--- a/apps/plugins/pkg/apis/plugins/v0alpha1/plugin_schema_gen.go
++++ b/apps/plugins/pkg/apis/plugins/v0alpha1/plugin_schema_gen.go
+@@ -10,7 +10,7 @@ import (
+ 
+ // schema is unexported to prevent accidental overwrites
+ var (
+-	schemaPlugin = resource.NewSimpleSchema("plugins.grafana.app", "v0alpha1", &Plugin{}, &PluginList{}, resource.WithKind("Plugin"),
++	schemaPlugin = resource.NewSimpleSchema("plugins.grafana.app", "v0alpha1", NewPlugin(), &PluginList{}, resource.WithKind("Plugin"),
+ 		resource.WithPlural("plugins"), resource.WithScope(resource.NamespacedScope))
+ 	kindPlugin = resource.Kind{
+ 		Schema: schemaPlugin,
+diff --git a/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_schema_gen.go b/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_schema_gen.go
+deleted file mode 100644
+index a4022c8de97..00000000000
+--- a/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_schema_gen.go
++++ /dev/null
+@@ -1,34 +0,0 @@
+-//
+-// Code generated by grafana-app-sdk. DO NOT EDIT.
+-//
+-
+-package v0alpha1
+-
+-import (
+-	"github.com/grafana/grafana-app-sdk/resource"
+-)
+-
+-// schema is unexported to prevent accidental overwrites
+-var (
+-	schemaPluginMeta = resource.NewSimpleSchema("plugins.grafana.app", "v0alpha1", &PluginMeta{}, &PluginMetaList{}, resource.WithKind("PluginMeta"),
+-		resource.WithPlural("pluginmetas"), resource.WithScope(resource.NamespacedScope))
+-	kindPluginMeta = resource.Kind{
+-		Schema: schemaPluginMeta,
+-		Codecs: map[resource.KindEncoding]resource.Codec{
+-			resource.KindEncodingJSON: &PluginMetaJSONCodec{},
+-		},
+-	}
+-)
+-
+-// Kind returns a resource.Kind for this Schema with a JSON codec
+-func PluginMetaKind() resource.Kind {
+-	return kindPluginMeta
+-}
+-
+-// Schema returns a resource.SimpleSchema representation of PluginMeta
+-func PluginMetaSchema() *resource.SimpleSchema {
+-	return schemaPluginMeta
+-}
+-
+-// Interface compliance checks
+-var _ resource.Schema = kindPluginMeta
+diff --git a/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_spec_gen.go b/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_spec_gen.go
+deleted file mode 100644
+index 14a3b0515bd..00000000000
+--- a/apps/plugins/pkg/apis/plugins/v0alpha1/pluginmeta_spec_gen.go
++++ /dev/null
+@@ -1,474 +0,0 @@
+-// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+-
+-package v0alpha1
+-
+-// JSON configuration schema for Grafana plugins
+-// Converted from: https://github.com/grafana/grafana/blob/main/docs/sources/developers/plugins/plugin.schema.json
+-// +k8s:openapi-gen=true
+-type PluginMetaJSONData struct {
+-	// Unique name of the plugin
+-	Id string `json:"id"`
+-	// Plugin type
+-	Type PluginMetaJSONDataType `json:"type"`
+-	// Human-readable name of the plugin
+-	Name string `json:"name"`
+-	// Metadata for the plugin
+-	Info PluginMetaInfo `json:"info"`
+-	// Dependency information
+-	Dependencies PluginMetaDependencies `json:"dependencies"`
+-	// Optional fields
+-	Alerting           *bool                         `json:"alerting,omitempty"`
+-	Annotations        *bool                         `json:"annotations,omitempty"`
+-	AutoEnabled        *bool                         `json:"autoEnabled,omitempty"`
+-	Backend            *bool                         `json:"backend,omitempty"`
+-	BuildMode          *string                       `json:"buildMode,omitempty"`
+-	BuiltIn            *bool                         `json:"builtIn,omitempty"`
+-	Category           *PluginMetaJSONDataCategory   `json:"category,omitempty"`
+-	EnterpriseFeatures *PluginMetaEnterpriseFeatures `json:"enterpriseFeatures,omitempty"`
+-	Executable         *string                       `json:"executable,omitempty"`
+-	HideFromList       *bool                         `json:"hideFromList,omitempty"`
+-	// +listType=atomic
+-	Includes                  []PluginMetaInclude     `json:"includes,omitempty"`
+-	Logs                      *bool                   `json:"logs,omitempty"`
+-	Metrics                   *bool                   `json:"metrics,omitempty"`
+-	MultiValueFilterOperators *bool                   `json:"multiValueFilterOperators,omitempty"`
+-	PascalName                *string                 `json:"pascalName,omitempty"`
+-	Preload                   *bool                   `json:"preload,omitempty"`
+-	QueryOptions              *PluginMetaQueryOptions `json:"queryOptions,omitempty"`
+-	// +listType=atomic
+-	Routes        []PluginMetaRoute        `json:"routes,omitempty"`
+-	SkipDataQuery *bool                    `json:"skipDataQuery,omitempty"`
+-	State         *PluginMetaJSONDataState `json:"state,omitempty"`
+-	Streaming     *bool                    `json:"streaming,omitempty"`
+-	Suggestions   *bool                    `json:"suggestions,omitempty"`
+-	Tracing       *bool                    `json:"tracing,omitempty"`
+-	Iam           *PluginMetaIAM           `json:"iam,omitempty"`
+-	// +listType=atomic
+-	Roles      []PluginMetaRole      `json:"roles,omitempty"`
+-	Extensions *PluginMetaExtensions `json:"extensions,omitempty"`
+-}
+-
+-// NewPluginMetaJSONData creates a new PluginMetaJSONData object.
+-func NewPluginMetaJSONData() *PluginMetaJSONData {
+-	return &PluginMetaJSONData{
+-		Info:         *NewPluginMetaInfo(),
+-		Dependencies: *NewPluginMetaDependencies(),
+-	}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaInfo struct {
+-	// Required fields
+-	// +listType=set
+-	Keywords []string                    `json:"keywords"`
+-	Logos    PluginMetaV0alpha1InfoLogos `json:"logos"`
+-	Updated  string                      `json:"updated"`
+-	Version  string                      `json:"version"`
+-	// Optional fields
+-	Author      *PluginMetaV0alpha1InfoAuthor `json:"author,omitempty"`
+-	Description *string                       `json:"description,omitempty"`
+-	// +listType=atomic
+-	Links []PluginMetaV0alpha1InfoLinks `json:"links,omitempty"`
+-	// +listType=atomic
+-	Screenshots []PluginMetaV0alpha1InfoScreenshots `json:"screenshots,omitempty"`
+-}
+-
+-// NewPluginMetaInfo creates a new PluginMetaInfo object.
+-func NewPluginMetaInfo() *PluginMetaInfo {
+-	return &PluginMetaInfo{
+-		Keywords: []string{},
+-		Logos:    *NewPluginMetaV0alpha1InfoLogos(),
+-	}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaDependencies struct {
+-	// Required field
+-	GrafanaDependency string `json:"grafanaDependency"`
+-	// Optional fields
+-	GrafanaVersion *string `json:"grafanaVersion,omitempty"`
+-	// +listType=set
+-	// +listMapKey=id
+-	Plugins    []PluginMetaV0alpha1DependenciesPlugins   `json:"plugins,omitempty"`
+-	Extensions *PluginMetaV0alpha1DependenciesExtensions `json:"extensions,omitempty"`
+-}
+-
+-// NewPluginMetaDependencies creates a new PluginMetaDependencies object.
+-func NewPluginMetaDependencies() *PluginMetaDependencies {
+-	return &PluginMetaDependencies{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaEnterpriseFeatures struct {
+-	// Allow additional properties
+-	HealthDiagnosticsErrors *bool `json:"healthDiagnosticsErrors,omitempty"`
+-}
+-
+-// NewPluginMetaEnterpriseFeatures creates a new PluginMetaEnterpriseFeatures object.
+-func NewPluginMetaEnterpriseFeatures() *PluginMetaEnterpriseFeatures {
+-	return &PluginMetaEnterpriseFeatures{
+-		HealthDiagnosticsErrors: (func(input bool) *bool { return &input })(false),
+-	}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaInclude struct {
+-	Uid        *string                `json:"uid,omitempty"`
+-	Type       *PluginMetaIncludeType `json:"type,omitempty"`
+-	Name       *string                `json:"name,omitempty"`
+-	Component  *string                `json:"component,omitempty"`
+-	Role       *PluginMetaIncludeRole `json:"role,omitempty"`
+-	Action     *string                `json:"action,omitempty"`
+-	Path       *string                `json:"path,omitempty"`
+-	AddToNav   *bool                  `json:"addToNav,omitempty"`
+-	DefaultNav *bool                  `json:"defaultNav,omitempty"`
+-	Icon       *string                `json:"icon,omitempty"`
+-}
+-
+-// NewPluginMetaInclude creates a new PluginMetaInclude object.
+-func NewPluginMetaInclude() *PluginMetaInclude {
+-	return &PluginMetaInclude{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaQueryOptions struct {
+-	MaxDataPoints *bool `json:"maxDataPoints,omitempty"`
+-	MinInterval   *bool `json:"minInterval,omitempty"`
+-	CacheTimeout  *bool `json:"cacheTimeout,omitempty"`
+-}
+-
+-// NewPluginMetaQueryOptions creates a new PluginMetaQueryOptions object.
+-func NewPluginMetaQueryOptions() *PluginMetaQueryOptions {
+-	return &PluginMetaQueryOptions{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaRoute struct {
+-	Path        *string `json:"path,omitempty"`
+-	Method      *string `json:"method,omitempty"`
+-	Url         *string `json:"url,omitempty"`
+-	ReqSignedIn *bool   `json:"reqSignedIn,omitempty"`
+-	ReqRole     *string `json:"reqRole,omitempty"`
+-	ReqAction   *string `json:"reqAction,omitempty"`
+-	// +listType=atomic
+-	Headers      []string                             `json:"headers,omitempty"`
+-	Body         map[string]interface{}               `json:"body,omitempty"`
+-	TokenAuth    *PluginMetaV0alpha1RouteTokenAuth    `json:"tokenAuth,omitempty"`
+-	JwtTokenAuth *PluginMetaV0alpha1RouteJwtTokenAuth `json:"jwtTokenAuth,omitempty"`
+-	// +listType=atomic
+-	UrlParams []PluginMetaV0alpha1RouteUrlParams `json:"urlParams,omitempty"`
+-}
+-
+-// NewPluginMetaRoute creates a new PluginMetaRoute object.
+-func NewPluginMetaRoute() *PluginMetaRoute {
+-	return &PluginMetaRoute{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaIAM struct {
+-	// +listType=atomic
+-	Permissions []PluginMetaV0alpha1IAMPermissions `json:"permissions,omitempty"`
+-}
+-
+-// NewPluginMetaIAM creates a new PluginMetaIAM object.
+-func NewPluginMetaIAM() *PluginMetaIAM {
+-	return &PluginMetaIAM{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaRole struct {
+-	Role *PluginMetaV0alpha1RoleRole `json:"role,omitempty"`
+-	// +listType=set
+-	Grants []string `json:"grants,omitempty"`
+-}
+-
+-// NewPluginMetaRole creates a new PluginMetaRole object.
+-func NewPluginMetaRole() *PluginMetaRole {
+-	return &PluginMetaRole{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaExtensions struct {
+-	// +listType=atomic
+-	AddedComponents []PluginMetaV0alpha1ExtensionsAddedComponents `json:"addedComponents,omitempty"`
+-	// +listType=atomic
+-	AddedLinks []PluginMetaV0alpha1ExtensionsAddedLinks `json:"addedLinks,omitempty"`
+-	// +listType=set
+-	// +listMapKey=id
+-	ExposedComponents []PluginMetaV0alpha1ExtensionsExposedComponents `json:"exposedComponents,omitempty"`
+-	// +listType=set
+-	// +listMapKey=id
+-	ExtensionPoints []PluginMetaV0alpha1ExtensionsExtensionPoints `json:"extensionPoints,omitempty"`
+-}
+-
+-// NewPluginMetaExtensions creates a new PluginMetaExtensions object.
+-func NewPluginMetaExtensions() *PluginMetaExtensions {
+-	return &PluginMetaExtensions{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaSpec struct {
+-	PluginJSON PluginMetaJSONData `json:"pluginJSON"`
+-}
+-
+-// NewPluginMetaSpec creates a new PluginMetaSpec object.
+-func NewPluginMetaSpec() *PluginMetaSpec {
+-	return &PluginMetaSpec{
+-		PluginJSON: *NewPluginMetaJSONData(),
+-	}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1InfoLogos struct {
+-	Small string `json:"small"`
+-	Large string `json:"large"`
+-}
+-
+-// NewPluginMetaV0alpha1InfoLogos creates a new PluginMetaV0alpha1InfoLogos object.
+-func NewPluginMetaV0alpha1InfoLogos() *PluginMetaV0alpha1InfoLogos {
+-	return &PluginMetaV0alpha1InfoLogos{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1InfoAuthor struct {
+-	Name  *string `json:"name,omitempty"`
+-	Email *string `json:"email,omitempty"`
+-	Url   *string `json:"url,omitempty"`
+-}
+-
+-// NewPluginMetaV0alpha1InfoAuthor creates a new PluginMetaV0alpha1InfoAuthor object.
+-func NewPluginMetaV0alpha1InfoAuthor() *PluginMetaV0alpha1InfoAuthor {
+-	return &PluginMetaV0alpha1InfoAuthor{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1InfoLinks struct {
+-	Name *string `json:"name,omitempty"`
+-	Url  *string `json:"url,omitempty"`
+-}
+-
+-// NewPluginMetaV0alpha1InfoLinks creates a new PluginMetaV0alpha1InfoLinks object.
+-func NewPluginMetaV0alpha1InfoLinks() *PluginMetaV0alpha1InfoLinks {
+-	return &PluginMetaV0alpha1InfoLinks{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1InfoScreenshots struct {
+-	Name *string `json:"name,omitempty"`
+-	Path *string `json:"path,omitempty"`
+-}
+-
+-// NewPluginMetaV0alpha1InfoScreenshots creates a new PluginMetaV0alpha1InfoScreenshots object.
+-func NewPluginMetaV0alpha1InfoScreenshots() *PluginMetaV0alpha1InfoScreenshots {
+-	return &PluginMetaV0alpha1InfoScreenshots{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1DependenciesPlugins struct {
+-	Id   string                                    `json:"id"`
+-	Type PluginMetaV0alpha1DependenciesPluginsType `json:"type"`
+-	Name string                                    `json:"name"`
+-}
+-
+-// NewPluginMetaV0alpha1DependenciesPlugins creates a new PluginMetaV0alpha1DependenciesPlugins object.
+-func NewPluginMetaV0alpha1DependenciesPlugins() *PluginMetaV0alpha1DependenciesPlugins {
+-	return &PluginMetaV0alpha1DependenciesPlugins{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1DependenciesExtensions struct {
+-	// +listType=set
+-	ExposedComponents []string `json:"exposedComponents,omitempty"`
+-}
+-
+-// NewPluginMetaV0alpha1DependenciesExtensions creates a new PluginMetaV0alpha1DependenciesExtensions object.
+-func NewPluginMetaV0alpha1DependenciesExtensions() *PluginMetaV0alpha1DependenciesExtensions {
+-	return &PluginMetaV0alpha1DependenciesExtensions{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1RouteTokenAuth struct {
+-	Url *string `json:"url,omitempty"`
+-	// +listType=set
+-	Scopes []string               `json:"scopes,omitempty"`
+-	Params map[string]interface{} `json:"params,omitempty"`
+-}
+-
+-// NewPluginMetaV0alpha1RouteTokenAuth creates a new PluginMetaV0alpha1RouteTokenAuth object.
+-func NewPluginMetaV0alpha1RouteTokenAuth() *PluginMetaV0alpha1RouteTokenAuth {
+-	return &PluginMetaV0alpha1RouteTokenAuth{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1RouteJwtTokenAuth struct {
+-	Url *string `json:"url,omitempty"`
+-	// +listType=set
+-	Scopes []string               `json:"scopes,omitempty"`
+-	Params map[string]interface{} `json:"params,omitempty"`
+-}
+-
+-// NewPluginMetaV0alpha1RouteJwtTokenAuth creates a new PluginMetaV0alpha1RouteJwtTokenAuth object.
+-func NewPluginMetaV0alpha1RouteJwtTokenAuth() *PluginMetaV0alpha1RouteJwtTokenAuth {
+-	return &PluginMetaV0alpha1RouteJwtTokenAuth{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1RouteUrlParams struct {
+-	Name    *string `json:"name,omitempty"`
+-	Content *string `json:"content,omitempty"`
+-}
+-
+-// NewPluginMetaV0alpha1RouteUrlParams creates a new PluginMetaV0alpha1RouteUrlParams object.
+-func NewPluginMetaV0alpha1RouteUrlParams() *PluginMetaV0alpha1RouteUrlParams {
+-	return &PluginMetaV0alpha1RouteUrlParams{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1IAMPermissions struct {
+-	Action *string `json:"action,omitempty"`
+-	Scope  *string `json:"scope,omitempty"`
+-}
+-
+-// NewPluginMetaV0alpha1IAMPermissions creates a new PluginMetaV0alpha1IAMPermissions object.
+-func NewPluginMetaV0alpha1IAMPermissions() *PluginMetaV0alpha1IAMPermissions {
+-	return &PluginMetaV0alpha1IAMPermissions{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1RoleRolePermissions struct {
+-	Action *string `json:"action,omitempty"`
+-	Scope  *string `json:"scope,omitempty"`
+-}
+-
+-// NewPluginMetaV0alpha1RoleRolePermissions creates a new PluginMetaV0alpha1RoleRolePermissions object.
+-func NewPluginMetaV0alpha1RoleRolePermissions() *PluginMetaV0alpha1RoleRolePermissions {
+-	return &PluginMetaV0alpha1RoleRolePermissions{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1RoleRole struct {
+-	Name        *string `json:"name,omitempty"`
+-	Description *string `json:"description,omitempty"`
+-	// +listType=atomic
+-	Permissions []PluginMetaV0alpha1RoleRolePermissions `json:"permissions,omitempty"`
+-}
+-
+-// NewPluginMetaV0alpha1RoleRole creates a new PluginMetaV0alpha1RoleRole object.
+-func NewPluginMetaV0alpha1RoleRole() *PluginMetaV0alpha1RoleRole {
+-	return &PluginMetaV0alpha1RoleRole{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1ExtensionsAddedComponents struct {
+-	// +listType=set
+-	Targets     []string `json:"targets"`
+-	Title       string   `json:"title"`
+-	Description *string  `json:"description,omitempty"`
+-}
+-
+-// NewPluginMetaV0alpha1ExtensionsAddedComponents creates a new PluginMetaV0alpha1ExtensionsAddedComponents object.
+-func NewPluginMetaV0alpha1ExtensionsAddedComponents() *PluginMetaV0alpha1ExtensionsAddedComponents {
+-	return &PluginMetaV0alpha1ExtensionsAddedComponents{
+-		Targets: []string{},
+-	}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1ExtensionsAddedLinks struct {
+-	// +listType=set
+-	Targets     []string `json:"targets"`
+-	Title       string   `json:"title"`
+-	Description *string  `json:"description,omitempty"`
+-}
+-
+-// NewPluginMetaV0alpha1ExtensionsAddedLinks creates a new PluginMetaV0alpha1ExtensionsAddedLinks object.
+-func NewPluginMetaV0alpha1ExtensionsAddedLinks() *PluginMetaV0alpha1ExtensionsAddedLinks {
+-	return &PluginMetaV0alpha1ExtensionsAddedLinks{
+-		Targets: []string{},
+-	}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1ExtensionsExposedComponents struct {
+-	Id          string  `json:"id"`
+-	Title       *string `json:"title,omitempty"`
+-	Description *string `json:"description,omitempty"`
+-}
+-
+-// NewPluginMetaV0alpha1ExtensionsExposedComponents creates a new PluginMetaV0alpha1ExtensionsExposedComponents object.
+-func NewPluginMetaV0alpha1ExtensionsExposedComponents() *PluginMetaV0alpha1ExtensionsExposedComponents {
+-	return &PluginMetaV0alpha1ExtensionsExposedComponents{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1ExtensionsExtensionPoints struct {
+-	Id          string  `json:"id"`
+-	Title       *string `json:"title,omitempty"`
+-	Description *string `json:"description,omitempty"`
+-}
+-
+-// NewPluginMetaV0alpha1ExtensionsExtensionPoints creates a new PluginMetaV0alpha1ExtensionsExtensionPoints object.
+-func NewPluginMetaV0alpha1ExtensionsExtensionPoints() *PluginMetaV0alpha1ExtensionsExtensionPoints {
+-	return &PluginMetaV0alpha1ExtensionsExtensionPoints{}
+-}
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaJSONDataType string
+-
+-const (
+-	PluginMetaJSONDataTypeApp        PluginMetaJSONDataType = "app"
+-	PluginMetaJSONDataTypeDatasource PluginMetaJSONDataType = "datasource"
+-	PluginMetaJSONDataTypePanel      PluginMetaJSONDataType = "panel"
+-	PluginMetaJSONDataTypeRenderer   PluginMetaJSONDataType = "renderer"
+-)
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaJSONDataCategory string
+-
+-const (
+-	PluginMetaJSONDataCategoryTsdb       PluginMetaJSONDataCategory = "tsdb"
+-	PluginMetaJSONDataCategoryLogging    PluginMetaJSONDataCategory = "logging"
+-	PluginMetaJSONDataCategoryCloud      PluginMetaJSONDataCategory = "cloud"
+-	PluginMetaJSONDataCategoryTracing    PluginMetaJSONDataCategory = "tracing"
+-	PluginMetaJSONDataCategoryProfiling  PluginMetaJSONDataCategory = "profiling"
+-	PluginMetaJSONDataCategorySql        PluginMetaJSONDataCategory = "sql"
+-	PluginMetaJSONDataCategoryEnterprise PluginMetaJSONDataCategory = "enterprise"
+-	PluginMetaJSONDataCategoryIot        PluginMetaJSONDataCategory = "iot"
+-	PluginMetaJSONDataCategoryOther      PluginMetaJSONDataCategory = "other"
+-)
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaJSONDataState string
+-
+-const (
+-	PluginMetaJSONDataStateAlpha PluginMetaJSONDataState = "alpha"
+-	PluginMetaJSONDataStateBeta  PluginMetaJSONDataState = "beta"
+-)
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaIncludeType string
+-
+-const (
+-	PluginMetaIncludeTypeDashboard  PluginMetaIncludeType = "dashboard"
+-	PluginMetaIncludeTypePage       PluginMetaIncludeType = "page"
+-	PluginMetaIncludeTypePanel      PluginMetaIncludeType = "panel"
+-	PluginMetaIncludeTypeDatasource PluginMetaIncludeType = "datasource"
+-)
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaIncludeRole string
+-
+-const (
+-	PluginMetaIncludeRoleAdmin  PluginMetaIncludeRole = "Admin"
+-	PluginMetaIncludeRoleEditor PluginMetaIncludeRole = "Editor"
+-	PluginMetaIncludeRoleViewer PluginMetaIncludeRole = "Viewer"
+-)
+-
+-// +k8s:openapi-gen=true
+-type PluginMetaV0alpha1DependenciesPluginsType string
+-
+-const (
+-	PluginMetaV0alpha1DependenciesPluginsTypeApp        PluginMetaV0alpha1DependenciesPluginsType = "app"
+-	PluginMetaV0alpha1DependenciesPluginsTypeDatasource PluginMetaV0alpha1DependenciesPluginsType = "datasource"
+-	PluginMetaV0alpha1DependenciesPluginsTypePanel      PluginMetaV0alpha1DependenciesPluginsType = "panel"
+-)
+diff --git a/apps/plugins/pkg/apis/plugins_manifest.go b/apps/plugins/pkg/apis/plugins_manifest.go
+index e09c70244a7..1a351eb2baf 100644
+--- a/apps/plugins/pkg/apis/plugins_manifest.go
++++ b/apps/plugins/pkg/apis/plugins_manifest.go
+@@ -20,12 +20,12 @@ import (
+ )
+ 
+ var (
+-	rawSchemaPluginv0alpha1         = []byte(`{"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"Plugin":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"class":{"enum":["core","external"],"type":"string"},"id":{"type":"string"},"url":{"type":"string"},"version":{"type":"string"}},"required":["id","version","class"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+-	versionSchemaPluginv0alpha1     app.VersionSchema
+-	_                               = json.Unmarshal(rawSchemaPluginv0alpha1, &versionSchemaPluginv0alpha1)
+-	rawSchemaPluginMetav0alpha1     = []byte(`{"Dependencies":{"additionalProperties":false,"properties":{"extensions":{"additionalProperties":false,"properties":{"exposedComponents":{"description":"+listType=set","items":{"type":"string"},"type":"array"}},"type":"object"},"grafanaDependency":{"description":"Required field","type":"string"},"grafanaVersion":{"description":"Optional fields","type":"string"},"plugins":{"description":"+listType=set\n+listMapKey=id","items":{"additionalProperties":false,"properties":{"id":{"type":"string"},"name":{"type":"string"},"type":{"enum":["app","datasource","panel"],"type":"string"}},"required":["id","type","name"],"type":"object"},"type":"array"}},"required":["grafanaDependency"],"type":"object"},"EnterpriseFeatures":{"additionalProperties":false,"properties":{"healthDiagnosticsErrors":{"default":false,"description":"Allow additional properties","type":"boolean"}},"type":"object"},"Extensions":{"additionalProperties":false,"properties":{"addedComponents":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"description":{"type":"string"},"targets":{"description":"+listType=set","items":{"type":"string"},"type":"array"},"title":{"type":"string"}},"required":["targets","title"],"type":"object"},"type":"array"},"addedLinks":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"description":{"type":"string"},"targets":{"description":"+listType=set","items":{"type":"string"},"type":"array"},"title":{"type":"string"}},"required":["targets","title"],"type":"object"},"type":"array"},"exposedComponents":{"description":"+listType=set\n+listMapKey=id","items":{"additionalProperties":false,"properties":{"description":{"type":"string"},"id":{"type":"string"},"title":{"type":"string"}},"required":["id"],"type":"object"},"type":"array"},"extensionPoints":{"description":"+listType=set\n+listMapKey=id","items":{"additionalProperties":false,"properties":{"description":{"type":"string"},"id":{"type":"string"},"title":{"type":"string"}},"required":["id"],"type":"object"},"type":"array"}},"type":"object"},"IAM":{"additionalProperties":false,"properties":{"permissions":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"action":{"type":"string"},"scope":{"type":"string"}},"type":"object"},"type":"array"}},"type":"object"},"Include":{"additionalProperties":false,"properties":{"action":{"type":"string"},"addToNav":{"type":"boolean"},"component":{"type":"string"},"defaultNav":{"type":"boolean"},"icon":{"type":"string"},"name":{"type":"string"},"path":{"type":"string"},"role":{"enum":["Admin","Editor","Viewer"],"type":"string"},"type":{"enum":["dashboard","page","panel","datasource"],"type":"string"},"uid":{"type":"string"}},"type":"object"},"Info":{"additionalProperties":false,"properties":{"author":{"additionalProperties":false,"description":"Optional fields","properties":{"email":{"type":"string"},"name":{"type":"string"},"url":{"type":"string"}},"type":"object"},"description":{"type":"string"},"keywords":{"description":"Required fields\n+listType=set","items":{"type":"string"},"type":"array"},"links":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"name":{"type":"string"},"url":{"type":"string"}},"type":"object"},"type":"array"},"logos":{"additionalProperties":false,"properties":{"large":{"type":"string"},"small":{"type":"string"}},"required":["small","large"],"type":"object"},"screenshots":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"name":{"type":"string"},"path":{"type":"string"}},"type":"object"},"type":"array"},"updated":{"type":"string"},"version":{"type":"string"}},"required":["keywords","logos","updated","version"],"type":"object"},"JSONData":{"additionalProperties":false,"description":"JSON configuration schema for Grafana plugins\nConverted from: https://github.com/grafana/grafana/blob/main/docs/sources/developers/plugins/plugin.schema.json","properties":{"alerting":{"description":"Optional fields","type":"boolean"},"annotations":{"type":"boolean"},"autoEnabled":{"type":"boolean"},"backend":{"type":"boolean"},"buildMode":{"type":"string"},"builtIn":{"type":"boolean"},"category":{"enum":["tsdb","logging","cloud","tracing","profiling","sql","enterprise","iot","other"],"type":"string"},"dependencies":{"$ref":"#/components/schemas/Dependencies","description":"Dependency information"},"enterpriseFeatures":{"$ref":"#/components/schemas/EnterpriseFeatures"},"executable":{"type":"string"},"extensions":{"$ref":"#/components/schemas/Extensions"},"hideFromList":{"type":"boolean"},"iam":{"$ref":"#/components/schemas/IAM"},"id":{"description":"Unique name of the plugin","type":"string"},"includes":{"description":"+listType=atomic","items":{"$ref":"#/components/schemas/Include"},"type":"array"},"info":{"$ref":"#/components/schemas/Info","description":"Metadata for the plugin"},"logs":{"type":"boolean"},"metrics":{"type":"boolean"},"multiValueFilterOperators":{"type":"boolean"},"name":{"description":"Human-readable name of the plugin","type":"string"},"pascalName":{"type":"string"},"preload":{"type":"boolean"},"queryOptions":{"$ref":"#/components/schemas/QueryOptions"},"roles":{"description":"+listType=atomic","items":{"$ref":"#/components/schemas/Role"},"type":"array"},"routes":{"description":"+listType=atomic","items":{"$ref":"#/components/schemas/Route"},"type":"array"},"skipDataQuery":{"type":"boolean"},"state":{"enum":["alpha","beta"],"type":"string"},"streaming":{"type":"boolean"},"suggestions":{"type":"boolean"},"tracing":{"type":"boolean"},"type":{"description":"Plugin type","enum":["app","datasource","panel","renderer"],"type":"string"}},"required":["id","type","name","info","dependencies"],"type":"object"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PluginMeta":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"QueryOptions":{"additionalProperties":false,"properties":{"cacheTimeout":{"type":"boolean"},"maxDataPoints":{"type":"boolean"},"minInterval":{"type":"boolean"}},"type":"object"},"Role":{"additionalProperties":false,"properties":{"grants":{"description":"+listType=set","items":{"type":"string"},"type":"array"},"role":{"additionalProperties":false,"properties":{"description":{"type":"string"},"name":{"type":"string"},"permissions":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"action":{"type":"string"},"scope":{"type":"string"}},"type":"object"},"type":"array"}},"type":"object"}},"type":"object"},"Route":{"additionalProperties":false,"properties":{"body":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"headers":{"description":"+listType=atomic","items":{"type":"string"},"type":"array"},"jwtTokenAuth":{"additionalProperties":false,"properties":{"params":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"scopes":{"description":"+listType=set","items":{"type":"string"},"type":"array"},"url":{"type":"string"}},"type":"object"},"method":{"type":"string"},"path":{"type":"string"},"reqAction":{"type":"string"},"reqRole":{"type":"string"},"reqSignedIn":{"type":"boolean"},"tokenAuth":{"additionalProperties":false,"properties":{"params":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"scopes":{"description":"+listType=set","items":{"type":"string"},"type":"array"},"url":{"type":"string"}},"type":"object"},"url":{"type":"string"},"urlParams":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"content":{"type":"string"},"name":{"type":"string"}},"type":"object"},"type":"array"}},"type":"object"},"spec":{"additionalProperties":false,"properties":{"pluginJSON":{"$ref":"#/components/schemas/JSONData"}},"required":["pluginJSON"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+-	versionSchemaPluginMetav0alpha1 app.VersionSchema
+-	_                               = json.Unmarshal(rawSchemaPluginMetav0alpha1, &versionSchemaPluginMetav0alpha1)
++	rawSchemaPluginv0alpha1     = []byte(`{"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"Plugin":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"class":{"enum":["core","external"],"type":"string"},"id":{"type":"string"},"url":{"type":"string"},"version":{"type":"string"}},"required":["id","version","class"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
++	versionSchemaPluginv0alpha1 app.VersionSchema
++	_                           = json.Unmarshal(rawSchemaPluginv0alpha1, &versionSchemaPluginv0alpha1)
++	rawSchemaMetav0alpha1       = []byte(`{"Dependencies":{"additionalProperties":false,"properties":{"extensions":{"additionalProperties":false,"properties":{"exposedComponents":{"description":"+listType=set","items":{"type":"string"},"type":"array"}},"type":"object"},"grafanaDependency":{"description":"Required field","type":"string"},"grafanaVersion":{"description":"Optional fields","type":"string"},"plugins":{"description":"+listType=set\n+listMapKey=id","items":{"additionalProperties":false,"properties":{"id":{"type":"string"},"name":{"type":"string"},"type":{"enum":["app","datasource","panel"],"type":"string"}},"required":["id","type","name"],"type":"object"},"type":"array"}},"required":["grafanaDependency"],"type":"object"},"EnterpriseFeatures":{"additionalProperties":false,"properties":{"healthDiagnosticsErrors":{"default":false,"description":"Allow additional properties","type":"boolean"}},"type":"object"},"Extensions":{"additionalProperties":false,"properties":{"addedComponents":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"description":{"type":"string"},"targets":{"description":"+listType=set","items":{"type":"string"},"type":"array"},"title":{"type":"string"}},"required":["targets","title"],"type":"object"},"type":"array"},"addedLinks":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"description":{"type":"string"},"targets":{"description":"+listType=set","items":{"type":"string"},"type":"array"},"title":{"type":"string"}},"required":["targets","title"],"type":"object"},"type":"array"},"exposedComponents":{"description":"+listType=set\n+listMapKey=id","items":{"additionalProperties":false,"properties":{"description":{"type":"string"},"id":{"type":"string"},"title":{"type":"string"}},"required":["id"],"type":"object"},"type":"array"},"extensionPoints":{"description":"+listType=set\n+listMapKey=id","items":{"additionalProperties":false,"properties":{"description":{"type":"string"},"id":{"type":"string"},"title":{"type":"string"}},"required":["id"],"type":"object"},"type":"array"}},"type":"object"},"IAM":{"additionalProperties":false,"properties":{"permissions":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"action":{"type":"string"},"scope":{"type":"string"}},"type":"object"},"type":"array"}},"type":"object"},"Include":{"additionalProperties":false,"properties":{"action":{"type":"string"},"addToNav":{"type":"boolean"},"component":{"type":"string"},"defaultNav":{"type":"boolean"},"icon":{"type":"string"},"name":{"type":"string"},"path":{"type":"string"},"role":{"enum":["Admin","Editor","Viewer"],"type":"string"},"type":{"enum":["dashboard","page","panel","datasource"],"type":"string"},"uid":{"type":"string"}},"type":"object"},"Info":{"additionalProperties":false,"properties":{"author":{"additionalProperties":false,"description":"Optional fields","properties":{"email":{"type":"string"},"name":{"type":"string"},"url":{"type":"string"}},"type":"object"},"description":{"type":"string"},"keywords":{"description":"Required fields\n+listType=set","items":{"type":"string"},"type":"array"},"links":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"name":{"type":"string"},"url":{"type":"string"}},"type":"object"},"type":"array"},"logos":{"additionalProperties":false,"properties":{"large":{"type":"string"},"small":{"type":"string"}},"required":["small","large"],"type":"object"},"screenshots":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"name":{"type":"string"},"path":{"type":"string"}},"type":"object"},"type":"array"},"updated":{"type":"string"},"version":{"type":"string"}},"required":["keywords","logos","updated","version"],"type":"object"},"JSONData":{"additionalProperties":false,"description":"JSON configuration schema for Grafana plugins\nConverted from: https://github.com/grafana/grafana/blob/main/docs/sources/developers/plugins/plugin.schema.json","properties":{"alerting":{"description":"Optional fields","type":"boolean"},"annotations":{"type":"boolean"},"autoEnabled":{"type":"boolean"},"backend":{"type":"boolean"},"buildMode":{"type":"string"},"builtIn":{"type":"boolean"},"category":{"enum":["tsdb","logging","cloud","tracing","profiling","sql","enterprise","iot","other"],"type":"string"},"dependencies":{"$ref":"#/components/schemas/Dependencies","description":"Dependency information"},"enterpriseFeatures":{"$ref":"#/components/schemas/EnterpriseFeatures"},"executable":{"type":"string"},"extensions":{"$ref":"#/components/schemas/Extensions"},"hideFromList":{"type":"boolean"},"iam":{"$ref":"#/components/schemas/IAM"},"id":{"description":"Unique name of the plugin","type":"string"},"includes":{"description":"+listType=atomic","items":{"$ref":"#/components/schemas/Include"},"type":"array"},"info":{"$ref":"#/components/schemas/Info","description":"Metadata for the plugin"},"logs":{"type":"boolean"},"metrics":{"type":"boolean"},"multiValueFilterOperators":{"type":"boolean"},"name":{"description":"Human-readable name of the plugin","type":"string"},"pascalName":{"type":"string"},"preload":{"type":"boolean"},"queryOptions":{"$ref":"#/components/schemas/QueryOptions"},"roles":{"description":"+listType=atomic","items":{"$ref":"#/components/schemas/Role"},"type":"array"},"routes":{"description":"+listType=atomic","items":{"$ref":"#/components/schemas/Route"},"type":"array"},"skipDataQuery":{"type":"boolean"},"state":{"enum":["alpha","beta"],"type":"string"},"streaming":{"type":"boolean"},"suggestions":{"type":"boolean"},"tracing":{"type":"boolean"},"type":{"description":"Plugin type","enum":["app","datasource","panel","renderer"],"type":"string"}},"required":["id","type","name","info","dependencies"],"type":"object"},"Meta":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"QueryOptions":{"additionalProperties":false,"properties":{"cacheTimeout":{"type":"boolean"},"maxDataPoints":{"type":"boolean"},"minInterval":{"type":"boolean"}},"type":"object"},"Role":{"additionalProperties":false,"properties":{"grants":{"description":"+listType=set","items":{"type":"string"},"type":"array"},"role":{"additionalProperties":false,"properties":{"description":{"type":"string"},"name":{"type":"string"},"permissions":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"action":{"type":"string"},"scope":{"type":"string"}},"type":"object"},"type":"array"}},"type":"object"}},"type":"object"},"Route":{"additionalProperties":false,"properties":{"body":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"headers":{"description":"+listType=atomic","items":{"type":"string"},"type":"array"},"jwtTokenAuth":{"additionalProperties":false,"properties":{"params":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"scopes":{"description":"+listType=set","items":{"type":"string"},"type":"array"},"url":{"type":"string"}},"type":"object"},"method":{"type":"string"},"path":{"type":"string"},"reqAction":{"type":"string"},"reqRole":{"type":"string"},"reqSignedIn":{"type":"boolean"},"tokenAuth":{"additionalProperties":false,"properties":{"params":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"scopes":{"description":"+listType=set","items":{"type":"string"},"type":"array"},"url":{"type":"string"}},"type":"object"},"url":{"type":"string"},"urlParams":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"content":{"type":"string"},"name":{"type":"string"}},"type":"object"},"type":"array"}},"type":"object"},"spec":{"additionalProperties":false,"properties":{"pluginJSON":{"$ref":"#/components/schemas/JSONData"}},"required":["pluginJSON"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
++	versionSchemaMetav0alpha1   app.VersionSchema
++	_                           = json.Unmarshal(rawSchemaMetav0alpha1, &versionSchemaMetav0alpha1)
+ )
+ 
+ var appManifestData = app.ManifestData{
+@@ -46,11 +46,11 @@ var appManifestData = app.ManifestData{
+ 				},
+ 
+ 				{
+-					Kind:       "PluginMeta",
+-					Plural:     "PluginMetas",
++					Kind:       "Meta",
++					Plural:     "Metas",
+ 					Scope:      "Namespaced",
+ 					Conversion: false,
+-					Schema:     &versionSchemaPluginMetav0alpha1,
++					Schema:     &versionSchemaMetav0alpha1,
+ 				},
+ 			},
+ 			Routes: app.ManifestVersionRoutes{
+@@ -71,8 +71,8 @@ func RemoteManifest() app.Manifest {
+ }
+ 
+ var kindVersionToGoType = map[string]resource.Kind{
+-	"Plugin/v0alpha1":     v0alpha1.PluginKind(),
+-	"PluginMeta/v0alpha1": v0alpha1.PluginMetaKind(),
++	"Plugin/v0alpha1": v0alpha1.PluginKind(),
++	"Meta/v0alpha1":   v0alpha1.MetaKind(),
+ }
+ 
+ // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
+diff --git a/apps/plugins/pkg/app/app.go b/apps/plugins/pkg/app/app.go
+index 3d17cc34221..7d8614f2a3c 100644
+--- a/apps/plugins/pkg/app/app.go
++++ b/apps/plugins/pkg/app/app.go
+@@ -43,7 +43,7 @@ func New(cfg app.Config) (app.App, error) {
+ 				Kind: pluginsv0alpha1.PluginKind(),
+ 			},
+ 			{
+-				Kind: pluginsv0alpha1.PluginMetaKind(),
++				Kind: pluginsv0alpha1.MetaKind(),
+ 			},
+ 		},
+ 	}
+@@ -137,9 +137,9 @@ func (p *PluginAppInstaller) InstallAPIs(
+ 		return client, nil
+ 	}
+ 
+-	pluginMetaGVR := pluginsv0alpha1.PluginMetaKind().GroupVersionResource()
++	pluginMetaGVR := pluginsv0alpha1.MetaKind().GroupVersionResource()
+ 	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
+-		pluginMetaGVR: NewPluginMetaStorage(p.metaManager, clientFactory),
++		pluginMetaGVR: NewMetaStorage(p.metaManager, clientFactory),
+ 	}
+ 	wrappedServer := &customStorageWrapper{
+ 		wrapped: server,
+diff --git a/apps/plugins/pkg/app/meta/cloud.go b/apps/plugins/pkg/app/meta/cloud.go
+index f49445d093a..799480eab96 100644
+--- a/apps/plugins/pkg/app/meta/cloud.go
++++ b/apps/plugins/pkg/app/meta/cloud.go
+@@ -96,24 +96,24 @@ func (p *CloudProvider) GetMeta(ctx context.Context, pluginID, version string) (
+ // grafanaComPluginVersionMeta represents the response from grafana.com API
+ // GET /api/plugins/{pluginId}/versions/{version}
+ type grafanaComPluginVersionMeta struct {
+-	PluginID        string                             `json:"pluginSlug"`
+-	Version         string                             `json:"version"`
+-	URL             string                             `json:"url"`
+-	Commit          string                             `json:"commit"`
+-	Description     string                             `json:"description"`
+-	Keywords        []string                           `json:"keywords"`
+-	CreatedAt       time.Time                          `json:"createdAt"`
+-	UpdatedAt       time.Time                          `json:"updatedAt"`
+-	JSON            pluginsv0alpha1.PluginMetaJSONData `json:"json"`
+-	Readme          string                             `json:"readme"`
+-	Downloads       int                                `json:"downloads"`
+-	Verified        bool                               `json:"verified"`
+-	Status          string                             `json:"status"`
+-	StatusContext   string                             `json:"statusContext"`
+-	DownloadSlug    string                             `json:"downloadSlug"`
+-	SignatureType   string                             `json:"signatureType"`
+-	SignedByOrg     string                             `json:"signedByOrg"`
+-	SignedByOrgName string                             `json:"signedByOrgName"`
++	PluginID        string                       `json:"pluginSlug"`
++	Version         string                       `json:"version"`
++	URL             string                       `json:"url"`
++	Commit          string                       `json:"commit"`
++	Description     string                       `json:"description"`
++	Keywords        []string                     `json:"keywords"`
++	CreatedAt       time.Time                    `json:"createdAt"`
++	UpdatedAt       time.Time                    `json:"updatedAt"`
++	JSON            pluginsv0alpha1.MetaJSONData `json:"json"`
++	Readme          string                       `json:"readme"`
++	Downloads       int                          `json:"downloads"`
++	Verified        bool                         `json:"verified"`
++	Status          string                       `json:"status"`
++	StatusContext   string                       `json:"statusContext"`
++	DownloadSlug    string                       `json:"downloadSlug"`
++	SignatureType   string                       `json:"signatureType"`
++	SignedByOrg     string                       `json:"signedByOrg"`
++	SignedByOrgName string                       `json:"signedByOrgName"`
+ 	Packages        struct {
+ 		Any struct {
+ 			Md5         string `json:"md5"`
+diff --git a/apps/plugins/pkg/app/meta/core.go b/apps/plugins/pkg/app/meta/core.go
+index 3452f95b24b..e16f7a23db5 100644
+--- a/apps/plugins/pkg/app/meta/core.go
++++ b/apps/plugins/pkg/app/meta/core.go
+@@ -23,7 +23,7 @@ const (
+ // CoreProvider retrieves plugin metadata for core plugins.
+ type CoreProvider struct {
+ 	mu            sync.RWMutex
+-	loadedPlugins map[string]pluginsv0alpha1.PluginMetaJSONData
++	loadedPlugins map[string]pluginsv0alpha1.MetaJSONData
+ 	initialized   bool
+ 	ttl           time.Duration
+ }
+@@ -36,7 +36,7 @@ func NewCoreProvider() *CoreProvider {
+ // NewCoreProviderWithTTL creates a new CoreProvider with a custom TTL.
+ func NewCoreProviderWithTTL(ttl time.Duration) *CoreProvider {
+ 	return &CoreProvider{
+-		loadedPlugins: make(map[string]pluginsv0alpha1.PluginMetaJSONData),
++		loadedPlugins: make(map[string]pluginsv0alpha1.MetaJSONData),
+ 		ttl:           ttl,
+ 	}
+ }
+@@ -119,17 +119,17 @@ func (p *CoreProvider) loadPlugins(ctx context.Context) error {
+ 	}
+ 
+ 	for _, bundle := range ps {
+-		meta := jsonDataToPluginMetaJSONData(bundle.Primary.JSONData)
++		meta := jsonDataToMetaJSONData(bundle.Primary.JSONData)
+ 		p.loadedPlugins[bundle.Primary.JSONData.ID] = meta
+ 	}
+ 
+ 	return nil
+ }
+ 
+-// jsonDataToPluginMetaJSONData converts a plugins.JSONData to a pluginsv0alpha1.PluginMetaJSONData.
++// jsonDataToMetaJSONData converts a plugins.JSONData to a pluginsv0alpha1.MetaJSONData.
+ // nolint:gocyclo
+-func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.PluginMetaJSONData {
+-	meta := pluginsv0alpha1.PluginMetaJSONData{
++func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSONData {
++	meta := pluginsv0alpha1.MetaJSONData{
+ 		Id:   jsonData.ID,
+ 		Name: jsonData.Name,
+ 	}
+@@ -137,19 +137,19 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 	// Map plugin type
+ 	switch jsonData.Type {
+ 	case plugins.TypeApp:
+-		meta.Type = pluginsv0alpha1.PluginMetaJSONDataTypeApp
++		meta.Type = pluginsv0alpha1.MetaJSONDataTypeApp
+ 	case plugins.TypeDataSource:
+-		meta.Type = pluginsv0alpha1.PluginMetaJSONDataTypeDatasource
++		meta.Type = pluginsv0alpha1.MetaJSONDataTypeDatasource
+ 	case plugins.TypePanel:
+-		meta.Type = pluginsv0alpha1.PluginMetaJSONDataTypePanel
++		meta.Type = pluginsv0alpha1.MetaJSONDataTypePanel
+ 	case plugins.TypeRenderer:
+-		meta.Type = pluginsv0alpha1.PluginMetaJSONDataTypeRenderer
++		meta.Type = pluginsv0alpha1.MetaJSONDataTypeRenderer
+ 	}
+ 
+ 	// Map Info
+-	meta.Info = pluginsv0alpha1.PluginMetaInfo{
++	meta.Info = pluginsv0alpha1.MetaInfo{
+ 		Keywords: jsonData.Info.Keywords,
+-		Logos: pluginsv0alpha1.PluginMetaV0alpha1InfoLogos{
++		Logos: pluginsv0alpha1.MetaV0alpha1InfoLogos{
+ 			Small: jsonData.Info.Logos.Small,
+ 			Large: jsonData.Info.Logos.Large,
+ 		},
+@@ -162,7 +162,7 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 	}
+ 
+ 	if jsonData.Info.Author.Name != "" || jsonData.Info.Author.URL != "" {
+-		author := &pluginsv0alpha1.PluginMetaV0alpha1InfoAuthor{}
++		author := &pluginsv0alpha1.MetaV0alpha1InfoAuthor{}
+ 		if jsonData.Info.Author.Name != "" {
+ 			author.Name = &jsonData.Info.Author.Name
+ 		}
+@@ -173,9 +173,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 	}
+ 
+ 	if len(jsonData.Info.Links) > 0 {
+-		meta.Info.Links = make([]pluginsv0alpha1.PluginMetaV0alpha1InfoLinks, 0, len(jsonData.Info.Links))
++		meta.Info.Links = make([]pluginsv0alpha1.MetaV0alpha1InfoLinks, 0, len(jsonData.Info.Links))
+ 		for _, link := range jsonData.Info.Links {
+-			v0Link := pluginsv0alpha1.PluginMetaV0alpha1InfoLinks{}
++			v0Link := pluginsv0alpha1.MetaV0alpha1InfoLinks{}
+ 			if link.Name != "" {
+ 				v0Link.Name = &link.Name
+ 			}
+@@ -187,9 +187,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 	}
+ 
+ 	if len(jsonData.Info.Screenshots) > 0 {
+-		meta.Info.Screenshots = make([]pluginsv0alpha1.PluginMetaV0alpha1InfoScreenshots, 0, len(jsonData.Info.Screenshots))
++		meta.Info.Screenshots = make([]pluginsv0alpha1.MetaV0alpha1InfoScreenshots, 0, len(jsonData.Info.Screenshots))
+ 		for _, screenshot := range jsonData.Info.Screenshots {
+-			v0Screenshot := pluginsv0alpha1.PluginMetaV0alpha1InfoScreenshots{}
++			v0Screenshot := pluginsv0alpha1.MetaV0alpha1InfoScreenshots{}
+ 			if screenshot.Name != "" {
+ 				v0Screenshot.Name = &screenshot.Name
+ 			}
+@@ -201,7 +201,7 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 	}
+ 
+ 	// Map Dependencies
+-	meta.Dependencies = pluginsv0alpha1.PluginMetaDependencies{
++	meta.Dependencies = pluginsv0alpha1.MetaDependencies{
+ 		GrafanaDependency: jsonData.Dependencies.GrafanaDependency,
+ 	}
+ 
+@@ -210,18 +210,18 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 	}
+ 
+ 	if len(jsonData.Dependencies.Plugins) > 0 {
+-		meta.Dependencies.Plugins = make([]pluginsv0alpha1.PluginMetaV0alpha1DependenciesPlugins, 0, len(jsonData.Dependencies.Plugins))
++		meta.Dependencies.Plugins = make([]pluginsv0alpha1.MetaV0alpha1DependenciesPlugins, 0, len(jsonData.Dependencies.Plugins))
+ 		for _, dep := range jsonData.Dependencies.Plugins {
+-			var depType pluginsv0alpha1.PluginMetaV0alpha1DependenciesPluginsType
++			var depType pluginsv0alpha1.MetaV0alpha1DependenciesPluginsType
+ 			switch dep.Type {
+ 			case "app":
+-				depType = pluginsv0alpha1.PluginMetaV0alpha1DependenciesPluginsTypeApp
++				depType = pluginsv0alpha1.MetaV0alpha1DependenciesPluginsTypeApp
+ 			case "datasource":
+-				depType = pluginsv0alpha1.PluginMetaV0alpha1DependenciesPluginsTypeDatasource
++				depType = pluginsv0alpha1.MetaV0alpha1DependenciesPluginsTypeDatasource
+ 			case "panel":
+-				depType = pluginsv0alpha1.PluginMetaV0alpha1DependenciesPluginsTypePanel
++				depType = pluginsv0alpha1.MetaV0alpha1DependenciesPluginsTypePanel
+ 			}
+-			meta.Dependencies.Plugins = append(meta.Dependencies.Plugins, pluginsv0alpha1.PluginMetaV0alpha1DependenciesPlugins{
++			meta.Dependencies.Plugins = append(meta.Dependencies.Plugins, pluginsv0alpha1.MetaV0alpha1DependenciesPlugins{
+ 				Id:   dep.ID,
+ 				Type: depType,
+ 				Name: dep.Name,
+@@ -230,7 +230,7 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 	}
+ 
+ 	if len(jsonData.Dependencies.Extensions.ExposedComponents) > 0 {
+-		meta.Dependencies.Extensions = &pluginsv0alpha1.PluginMetaV0alpha1DependenciesExtensions{
++		meta.Dependencies.Extensions = &pluginsv0alpha1.MetaV0alpha1DependenciesExtensions{
+ 			ExposedComponents: jsonData.Dependencies.Extensions.ExposedComponents,
+ 		}
+ 	}
+@@ -278,40 +278,40 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 
+ 	// Map category
+ 	if jsonData.Category != "" {
+-		var category pluginsv0alpha1.PluginMetaJSONDataCategory
++		var category pluginsv0alpha1.MetaJSONDataCategory
+ 		switch jsonData.Category {
+ 		case "tsdb":
+-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryTsdb
++			category = pluginsv0alpha1.MetaJSONDataCategoryTsdb
+ 		case "logging":
+-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryLogging
++			category = pluginsv0alpha1.MetaJSONDataCategoryLogging
+ 		case "cloud":
+-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryCloud
++			category = pluginsv0alpha1.MetaJSONDataCategoryCloud
+ 		case "tracing":
+-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryTracing
++			category = pluginsv0alpha1.MetaJSONDataCategoryTracing
+ 		case "profiling":
+-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryProfiling
++			category = pluginsv0alpha1.MetaJSONDataCategoryProfiling
+ 		case "sql":
+-			category = pluginsv0alpha1.PluginMetaJSONDataCategorySql
++			category = pluginsv0alpha1.MetaJSONDataCategorySql
+ 		case "enterprise":
+-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryEnterprise
++			category = pluginsv0alpha1.MetaJSONDataCategoryEnterprise
+ 		case "iot":
+-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryIot
++			category = pluginsv0alpha1.MetaJSONDataCategoryIot
+ 		case "other":
+-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryOther
++			category = pluginsv0alpha1.MetaJSONDataCategoryOther
+ 		default:
+-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryOther
++			category = pluginsv0alpha1.MetaJSONDataCategoryOther
+ 		}
+ 		meta.Category = &category
+ 	}
+ 
+ 	// Map state
+ 	if jsonData.State != "" {
+-		var state pluginsv0alpha1.PluginMetaJSONDataState
++		var state pluginsv0alpha1.MetaJSONDataState
+ 		switch jsonData.State {
+ 		case plugins.ReleaseStateAlpha:
+-			state = pluginsv0alpha1.PluginMetaJSONDataStateAlpha
++			state = pluginsv0alpha1.MetaJSONDataStateAlpha
+ 		case plugins.ReleaseStateBeta:
+-			state = pluginsv0alpha1.PluginMetaJSONDataStateBeta
++			state = pluginsv0alpha1.MetaJSONDataStateBeta
+ 		default:
+ 		}
+ 		if state != "" {
+@@ -326,7 +326,7 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 
+ 	// Map QueryOptions
+ 	if len(jsonData.QueryOptions) > 0 {
+-		queryOptions := &pluginsv0alpha1.PluginMetaQueryOptions{}
++		queryOptions := &pluginsv0alpha1.MetaQueryOptions{}
+ 		if val, ok := jsonData.QueryOptions["maxDataPoints"]; ok {
+ 			queryOptions.MaxDataPoints = &val
+ 		}
+@@ -341,23 +341,23 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 
+ 	// Map Includes
+ 	if len(jsonData.Includes) > 0 {
+-		meta.Includes = make([]pluginsv0alpha1.PluginMetaInclude, 0, len(jsonData.Includes))
++		meta.Includes = make([]pluginsv0alpha1.MetaInclude, 0, len(jsonData.Includes))
+ 		for _, include := range jsonData.Includes {
+-			v0Include := pluginsv0alpha1.PluginMetaInclude{}
++			v0Include := pluginsv0alpha1.MetaInclude{}
+ 			if include.UID != "" {
+ 				v0Include.Uid = &include.UID
+ 			}
+ 			if include.Type != "" {
+-				var includeType pluginsv0alpha1.PluginMetaIncludeType
++				var includeType pluginsv0alpha1.MetaIncludeType
+ 				switch include.Type {
+ 				case "dashboard":
+-					includeType = pluginsv0alpha1.PluginMetaIncludeTypeDashboard
++					includeType = pluginsv0alpha1.MetaIncludeTypeDashboard
+ 				case "page":
+-					includeType = pluginsv0alpha1.PluginMetaIncludeTypePage
++					includeType = pluginsv0alpha1.MetaIncludeTypePage
+ 				case "panel":
+-					includeType = pluginsv0alpha1.PluginMetaIncludeTypePanel
++					includeType = pluginsv0alpha1.MetaIncludeTypePanel
+ 				case "datasource":
+-					includeType = pluginsv0alpha1.PluginMetaIncludeTypeDatasource
++					includeType = pluginsv0alpha1.MetaIncludeTypeDatasource
+ 				}
+ 				v0Include.Type = &includeType
+ 			}
+@@ -368,14 +368,14 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 				v0Include.Component = &include.Component
+ 			}
+ 			if include.Role != "" {
+-				var role pluginsv0alpha1.PluginMetaIncludeRole
++				var role pluginsv0alpha1.MetaIncludeRole
+ 				switch include.Role {
+ 				case "Admin":
+-					role = pluginsv0alpha1.PluginMetaIncludeRoleAdmin
++					role = pluginsv0alpha1.MetaIncludeRoleAdmin
+ 				case "Editor":
+-					role = pluginsv0alpha1.PluginMetaIncludeRoleEditor
++					role = pluginsv0alpha1.MetaIncludeRoleEditor
+ 				case "Viewer":
+-					role = pluginsv0alpha1.PluginMetaIncludeRoleViewer
++					role = pluginsv0alpha1.MetaIncludeRoleViewer
+ 				}
+ 				v0Include.Role = &role
+ 			}
+@@ -400,9 +400,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 
+ 	// Map Routes
+ 	if len(jsonData.Routes) > 0 {
+-		meta.Routes = make([]pluginsv0alpha1.PluginMetaRoute, 0, len(jsonData.Routes))
++		meta.Routes = make([]pluginsv0alpha1.MetaRoute, 0, len(jsonData.Routes))
+ 		for _, route := range jsonData.Routes {
+-			v0Route := pluginsv0alpha1.PluginMetaRoute{}
++			v0Route := pluginsv0alpha1.MetaRoute{}
+ 			if route.Path != "" {
+ 				v0Route.Path = &route.Path
+ 			}
+@@ -427,9 +427,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 				v0Route.Headers = headers
+ 			}
+ 			if len(route.URLParams) > 0 {
+-				v0Route.UrlParams = make([]pluginsv0alpha1.PluginMetaV0alpha1RouteUrlParams, 0, len(route.URLParams))
++				v0Route.UrlParams = make([]pluginsv0alpha1.MetaV0alpha1RouteUrlParams, 0, len(route.URLParams))
+ 				for _, param := range route.URLParams {
+-					v0Param := pluginsv0alpha1.PluginMetaV0alpha1RouteUrlParams{}
++					v0Param := pluginsv0alpha1.MetaV0alpha1RouteUrlParams{}
+ 					if param.Name != "" {
+ 						v0Param.Name = &param.Name
+ 					}
+@@ -440,7 +440,7 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 				}
+ 			}
+ 			if route.TokenAuth != nil {
+-				v0Route.TokenAuth = &pluginsv0alpha1.PluginMetaV0alpha1RouteTokenAuth{}
++				v0Route.TokenAuth = &pluginsv0alpha1.MetaV0alpha1RouteTokenAuth{}
+ 				if route.TokenAuth.Url != "" {
+ 					v0Route.TokenAuth.Url = &route.TokenAuth.Url
+ 				}
+@@ -455,7 +455,7 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 				}
+ 			}
+ 			if route.JwtTokenAuth != nil {
+-				v0Route.JwtTokenAuth = &pluginsv0alpha1.PluginMetaV0alpha1RouteJwtTokenAuth{}
++				v0Route.JwtTokenAuth = &pluginsv0alpha1.MetaV0alpha1RouteJwtTokenAuth{}
+ 				if route.JwtTokenAuth.Url != "" {
+ 					v0Route.JwtTokenAuth.Url = &route.JwtTokenAuth.Url
+ 				}
+@@ -482,12 +482,12 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 	// Map Extensions
+ 	if len(jsonData.Extensions.AddedLinks) > 0 || len(jsonData.Extensions.AddedComponents) > 0 ||
+ 		len(jsonData.Extensions.ExposedComponents) > 0 || len(jsonData.Extensions.ExtensionPoints) > 0 {
+-		extensions := &pluginsv0alpha1.PluginMetaExtensions{}
++		extensions := &pluginsv0alpha1.MetaExtensions{}
+ 
+ 		if len(jsonData.Extensions.AddedLinks) > 0 {
+-			extensions.AddedLinks = make([]pluginsv0alpha1.PluginMetaV0alpha1ExtensionsAddedLinks, 0, len(jsonData.Extensions.AddedLinks))
++			extensions.AddedLinks = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsAddedLinks, 0, len(jsonData.Extensions.AddedLinks))
+ 			for _, link := range jsonData.Extensions.AddedLinks {
+-				v0Link := pluginsv0alpha1.PluginMetaV0alpha1ExtensionsAddedLinks{
++				v0Link := pluginsv0alpha1.MetaV0alpha1ExtensionsAddedLinks{
+ 					Targets: link.Targets,
+ 					Title:   link.Title,
+ 				}
+@@ -499,9 +499,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 		}
+ 
+ 		if len(jsonData.Extensions.AddedComponents) > 0 {
+-			extensions.AddedComponents = make([]pluginsv0alpha1.PluginMetaV0alpha1ExtensionsAddedComponents, 0, len(jsonData.Extensions.AddedComponents))
++			extensions.AddedComponents = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsAddedComponents, 0, len(jsonData.Extensions.AddedComponents))
+ 			for _, comp := range jsonData.Extensions.AddedComponents {
+-				v0Comp := pluginsv0alpha1.PluginMetaV0alpha1ExtensionsAddedComponents{
++				v0Comp := pluginsv0alpha1.MetaV0alpha1ExtensionsAddedComponents{
+ 					Targets: comp.Targets,
+ 					Title:   comp.Title,
+ 				}
+@@ -513,9 +513,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 		}
+ 
+ 		if len(jsonData.Extensions.ExposedComponents) > 0 {
+-			extensions.ExposedComponents = make([]pluginsv0alpha1.PluginMetaV0alpha1ExtensionsExposedComponents, 0, len(jsonData.Extensions.ExposedComponents))
++			extensions.ExposedComponents = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsExposedComponents, 0, len(jsonData.Extensions.ExposedComponents))
+ 			for _, comp := range jsonData.Extensions.ExposedComponents {
+-				v0Comp := pluginsv0alpha1.PluginMetaV0alpha1ExtensionsExposedComponents{
++				v0Comp := pluginsv0alpha1.MetaV0alpha1ExtensionsExposedComponents{
+ 					Id: comp.Id,
+ 				}
+ 				if comp.Title != "" {
+@@ -529,9 +529,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 		}
+ 
+ 		if len(jsonData.Extensions.ExtensionPoints) > 0 {
+-			extensions.ExtensionPoints = make([]pluginsv0alpha1.PluginMetaV0alpha1ExtensionsExtensionPoints, 0, len(jsonData.Extensions.ExtensionPoints))
++			extensions.ExtensionPoints = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsExtensionPoints, 0, len(jsonData.Extensions.ExtensionPoints))
+ 			for _, point := range jsonData.Extensions.ExtensionPoints {
+-				v0Point := pluginsv0alpha1.PluginMetaV0alpha1ExtensionsExtensionPoints{
++				v0Point := pluginsv0alpha1.MetaV0alpha1ExtensionsExtensionPoints{
+ 					Id: point.Id,
+ 				}
+ 				if point.Title != "" {
+@@ -549,13 +549,13 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 
+ 	// Map Roles
+ 	if len(jsonData.Roles) > 0 {
+-		meta.Roles = make([]pluginsv0alpha1.PluginMetaRole, 0, len(jsonData.Roles))
++		meta.Roles = make([]pluginsv0alpha1.MetaRole, 0, len(jsonData.Roles))
+ 		for _, role := range jsonData.Roles {
+-			v0Role := pluginsv0alpha1.PluginMetaRole{
++			v0Role := pluginsv0alpha1.MetaRole{
+ 				Grants: role.Grants,
+ 			}
+ 			if role.Role.Name != "" || role.Role.Description != "" || len(role.Role.Permissions) > 0 {
+-				v0RoleRole := &pluginsv0alpha1.PluginMetaV0alpha1RoleRole{}
++				v0RoleRole := &pluginsv0alpha1.MetaV0alpha1RoleRole{}
+ 				if role.Role.Name != "" {
+ 					v0RoleRole.Name = &role.Role.Name
+ 				}
+@@ -563,9 +563,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 					v0RoleRole.Description = &role.Role.Description
+ 				}
+ 				if len(role.Role.Permissions) > 0 {
+-					v0RoleRole.Permissions = make([]pluginsv0alpha1.PluginMetaV0alpha1RoleRolePermissions, 0, len(role.Role.Permissions))
++					v0RoleRole.Permissions = make([]pluginsv0alpha1.MetaV0alpha1RoleRolePermissions, 0, len(role.Role.Permissions))
+ 					for _, perm := range role.Role.Permissions {
+-						v0Perm := pluginsv0alpha1.PluginMetaV0alpha1RoleRolePermissions{}
++						v0Perm := pluginsv0alpha1.MetaV0alpha1RoleRolePermissions{}
+ 						if perm.Action != "" {
+ 							v0Perm.Action = &perm.Action
+ 						}
+@@ -583,11 +583,11 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
+ 
+ 	// Map IAM
+ 	if jsonData.IAM != nil && len(jsonData.IAM.Permissions) > 0 {
+-		iam := &pluginsv0alpha1.PluginMetaIAM{
+-			Permissions: make([]pluginsv0alpha1.PluginMetaV0alpha1IAMPermissions, 0, len(jsonData.IAM.Permissions)),
++		iam := &pluginsv0alpha1.MetaIAM{
++			Permissions: make([]pluginsv0alpha1.MetaV0alpha1IAMPermissions, 0, len(jsonData.IAM.Permissions)),
+ 		}
+ 		for _, perm := range jsonData.IAM.Permissions {
+-			v0Perm := pluginsv0alpha1.PluginMetaV0alpha1IAMPermissions{}
++			v0Perm := pluginsv0alpha1.MetaV0alpha1IAMPermissions{}
+ 			if perm.Action != "" {
+ 				v0Perm.Action = &perm.Action
+ 			}
+diff --git a/apps/plugins/pkg/app/meta/manager.go b/apps/plugins/pkg/app/meta/manager.go
+index e694e88bba7..7e99d0cc197 100644
+--- a/apps/plugins/pkg/app/meta/manager.go
++++ b/apps/plugins/pkg/app/meta/manager.go
+@@ -16,7 +16,7 @@ const (
+ 
+ // cachedMeta represents a cached metadata entry with expiration time
+ type cachedMeta struct {
+-	meta      pluginsv0alpha1.PluginMetaJSONData
++	meta      pluginsv0alpha1.MetaJSONData
+ 	ttl       time.Duration
+ 	expiresAt time.Time
+ }
+diff --git a/apps/plugins/pkg/app/meta/provider.go b/apps/plugins/pkg/app/meta/provider.go
+index 8b5d8b0fcbd..818c0da9dc5 100644
+--- a/apps/plugins/pkg/app/meta/provider.go
++++ b/apps/plugins/pkg/app/meta/provider.go
+@@ -14,14 +14,14 @@ var (
+ 
+ // Result contains plugin metadata along with its recommended TTL.
+ type Result struct {
+-	Meta pluginsv0alpha1.PluginMetaJSONData
++	Meta pluginsv0alpha1.MetaJSONData
+ 	TTL  time.Duration
+ }
+ 
+ // Provider is used for retrieving plugin metadata.
+ type Provider interface {
+ 	// GetMeta retrieves plugin metadata for the given plugin ID and version.
+-	// Returns the Result containing the PluginMetaJSONData and its recommended TTL.
++	// Returns the Result containing the MetaJSONData and its recommended TTL.
+ 	// If the plugin is not found, returns ErrMetaNotFound.
+ 	GetMeta(ctx context.Context, pluginID, version string) (*Result, error)
+ }
+diff --git a/apps/plugins/pkg/app/storage.go b/apps/plugins/pkg/app/storage.go
+index 575b1ca21c8..f2dd2ac98d5 100644
+--- a/apps/plugins/pkg/app/storage.go
++++ b/apps/plugins/pkg/app/storage.go
+@@ -22,15 +22,15 @@ import (
+ )
+ 
+ var (
+-	_ rest.Scoper               = (*PluginMetaStorage)(nil)
+-	_ rest.SingularNameProvider = (*PluginMetaStorage)(nil)
+-	_ rest.Getter               = (*PluginMetaStorage)(nil)
+-	_ rest.Lister               = (*PluginMetaStorage)(nil)
+-	_ rest.Storage              = (*PluginMetaStorage)(nil)
+-	_ rest.TableConvertor       = (*PluginMetaStorage)(nil)
++	_ rest.Scoper               = (*MetaStorage)(nil)
++	_ rest.SingularNameProvider = (*MetaStorage)(nil)
++	_ rest.Getter               = (*MetaStorage)(nil)
++	_ rest.Lister               = (*MetaStorage)(nil)
++	_ rest.Storage              = (*MetaStorage)(nil)
++	_ rest.TableConvertor       = (*MetaStorage)(nil)
+ )
+ 
+-type PluginMetaStorage struct {
++type MetaStorage struct {
+ 	metaManager   *meta.ProviderManager
+ 	client        *pluginsv0alpha1.PluginClient
+ 	clientFactory func(context.Context) (*pluginsv0alpha1.PluginClient, error)
+@@ -41,16 +41,16 @@ type PluginMetaStorage struct {
+ 	tableConverter rest.TableConvertor
+ }
+ 
+-func NewPluginMetaStorage(
++func NewMetaStorage(
+ 	metaManager *meta.ProviderManager,
+ 	clientFactory func(context.Context) (*pluginsv0alpha1.PluginClient, error),
+-) *PluginMetaStorage {
++) *MetaStorage {
+ 	gr := schema.GroupResource{
+ 		Group:    pluginsv0alpha1.APIGroup,
+-		Resource: strings.ToLower(pluginsv0alpha1.PluginMetaKind().Plural()),
++		Resource: strings.ToLower(pluginsv0alpha1.MetaKind().Plural()),
+ 	}
+ 
+-	return &PluginMetaStorage{
++	return &MetaStorage{
+ 		metaManager:    metaManager,
+ 		clientFactory:  clientFactory,
+ 		gr:             gr,
+@@ -58,7 +58,7 @@ func NewPluginMetaStorage(
+ 	}
+ }
+ 
+-func (s *PluginMetaStorage) getClient(ctx context.Context) (*pluginsv0alpha1.PluginClient, error) {
++func (s *MetaStorage) getClient(ctx context.Context) (*pluginsv0alpha1.PluginClient, error) {
+ 	s.clientOnce.Do(func() {
+ 		client, err := s.clientFactory(ctx)
+ 		if err != nil {
+@@ -72,29 +72,29 @@ func (s *PluginMetaStorage) getClient(ctx context.Context) (*pluginsv0alpha1.Plu
+ 	return s.client, s.clientErr
+ }
+ 
+-func (s *PluginMetaStorage) New() runtime.Object {
+-	return pluginsv0alpha1.PluginMetaKind().ZeroValue()
++func (s *MetaStorage) New() runtime.Object {
++	return pluginsv0alpha1.MetaKind().ZeroValue()
+ }
+ 
+-func (s *PluginMetaStorage) Destroy() {}
++func (s *MetaStorage) Destroy() {}
+ 
+-func (s *PluginMetaStorage) NamespaceScoped() bool {
++func (s *MetaStorage) NamespaceScoped() bool {
+ 	return true
+ }
+ 
+-func (s *PluginMetaStorage) GetSingularName() string {
+-	return strings.ToLower(pluginsv0alpha1.PluginMetaKind().Kind())
++func (s *MetaStorage) GetSingularName() string {
++	return strings.ToLower(pluginsv0alpha1.MetaKind().Kind())
+ }
+ 
+-func (s *PluginMetaStorage) NewList() runtime.Object {
+-	return pluginsv0alpha1.PluginMetaKind().ZeroListValue()
++func (s *MetaStorage) NewList() runtime.Object {
++	return pluginsv0alpha1.MetaKind().ZeroListValue()
+ }
+ 
+-func (s *PluginMetaStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
++func (s *MetaStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+ 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
+ }
+ 
+-func (s *PluginMetaStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
++func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+ 	ns, err := request.NamespaceInfoFrom(ctx, true)
+ 	if err != nil {
+ 		return nil, err
+@@ -111,8 +111,8 @@ func (s *PluginMetaStorage) List(ctx context.Context, options *internalversion.L
+ 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to list plugins: %w", err))
+ 	}
+ 
+-	// Convert each Plugin to PluginMeta
+-	metaItems := make([]pluginsv0alpha1.PluginMeta, 0, len(plugins.Items))
++	// Convert each Plugin to Meta
++	metaItems := make([]pluginsv0alpha1.Meta, 0, len(plugins.Items))
+ 	for _, plugin := range plugins.Items {
+ 		result, err := s.metaManager.GetMeta(ctx, plugin.Spec.Id, plugin.Spec.Version)
+ 		if err != nil {
+@@ -121,14 +121,14 @@ func (s *PluginMetaStorage) List(ctx context.Context, options *internalversion.L
+ 			continue
+ 		}
+ 
+-		pluginMeta := createPluginMetaFromPluginMetaJSONData(result.Meta, plugin.Name, plugin.Namespace)
++		pluginMeta := createMetaFromMetaJSONData(result.Meta, plugin.Name, plugin.Namespace)
+ 		metaItems = append(metaItems, *pluginMeta)
+ 	}
+ 
+-	list := &pluginsv0alpha1.PluginMetaList{
++	list := &pluginsv0alpha1.MetaList{
+ 		TypeMeta: metav1.TypeMeta{
+ 			APIVersion: pluginsv0alpha1.APIGroup + "/" + pluginsv0alpha1.APIVersion,
+-			Kind:       pluginsv0alpha1.PluginMetaKind().Kind() + "List",
++			Kind:       pluginsv0alpha1.MetaKind().Kind() + "List",
+ 		},
+ 		Items: metaItems,
+ 	}
+@@ -136,7 +136,7 @@ func (s *PluginMetaStorage) List(ctx context.Context, options *internalversion.L
+ 	return list, nil
+ }
+ 
+-func (s *PluginMetaStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
++func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+ 	ns, err := request.NamespaceInfoFrom(ctx, true)
+ 	if err != nil {
+ 		return nil, err
+@@ -169,17 +169,17 @@ func (s *PluginMetaStorage) Get(ctx context.Context, name string, options *metav
+ 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to fetch plugin metadata: %w", err))
+ 	}
+ 
+-	return createPluginMetaFromPluginMetaJSONData(result.Meta, name, ns.Value), nil
++	return createMetaFromMetaJSONData(result.Meta, name, ns.Value), nil
+ }
+ 
+-// createPluginMetaFromPluginMetaJSONData creates a PluginMeta k8s object from PluginMetaJSONData and plugin metadata.
+-func createPluginMetaFromPluginMetaJSONData(pluginJSON pluginsv0alpha1.PluginMetaJSONData, name, namespace string) *pluginsv0alpha1.PluginMeta {
+-	pluginMeta := &pluginsv0alpha1.PluginMeta{
++// createMetaFromMetaJSONData creates a Meta k8s object from MetaJSONData and plugin metadata.
++func createMetaFromMetaJSONData(pluginJSON pluginsv0alpha1.MetaJSONData, name, namespace string) *pluginsv0alpha1.Meta {
++	pluginMeta := &pluginsv0alpha1.Meta{
+ 		ObjectMeta: metav1.ObjectMeta{
+ 			Name:      name,
+ 			Namespace: namespace,
+ 		},
+-		Spec: pluginsv0alpha1.PluginMetaSpec{
++		Spec: pluginsv0alpha1.MetaSpec{
+ 			PluginJSON: pluginJSON,
+ 		},
+ 	}
+@@ -188,7 +188,7 @@ func createPluginMetaFromPluginMetaJSONData(pluginJSON pluginsv0alpha1.PluginMet
+ 	pluginMeta.SetGroupVersionKind(schema.GroupVersionKind{
+ 		Group:   pluginsv0alpha1.APIGroup,
+ 		Version: pluginsv0alpha1.APIVersion,
+-		Kind:    pluginsv0alpha1.PluginMetaKind().Kind(),
++		Kind:    pluginsv0alpha1.MetaKind().Kind(),
+ 	})
+ 
+ 	return pluginMeta
+diff --git a/pkg/extensions/enterprise_imports.go b/pkg/extensions/enterprise_imports.go
+index fbff17523fc..472652cc103 100644
+--- a/pkg/extensions/enterprise_imports.go
++++ b/pkg/extensions/enterprise_imports.go
+@@ -56,8 +56,7 @@ import (
+ 	_ "github.com/grafana/e2e"
+ 	_ "github.com/grafana/gofpdf"
+ 	_ "github.com/grafana/gomemcache/memcache"
+-	_ "github.com/grafana/tempo/pkg/traceql"
+-
+ 	_ "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1"
+ 	_ "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
++	_ "github.com/grafana/tempo/pkg/traceql"
+ )
+diff --git a/pkg/registry/apps/plugins/accesscontrol.go b/pkg/registry/apps/plugins/accesscontrol.go
+index d41efa86f97..e0a8c9b6c23 100644
+--- a/pkg/registry/apps/plugins/accesscontrol.go
++++ b/pkg/registry/apps/plugins/accesscontrol.go
+@@ -13,15 +13,15 @@ const (
+ 	ActionPluginsPluginsDelete = "plugins.plugins:delete" // DELETE.
+ 
+ 	// PluginMetas
+-	ActionPluginsPluginsMetaCreate = "plugins.pluginsmeta:create" // CREATE.
+-	ActionPluginsPluginsMetaWrite  = "plugins.pluginsmeta:write"  // UPDATE.
+-	ActionPluginsPluginsMetaRead   = "plugins.pluginsmeta:read"   // GET + LIST.
+-	ActionPluginsPluginsMetaDelete = "plugins.pluginsmeta:delete" // DELETE.
++	ActionPluginsPluginsMetaCreate = "plugins.metas:create" // CREATE.
++	ActionPluginsPluginsMetaWrite  = "plugins.metas:write"  // UPDATE.
++	ActionPluginsPluginsMetaRead   = "plugins.metas:read"   // GET + LIST.
++	ActionPluginsPluginsMetaDelete = "plugins.metas:delete" // DELETE.
+ )
+ 
+ var (
+ 	ScopeProviderPluginsPlugins     = accesscontrol.NewScopeProvider("plugins.plugins")
+-	ScopeProviderPluginsPluginsMeta = accesscontrol.NewScopeProvider("plugins.pluginsmeta")
++	ScopeProviderPluginsPluginsMeta = accesscontrol.NewScopeProvider("plugins.metas")
+ 
+ 	ScopeAllPluginsPlugins     = ScopeProviderPluginsPlugins.GetResourceAllScope()
+ 	ScopeAllPluginsPluginsMeta = ScopeProviderPluginsPluginsMeta.GetResourceAllScope()
+@@ -76,7 +76,7 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
+ 	// PluginMetas
+ 	pluginsMetaReader := accesscontrol.RoleRegistration{
+ 		Role: accesscontrol.RoleDTO{
+-			Name:        "fixed:plugins.pluginsmeta:reader",
++			Name:        "fixed:plugins.metas:reader",
+ 			DisplayName: "Plugin Metas Reader",
+ 			Description: "Read and list plugin metadata.",
+ 			Group:       "Plugins",
+@@ -92,7 +92,7 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
+ 
+ 	pluginsMetaWriter := accesscontrol.RoleRegistration{
+ 		Role: accesscontrol.RoleDTO{
+-			Name:        "fixed:plugins.pluginsmeta:writer",
++			Name:        "fixed:plugins.metas:writer",
+ 			DisplayName: "Plugin Metas Writer",
+ 			Description: "Create, update and delete plugin metadata.",
+ 			Group:       "Plugins",
+diff --git a/pkg/services/accesscontrol/permreg/permreg.go b/pkg/services/accesscontrol/permreg/permreg.go
+index c9f010c2909..e975681ff03 100644
+--- a/pkg/services/accesscontrol/permreg/permreg.go
++++ b/pkg/services/accesscontrol/permreg/permreg.go
+@@ -85,7 +85,7 @@ func newPermissionRegistry() *permissionRegistry {
+ 		"orgs":                "orgs:id:",
+ 		"plugins":             "plugins:id:",
+ 		"plugins.plugins":     "plugins.plugins:uid:",
+-		"plugins.pluginsmeta": "plugins.pluginsmeta:uid:",
++		"plugins.metas":       "plugins.metas:uid:",
+ 		"provisioners":        "provisioners:",
+ 		"reports":             "reports:id:",
+ 		"permissions":         "permissions:type:",
+diff --git a/pkg/services/authz/rbac/mapper.go b/pkg/services/authz/rbac/mapper.go
+index e34965df999..d50ca050cdb 100644
+--- a/pkg/services/authz/rbac/mapper.go
++++ b/pkg/services/authz/rbac/mapper.go
+@@ -298,8 +298,8 @@ func NewMapperRegistry() MapperRegistry {
+ 			},
+ 		},
+ 		"plugins.grafana.app": {
+-			"plugins":     newResourceTranslation("plugins.plugins", "uid", false, nil),
+-			"pluginsmeta": newResourceTranslation("plugins.pluginsmeta", "uid", false, nil),
++			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),
++			"metas":   newResourceTranslation("plugins.metas", "uid", false, nil),
+ 		},
+ 	})
+ 

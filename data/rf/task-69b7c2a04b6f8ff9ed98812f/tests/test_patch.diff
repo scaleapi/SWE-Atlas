@@ -1,0 +1,168 @@
+diff --git a/rust/src/filecontainer_tests.rs b/rust/src/filecontainer_tests.rs
+new file mode 100644
+index 000000000..XXXXXXX
+--- /dev/null
++++ b/rust/src/filecontainer_tests.rs
+@@ -0,0 +1,149 @@
++/* Copyright (C) 2024 Open Information Security Foundation
++ *
++ * You can copy, redistribute or modify this Program under the terms of
++ * the GNU General Public License version 2 as published by the Free
++ * Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * version 2 along with this program; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
++ * 02110-1301, USA.
++ */
++
++//! Tests for filecontainer module refactoring.
++//! Validates direct FFI calls replace the old SuricataContext vtable indirection.
++
++#[cfg(test)]
++mod tests {
++    use crate::filecontainer::FileContainer;
++    use crate::core::{StreamingBufferConfig, SuricataFileContext};
++    use std::ptr::NonNull;
++
++    /// Creates a test-only SuricataFileContext with a synthetic static lifetime.
++    /// StreamingBufferConfig is an opaque FFI type; the #[cfg(test)] stubs
++    /// never dereference it, so a dangling pointer is safe in this context.
++    fn make_test_cfg() -> &'static SuricataFileContext {
++        let sbcfg: &'static StreamingBufferConfig = unsafe {
++            &*(NonNull::<StreamingBufferConfig>::dangling().as_ptr())
++        };
++        Box::leak(Box::new(SuricataFileContext { files_sbcfg: sbcfg }))
++    }
++
++    #[test]
++    fn test_file_container_default() {
++        let fc = FileContainer::default();
++        let _ = format!("{:?}", fc);
++    }
++
++    #[test]
++    fn test_file_container_default_debug_format() {
++        let fc = FileContainer::default();
++        let debug_str = format!("{:?}", fc);
++        assert!(debug_str.contains("FileContainer"));
++        assert!(debug_str.contains("head"));
++        assert!(debug_str.contains("tail"));
++    }
++
++    #[test]
++    fn test_file_container_free() {
++        let mut fc = FileContainer::default();
++        let cfg = make_test_cfg();
++        fc.free(cfg);
++    }
++
++    #[test]
++    fn test_file_container_file_open() {
++        let mut fc = FileContainer::default();
++        let cfg = make_test_cfg();
++        let result = fc.file_open(cfg, 1, b"test_file.txt", 0);
++        assert_eq!(result, 0);
++    }
++
++    #[test]
++    fn test_file_container_file_open_with_flags() {
++        let mut fc = FileContainer::default();
++        let cfg = make_test_cfg();
++        let result = fc.file_open(cfg, 1, b"flagged_file.txt", 0x0001);
++        assert_eq!(result, 0);
++    }
++
++    #[test]
++    fn test_file_container_file_append_data() {
++        let mut fc = FileContainer::default();
++        let cfg = make_test_cfg();
++        let track_id: u32 = 1;
++        let result = fc.file_append(cfg, &track_id, b"hello world", false);
++        assert_eq!(result, 0);
++    }
++
++    #[test]
++    fn test_file_container_file_append_gap() {
++        let mut fc = FileContainer::default();
++        let cfg = make_test_cfg();
++        let track_id: u32 = 1;
++        let result = fc.file_append(cfg, &track_id, b"gap data", true);
++        assert_eq!(result, 0);
++    }
++
++    #[test]
++    fn test_file_container_file_append_empty_data() {
++        let mut fc = FileContainer::default();
++        let cfg = make_test_cfg();
++        let track_id: u32 = 1;
++        let result = fc.file_append(cfg, &track_id, b"", false);
++        assert_eq!(result, 0);
++    }
++
++    #[test]
++    fn test_file_container_file_append_empty_gap() {
++        let mut fc = FileContainer::default();
++        let cfg = make_test_cfg();
++        let track_id: u32 = 1;
++        let result = fc.file_append(cfg, &track_id, b"", true);
++        assert_eq!(result, 0);
++    }
++
++    #[test]
++    fn test_file_container_file_close() {
++        let mut fc = FileContainer::default();
++        let cfg = make_test_cfg();
++        let track_id: u32 = 1;
++        let result = fc.file_close(cfg, &track_id, 0);
++        assert_eq!(result, 0);
++    }
++
++    #[test]
++    fn test_file_container_file_close_with_flags() {
++        let mut fc = FileContainer::default();
++        let cfg = make_test_cfg();
++        let track_id: u32 = 1;
++        let result = fc.file_close(cfg, &track_id, 0x0001);
++        assert_eq!(result, 0);
++    }
++
++    #[test]
++    fn test_file_container_full_lifecycle() {
++        let mut fc = FileContainer::default();
++        let cfg = make_test_cfg();
++        let track_id: u32 = 42;
++
++        let open_result = fc.file_open(cfg, track_id, b"lifecycle_test.bin", 0);
++        assert_eq!(open_result, 0);
++
++        let append_result = fc.file_append(cfg, &track_id, b"file content", false);
++        assert_eq!(append_result, 0);
++
++        let gap_result = fc.file_append(cfg, &track_id, b"gap segment", true);
++        assert_eq!(gap_result, 0);
++
++        let close_result = fc.file_close(cfg, &track_id, 0);
++        assert_eq!(close_result, 0);
++
++        fc.free(cfg);
++    }
++}
+diff --git a/rust/src/lib.rs b/rust/src/lib.rs
+index 102221287..4cbb8a4dc 100644
+--- a/rust/src/lib.rs
++++ b/rust/src/lib.rs
+@@ -85,6 +85,8 @@ pub mod jsonbuilder;
+ pub mod applayer;
+ pub mod frames;
+ pub mod filecontainer;
++#[cfg(test)]
++mod filecontainer_tests;
+ pub mod filetracker;
+ pub mod kerberos;
+ pub mod detect;

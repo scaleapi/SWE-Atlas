@@ -1,0 +1,315 @@
+diff --git a/.golangci.yml b/.golangci.yml
+index 4c65575bb..4cd5b1efd 100644
+--- a/.golangci.yml
++++ b/.golangci.yml
+@@ -58,6 +58,7 @@ linters-settings:
+       - '^os\.(.*)$(# Using anything except Signal and SyscallError from the os package is forbidden )?'
+       # Forbid everything in syscall except the uppercase constants
+       - '^syscall\.[^A-Z_]+$(# Using anything except constants from the syscall package is forbidden )?'
++      - '^logrus\.Logger$'
+ 
+ linters:
+   disable-all: true
+diff --git a/cmd/run.go b/cmd/run.go
+index 1a99661b6..426bcf9cc 100644
+--- a/cmd/run.go
++++ b/cmd/run.go
+@@ -355,19 +355,19 @@ func getCmdRun(gs *state.GlobalState) *cobra.Command {
+ 	exampleText := getExampleText(gs, `
+   # Run a single VU, once.
+   {{.}} run script.js
+-  
++
+   # Run a single VU, 10 times.
+   {{.}} run -i 10 script.js
+-  
++
+   # Run 5 VUs, splitting 10 iterations between them.
+   {{.}} run -u 5 -i 10 script.js
+-  
++
+   # Run 5 VUs for 10s.
+   {{.}} run -u 5 -d 10s script.js
+-  
++
+   # Ramp VUs from 0 to 100 over 10s, stay there for 60s, then 10s down to 0.
+   {{.}} run -u 0 -s 10s:100 -s 60s -s 10s:0
+-  
++
+   # Send metrics to an influxdb server
+   {{.}} run -o influxdb=http://1.2.3.4:8086/k6`[1:])
+ 
+diff --git a/cmd/test_load.go b/cmd/test_load.go
+index 120cd181d..18085609a 100644
+--- a/cmd/test_load.go
++++ b/cmd/test_load.go
+@@ -248,7 +248,7 @@ func loadAndConfigureTest(
+ }
+ 
+ // loadSystemCertPool attempts to load system certificates.
+-func loadSystemCertPool(logger *logrus.Logger) {
++func loadSystemCertPool(logger logrus.FieldLogger) {
+ 	if _, err := x509.SystemCertPool(); err != nil {
+ 		logger.WithError(err).Warning("Unable to load system cert pool")
+ 	}
+diff --git a/cmd/tests/test_state.go b/cmd/tests/test_state.go
+index a44f97bf5..760833dc6 100644
+--- a/cmd/tests/test_state.go
++++ b/cmd/tests/test_state.go
+@@ -49,7 +49,7 @@ func NewGlobalTestState(tb testing.TB) *GlobalTestState {
+ 	logger := logrus.New()
+ 	logger.SetLevel(logrus.InfoLevel)
+ 	logger.Out = testutils.NewTestOutput(tb)
+-	hook := &testutils.SimpleLogrusHook{HookedLevels: logrus.AllLevels}
++	hook := testutils.NewLogHook()
+ 	logger.AddHook(hook)
+ 
+ 	ts := &GlobalTestState{
+diff --git a/js/console.go b/js/console.go
+index 9d16c6740..b0c191fee 100644
+--- a/js/console.go
++++ b/js/console.go
+@@ -9,7 +9,7 @@ import (
+ 	"github.com/sirupsen/logrus"
+ )
+ 
+-// console represents a JS console implemented as a logrus.Logger.
++// console represents a JS console implemented as a logrus.FieldLogger.
+ type console struct {
+ 	logger logrus.FieldLogger
+ }
+diff --git a/js/runner.go b/js/runner.go
+index 58efc13ed..4c9634eac 100644
+--- a/js/runner.go
++++ b/js/runner.go
+@@ -17,6 +17,7 @@ import (
+ 	"time"
+ 
+ 	"github.com/dop251/goja"
++	"github.com/sirupsen/logrus"
+ 	"github.com/spf13/afero"
+ 	"golang.org/x/net/http2"
+ 	"golang.org/x/time/rate"
+@@ -440,7 +441,13 @@ func (r *Runner) SetOptions(opts lib.Options) error {
+ 	// TODO: validate that all exec values are either nil or valid exported methods (or HTTP requests in the future)
+ 
+ 	if opts.ConsoleOutput.Valid {
+-		c, err := newFileConsole(opts.ConsoleOutput.String, r.preInitState.Logger.Formatter)
++		// TODO: fix logger hack, see https://github.com/grafana/k6/issues/2958
++		// and https://github.com/grafana/k6/issues/2968
++		var formatter logrus.Formatter = &logrus.JSONFormatter{}
++		if l, ok := r.preInitState.Logger.(*logrus.Logger); ok { //nolint: forbidigo
++			formatter = l.Formatter
++		}
++		c, err := newFileConsole(opts.ConsoleOutput.String, formatter)
+ 		if err != nil {
+ 			return err
+ 		}
+diff --git a/lib/netext/grpcext/conn.go b/lib/netext/grpcext/conn.go
+index a46800748..625069d3a 100644
+--- a/lib/netext/grpcext/conn.go
++++ b/lib/netext/grpcext/conn.go
+@@ -9,11 +9,11 @@ import (
+ 	"strconv"
+ 	"strings"
+ 
+-	"github.com/sirupsen/logrus"
+ 	"go.k6.io/k6/lib"
+ 	"go.k6.io/k6/metrics"
+ 
+ 	protov1 "github.com/golang/protobuf/proto" //nolint:staticcheck,nolintlint // this is the old v1 version
++	"github.com/sirupsen/logrus"
+ 	"google.golang.org/grpc"
+ 	"google.golang.org/grpc/codes"
+ 	"google.golang.org/grpc/metadata"
+diff --git a/lib/netext/httpext/httpdebug_transport.go b/lib/netext/httpext/httpdebug_transport.go
+index 1d0b5d74b..f242dfcd9 100644
+--- a/lib/netext/httpext/httpdebug_transport.go
++++ b/lib/netext/httpext/httpdebug_transport.go
+@@ -18,9 +18,9 @@ type httpDebugTransport struct {
+ // RoundTrip prints passing HTTP requests and received responses
+ //
+ // TODO: massively improve this, because the printed information can be wrong:
+-//  - https://github.com/k6io/k6/issues/986
+-//  - https://github.com/k6io/k6/issues/1042
+-//  - https://github.com/k6io/k6/issues/774
++//   - https://github.com/k6io/k6/issues/986
++//   - https://github.com/k6io/k6/issues/1042
++//   - https://github.com/k6io/k6/issues/774
+ func (t httpDebugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+ 	id, _ := uuid.NewV4()
+ 	t.debugRequest(req, id.String())
+diff --git a/lib/test_state.go b/lib/test_state.go
+index 716abb6e1..9fd555283 100644
+--- a/lib/test_state.go
++++ b/lib/test_state.go
+@@ -15,9 +15,7 @@ type TestPreInitState struct {
+ 	BuiltinMetrics *metrics.BuiltinMetrics
+ 	KeyLogger      io.Writer
+ 	LookupEnv      func(key string) (val string, ok bool)
+-
+-	// TODO: replace with logrus.FieldLogger when all of the tests can be fixed
+-	Logger *logrus.Logger
++	Logger         logrus.FieldLogger
+ }
+ 
+ // TestRunState contains the pre-init state as well as all of the state and
+diff --git a/lib/testutils/logrus_hook.go b/lib/testutils/logrus_hook.go
+index 0f35b4ea8..770d7d02f 100644
+--- a/lib/testutils/logrus_hook.go
++++ b/lib/testutils/logrus_hook.go
+@@ -1,7 +1,6 @@
+ package testutils
+ 
+ import (
+-	"io"
+ 	"strings"
+ 	"sync"
+ 
+@@ -48,8 +47,36 @@ func (smh *SimpleLogrusHook) Lines() []string {
+ 	return lines
+ }
+ 
++// Reset clears the internal entry buffer.
++func (smh *SimpleLogrusHook) Reset() {
++	smh.mutex.Lock()
++	defer smh.mutex.Unlock()
++	smh.messageCache = []logrus.Entry{}
++}
++
++// LastEntry returns the last entry that was logged (or nil, if no messages were
++// logged or remain).
++func (smh *SimpleLogrusHook) LastEntry() *logrus.Entry {
++	smh.mutex.Lock()
++	defer smh.mutex.Unlock()
++	i := len(smh.messageCache) - 1
++	if i < 0 {
++		return nil
++	}
++	return &smh.messageCache[i]
++}
++
+ var _ logrus.Hook = &SimpleLogrusHook{}
+ 
++// NewLogHook creates a new SimpleLogrusHook with the given levels and returns
++// it. If no levels are specified, then logrus.AllLevels will be used.
++func NewLogHook(levels ...logrus.Level) *SimpleLogrusHook {
++	if len(levels) == 0 {
++		levels = logrus.AllLevels
++	}
++	return &SimpleLogrusHook{HookedLevels: levels}
++}
++
+ // LogContains is a helper function that checks the provided list of log entries
+ // for a message matching the provided level and contents.
+ func LogContains(logEntries []logrus.Entry, expLevel logrus.Level, expContents string) bool {
+@@ -60,18 +87,3 @@ func LogContains(logEntries []logrus.Entry, expLevel logrus.Level, expContents s
+ 	}
+ 	return false
+ }
+-
+-// NewMemLogger creates a Logrus logger mocked by SimpleLogrusHook.
+-func NewMemLogger(levels ...logrus.Level) (*logrus.Logger, *SimpleLogrusHook) {
+-	if len(levels) == 0 {
+-		levels = logrus.AllLevels
+-	}
+-	logger := logrus.New()
+-	logger.SetLevel(logrus.InfoLevel)
+-	logger.Out = io.Discard
+-	hook := &SimpleLogrusHook{
+-		HookedLevels: levels,
+-	}
+-	logger.AddHook(hook)
+-	return logger, hook
+-}
+diff --git a/lib/testutils/test_output.go b/lib/testutils/test_output.go
+index fd35551e4..4cdefdc67 100644
+--- a/lib/testutils/test_output.go
++++ b/lib/testutils/test_output.go
+@@ -23,10 +23,44 @@ func NewTestOutput(t testing.TB) io.Writer {
+ 	return testOutput{t}
+ }
+ 
+-// NewLogger Returns new logger that will log to the testing.TB.Logf
+-func NewLogger(t testing.TB) *logrus.Logger {
++func newLogger(t testing.TB, level logrus.Level) *logrus.Logger { //nolint:forbidigo
+ 	l := logrus.New()
+-	logrus.SetOutput(NewTestOutput(t))
+-
++	l.SetLevel(level)
++	var w io.Writer
++	if t == nil {
++		w = io.Discard
++	} else {
++		w = NewTestOutput(t)
++	}
++	logrus.SetOutput(w)
+ 	return l
+ }
++
++// NewLogger returns a new logger instance. If the given argument is not nil,
++// the logger will log everything using its t.Logf() method. If its nil, all
++// messages will be discarded.
++func NewLogger(t testing.TB) logrus.FieldLogger {
++	return newLogger(t, logrus.InfoLevel)
++}
++
++// NewLoggerWithHook calls NewLogger() and attaches a hook with the given
++// levels. If no levels are specified, then logrus.AllLevels will be used and
++// the lowest log level will be Debug.
++func NewLoggerWithHook(t testing.TB, levels ...logrus.Level) (logrus.FieldLogger, *SimpleLogrusHook) {
++	maxLevel := logrus.PanicLevel
++	if len(levels) == 0 {
++		levels = logrus.AllLevels
++		maxLevel = logrus.DebugLevel
++	} else {
++		for _, l := range levels {
++			if l > maxLevel {
++				maxLevel = l
++			}
++		}
++	}
++
++	l := newLogger(t, maxLevel)
++	hook := NewLogHook(levels...)
++	l.AddHook(hook)
++	return l, hook
++}
+diff --git a/lib/vu_state.go b/lib/vu_state.go
+index e24191379..656c6f6c2 100644
+--- a/lib/vu_state.go
++++ b/lib/vu_state.go
+@@ -33,9 +33,8 @@ type State struct {
+ 	Options        Options
+ 	BuiltinMetrics *metrics.BuiltinMetrics
+ 
+-	// Logger. Avoid using the global logger.
+-	// TODO: change to logrus.FieldLogger when there is time to fix all the tests
+-	Logger *logrus.Logger
++	// Logger instance for every VU.
++	Logger logrus.FieldLogger
+ 
+ 	// Current group; all emitted metrics are tagged with this.
+ 	Group *Group
+diff --git a/output/csv/config.go b/output/csv/config.go
+index b7b0de69d..b1717eff9 100644
+--- a/output/csv/config.go
++++ b/output/csv/config.go
+@@ -60,7 +60,7 @@ func (c Config) Apply(cfg Config) Config {
+ }
+ 
+ // ParseArg takes an arg string and converts it to a config
+-func ParseArg(arg string, logger *logrus.Logger) (Config, error) {
++func ParseArg(arg string, logger logrus.FieldLogger) (Config, error) {
+ 	c := NewConfig()
+ 
+ 	if !strings.Contains(arg, "=") {
+@@ -102,7 +102,7 @@ func ParseArg(arg string, logger *logrus.Logger) (Config, error) {
+ // GetConsolidatedConfig combines {default config values + JSON config +
+ // environment vars + arg config values}, and returns the final result.
+ func GetConsolidatedConfig(
+-	jsonRawConf json.RawMessage, env map[string]string, arg string, logger *logrus.Logger,
++	jsonRawConf json.RawMessage, env map[string]string, arg string, logger logrus.FieldLogger,
+ ) (Config, error) {
+ 	result := NewConfig()
+ 	if jsonRawConf != nil {

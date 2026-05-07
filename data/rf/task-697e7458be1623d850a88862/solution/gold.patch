@@ -1,0 +1,355 @@
+diff --git a/public/app/features/alerting/routes.tsx b/public/app/features/alerting/routes.tsx
+index ee8fe2bbb17..da52a55447f 100644
+--- a/public/app/features/alerting/routes.tsx
++++ b/public/app/features/alerting/routes.tsx
+@@ -72,7 +72,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
+         AccessControlAction.AlertingSilenceRead,
+       ]),
+       component: importAlertingComponent(
+-        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
++        () =>
++          import(
++            /* webpackChunkName: "SilencesTablePage" */ 'app/features/alerting/unified/components/silences/SilencesTable'
++          )
+       ),
+     },
+     {
+@@ -84,13 +87,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
+         AccessControlAction.AlertingSilenceUpdate,
+       ]),
+       component: importAlertingComponent(
+-        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
++        () => import(/* webpackChunkName: "NewSilencePage" */ 'app/features/alerting/unified/NewSilencePage')
+       ),
+     },
+     {
+       path: '/alerting/silence/:id/edit',
+       component: importAlertingComponent(
+-        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
++        () =>
++          import(
++            /* webpackChunkName: "ExistingSilenceEditorPage" */ 'app/features/alerting/unified/components/silences/SilencesEditor'
++          )
+       ),
+     },
+     {
+diff --git a/public/app/features/alerting/unified/NewSilencePage.tsx b/public/app/features/alerting/unified/NewSilencePage.tsx
+new file mode 100644
+index 00000000000..859b9c3875e
+--- /dev/null
++++ b/public/app/features/alerting/unified/NewSilencePage.tsx
+@@ -0,0 +1,51 @@
++import { useLocation } from 'react-router-dom-v5-compat';
++
++import { withErrorBoundary } from '@grafana/ui';
++import {
++  defaultsFromQuery,
++  getDefaultSilenceFormValues,
++} from 'app/features/alerting/unified/components/silences/utils';
++import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
++import { parseQueryParamMatchers } from 'app/features/alerting/unified/utils/matchers';
++
++import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
++import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
++import { SilencesEditor } from './components/silences/SilencesEditor';
++import { useAlertmanager } from './state/AlertmanagerContext';
++
++const SilencesEditorComponent = () => {
++  const location = useLocation();
++  const queryParams = new URLSearchParams(location.search);
++  const { selectedAlertmanager = '' } = useAlertmanager();
++  const potentialAlertRuleMatcher = parseQueryParamMatchers(queryParams.getAll('matcher')).find(
++    (m) => m.name === MATCHER_ALERT_RULE_UID
++  );
++
++  const potentialRuleUid = potentialAlertRuleMatcher?.value;
++  const formValues = getDefaultSilenceFormValues(defaultsFromQuery(queryParams));
++
++  return (
++    <>
++      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
++      <SilencesEditor
++        formValues={formValues}
++        alertManagerSourceName={selectedAlertmanager}
++        ruleUid={potentialRuleUid}
++      />
++    </>
++  );
++};
++
++function NewSilencePage() {
++  const pageNav = {
++    id: 'silence-new',
++    text: 'Silence alert rule',
++    subTitle: 'Configure silences to stop notifications from a particular alert rule',
++  };
++  return (
++    <AlertmanagerPageWrapper navId="silences" pageNav={pageNav} accessType="instance">
++      <SilencesEditorComponent />
++    </AlertmanagerPageWrapper>
++  );
++}
++export default withErrorBoundary(NewSilencePage, { style: 'page' });
+diff --git a/public/app/features/alerting/unified/Silences.tsx b/public/app/features/alerting/unified/Silences.tsx
+deleted file mode 100644
+index bc257e65a2e..00000000000
+--- a/public/app/features/alerting/unified/Silences.tsx
++++ /dev/null
+@@ -1,74 +0,0 @@
+-import { Route, Switch } from 'react-router-dom';
+-import { useLocation } from 'react-router-dom-v5-compat';
+-
+-import { withErrorBoundary } from '@grafana/ui';
+-import {
+-  defaultsFromQuery,
+-  getDefaultSilenceFormValues,
+-} from 'app/features/alerting/unified/components/silences/utils';
+-import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
+-import { parseQueryParamMatchers } from 'app/features/alerting/unified/utils/matchers';
+-
+-import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
+-import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
+-import ExistingSilenceEditor, { SilencesEditor } from './components/silences/SilencesEditor';
+-import SilencesTable from './components/silences/SilencesTable';
+-import { useSilenceNavData } from './hooks/useSilenceNavData';
+-import { useAlertmanager } from './state/AlertmanagerContext';
+-
+-const Silences = () => {
+-  const { selectedAlertmanager } = useAlertmanager();
+-
+-  if (!selectedAlertmanager) {
+-    return null;
+-  }
+-
+-  return (
+-    <>
+-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
+-      <Switch>
+-        <Route exact path="/alerting/silences">
+-          <SilencesTable alertManagerSourceName={selectedAlertmanager} />
+-        </Route>
+-        <Route exact path="/alerting/silence/new">
+-          <SilencesEditorComponent selectedAlertmanager={selectedAlertmanager} />
+-        </Route>
+-        <Route exact path="/alerting/silence/:id/edit">
+-          <ExistingSilenceEditor alertManagerSourceName={selectedAlertmanager} />
+-        </Route>
+-      </Switch>
+-    </>
+-  );
+-};
+-
+-function SilencesPage() {
+-  const pageNav = useSilenceNavData();
+-
+-  return (
+-    <AlertmanagerPageWrapper navId="silences" pageNav={pageNav} accessType="instance">
+-      <Silences />
+-    </AlertmanagerPageWrapper>
+-  );
+-}
+-
+-export default withErrorBoundary(SilencesPage, { style: 'page' });
+-
+-type SilencesEditorComponentProps = {
+-  selectedAlertmanager: string;
+-};
+-const SilencesEditorComponent = ({ selectedAlertmanager }: SilencesEditorComponentProps) => {
+-  const location = useLocation();
+-  const queryParams = new URLSearchParams(location.search);
+-
+-  const potentialAlertRuleMatcher = parseQueryParamMatchers(queryParams.getAll('matcher')).find(
+-    (m) => m.name === MATCHER_ALERT_RULE_UID
+-  );
+-
+-  const potentialRuleUid = potentialAlertRuleMatcher?.value;
+-
+-  const formValues = getDefaultSilenceFormValues(defaultsFromQuery(queryParams));
+-
+-  return (
+-    <SilencesEditor formValues={formValues} alertManagerSourceName={selectedAlertmanager} ruleUid={potentialRuleUid} />
+-  );
+-};
+diff --git a/public/app/features/alerting/unified/components/silences/SilencesEditor.tsx b/public/app/features/alerting/unified/components/silences/SilencesEditor.tsx
+index e9ce5661d3c..f4164badfad 100644
+--- a/public/app/features/alerting/unified/components/silences/SilencesEditor.tsx
++++ b/public/app/features/alerting/unified/components/silences/SilencesEditor.tsx
+@@ -25,6 +25,7 @@ import {
+   Stack,
+   TextArea,
+   useStyles2,
++  withErrorBoundary,
+ } from '@grafana/ui';
+ import { alertSilencesApi, SilenceCreatedResponse } from 'app/features/alerting/unified/api/alertSilencesApi';
+ import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
+@@ -32,26 +33,26 @@ import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from 'app/features/ale
+ import { MatcherOperator, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
+ 
+ import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
++import { useAlertmanager } from '../../state/AlertmanagerContext';
+ import { SilenceFormFields } from '../../types/silence-form';
+ import { matcherFieldToMatcher } from '../../utils/alertmanager';
+ import { makeAMLink } from '../../utils/misc';
++import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
++import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
+ 
+ import MatchersField from './MatchersField';
+ import { SilencePeriod } from './SilencePeriod';
+ import { SilencedInstancesPreview } from './SilencedInstancesPreview';
+ import { getDefaultSilenceFormValues, getFormFieldsForSilence } from './utils';
+ 
+-interface Props {
+-  alertManagerSourceName: string;
+-}
+-
+ /**
+  * Silences editor for editing an existing silence.
+  *
+  * Fetches silence details from API, based on `silenceId`
+  */
+-const ExistingSilenceEditor = ({ alertManagerSourceName }: Props) => {
++const ExistingSilenceEditor = () => {
+   const { id: silenceId = '' } = useParams();
++  const { selectedAlertmanager: alertManagerSourceName = '' } = useAlertmanager();
+   const {
+     data: silence,
+     isLoading: getSilenceIsLoading,
+@@ -91,7 +92,10 @@ const ExistingSilenceEditor = ({ alertManagerSourceName }: Props) => {
+   }
+ 
+   return (
+-    <SilencesEditor ruleUid={ruleUid} formValues={defaultValues} alertManagerSourceName={alertManagerSourceName} />
++    <>
++      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={alertManagerSourceName} />
++      <SilencesEditor ruleUid={ruleUid} formValues={defaultValues} alertManagerSourceName={alertManagerSourceName} />
++    </>
+   );
+ };
+ 
+@@ -279,4 +283,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
+   }),
+ });
+ 
+-export default ExistingSilenceEditor;
++function ExistingSilenceEditorPage() {
++  const pageNav = {
++    id: 'silence-edit',
++    text: 'Edit silence',
++    subTitle: 'Recreate existing silence to stop notifications from a particular alert rule',
++  };
++  return (
++    <AlertmanagerPageWrapper navId="silences" pageNav={pageNav} accessType="instance">
++      <ExistingSilenceEditor />
++    </AlertmanagerPageWrapper>
++  );
++}
++export default withErrorBoundary(ExistingSilenceEditorPage, { style: 'page' });
+diff --git a/public/app/features/alerting/unified/components/silences/SilencesTable.tsx b/public/app/features/alerting/unified/components/silences/SilencesTable.tsx
+index 01b92427a8e..f3cf2eda563 100644
+--- a/public/app/features/alerting/unified/components/silences/SilencesTable.tsx
++++ b/public/app/features/alerting/unified/components/silences/SilencesTable.tsx
+@@ -12,6 +12,7 @@ import {
+   LoadingPlaceholder,
+   Stack,
+   useStyles2,
++  withErrorBoundary,
+ } from '@grafana/ui';
+ import { useQueryParams } from 'app/core/hooks/useQueryParams';
+ import { Trans } from 'app/core/internationalization';
+@@ -23,8 +24,10 @@ import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource
+ 
+ import { alertmanagerApi } from '../../api/alertmanagerApi';
+ import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
++import { useAlertmanager } from '../../state/AlertmanagerContext';
+ import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
+ import { getSilenceFiltersFromUrlParams, makeAMLink, stringifyErrorLike } from '../../utils/misc';
++import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
+ import { Authorize } from '../Authorize';
+ import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+ 
+@@ -32,6 +35,7 @@ import { Matchers } from './Matchers';
+ import { NoSilencesSplash } from './NoSilencesCTA';
+ import { SilenceDetails } from './SilenceDetails';
+ import { SilenceStateTag } from './SilenceStateTag';
++import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
+ import { SilencesFilter } from './SilencesFilter';
+ 
+ export interface SilenceTableItem extends Silence {
+@@ -40,13 +44,11 @@ export interface SilenceTableItem extends Silence {
+ 
+ type SilenceTableColumnProps = DynamicTableColumnProps<SilenceTableItem>;
+ type SilenceTableItemProps = DynamicTableItemProps<SilenceTableItem>;
+-interface Props {
+-  alertManagerSourceName: string;
+-}
+ 
+ const API_QUERY_OPTIONS = { pollingInterval: SILENCES_POLL_INTERVAL_MS, refetchOnFocus: true };
+ 
+-const SilencesTable = ({ alertManagerSourceName }: Props) => {
++const SilencesTable = () => {
++  const { selectedAlertmanager: alertManagerSourceName = '' } = useAlertmanager();
+   const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
+     AlertmanagerAction.PreviewSilencedInstances
+   );
+@@ -135,6 +137,7 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
+ 
+   return (
+     <div data-testid="silences-table">
++      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={alertManagerSourceName} />
+       {!!silences.length && (
+         <Stack direction="column">
+           <SilencesFilter />
+@@ -382,4 +385,12 @@ function useColumns(alertManagerSourceName: string) {
+     return columns;
+   }, [alertManagerSourceName, expireSilence, isGrafanaFlavoredAlertmanager, updateAllowed, updateSupported]);
+ }
+-export default SilencesTable;
++
++function SilencesTablePage() {
++  return (
++    <AlertmanagerPageWrapper navId="silences" accessType="instance">
++      <SilencesTable />
++    </AlertmanagerPageWrapper>
++  );
++}
++export default withErrorBoundary(SilencesTablePage, { style: 'page' });
+diff --git a/public/app/features/alerting/unified/hooks/useSilenceNavData.ts b/public/app/features/alerting/unified/hooks/useSilenceNavData.ts
+deleted file mode 100644
+index 9df734e8aa2..00000000000
+--- a/public/app/features/alerting/unified/hooks/useSilenceNavData.ts
++++ /dev/null
+@@ -1,34 +0,0 @@
+-import { useEffect, useState } from 'react';
+-import { useMatch } from 'react-router-dom-v5-compat';
+-
+-import { NavModelItem } from '@grafana/data';
+-
+-const defaultPageNav: Partial<NavModelItem> = {
+-  icon: 'bell-slash',
+-};
+-
+-export function useSilenceNavData() {
+-  const [pageNav, setPageNav] = useState<NavModelItem | undefined>();
+-  const isNewPath = useMatch('/alerting/silence/new');
+-  const isEditPath = useMatch('/alerting/silence/:id/edit');
+-
+-  useEffect(() => {
+-    if (isNewPath) {
+-      setPageNav({
+-        ...defaultPageNav,
+-        id: 'silence-new',
+-        text: 'Silence alert rule',
+-        subTitle: 'Configure silences to stop notifications from a particular alert rule',
+-      });
+-    } else if (isEditPath) {
+-      setPageNav({
+-        ...defaultPageNav,
+-        id: 'silence-edit',
+-        text: 'Edit silence',
+-        subTitle: 'Recreate existing silence to stop notifications from a particular alert rule',
+-      });
+-    }
+-  }, [isEditPath, isNewPath]);
+-
+-  return pageNav;
+-}

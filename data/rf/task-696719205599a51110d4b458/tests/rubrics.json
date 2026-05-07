@@ -1,0 +1,202 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a2b3c4d5e6f7890123456789abcdef01",
+    "title": "1.1: Renames the CUE definition variable from pluginMetaV0Alpha1 to metaV0Alpha1 in apps/plugins/kinds/",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1c2e8b9e94860c48f1f9f91d3f116d53",
+    "title": "1.2: Changes the kind field from 'PluginMeta' to 'Meta' in the CUE schema definition",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7a8b9c0d1e2f3456789012345678abce",
+    "title": "1.3: Removes or changes the hardcoded plural 'pluginsmeta' so the resulting plural is 'metas'",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "dfa242f6ec97ba16f3d5bfdaa801e30d",
+    "title": "1.4: Updates apps/plugins/kinds/manifest.cue to reference the renamed metaV0Alpha1 definition",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b32768c7797071abc92788ba51ae1500",
+    "title": "1.5: Renames all 42 PluginMeta* type definitions (including PluginMeta \u2192 Meta, PluginMetaList \u2192 MetaList, PluginMetaSpec \u2192 MetaSpec, PluginMetaJSONData \u2192 MetaJSONData, PluginMetaClient \u2192 MetaClient, PluginMetaJSONCodec \u2192 MetaJSONCodec, PluginMetaStorage \u2192 MetaStorage, PluginMetaJSONDataType \u2192 MetaJSONDataType, PluginMetaInclude \u2192 MetaInclude, PluginMetaRoute \u2192 MetaRoute, ...) to their Meta* equivalents",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b32768c7797071abc92788ba51ae1501",
+    "title": "1.6: Renames all 37 PluginMeta* package-level functions (including PluginMetaKind() \u2192 MetaKind(), PluginMetaSchema() \u2192 MetaSchema(), NewPluginMetaClient() \u2192 NewMetaClient(), NewPluginMetaStorage() \u2192 NewMetaStorage(), NewPluginMetaSpec() \u2192 NewMetaSpec(), NewPluginMetaJSONData() \u2192 NewMetaJSONData(), NewPluginMetaInfo() \u2192 NewMetaInfo(), createPluginMetaFromPluginMetaJSONData() \u2192 createMetaFromMetaJSONData(), jsonDataToPluginMetaJSONData() \u2192 jsonDataToMetaJSONData(), NewPluginMetaClientFromGenerator() \u2192 NewMetaClientFromGenerator(), ...) to their Meta* equivalents",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b32768c7797071abc92788ba51ae1502",
+    "title": "1.7: Renames all 48 PluginMeta* methods (including (*PluginMeta).GetSpec \u2192 (*Meta).GetSpec, (*PluginMeta).SetSpec \u2192 (*Meta).SetSpec, (*PluginMeta).DeepCopy \u2192 (*Meta).DeepCopy, (*PluginMeta).Copy \u2192 (*Meta).Copy, (*PluginMetaClient).Create \u2192 (*MetaClient).Create, (*PluginMetaClient).Get \u2192 (*MetaClient).Get, (*PluginMetaList).GetItems \u2192 (*MetaList).GetItems, (*PluginMetaJSONCodec).Read \u2192 (*MetaJSONCodec).Read, (*PluginMetaStorage).List \u2192 (*MetaStorage).List, (*PluginMetaSpec).DeepCopy \u2192 (*MetaSpec).DeepCopy, ...) to their Meta* equivalents",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "308641b4cad657a79d1771ed3aa65bc8",
+    "title": "1.8: Adds a NewMeta() constructor that returns *Meta with default-initialized Spec and Status",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6cde657de5ed4ef8a6e0ff0233e3b92c",
+    "title": "1.9: Adds a NewPlugin() constructor that returns *Plugin with default-initialized Spec and Status",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e5f6a7b8c9d0123456789abcdef01236",
+    "title": "1.10: Uses NewPlugin() in Plugin schema registration instead of a bare struct literal",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f6a7b8c9d0e1234567890abcdef01237",
+    "title": "1.11: Updates the app manifest to register the renamed 'Meta' kind with MetaKind()",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a7b8c9d0e1f2345678901abcdef01238",
+    "title": "1.12: Updates the storage layer to reference renamed Meta types instead of PluginMeta types",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b8c9d0e1f2a3456789012bcdef01239",
+    "title": "1.13: Updates the metadata providers in apps/plugins/pkg/app/meta/ to use Meta types",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c9d0e1f2a3b4567890123cdef0123a",
+    "title": "1.14: Updates all 4 RBAC action strings (plugins.pluginsmeta:create, plugins.pluginsmeta:write, plugins.pluginsmeta:read, plugins.pluginsmeta:delete) to use 'plugins.metas' as the resource prefix",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c9d0e1f2a3b4567890123cdef8888a",
+    "title": "1.15: Updates the RBAC scope provider from 'plugins.pluginsmeta' to 'plugins.metas'",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d0e1f2a3b4c5678901234def01234b",
+    "title": "1.16: Updates the 2 RBAC role names (fixed:plugins.pluginsmeta:reader, fixed:plugins.pluginsmeta:writer) to use 'fixed:plugins.metas' as the role prefix",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e1f2a3b4c5d6789012345ef012345c",
+    "title": "1.17: Updates the permission registry entry from 'plugins.pluginsmeta' to 'plugins.metas'",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f2a3b4c5d6e7890123456f0123456d",
+    "title": "1.18: Updates the auth mapper resource translation from 'pluginsmeta' to 'metas'",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "b56a1e65d3304d84c30905297bf1ee6e",
+    "title": "2.1: Updates code comments referencing 'PluginMeta' to reference 'Meta' in modified source files (such as meta_object_gen.go, meta_codec_gen.go, core.go, storage.go, provider.go)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a3b4c5d6e7f8901234567012345678e",
+    "title": "3.1: Removes or replaces all 7 old pluginmeta gen files (pluginmeta_client_gen.go, pluginmeta_codec_gen.go, pluginmeta_metadata_gen.go, pluginmeta_object_gen.go, pluginmeta_status_gen.go, pluginmeta_schema_gen.go, pluginmeta_spec_gen.go) so no duplicate type definitions remain",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c5d6e7f8a9b0123456789012345678ab",
+    "title": "4.1: Renames or removes any of the existing Plugin kind types (Plugin, PluginList, PluginSpec, PluginStatus, PluginKind, PluginClient) or their methods instead of targeting only PluginMeta types",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

@@ -1,0 +1,76 @@
+{
+  "tests": [
+    {
+      "name": "TestBundleEnv"
+    },
+    {
+      "name": "TestBundleNotSharable"
+    },
+    {
+      "name": "TestCompile"
+    },
+    {
+      "name": "TestDNSResolverCache"
+    },
+    {
+      "name": "TestExecutionInfoAll"
+    },
+    {
+      "name": "TestExecutionInfoScenarioIter"
+    },
+    {
+      "name": "TestExecutionInfoVUSharing"
+    },
+    {
+      "name": "TestGlobalTimers"
+    },
+    {
+      "name": "TestMinimalSourceMap"
+    },
+    {
+      "name": "TestNewBundleFromArchive"
+    },
+    {
+      "name": "TestNewJSRunnerWithCustomModule"
+    },
+    {
+      "name": "TestNewModuleResolver"
+    },
+    {
+      "name": "TestNewSchedulerHasWork"
+    },
+    {
+      "name": "TestOpen"
+    },
+    {
+      "name": "TestRealTimeAndSetupTeardownMetrics"
+    },
+    {
+      "name": "TestRequire"
+    },
+    {
+      "name": "TestSchedulerRunCustomConfigNoCrossover"
+    },
+    {
+      "name": "TestSchedulerRunCustomTags"
+    },
+    {
+      "name": "TestSchedulerRunEnv"
+    },
+    {
+      "name": "TestSchedulerRunNonDefault"
+    },
+    {
+      "name": "TestSchedulerSystemTags"
+    },
+    {
+      "name": "TestSetupData"
+    },
+    {
+      "name": "TestSetupDataMarshalling"
+    },
+    {
+      "name": "TestSharedIterationsStable"
+    }
+  ]
+}

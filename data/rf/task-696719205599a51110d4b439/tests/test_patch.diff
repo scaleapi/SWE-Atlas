@@ -1,0 +1,2206 @@
+diff --git a/internal/js/modules/k6/browser/browser/browser_context_mapping_test.go b/internal/js/modules/k6/browser/browser/browser_context_mapping_test.go
+new file mode 100644
+index 000000000..3df9da2b6
+--- /dev/null
++++ b/internal/js/modules/k6/browser/browser/browser_context_mapping_test.go
+@@ -0,0 +1,125 @@
++package browser
++
++import (
++	"testing"
++	"time"
++
++	"github.com/grafana/sobek"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++
++	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext/k6test"
++)
++
++func TestParseWaitForEventOptionsNullishHandling(t *testing.T) {
++	t.Parallel()
++
++	defaultTimeout := 30 * time.Second
++
++	tests := []struct {
++		name     string
++		getValue func(*sobek.Runtime) sobek.Value
++	}{
++		{
++			name: "nil_returns_default_options",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return nil
++			},
++		},
++		{
++			name: "undefined_returns_default_options",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return sobek.Undefined()
++			},
++		},
++		{
++			name: "null_returns_default_options",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return sobek.Null()
++			},
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			t.Parallel()
++
++			vu := k6test.NewVU(t)
++			opts := tt.getValue(vu.Runtime())
++
++			parsedOpts, err := parseWaitForEventOptions(vu.Runtime(), opts, defaultTimeout)
++			assert.NoError(t, err)
++			assert.NotNil(t, parsedOpts)
++			assert.Equal(t, defaultTimeout, parsedOpts.Timeout)
++			assert.Nil(t, parsedOpts.PredicateFn)
++		})
++	}
++}
++
++func TestParseWaitForEventOptionsWithPredicate(t *testing.T) {
++	t.Parallel()
++
++	vu := k6test.NewVU(t)
++	defaultTimeout := 30 * time.Second
++
++	predicateFn, err := vu.Runtime().RunString(`(function() { return true; })`)
++	require.NoError(t, err)
++
++	parsedOpts, err := parseWaitForEventOptions(vu.Runtime(), predicateFn, defaultTimeout)
++	assert.NoError(t, err)
++	assert.NotNil(t, parsedOpts)
++	assert.Equal(t, defaultTimeout, parsedOpts.Timeout)
++	assert.NotNil(t, parsedOpts.PredicateFn)
++}
++
++func TestParseWaitForEventOptionsWithObject(t *testing.T) {
++	t.Parallel()
++
++	vu := k6test.NewVU(t)
++	defaultTimeout := 30 * time.Second
++
++	optsObj, err := vu.Runtime().RunString(`({
++		predicate: function() { return true; },
++		timeout: 5000
++	})`)
++	require.NoError(t, err)
++
++	parsedOpts, err := parseWaitForEventOptions(vu.Runtime(), optsObj, defaultTimeout)
++	assert.NoError(t, err)
++	assert.NotNil(t, parsedOpts)
++	assert.Equal(t, 5*time.Second, parsedOpts.Timeout)
++	assert.NotNil(t, parsedOpts.PredicateFn)
++}
++
++func TestParseWaitForEventOptionsInvalidPredicate(t *testing.T) {
++	t.Parallel()
++
++	vu := k6test.NewVU(t)
++	defaultTimeout := 30 * time.Second
++
++	optsObj, err := vu.Runtime().RunString(`({
++		predicate: "not a function",
++		timeout: 5000
++	})`)
++	require.NoError(t, err)
++
++	_, err = parseWaitForEventOptions(vu.Runtime(), optsObj, defaultTimeout)
++	assert.Error(t, err)
++	assert.Contains(t, err.Error(), "predicate function is not callable")
++}
++
++func TestParseWaitForEventOptionsUnknownOption(t *testing.T) {
++	t.Parallel()
++
++	vu := k6test.NewVU(t)
++	defaultTimeout := 30 * time.Second
++
++	optsObj, err := vu.Runtime().RunString(`({
++		unknownOption: "value"
++	})`)
++	require.NoError(t, err)
++
++	_, err = parseWaitForEventOptions(vu.Runtime(), optsObj, defaultTimeout)
++	assert.Error(t, err)
++	assert.Contains(t, err.Error(), "unknown option")
++}
+diff --git a/internal/js/modules/k6/browser/browser/page_mapping_test.go b/internal/js/modules/k6/browser/browser/page_mapping_test.go
+new file mode 100644
+index 000000000..aaecc3099
+--- /dev/null
++++ b/internal/js/modules/k6/browser/browser/page_mapping_test.go
+@@ -0,0 +1,178 @@
++package browser
++
++import (
++	"testing"
++
++	"github.com/grafana/sobek"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++
++	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext/k6test"
++)
++
++func TestParseGetByRoleOptionsNullishHandling(t *testing.T) {
++	t.Parallel()
++
++	tests := []struct {
++		name     string
++		getValue func(*sobek.Runtime) sobek.Value
++	}{
++		{
++			name: "nil_returns_nil",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return nil
++			},
++		},
++		{
++			name: "undefined_returns_nil",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return sobek.Undefined()
++			},
++		},
++		{
++			name: "null_returns_nil",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return sobek.Null()
++			},
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			t.Parallel()
++
++			vu := k6test.NewVU(t)
++			opts := tt.getValue(vu.Runtime())
++
++			parsedOpts := parseGetByRoleOptions(vu.Context(), opts)
++			assert.Nil(t, parsedOpts)
++		})
++	}
++}
++
++func TestParseGetByRoleOptionsWithValidOptions(t *testing.T) {
++	t.Parallel()
++
++	vu := k6test.NewVU(t)
++
++	optsObj, err := vu.Runtime().RunString(`({
++		checked: true,
++		disabled: false,
++		exact: true,
++		expanded: true,
++		includeHidden: false,
++		level: 2,
++		name: "test-name",
++		pressed: true,
++		selected: false
++	})`)
++	require.NoError(t, err)
++
++	parsedOpts := parseGetByRoleOptions(vu.Context(), optsObj)
++	assert.NotNil(t, parsedOpts)
++	assert.NotNil(t, parsedOpts.Checked)
++	assert.True(t, *parsedOpts.Checked)
++	assert.NotNil(t, parsedOpts.Disabled)
++	assert.False(t, *parsedOpts.Disabled)
++	assert.NotNil(t, parsedOpts.Exact)
++	assert.True(t, *parsedOpts.Exact)
++	assert.NotNil(t, parsedOpts.Expanded)
++	assert.True(t, *parsedOpts.Expanded)
++	assert.NotNil(t, parsedOpts.IncludeHidden)
++	assert.False(t, *parsedOpts.IncludeHidden)
++	assert.NotNil(t, parsedOpts.Level)
++	assert.Equal(t, int64(2), *parsedOpts.Level)
++	assert.NotNil(t, parsedOpts.Name)
++	assert.Equal(t, "'test-name'", *parsedOpts.Name)
++	assert.NotNil(t, parsedOpts.Pressed)
++	assert.True(t, *parsedOpts.Pressed)
++	assert.NotNil(t, parsedOpts.Selected)
++	assert.False(t, *parsedOpts.Selected)
++}
++
++func TestParseGetByBaseOptionsNullishHandling(t *testing.T) {
++	t.Parallel()
++
++	tests := []struct {
++		name     string
++		getValue func(*sobek.Runtime) sobek.Value
++	}{
++		{
++			name: "nil_returns_nil_options",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return nil
++			},
++		},
++		{
++			name: "undefined_returns_nil_options",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return sobek.Undefined()
++			},
++		},
++		{
++			name: "null_returns_nil_options",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return sobek.Null()
++			},
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			t.Parallel()
++
++			vu := k6test.NewVU(t)
++			rt := vu.Runtime()
++			inputVal := rt.ToValue("test-input")
++			opts := tt.getValue(rt)
++
++			parsedInput, parsedOpts := parseGetByBaseOptions(vu.Context(), inputVal, false, opts)
++			assert.Equal(t, "'test-input'", parsedInput)
++			assert.Nil(t, parsedOpts)
++		})
++	}
++}
++
++func TestParseGetByBaseOptionsWithValidOptions(t *testing.T) {
++	t.Parallel()
++
++	vu := k6test.NewVU(t)
++	rt := vu.Runtime()
++
++	inputVal := rt.ToValue("test-input")
++	optsObj, err := rt.RunString(`({ exact: true })`)
++	require.NoError(t, err)
++
++	parsedInput, parsedOpts := parseGetByBaseOptions(vu.Context(), inputVal, false, optsObj)
++	assert.Equal(t, "'test-input'", parsedInput)
++	assert.NotNil(t, parsedOpts)
++	assert.NotNil(t, parsedOpts.Exact)
++	assert.True(t, *parsedOpts.Exact)
++}
++
++func TestParseGetByBaseOptionsWithDoubleQuote(t *testing.T) {
++	t.Parallel()
++
++	vu := k6test.NewVU(t)
++	rt := vu.Runtime()
++
++	inputVal := rt.ToValue("test-input")
++
++	parsedInput, parsedOpts := parseGetByBaseOptions(vu.Context(), inputVal, true, nil)
++	assert.Equal(t, `"test-input"`, parsedInput)
++	assert.Nil(t, parsedOpts)
++}
++
++func TestParseGetByBaseOptionsWithRegex(t *testing.T) {
++	t.Parallel()
++
++	vu := k6test.NewVU(t)
++	rt := vu.Runtime()
++
++	inputVal, err := rt.RunString(`/test-pattern/i`)
++	require.NoError(t, err)
++
++	parsedInput, parsedOpts := parseGetByBaseOptions(vu.Context(), inputVal, false, nil)
++	assert.Equal(t, "/test-pattern/i", parsedInput)
++	assert.Nil(t, parsedOpts)
++}
+diff --git a/internal/js/modules/k6/browser/common/element_handle_options_test.go b/internal/js/modules/k6/browser/common/element_handle_options_test.go
+new file mode 100644
+index 000000000..113b360a4
+--- /dev/null
++++ b/internal/js/modules/k6/browser/common/element_handle_options_test.go
+@@ -0,0 +1,545 @@
++package common
++
++import (
++	"testing"
++	"time"
++
++	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext/k6test"
++
++	"github.com/grafana/sobek"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestElementHandleBaseOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		baseOpts := NewElementHandleBaseOptions(30 * time.Second)
++		err := baseOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, baseOpts.Timeout)
++		assert.False(t, baseOpts.Force)
++		assert.False(t, baseOpts.NoWaitAfter)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		baseOpts := NewElementHandleBaseOptions(30 * time.Second)
++		err := baseOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, baseOpts.Timeout)
++		assert.False(t, baseOpts.Force)
++		assert.False(t, baseOpts.NoWaitAfter)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		baseOpts := NewElementHandleBaseOptions(30 * time.Second)
++		err := baseOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, baseOpts.Timeout)
++		assert.False(t, baseOpts.Force)
++		assert.False(t, baseOpts.NoWaitAfter)
++	})
++
++	t.Run("valid_opts_overrides_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		opts := vu.ToSobekValue(map[string]any{
++			"timeout":     "5000",
++			"force":       true,
++			"noWaitAfter": true,
++		})
++		baseOpts := NewElementHandleBaseOptions(30 * time.Second)
++		err := baseOpts.Parse(vu.Context(), opts)
++		require.NoError(t, err)
++
++		assert.Equal(t, 5*time.Second, baseOpts.Timeout)
++		assert.True(t, baseOpts.Force)
++		assert.True(t, baseOpts.NoWaitAfter)
++	})
++}
++
++func TestElementHandleClickOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		clickOpts := NewElementHandleClickOptions(30 * time.Second)
++		err := clickOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, clickOpts.Timeout)
++		assert.Equal(t, "left", clickOpts.Button)
++		assert.Equal(t, int64(1), clickOpts.ClickCount)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		clickOpts := NewElementHandleClickOptions(30 * time.Second)
++		err := clickOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, clickOpts.Timeout)
++		assert.Equal(t, "left", clickOpts.Button)
++		assert.Equal(t, int64(1), clickOpts.ClickCount)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		clickOpts := NewElementHandleClickOptions(30 * time.Second)
++		err := clickOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, clickOpts.Timeout)
++		assert.Equal(t, "left", clickOpts.Button)
++		assert.Equal(t, int64(1), clickOpts.ClickCount)
++	})
++
++	t.Run("valid_opts_overrides_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		opts := vu.ToSobekValue(map[string]any{
++			"button":     "right",
++			"clickCount": 2,
++			"delay":      100,
++		})
++		clickOpts := NewElementHandleClickOptions(30 * time.Second)
++		err := clickOpts.Parse(vu.Context(), opts)
++		require.NoError(t, err)
++
++		assert.Equal(t, "right", clickOpts.Button)
++		assert.Equal(t, int64(2), clickOpts.ClickCount)
++		assert.Equal(t, int64(100), clickOpts.Delay)
++	})
++}
++
++func TestElementHandleHoverOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		hoverOpts := NewElementHandleHoverOptions(30 * time.Second)
++		err := hoverOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, hoverOpts.Timeout)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		hoverOpts := NewElementHandleHoverOptions(30 * time.Second)
++		err := hoverOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, hoverOpts.Timeout)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		hoverOpts := NewElementHandleHoverOptions(30 * time.Second)
++		err := hoverOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, hoverOpts.Timeout)
++	})
++}
++
++func TestElementHandleScreenshotOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		screenshotOpts := NewElementHandleScreenshotOptions(30 * time.Second)
++		err := screenshotOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, screenshotOpts.Timeout)
++		assert.Equal(t, ImageFormatPNG, screenshotOpts.Format)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		screenshotOpts := NewElementHandleScreenshotOptions(30 * time.Second)
++		err := screenshotOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, screenshotOpts.Timeout)
++		assert.Equal(t, ImageFormatPNG, screenshotOpts.Format)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		screenshotOpts := NewElementHandleScreenshotOptions(30 * time.Second)
++		err := screenshotOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, screenshotOpts.Timeout)
++		assert.Equal(t, ImageFormatPNG, screenshotOpts.Format)
++	})
++
++	t.Run("valid_opts_overrides_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		opts := vu.ToSobekValue(map[string]any{
++			"type":    "jpeg",
++			"quality": 80,
++		})
++		screenshotOpts := NewElementHandleScreenshotOptions(30 * time.Second)
++		err := screenshotOpts.Parse(vu.Context(), opts)
++		require.NoError(t, err)
++
++		assert.Equal(t, ImageFormatJPEG, screenshotOpts.Format)
++		assert.Equal(t, int64(80), screenshotOpts.Quality)
++	})
++}
++
++func TestElementHandleTypeOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		typeOpts := NewElementHandleTypeOptions(30 * time.Second)
++		err := typeOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, typeOpts.Timeout)
++		assert.Equal(t, int64(0), typeOpts.Delay)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		typeOpts := NewElementHandleTypeOptions(30 * time.Second)
++		err := typeOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, typeOpts.Timeout)
++		assert.Equal(t, int64(0), typeOpts.Delay)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		typeOpts := NewElementHandleTypeOptions(30 * time.Second)
++		err := typeOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, typeOpts.Timeout)
++		assert.Equal(t, int64(0), typeOpts.Delay)
++	})
++
++	t.Run("valid_opts_overrides_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		opts := vu.ToSobekValue(map[string]any{
++			"delay":   50,
++			"timeout": "5000",
++		})
++		typeOpts := NewElementHandleTypeOptions(30 * time.Second)
++		err := typeOpts.Parse(vu.Context(), opts)
++		require.NoError(t, err)
++
++		assert.Equal(t, 5*time.Second, typeOpts.Timeout)
++		assert.Equal(t, int64(50), typeOpts.Delay)
++	})
++}
++
++func TestElementHandlePressOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		pressOpts := NewElementHandlePressOptions(30 * time.Second)
++		err := pressOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, pressOpts.Timeout)
++		assert.Equal(t, int64(0), pressOpts.Delay)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		pressOpts := NewElementHandlePressOptions(30 * time.Second)
++		err := pressOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, pressOpts.Timeout)
++		assert.Equal(t, int64(0), pressOpts.Delay)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		pressOpts := NewElementHandlePressOptions(30 * time.Second)
++		err := pressOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, pressOpts.Timeout)
++		assert.Equal(t, int64(0), pressOpts.Delay)
++	})
++}
++
++func TestElementHandleBasePointerOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		pointerOpts := NewElementHandleBasePointerOptions(30 * time.Second)
++		err := pointerOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, pointerOpts.Timeout)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		pointerOpts := NewElementHandleBasePointerOptions(30 * time.Second)
++		err := pointerOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, pointerOpts.Timeout)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		pointerOpts := NewElementHandleBasePointerOptions(30 * time.Second)
++		err := pointerOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, pointerOpts.Timeout)
++	})
++}
++
++func TestElementHandleDblclickOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		dblclickOpts := NewElementHandleDblclickOptions(30 * time.Second)
++		err := dblclickOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, dblclickOpts.Timeout)
++		assert.Equal(t, "left", dblclickOpts.Button)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		dblclickOpts := NewElementHandleDblclickOptions(30 * time.Second)
++		err := dblclickOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, dblclickOpts.Timeout)
++		assert.Equal(t, "left", dblclickOpts.Button)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		dblclickOpts := NewElementHandleDblclickOptions(30 * time.Second)
++		err := dblclickOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, dblclickOpts.Timeout)
++		assert.Equal(t, "left", dblclickOpts.Button)
++	})
++}
++
++func TestElementHandleSetCheckedOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		checkedOpts := NewElementHandleSetCheckedOptions(30 * time.Second)
++		err := checkedOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, checkedOpts.Timeout)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		checkedOpts := NewElementHandleSetCheckedOptions(30 * time.Second)
++		err := checkedOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, checkedOpts.Timeout)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		checkedOpts := NewElementHandleSetCheckedOptions(30 * time.Second)
++		err := checkedOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, checkedOpts.Timeout)
++	})
++}
++
++func TestElementHandleTapOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		tapOpts := NewElementHandleTapOptions(30 * time.Second)
++		err := tapOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, tapOpts.Timeout)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		tapOpts := NewElementHandleTapOptions(30 * time.Second)
++		err := tapOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, tapOpts.Timeout)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		tapOpts := NewElementHandleTapOptions(30 * time.Second)
++		err := tapOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, tapOpts.Timeout)
++	})
++}
++
++func TestElementHandleWaitForElementStateOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		waitOpts := NewElementHandleWaitForElementStateOptions(30 * time.Second)
++		err := waitOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, waitOpts.Timeout)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		waitOpts := NewElementHandleWaitForElementStateOptions(30 * time.Second)
++		err := waitOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, waitOpts.Timeout)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		waitOpts := NewElementHandleWaitForElementStateOptions(30 * time.Second)
++		err := waitOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, waitOpts.Timeout)
++	})
++}
++
++func TestFilesParseNullishHandling(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_files_returns_no_error", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		files := &Files{}
++		err := files.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++		assert.Empty(t, files.Payload)
++	})
++
++	t.Run("undefined_files_returns_no_error", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		files := &Files{}
++		err := files.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++		assert.Empty(t, files.Payload)
++	})
++
++	t.Run("null_files_returns_no_error", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		files := &Files{}
++		err := files.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++		assert.Empty(t, files.Payload)
++	})
++}
+diff --git a/internal/js/modules/k6/browser/common/mouse_options_test.go b/internal/js/modules/k6/browser/common/mouse_options_test.go
+new file mode 100644
+index 000000000..4a6d5b3f9
+--- /dev/null
++++ b/internal/js/modules/k6/browser/common/mouse_options_test.go
+@@ -0,0 +1,203 @@
++package common
++
++import (
++	"testing"
++
++	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext/k6test"
++
++	"github.com/grafana/sobek"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestMouseClickOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		clickOpts := NewMouseClickOptions()
++		err := clickOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, "left", clickOpts.Button)
++		assert.Equal(t, int64(1), clickOpts.ClickCount)
++		assert.Equal(t, int64(0), clickOpts.Delay)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		clickOpts := NewMouseClickOptions()
++		err := clickOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, "left", clickOpts.Button)
++		assert.Equal(t, int64(1), clickOpts.ClickCount)
++		assert.Equal(t, int64(0), clickOpts.Delay)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		clickOpts := NewMouseClickOptions()
++		err := clickOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, "left", clickOpts.Button)
++		assert.Equal(t, int64(1), clickOpts.ClickCount)
++		assert.Equal(t, int64(0), clickOpts.Delay)
++	})
++
++	t.Run("valid_opts_overrides_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		opts := vu.ToSobekValue(map[string]any{
++			"button":     "right",
++			"clickCount": 2,
++			"delay":      100,
++		})
++		clickOpts := NewMouseClickOptions()
++		err := clickOpts.Parse(vu.Context(), opts)
++		require.NoError(t, err)
++
++		assert.Equal(t, "right", clickOpts.Button)
++		assert.Equal(t, int64(2), clickOpts.ClickCount)
++		assert.Equal(t, int64(100), clickOpts.Delay)
++	})
++}
++
++func TestMouseDblClickOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		dblClickOpts := NewMouseDblClickOptions()
++		err := dblClickOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, "left", dblClickOpts.Button)
++		assert.Equal(t, int64(0), dblClickOpts.Delay)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		dblClickOpts := NewMouseDblClickOptions()
++		err := dblClickOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, "left", dblClickOpts.Button)
++		assert.Equal(t, int64(0), dblClickOpts.Delay)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		dblClickOpts := NewMouseDblClickOptions()
++		err := dblClickOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, "left", dblClickOpts.Button)
++		assert.Equal(t, int64(0), dblClickOpts.Delay)
++	})
++}
++
++func TestMouseDownUpOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		downUpOpts := NewMouseDownUpOptions()
++		err := downUpOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, "left", downUpOpts.Button)
++		assert.Equal(t, int64(1), downUpOpts.ClickCount)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		downUpOpts := NewMouseDownUpOptions()
++		err := downUpOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, "left", downUpOpts.Button)
++		assert.Equal(t, int64(1), downUpOpts.ClickCount)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		downUpOpts := NewMouseDownUpOptions()
++		err := downUpOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, "left", downUpOpts.Button)
++		assert.Equal(t, int64(1), downUpOpts.ClickCount)
++	})
++}
++
++func TestMouseMoveOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		moveOpts := NewMouseMoveOptions()
++		err := moveOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, int64(1), moveOpts.Steps)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		moveOpts := NewMouseMoveOptions()
++		err := moveOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, int64(1), moveOpts.Steps)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		moveOpts := NewMouseMoveOptions()
++		err := moveOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, int64(1), moveOpts.Steps)
++	})
++
++	t.Run("valid_opts_overrides_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		opts := vu.ToSobekValue(map[string]any{
++			"steps": 10,
++		})
++		moveOpts := NewMouseMoveOptions()
++		err := moveOpts.Parse(vu.Context(), opts)
++		require.NoError(t, err)
++
++		assert.Equal(t, int64(10), moveOpts.Steps)
++	})
++}
+diff --git a/internal/js/modules/k6/browser/common/page_options_test.go b/internal/js/modules/k6/browser/common/page_options_test.go
+new file mode 100644
+index 000000000..e423e3974
+--- /dev/null
++++ b/internal/js/modules/k6/browser/common/page_options_test.go
+@@ -0,0 +1,208 @@
++package common
++
++import (
++	"testing"
++	"time"
++
++	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext/k6test"
++
++	"github.com/grafana/sobek"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestPageEmulateMediaOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		emulateOpts := &PageEmulateMediaOptions{
++			ColorScheme:   ColorSchemeLight,
++			Media:         MediaTypeScreen,
++			ReducedMotion: ReducedMotionNoPreference,
++		}
++		err := emulateOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, ColorSchemeLight, emulateOpts.ColorScheme)
++		assert.Equal(t, MediaTypeScreen, emulateOpts.Media)
++		assert.Equal(t, ReducedMotionNoPreference, emulateOpts.ReducedMotion)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		emulateOpts := &PageEmulateMediaOptions{
++			ColorScheme:   ColorSchemeLight,
++			Media:         MediaTypeScreen,
++			ReducedMotion: ReducedMotionNoPreference,
++		}
++		err := emulateOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, ColorSchemeLight, emulateOpts.ColorScheme)
++		assert.Equal(t, MediaTypeScreen, emulateOpts.Media)
++		assert.Equal(t, ReducedMotionNoPreference, emulateOpts.ReducedMotion)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		emulateOpts := &PageEmulateMediaOptions{
++			ColorScheme:   ColorSchemeLight,
++			Media:         MediaTypeScreen,
++			ReducedMotion: ReducedMotionNoPreference,
++		}
++		err := emulateOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, ColorSchemeLight, emulateOpts.ColorScheme)
++		assert.Equal(t, MediaTypeScreen, emulateOpts.Media)
++		assert.Equal(t, ReducedMotionNoPreference, emulateOpts.ReducedMotion)
++	})
++
++	t.Run("valid_opts_overrides_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		opts := vu.ToSobekValue(map[string]any{
++			"colorScheme":   "dark",
++			"media":         "print",
++			"reducedMotion": "reduce",
++		})
++		emulateOpts := &PageEmulateMediaOptions{
++			ColorScheme:   ColorSchemeLight,
++			Media:         MediaTypeScreen,
++			ReducedMotion: ReducedMotionNoPreference,
++		}
++		err := emulateOpts.Parse(vu.Context(), opts)
++		require.NoError(t, err)
++
++		assert.Equal(t, ColorSchemeDark, emulateOpts.ColorScheme)
++		assert.Equal(t, MediaTypePrint, emulateOpts.Media)
++		assert.Equal(t, ReducedMotionReduce, emulateOpts.ReducedMotion)
++	})
++}
++
++func TestPageReloadOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		reloadOpts := NewPageReloadOptions(LifecycleEventLoad, 30*time.Second)
++		err := reloadOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, reloadOpts.Timeout)
++		assert.Equal(t, LifecycleEventLoad, reloadOpts.WaitUntil)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		reloadOpts := NewPageReloadOptions(LifecycleEventLoad, 30*time.Second)
++		err := reloadOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, reloadOpts.Timeout)
++		assert.Equal(t, LifecycleEventLoad, reloadOpts.WaitUntil)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		reloadOpts := NewPageReloadOptions(LifecycleEventLoad, 30*time.Second)
++		err := reloadOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, reloadOpts.Timeout)
++		assert.Equal(t, LifecycleEventLoad, reloadOpts.WaitUntil)
++	})
++
++	t.Run("valid_opts_overrides_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		opts := vu.ToSobekValue(map[string]any{
++			"timeout":   "5000",
++			"waitUntil": "networkidle",
++		})
++		reloadOpts := NewPageReloadOptions(LifecycleEventLoad, 30*time.Second)
++		err := reloadOpts.Parse(vu.Context(), opts)
++		require.NoError(t, err)
++
++		assert.Equal(t, 5*time.Second, reloadOpts.Timeout)
++		assert.Equal(t, LifecycleEventNetworkIdle, reloadOpts.WaitUntil)
++	})
++}
++
++func TestPageScreenshotOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		screenshotOpts := NewPageScreenshotOptions()
++		err := screenshotOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, ImageFormatPNG, screenshotOpts.Format)
++		assert.False(t, screenshotOpts.FullPage)
++		assert.False(t, screenshotOpts.OmitBackground)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		screenshotOpts := NewPageScreenshotOptions()
++		err := screenshotOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, ImageFormatPNG, screenshotOpts.Format)
++		assert.False(t, screenshotOpts.FullPage)
++		assert.False(t, screenshotOpts.OmitBackground)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		screenshotOpts := NewPageScreenshotOptions()
++		err := screenshotOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, ImageFormatPNG, screenshotOpts.Format)
++		assert.False(t, screenshotOpts.FullPage)
++		assert.False(t, screenshotOpts.OmitBackground)
++	})
++
++	t.Run("valid_opts_overrides_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		opts := vu.ToSobekValue(map[string]any{
++			"type":           "jpeg",
++			"quality":        80,
++			"fullPage":       true,
++			"omitBackground": true,
++		})
++		screenshotOpts := NewPageScreenshotOptions()
++		err := screenshotOpts.Parse(vu.Context(), opts)
++		require.NoError(t, err)
++
++		assert.Equal(t, ImageFormatJPEG, screenshotOpts.Format)
++		assert.Equal(t, int64(80), screenshotOpts.Quality)
++		assert.True(t, screenshotOpts.FullPage)
++		assert.True(t, screenshotOpts.OmitBackground)
++	})
++}
+diff --git a/internal/js/modules/k6/browser/browser/helpers_test.go b/internal/js/modules/k6/browser/browser/helpers_test.go
+index b7f1ecd06..27d9f05ff 100644
+--- a/internal/js/modules/k6/browser/browser/helpers_test.go
++++ b/internal/js/modules/k6/browser/browser/helpers_test.go
+@@ -4,9 +4,64 @@ import (
+ 	"testing"
+ 
+ 	"github.com/grafana/sobek"
++	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
++
++	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext/k6test"
+ )
+ 
++func TestSobekEmptyStringNullishHandling(t *testing.T) {
++	t.Parallel()
++
++	vu := k6test.NewVU(t)
++	rt := vu.Runtime()
++
++	tests := []struct {
++		name     string
++		getValue func() sobek.Value
++		expected bool
++	}{
++		{
++			name:     "nil_returns_true",
++			getValue: func() sobek.Value { return nil },
++			expected: true,
++		},
++		{
++			name:     "undefined_returns_true",
++			getValue: func() sobek.Value { return sobek.Undefined() },
++			expected: true,
++		},
++		{
++			name:     "null_returns_true",
++			getValue: func() sobek.Value { return sobek.Null() },
++			expected: true,
++		},
++		{
++			name:     "empty_string_returns_true",
++			getValue: func() sobek.Value { return rt.ToValue("") },
++			expected: true,
++		},
++		{
++			name:     "whitespace_string_returns_true",
++			getValue: func() sobek.Value { return rt.ToValue("   ") },
++			expected: true,
++		},
++		{
++			name:     "non_empty_string_returns_false",
++			getValue: func() sobek.Value { return rt.ToValue("hello") },
++			expected: false,
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			t.Parallel()
++			result := sobekEmptyString(tt.getValue())
++			assert.Equal(t, tt.expected, result)
++		})
++	}
++}
++
+ func TestSobekEmptyString(t *testing.T) {
+ 	t.Parallel()
+ 	// SobekEmpty string should return true if the argument
+@@ -24,3 +79,170 @@ func TestSobekEmptyString(t *testing.T) {
+ 		require.Truef(t, v.ToBoolean(), "got: false, want: true for %q", s)
+ 	}
+ }
++
++func TestMergeWithNullishHandling(t *testing.T) {
++	t.Parallel()
++
++	type testStruct struct {
++		Name  string `json:"name"`
++		Value int    `json:"value"`
++	}
++
++	t.Run("nil_value_returns_nil_error", func(t *testing.T) {
++		t.Parallel()
++		rt := sobek.New()
++		src := testStruct{Name: "original", Value: 42}
++		err := mergeWith(rt, src, nil)
++		assert.NoError(t, err)
++		assert.Equal(t, "original", src.Name)
++		assert.Equal(t, 42, src.Value)
++	})
++
++	t.Run("undefined_value_returns_nil_error", func(t *testing.T) {
++		t.Parallel()
++		rt := sobek.New()
++		src := testStruct{Name: "original", Value: 42}
++		err := mergeWith(rt, src, sobek.Undefined())
++		assert.NoError(t, err)
++		assert.Equal(t, "original", src.Name)
++		assert.Equal(t, 42, src.Value)
++	})
++
++	t.Run("null_value_returns_nil_error", func(t *testing.T) {
++		t.Parallel()
++		rt := sobek.New()
++		src := testStruct{Name: "original", Value: 42}
++		err := mergeWith(rt, src, sobek.Null())
++		assert.NoError(t, err)
++		assert.Equal(t, "original", src.Name)
++		assert.Equal(t, 42, src.Value)
++	})
++
++	t.Run("valid_value_does_not_return_error", func(t *testing.T) {
++		t.Parallel()
++		rt := sobek.New()
++		src := testStruct{Name: "original", Value: 42}
++		obj := rt.ToValue(map[string]any{"name": "updated", "value": 100})
++		err := mergeWith(rt, src, obj)
++		assert.NoError(t, err)
++	})
++}
++
++func TestExportToNullishHandling(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_value_returns_zero_value", func(t *testing.T) {
++		t.Parallel()
++		rt := sobek.New()
++		result, err := exportTo[string](rt, nil)
++		assert.NoError(t, err)
++		assert.Equal(t, "", result)
++	})
++
++	t.Run("undefined_value_returns_zero_value", func(t *testing.T) {
++		t.Parallel()
++		rt := sobek.New()
++		result, err := exportTo[int](rt, sobek.Undefined())
++		assert.NoError(t, err)
++		assert.Equal(t, 0, result)
++	})
++
++	t.Run("null_value_returns_zero_value", func(t *testing.T) {
++		t.Parallel()
++		rt := sobek.New()
++		result, err := exportTo[bool](rt, sobek.Null())
++		assert.NoError(t, err)
++		assert.Equal(t, false, result)
++	})
++
++	t.Run("valid_value_exports_successfully", func(t *testing.T) {
++		t.Parallel()
++		rt := sobek.New()
++		result, err := exportTo[string](rt, rt.ToValue("hello"))
++		assert.NoError(t, err)
++		assert.Equal(t, "hello", result)
++	})
++}
++
++func TestExportArgNullishHandling(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_value_returns_nil", func(t *testing.T) {
++		t.Parallel()
++		result := exportArg(nil)
++		assert.Nil(t, result)
++	})
++
++	t.Run("undefined_value_returns_nil", func(t *testing.T) {
++		t.Parallel()
++		result := exportArg(sobek.Undefined())
++		assert.Nil(t, result)
++	})
++
++	t.Run("null_value_returns_nil", func(t *testing.T) {
++		t.Parallel()
++		result := exportArg(sobek.Null())
++		assert.Nil(t, result)
++	})
++
++	t.Run("valid_string_exports_successfully", func(t *testing.T) {
++		t.Parallel()
++		rt := sobek.New()
++		result := exportArg(rt.ToValue("test"))
++		assert.Equal(t, "test", result)
++	})
++
++	t.Run("valid_number_exports_successfully", func(t *testing.T) {
++		t.Parallel()
++		rt := sobek.New()
++		result := exportArg(rt.ToValue(42))
++		assert.Equal(t, int64(42), result)
++	})
++
++	t.Run("valid_object_exports_successfully", func(t *testing.T) {
++		t.Parallel()
++		rt := sobek.New()
++		obj := map[string]any{"key": "value"}
++		result := exportArg(rt.ToValue(obj))
++		assert.NotNil(t, result)
++	})
++}
++
++func TestExportArgsNullishHandling(t *testing.T) {
++	t.Parallel()
++
++	t.Run("mixed_nullish_and_valid_values", func(t *testing.T) {
++		t.Parallel()
++		rt := sobek.New()
++		args := []sobek.Value{
++			nil,
++			sobek.Undefined(),
++			rt.ToValue("valid"),
++			sobek.Null(),
++			rt.ToValue(42),
++		}
++		result := exportArgs(args)
++		assert.Len(t, result, 5)
++		assert.Nil(t, result[0])
++		assert.Nil(t, result[1])
++		assert.Equal(t, "valid", result[2])
++		assert.Nil(t, result[3])
++		assert.Equal(t, int64(42), result[4])
++	})
++
++	t.Run("all_nullish_values", func(t *testing.T) {
++		t.Parallel()
++		args := []sobek.Value{nil, sobek.Undefined(), sobek.Null()}
++		result := exportArgs(args)
++		assert.Len(t, result, 3)
++		for _, r := range result {
++			assert.Nil(t, r)
++		}
++	})
++
++	t.Run("empty_args", func(t *testing.T) {
++		t.Parallel()
++		result := exportArgs([]sobek.Value{})
++		assert.Empty(t, result)
++	})
++}
+diff --git a/internal/js/modules/k6/browser/browser/route_options_test.go b/internal/js/modules/k6/browser/browser/route_options_test.go
+index caf0f901c..ab17e4573 100644
+--- a/internal/js/modules/k6/browser/browser/route_options_test.go
++++ b/internal/js/modules/k6/browser/browser/route_options_test.go
+@@ -3,7 +3,9 @@ package browser
+ import (
+ 	"fmt"
+ 	"testing"
++	"time"
+ 
++	"github.com/grafana/sobek"
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
+ 
+@@ -11,6 +13,160 @@ import (
+ 	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext/k6test"
+ )
+ 
++func TestParseContinueOptionsNullishHandling(t *testing.T) {
++	t.Parallel()
++
++	tests := []struct {
++		name     string
++		getValue func(*sobek.Runtime) sobek.Value
++	}{
++		{
++			name: "nil_returns_empty_options",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return nil
++			},
++		},
++		{
++			name: "undefined_returns_empty_options",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return sobek.Undefined()
++			},
++		},
++		{
++			name: "null_returns_empty_options",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return sobek.Null()
++			},
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			t.Parallel()
++
++			vu := k6test.NewVU(t)
++			opts := tt.getValue(vu.Runtime())
++
++			parsedOpts, err := parseContinueOptions(vu.Context(), opts)
++			assert.NoError(t, err)
++			assert.Equal(t, common.ContinueOptions{}, parsedOpts)
++		})
++	}
++}
++
++func TestParseFulfillOptionsNullishHandling(t *testing.T) {
++	t.Parallel()
++
++	tests := []struct {
++		name     string
++		getValue func(*sobek.Runtime) sobek.Value
++	}{
++		{
++			name: "nil_returns_empty_options",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return nil
++			},
++		},
++		{
++			name: "undefined_returns_empty_options",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return sobek.Undefined()
++			},
++		},
++		{
++			name: "null_returns_empty_options",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return sobek.Null()
++			},
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			t.Parallel()
++
++			vu := k6test.NewVU(t)
++			opts := tt.getValue(vu.Runtime())
++
++			parsedOpts, err := parseFulfillOptions(vu.Context(), opts)
++			assert.NoError(t, err)
++			assert.Equal(t, common.FulfillOptions{}, parsedOpts)
++		})
++	}
++}
++
++func TestParseHeadersNullishHandling(t *testing.T) {
++	t.Parallel()
++
++	vu := k6test.NewVU(t)
++	rt := vu.Runtime()
++
++	obj, err := rt.RunString(`({
++		"Content-Type": "application/json",
++		"X-Undefined": undefined,
++		"X-Null": null,
++		"X-Valid": "valid-value"
++	})`)
++	require.NoError(t, err)
++
++	headers := parseHeaders(obj.ToObject(rt))
++
++	assert.Len(t, headers, 2)
++	expectedHeaders := map[string]string{
++		"Content-Type": "application/json",
++		"X-Valid":      "valid-value",
++	}
++	for _, h := range headers {
++		expected, ok := expectedHeaders[h.Name]
++		assert.True(t, ok, "unexpected header: %s", h.Name)
++		assert.Equal(t, expected, h.Value)
++	}
++}
++
++func TestParseWaitForResponseOptionsNullishHandling(t *testing.T) {
++	t.Parallel()
++
++	defaultTimeout := 30 * time.Second
++
++	tests := []struct {
++		name     string
++		getValue func(*sobek.Runtime) sobek.Value
++	}{
++		{
++			name: "nil_returns_default_options",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return nil
++			},
++		},
++		{
++			name: "undefined_returns_default_options",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return sobek.Undefined()
++			},
++		},
++		{
++			name: "null_returns_default_options",
++			getValue: func(rt *sobek.Runtime) sobek.Value {
++				return sobek.Null()
++			},
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			t.Parallel()
++
++			vu := k6test.NewVU(t)
++			opts := tt.getValue(vu.Runtime())
++
++			parsedOpts, err := parseWaitForResponseOptions(vu.Context(), opts, defaultTimeout)
++			assert.NoError(t, err)
++			assert.NotNil(t, parsedOpts)
++			assert.Equal(t, defaultTimeout, parsedOpts.Timeout)
++		})
++	}
++}
++
+ func TestParseContinueOptions(t *testing.T) {
+ 	t.Parallel()
+ 	tests := []struct {
+diff --git a/internal/js/modules/k6/browser/common/frame_options_test.go b/internal/js/modules/k6/browser/common/frame_options_test.go
+index 0fa138375..b2daa634a 100644
+--- a/internal/js/modules/k6/browser/common/frame_options_test.go
++++ b/internal/js/modules/k6/browser/common/frame_options_test.go
+@@ -6,6 +6,7 @@ import (
+ 
+ 	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext/k6test"
+ 
++	"github.com/grafana/sobek"
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
+ )
+@@ -45,6 +46,45 @@ func TestFrameGotoOptionsParse(t *testing.T) {
+ 				`invalid lifecycle event: "none"; must be one of: `+
+ 				`load, domcontentloaded, networkidle`)
+ 	})
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		gotoOpts := NewFrameGotoOptions("https://example.com/", 30*time.Second)
++		err := gotoOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, "https://example.com/", gotoOpts.Referer)
++		assert.Equal(t, 30*time.Second, gotoOpts.Timeout)
++		assert.Equal(t, LifecycleEventLoad, gotoOpts.WaitUntil)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		gotoOpts := NewFrameGotoOptions("https://example.com/", 30*time.Second)
++		err := gotoOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, "https://example.com/", gotoOpts.Referer)
++		assert.Equal(t, 30*time.Second, gotoOpts.Timeout)
++		assert.Equal(t, LifecycleEventLoad, gotoOpts.WaitUntil)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		gotoOpts := NewFrameGotoOptions("https://example.com/", 30*time.Second)
++		err := gotoOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, "https://example.com/", gotoOpts.Referer)
++		assert.Equal(t, 30*time.Second, gotoOpts.Timeout)
++		assert.Equal(t, LifecycleEventLoad, gotoOpts.WaitUntil)
++	})
+ }
+ 
+ func TestFrameSetContentOptionsParse(t *testing.T) {
+@@ -80,6 +120,42 @@ func TestFrameSetContentOptionsParse(t *testing.T) {
+ 				`invalid lifecycle event: "none"; must be one of: `+
+ 				`load, domcontentloaded, networkidle`)
+ 	})
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		scOpts := NewFrameSetContentOptions(30 * time.Second)
++		err := scOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, scOpts.Timeout)
++		assert.Equal(t, LifecycleEventLoad, scOpts.WaitUntil)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		scOpts := NewFrameSetContentOptions(30 * time.Second)
++		err := scOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, scOpts.Timeout)
++		assert.Equal(t, LifecycleEventLoad, scOpts.WaitUntil)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		scOpts := NewFrameSetContentOptions(30 * time.Second)
++		err := scOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, scOpts.Timeout)
++		assert.Equal(t, LifecycleEventLoad, scOpts.WaitUntil)
++	})
+ }
+ 
+ func TestFrameWaitForNavigationOptionsParse(t *testing.T) {
+@@ -118,4 +194,326 @@ func TestFrameWaitForNavigationOptionsParse(t *testing.T) {
+ 				`invalid lifecycle event: "none"; must be one of: `+
+ 				`load, domcontentloaded, networkidle`)
+ 	})
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		navOpts := NewFrameWaitForNavigationOptions(30 * time.Second)
++		err := navOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, navOpts.Timeout)
++		assert.Equal(t, LifecycleEventLoad, navOpts.WaitUntil)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		navOpts := NewFrameWaitForNavigationOptions(30 * time.Second)
++		err := navOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, navOpts.Timeout)
++		assert.Equal(t, LifecycleEventLoad, navOpts.WaitUntil)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		navOpts := NewFrameWaitForNavigationOptions(30 * time.Second)
++		err := navOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, navOpts.Timeout)
++		assert.Equal(t, LifecycleEventLoad, navOpts.WaitUntil)
++	})
++}
++
++func TestFrameBaseOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		baseOpts := NewFrameBaseOptions(30 * time.Second)
++		err := baseOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, baseOpts.Timeout)
++		assert.False(t, baseOpts.Strict)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		baseOpts := NewFrameBaseOptions(30 * time.Second)
++		err := baseOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, baseOpts.Timeout)
++		assert.False(t, baseOpts.Strict)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		baseOpts := NewFrameBaseOptions(30 * time.Second)
++		err := baseOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, baseOpts.Timeout)
++		assert.False(t, baseOpts.Strict)
++	})
++
++	t.Run("valid_opts_overrides_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		opts := vu.ToSobekValue(map[string]any{
++			"timeout": "5000",
++			"strict":  true,
++		})
++		baseOpts := NewFrameBaseOptions(30 * time.Second)
++		err := baseOpts.Parse(vu.Context(), opts)
++		require.NoError(t, err)
++
++		assert.Equal(t, 5*time.Second, baseOpts.Timeout)
++		assert.True(t, baseOpts.Strict)
++	})
++}
++
++func TestFrameWaitForFunctionOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		funcOpts := NewFrameWaitForFunctionOptions(30 * time.Second)
++		err := funcOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, funcOpts.Timeout)
++		assert.Equal(t, PollingRaf, funcOpts.Polling)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		funcOpts := NewFrameWaitForFunctionOptions(30 * time.Second)
++		err := funcOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, funcOpts.Timeout)
++		assert.Equal(t, PollingRaf, funcOpts.Polling)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		funcOpts := NewFrameWaitForFunctionOptions(30 * time.Second)
++		err := funcOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, funcOpts.Timeout)
++		assert.Equal(t, PollingRaf, funcOpts.Polling)
++	})
++}
++
++func TestFrameWaitForSelectorOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		selectorOpts := NewFrameWaitForSelectorOptions(30 * time.Second)
++		err := selectorOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, selectorOpts.Timeout)
++		assert.Equal(t, DOMElementStateVisible, selectorOpts.State)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		selectorOpts := NewFrameWaitForSelectorOptions(30 * time.Second)
++		err := selectorOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, selectorOpts.Timeout)
++		assert.Equal(t, DOMElementStateVisible, selectorOpts.State)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		selectorOpts := NewFrameWaitForSelectorOptions(30 * time.Second)
++		err := selectorOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, selectorOpts.Timeout)
++		assert.Equal(t, DOMElementStateVisible, selectorOpts.State)
++	})
++}
++
++func TestFrameTapOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		tapOpts := NewFrameTapOptions(30 * time.Second)
++		err := tapOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, tapOpts.Timeout)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		tapOpts := NewFrameTapOptions(30 * time.Second)
++		err := tapOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, tapOpts.Timeout)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		tapOpts := NewFrameTapOptions(30 * time.Second)
++		err := tapOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, tapOpts.Timeout)
++	})
++}
++
++func TestFrameWaitForLoadStateOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		loadOpts := NewFrameWaitForLoadStateOptions(30 * time.Second)
++		err := loadOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, loadOpts.Timeout)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		loadOpts := NewFrameWaitForLoadStateOptions(30 * time.Second)
++		err := loadOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, loadOpts.Timeout)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		loadOpts := NewFrameWaitForLoadStateOptions(30 * time.Second)
++		err := loadOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, loadOpts.Timeout)
++	})
++}
++
++func TestFrameWaitForURLOptionsParse(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		urlOpts := NewFrameWaitForURLOptions(30 * time.Second)
++		err := urlOpts.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, urlOpts.Timeout)
++	})
++
++	t.Run("undefined_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		urlOpts := NewFrameWaitForURLOptions(30 * time.Second)
++		err := urlOpts.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, urlOpts.Timeout)
++	})
++
++	t.Run("null_opts_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		urlOpts := NewFrameWaitForURLOptions(30 * time.Second)
++		err := urlOpts.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, 30*time.Second, urlOpts.Timeout)
++	})
++}
++
++func TestParseStrictNullishHandling(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_opts_returns_false", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		result := parseStrict(vu.Context(), nil)
++		assert.False(t, result)
++	})
++
++	t.Run("undefined_opts_returns_false", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		result := parseStrict(vu.Context(), sobek.Undefined())
++		assert.False(t, result)
++	})
++
++	t.Run("null_opts_returns_false", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		result := parseStrict(vu.Context(), sobek.Null())
++		assert.False(t, result)
++	})
++
++	t.Run("valid_opts_with_strict_true", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		opts := vu.ToSobekValue(map[string]any{
++			"strict": true,
++		})
++		result := parseStrict(vu.Context(), opts)
++		assert.True(t, result)
++	})
+ }
+diff --git a/internal/js/modules/k6/browser/common/layout_test.go b/internal/js/modules/k6/browser/common/layout_test.go
+index 5bc9532e6..76378392d 100644
+--- a/internal/js/modules/k6/browser/common/layout_test.go
++++ b/internal/js/modules/k6/browser/common/layout_test.go
+@@ -3,9 +3,69 @@ package common
+ import (
+ 	"testing"
+ 
++	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext/k6test"
++
++	"github.com/grafana/sobek"
+ 	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
+ )
+ 
++func TestSizeParseNullishHandling(t *testing.T) {
++	t.Parallel()
++
++	t.Run("nil_viewport_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		size := &Size{Width: 1920, Height: 1080}
++		err := size.Parse(vu.Context(), nil)
++		require.NoError(t, err)
++
++		assert.Equal(t, float64(1920), size.Width)
++		assert.Equal(t, float64(1080), size.Height)
++	})
++
++	t.Run("undefined_viewport_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		size := &Size{Width: 1920, Height: 1080}
++		err := size.Parse(vu.Context(), sobek.Undefined())
++		require.NoError(t, err)
++
++		assert.Equal(t, float64(1920), size.Width)
++		assert.Equal(t, float64(1080), size.Height)
++	})
++
++	t.Run("null_viewport_preserves_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		size := &Size{Width: 1920, Height: 1080}
++		err := size.Parse(vu.Context(), sobek.Null())
++		require.NoError(t, err)
++
++		assert.Equal(t, float64(1920), size.Width)
++		assert.Equal(t, float64(1080), size.Height)
++	})
++
++	t.Run("valid_viewport_overrides_defaults", func(t *testing.T) {
++		t.Parallel()
++
++		vu := k6test.NewVU(t)
++		opts := vu.ToSobekValue(map[string]any{
++			"width":  1280,
++			"height": 720,
++		})
++		size := &Size{Width: 1920, Height: 1080}
++		err := size.Parse(vu.Context(), opts)
++		require.NoError(t, err)
++
++		assert.Equal(t, float64(1280), size.Width)
++		assert.Equal(t, float64(720), size.Height)
++	})
++}
++
+ // See: Issue #183 for details.
+ func TestViewportCalculateInset(t *testing.T) {
+ 	t.Parallel()

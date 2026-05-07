@@ -1,0 +1,130 @@
+{
+  "tests": [
+    {
+      "name": "GTPPDUSessionContainer(), dissect"
+    },
+    {
+      "name": "GTPPDUSessionContainer, extraPadding build"
+    },
+    {
+      "name": "IE_IP_Address, dissection"
+    },
+    {
+      "name": "IE_IP_Address, basic instantiation"
+    },
+    {
+      "name": "IE_EPCO, dissection"
+    },
+    {
+      "name": "IE_EPCO, basic instantiation"
+    },
+    {
+      "name": "IE_MMContext_EPS, dissection"
+    },
+    {
+      "name": "IE_MMContext_EPS, basic instantiation"
+    },
+    {
+      "name": "IE_PDNConnection, IE_FQDN, dissection"
+    },
+    {
+      "name": "IE_PDNConnection, IE_FQDN, basic instantiation"
+    },
+    {
+      "name": "IE_IMSI, auto length via post_build roundtrip"
+    },
+    {
+      "name": "IE_Cause, auto length via post_build roundtrip"
+    },
+    {
+      "name": "IE_EPSBearerID, auto length via post_build roundtrip"
+    },
+    {
+      "name": "IE_IP_Address, IPv4 build and dissect"
+    },
+    {
+      "name": "IE_IP_Address, IPv6 build and dissect"
+    },
+    {
+      "name": "IE_IP_Address, IPv6 dissection roundtrip"
+    },
+    {
+      "name": "PCO_Option, auto length computation"
+    },
+    {
+      "name": "PCO_Option, auto length for Primary DNS"
+    },
+    {
+      "name": "PCO_Option, auto length for Secondary DNS"
+    },
+    {
+      "name": "PCO_Protocol, PCO_Session_AMBR auto length"
+    },
+    {
+      "name": "PCO_S_Nssai, fields with SST only"
+    },
+    {
+      "name": "PCO_S_Nssai, fields with SST and SD"
+    },
+    {
+      "name": "PCO_S_Nssai, all fields"
+    },
+    {
+      "name": "PCO_S_Nssai, dissection roundtrip"
+    },
+    {
+      "name": "PCO_Session_AMBR, fields"
+    },
+    {
+      "name": "PCO_Session_AMBR, default length"
+    },
+    {
+      "name": "PCO_Session_AMBR, roundtrip"
+    },
+    {
+      "name": "GTPV2ContextRequest, basic instantiation"
+    },
+    {
+      "name": "GTPV2ContextResponse, basic instantiation"
+    },
+    {
+      "name": "GTPV2ContextAcknowledge, basic instantiation"
+    },
+    {
+      "name": "GTPV2ContextRequest, layer binding"
+    },
+    {
+      "name": "GTPV2ContextResponse, layer binding"
+    },
+    {
+      "name": "PCO_SOF, protocol-type PCO has 2-byte type field"
+    },
+    {
+      "name": "PCO_IPCP, protocol-type PCO structure"
+    },
+    {
+      "name": "PCO_P_CSCF_IPv6_Address_Request, inherits PCO_Protocol"
+    },
+    {
+      "name": "PCO_IM_CN_Subsystem_Signaling_Flag, inherits PCO_Protocol"
+    },
+    {
+      "name": "PCO_IP_Allocation_via_NAS, inherits PCO_Protocol"
+    },
+    {
+      "name": "PCO_PPP, inherits PCO_Protocol"
+    },
+    {
+      "name": "PCO_IPv4, option-type PCO auto length"
+    },
+    {
+      "name": "PCO_Primary_DNS, option-type PCO auto length"
+    },
+    {
+      "name": "IE_AMBR, auto length via post_build roundtrip"
+    },
+    {
+      "name": "IE_RecoveryRestart, auto length via post_build roundtrip"
+    }
+  ]
+}

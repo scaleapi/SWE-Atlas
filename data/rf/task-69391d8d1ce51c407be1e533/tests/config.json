@@ -1,0 +1,9 @@
+{
+  "task_id": "69391d8d1ce51c407be1e533",
+  "repo": "simple-login_app",
+  "base_commit": "38d377acb316e0ead04b475c90620cc27534440d",
+  "language": "Python",
+  "mount_path": "/code",
+  "initial_complexity": "Trivial",
+  "uid": "0f1a823e-3191-4800-a0ea-b9cfccb19f64"
+}

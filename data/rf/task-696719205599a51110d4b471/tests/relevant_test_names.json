@@ -1,0 +1,67 @@
+{
+  "tests": [
+    {
+      "name": "GTPCreatePDPContextRequest(), basic dissection"
+    },
+    {
+      "name": "TCP()/OFPTHello() dissection, check new TCP.guess_payload_class"
+    },
+    {
+      "name": "complete Ether()/IP()/TCP()/OFPTFeaturesRequest()"
+    },
+    {
+      "name": "OFv1 request class gets both sport and dport defaulted to 6653"
+    },
+    {
+      "name": "OFv1 reply class gets both sport and dport defaulted to 6653"
+    },
+    {
+      "name": "OFv1 error class gets both sport and dport defaulted to 6653"
+    },
+    {
+      "name": "OFv1 explicit port values are not clobbered by defaults"
+    },
+    {
+      "name": "OFPMPRequestTableFeatures() with OFPTFPTMatch() OXMIDPacketListField tests"
+    },
+    {
+      "name": "OFv1.3 request class gets both sport and dport defaulted to 6653"
+    },
+    {
+      "name": "OFv1.3 reply class gets both sport and dport defaulted to 6653"
+    },
+    {
+      "name": "OFv1.3 error class gets both sport and dport defaulted to 6653"
+    },
+    {
+      "name": "SOCKS5Request build and dissection"
+    },
+    {
+      "name": "Load SOCKS contrib"
+    },
+    {
+      "name": "SOCKS5Request sets both dport and sport on TCP"
+    },
+    {
+      "name": "SOCKS5Reply sets both sport and dport on TCP"
+    },
+    {
+      "name": "SOCKS4Request sets both dport and sport on TCP"
+    },
+    {
+      "name": "SOCKS4Reply sets both sport and dport on TCP"
+    },
+    {
+      "name": "SOCKS request and reply set complementary port pairs"
+    },
+    {
+      "name": "Test with recv() calls that return exact packet-length rawings"
+    },
+    {
+      "name": "Test with recv() calls that return twice as much data as the exact packet-length"
+    },
+    {
+      "name": "Test with recv() calls that return not enough data"
+    }
+  ]
+}

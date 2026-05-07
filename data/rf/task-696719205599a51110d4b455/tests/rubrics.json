@@ -1,0 +1,90 @@
+[
+  {
+    "id": "cb82894adfc3a4247bbb3fcf3ca856e1",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ca23f32ee7392dd7867dafde4963220b",
+    "title": "1.1: Moves all 4 exported RV type definitions (RV update request, version upsert request, version get request, version response) from queries.go into the rvmanager package",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8",
+    "title": "1.2: Moves all 5 exported SQL template variable declarations (SqlResourceUpdateRV, SqlResourceHistoryUpdateRV, SqlResourceVersionGet, SqlResourceVersionUpdate, SqlResourceVersionInsert) from queries.go into the rvmanager package",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "09deb252420aba8e60b5a189a9d97a55",
+    "title": "1.3: Exports ResourceVersionManager from rvmanager package with both public methods (Lock, SaveRV)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f8e2a3b1c4d5e6f7a8b9c0d1e2f3a4b5",
+    "title": "1.4: Rewires both parent package source files (backend.go and bulk.go) to import and delegate resource version operations to the rvmanager package",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    "title": "1.5: Sets up independent template loading in the rvmanager package that parses SQL files from its own data directory into the exported template variables",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a2f5c61737b521237873c03bdb1ba945",
+    "title": "1.6: Removes all 5 RV-related template variables (sqlResourceUpdateRV, sqlResourceHistoryUpdateRV, sqlResourceVersionGet, sqlResourceVersionUpdate, sqlResourceVersionInsert) entirely from queries.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ce2ac7c6b0d96d897e615f007eed2451",
+    "title": "1.7: Removes all 4 RV-related type definitions (sqlResourceUpdateRVRequest, resourceVersionResponse, sqlResourceVersionUpsertRequest, sqlResourceVersionGetRequest) entirely from queries.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a258b940d177fe62794a6bb8765b6b6b",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9a343e6462977fa73023f69f1e547eaa",
+    "title": "4.1: Keeps ResourceVersionManager or its methods unexported in the rvmanager package",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0",
+    "title": "4.2: Leaves SQL template files in the parent package instead of moving them to rvmanager/data/",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

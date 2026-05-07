@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "name": "public/app/features/apiserver/client.test.ts"
+    },
+    {
+      "name": "public/app/features/provisioning/api/endpoints.test.ts"
+    }
+  ]
+}

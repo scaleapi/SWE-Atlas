@@ -1,0 +1,742 @@
+diff --git a/api/v1/setup_teardown_routes_test.go b/api/v1/setup_teardown_routes_test.go
+index c08f59d7a..f51b3b3d9 100644
+--- a/api/v1/setup_teardown_routes_test.go
++++ b/api/v1/setup_teardown_routes_test.go
+@@ -120,14 +120,12 @@ func TestSetupData(t *testing.T) {
+ 			t.Parallel()
+ 
+ 			piState := getTestPreInitState(t)
+-			runner, err := js.New(
+-				piState,
+-				&loader.SourceData{
+-					URL:  &url.URL{Path: "/script.js"},
+-					Data: testCase.script,
+-				},
+-				nil,
+-			)
++			sourceData := &loader.SourceData{
++				URL:  &url.URL{Path: "/script.js"},
++				Data: testCase.script,
++			}
++			moduleResolver := js.NewModuleResolver(loader.Dir(sourceData.URL), piState, nil)
++			runner, err := js.New(piState, sourceData, nil, moduleResolver)
+ 			require.NoError(t, err)
+ 
+ 			testState := getTestRunState(t, lib.Options{
+diff --git a/internal/cmd/tests/test_state.go b/internal/cmd/tests/test_state.go
+index 85a9a9c95..a5e36c4e6 100644
+--- a/internal/cmd/tests/test_state.go
++++ b/internal/cmd/tests/test_state.go
+@@ -41,6 +41,7 @@ type GlobalTestState struct {
+ // NewGlobalTestState returns an initialized GlobalTestState, mocking all
+ // GlobalState fields for use in tests.
+ func NewGlobalTestState(tb testing.TB) *GlobalTestState {
++	tb.Helper()
+ 	ctx, cancel := context.WithCancel(context.Background())
+ 	tb.Cleanup(cancel)
+ 
+diff --git a/internal/execution/scheduler_ext_exec_test.go b/internal/execution/scheduler_ext_exec_test.go
+index 8648028a1..e1d708ec1 100644
+--- a/internal/execution/scheduler_ext_exec_test.go
++++ b/internal/execution/scheduler_ext_exec_test.go
+@@ -70,19 +70,18 @@ func TestExecutionInfoVUSharing(t *testing.T) {
+ 
+ 	registry := metrics.NewRegistry()
+ 	builtinMetrics := metrics.RegisterBuiltinMetrics(registry)
+-	runner, err := js.New(
+-		&lib.TestPreInitState{
+-			Logger:         logger,
+-			BuiltinMetrics: builtinMetrics,
+-			Registry:       registry,
+-			Usage:          usage.New(),
+-		},
+-		&loader.SourceData{
+-			URL:  &url.URL{Path: "/script.js"},
+-			Data: script,
+-		},
+-		nil,
+-	)
++	piState := &lib.TestPreInitState{
++		Logger:         logger,
++		BuiltinMetrics: builtinMetrics,
++		Registry:       registry,
++		Usage:          usage.New(),
++	}
++	sourceData := &loader.SourceData{
++		URL:  &url.URL{Path: "/script.js"},
++		Data: script,
++	}
++	moduleResolver := js.NewModuleResolver(loader.Dir(sourceData.URL), piState, nil)
++	runner, err := js.New(piState, sourceData, nil, moduleResolver)
+ 	require.NoError(t, err)
+ 
+ 	ctx, cancel, execScheduler, samples := newTestScheduler(t, runner, logger, lib.Options{})
+@@ -184,19 +183,18 @@ func TestExecutionInfoScenarioIter(t *testing.T) {
+ 
+ 	registry := metrics.NewRegistry()
+ 	builtinMetrics := metrics.RegisterBuiltinMetrics(registry)
+-	runner, err := js.New(
+-		&lib.TestPreInitState{
+-			Logger:         logger,
+-			BuiltinMetrics: builtinMetrics,
+-			Registry:       registry,
+-			Usage:          usage.New(),
+-		},
+-		&loader.SourceData{
+-			URL:  &url.URL{Path: "/script.js"},
+-			Data: script,
+-		},
+-		nil,
+-	)
++	piState := &lib.TestPreInitState{
++		Logger:         logger,
++		BuiltinMetrics: builtinMetrics,
++		Registry:       registry,
++		Usage:          usage.New(),
++	}
++	sourceData := &loader.SourceData{
++		URL:  &url.URL{Path: "/script.js"},
++		Data: script,
++	}
++	moduleResolver := js.NewModuleResolver(loader.Dir(sourceData.URL), piState, nil)
++	runner, err := js.New(piState, sourceData, nil, moduleResolver)
+ 	require.NoError(t, err)
+ 
+ 	ctx, cancel, execScheduler, samples := newTestScheduler(t, runner, logger, lib.Options{})
+@@ -267,19 +265,18 @@ func TestSharedIterationsStable(t *testing.T) {
+ 
+ 	registry := metrics.NewRegistry()
+ 	builtinMetrics := metrics.RegisterBuiltinMetrics(registry)
+-	runner, err := js.New(
+-		&lib.TestPreInitState{
+-			Logger:         logger,
+-			BuiltinMetrics: builtinMetrics,
+-			Registry:       registry,
+-			Usage:          usage.New(),
+-		},
+-		&loader.SourceData{
+-			URL:  &url.URL{Path: "/script.js"},
+-			Data: script,
+-		},
+-		nil,
+-	)
++	piState := &lib.TestPreInitState{
++		Logger:         logger,
++		BuiltinMetrics: builtinMetrics,
++		Registry:       registry,
++		Usage:          usage.New(),
++	}
++	sourceData := &loader.SourceData{
++		URL:  &url.URL{Path: "/script.js"},
++		Data: script,
++	}
++	moduleResolver := js.NewModuleResolver(loader.Dir(sourceData.URL), piState, nil)
++	runner, err := js.New(piState, sourceData, nil, moduleResolver)
+ 	require.NoError(t, err)
+ 
+ 	ctx, cancel, execScheduler, samples := newTestScheduler(t, runner, logger, lib.Options{})
+@@ -402,17 +399,18 @@ func TestExecutionInfoAll(t *testing.T) {
+ 
+ 			registry := metrics.NewRegistry()
+ 			builtinMetrics := metrics.RegisterBuiltinMetrics(registry)
+-			runner, err := js.New(
+-				&lib.TestPreInitState{
+-					Logger:         logger,
+-					BuiltinMetrics: builtinMetrics,
+-					Registry:       registry,
+-					Usage:          usage.New(),
+-				},
+-				&loader.SourceData{
+-					URL:  &url.URL{Path: "/script.js"},
+-					Data: []byte(tc.script),
+-				}, nil)
++			piState := &lib.TestPreInitState{
++				Logger:         logger,
++				BuiltinMetrics: builtinMetrics,
++				Registry:       registry,
++				Usage:          usage.New(),
++			}
++			sourceData := &loader.SourceData{
++				URL:  &url.URL{Path: "/script.js"},
++				Data: []byte(tc.script),
++			}
++			moduleResolver := js.NewModuleResolver(loader.Dir(sourceData.URL), piState, nil)
++			runner, err := js.New(piState, sourceData, nil, moduleResolver)
+ 			require.NoError(t, err)
+ 
+ 			ctx, cancel, execScheduler, samples := newTestScheduler(t, runner, logger, lib.Options{})
+diff --git a/internal/execution/scheduler_ext_test.go b/internal/execution/scheduler_ext_test.go
+index 8b28f4953..070479fa3 100644
+--- a/internal/execution/scheduler_ext_test.go
++++ b/internal/execution/scheduler_ext_test.go
+@@ -135,10 +135,11 @@ func TestSchedulerRunNonDefault(t *testing.T) {
+ 		t.Run(tc.name, func(t *testing.T) {
+ 			t.Parallel()
+ 			piState := getTestPreInitState(t)
+-			runner, err := js.New(
+-				piState, &loader.SourceData{
+-					URL: &url.URL{Path: "/script.js"}, Data: []byte(tc.script),
+-				}, nil)
++			sourceData := &loader.SourceData{
++				URL: &url.URL{Path: "/script.js"}, Data: []byte(tc.script),
++			}
++			moduleResolver := js.NewModuleResolver(loader.Dir(sourceData.URL), piState, nil)
++			runner, err := js.New(piState, sourceData, nil, moduleResolver)
+ 			require.NoError(t, err)
+ 
+ 			testRunState := getTestRunState(t, piState, runner.GetOptions(), runner)
+@@ -250,12 +251,12 @@ func TestSchedulerRunEnv(t *testing.T) {
+ 			t.Parallel()
+ 			piState := getTestPreInitState(t)
+ 			piState.RuntimeOptions = lib.RuntimeOptions{Env: map[string]string{"TESTVAR": "global"}}
+-			runner, err := js.New(
+-				piState, &loader.SourceData{
+-					URL:  &url.URL{Path: "/script.js"},
+-					Data: []byte(tc.script),
+-				}, nil,
+-			)
++			sourceData := &loader.SourceData{
++				URL:  &url.URL{Path: "/script.js"},
++				Data: []byte(tc.script),
++			}
++			moduleResolver := js.NewModuleResolver(loader.Dir(sourceData.URL), piState, nil)
++			runner, err := js.New(piState, sourceData, nil, moduleResolver)
+ 			require.NoError(t, err)
+ 
+ 			testRunState := getTestRunState(t, piState, runner.GetOptions(), runner)
+@@ -321,11 +322,12 @@ func TestSchedulerSystemTags(t *testing.T) {
+ 	}`)
+ 
+ 	piState := getTestPreInitState(t)
+-	runner, err := js.New(
+-		piState, &loader.SourceData{
+-			URL:  &url.URL{Path: "/script.js"},
+-			Data: []byte(script),
+-		}, nil)
++	sourceData := &loader.SourceData{
++		URL:  &url.URL{Path: "/script.js"},
++		Data: []byte(script),
++	}
++	moduleResolver := js.NewModuleResolver(loader.Dir(sourceData.URL), piState, nil)
++	runner, err := js.New(piState, sourceData, nil, moduleResolver)
+ 	require.NoError(t, err)
+ 
+ 	require.NoError(t, runner.SetOptions(runner.GetOptions().Apply(lib.Options{
+@@ -463,12 +465,12 @@ func TestSchedulerRunCustomTags(t *testing.T) {
+ 		t.Run(tc.name, func(t *testing.T) {
+ 			t.Parallel()
+ 			piState := getTestPreInitState(t)
+-			runner, err := js.New(
+-				piState, &loader.SourceData{
+-					URL:  &url.URL{Path: "/script.js"},
+-					Data: []byte(tc.script),
+-				}, nil,
+-			)
++			sourceData := &loader.SourceData{
++				URL:  &url.URL{Path: "/script.js"},
++				Data: []byte(tc.script),
++			}
++			moduleResolver := js.NewModuleResolver(loader.Dir(sourceData.URL), piState, nil)
++			runner, err := js.New(piState, sourceData, nil, moduleResolver)
+ 			require.NoError(t, err)
+ 
+ 			testRunState := getTestRunState(t, piState, runner.GetOptions(), runner)
+@@ -633,13 +635,12 @@ func TestSchedulerRunCustomConfigNoCrossover(t *testing.T) {
+ 
+ 	piState := getTestPreInitState(t)
+ 	piState.RuntimeOptions.Env = map[string]string{"TESTGLOBALVAR": "global"}
+-	runner, err := js.New(
+-		piState, &loader.SourceData{
+-			URL:  &url.URL{Path: "/script.js"},
+-			Data: []byte(script),
+-		},
+-		nil,
+-	)
++	sourceData := &loader.SourceData{
++		URL:  &url.URL{Path: "/script.js"},
++		Data: []byte(script),
++	}
++	moduleResolver := js.NewModuleResolver(loader.Dir(sourceData.URL), piState, nil)
++	runner, err := js.New(piState, sourceData, nil, moduleResolver)
+ 	require.NoError(t, err)
+ 
+ 	testRunState := getTestRunState(t, piState, runner.GetOptions(), runner)
+@@ -1104,16 +1105,17 @@ func TestDNSResolverCache(t *testing.T) {
+ 
+ 			registry := metrics.NewRegistry()
+ 			builtinMetrics := metrics.RegisterBuiltinMetrics(registry)
+-			runner, err := js.New(
+-				&lib.TestPreInitState{
+-					Logger:         logger,
+-					BuiltinMetrics: builtinMetrics,
+-					Registry:       registry,
+-					Usage:          usage.New(),
+-				},
+-				&loader.SourceData{
+-					URL: &url.URL{Path: "/script.js"}, Data: []byte(script),
+-				}, nil)
++			piState := &lib.TestPreInitState{
++				Logger:         logger,
++				BuiltinMetrics: builtinMetrics,
++				Registry:       registry,
++				Usage:          usage.New(),
++			}
++			sourceData := &loader.SourceData{
++				URL: &url.URL{Path: "/script.js"}, Data: []byte(script),
++			}
++			moduleResolver := js.NewModuleResolver(loader.Dir(sourceData.URL), piState, nil)
++			runner, err := js.New(piState, sourceData, nil, moduleResolver)
+ 			require.NoError(t, err)
+ 
+ 			mr := mockresolver.New(map[string][]net.IP{"myhost": {net.ParseIP(sr("HTTPBIN_IP"))}})
+@@ -1186,7 +1188,9 @@ func TestRealTimeAndSetupTeardownMetrics(t *testing.T) {
+ 	}`)
+ 
+ 	piState := getTestPreInitState(t)
+-	runner, err := js.New(piState, &loader.SourceData{URL: &url.URL{Path: "/script.js"}, Data: script}, nil)
++	sourceData := &loader.SourceData{URL: &url.URL{Path: "/script.js"}, Data: script}
++	moduleResolver := js.NewModuleResolver(loader.Dir(sourceData.URL), piState, nil)
++	runner, err := js.New(piState, sourceData, nil, moduleResolver)
+ 	require.NoError(t, err)
+ 
+ 	options, err := executor.DeriveScenariosFromShortcuts(runner.GetOptions().Apply(lib.Options{
+@@ -1399,7 +1403,9 @@ func TestNewSchedulerHasWork(t *testing.T) {
+ 		BuiltinMetrics: metrics.RegisterBuiltinMetrics(registry),
+ 		Usage:          usage.New(),
+ 	}
+-	runner, err := js.New(piState, &loader.SourceData{URL: &url.URL{Path: "/script.js"}, Data: script}, nil)
++	sourceData := &loader.SourceData{URL: &url.URL{Path: "/script.js"}, Data: script}
++	moduleResolver := js.NewModuleResolver(loader.Dir(sourceData.URL), piState, nil)
++	runner, err := js.New(piState, sourceData, nil, moduleResolver)
+ 	require.NoError(t, err)
+ 
+ 	testRunState := getTestRunState(t, piState, runner.GetOptions(), runner)
+diff --git a/internal/js/bundle_test.go b/internal/js/bundle_test.go
+index 13ee45d48..f1fdb4874 100644
+--- a/internal/js/bundle_test.go
++++ b/internal/js/bundle_test.go
+@@ -33,6 +33,7 @@ import (
+ const isWindows = runtime.GOOS == "windows"
+ 
+ func getTestPreInitState(tb testing.TB, logger logrus.FieldLogger, rtOpts *lib.RuntimeOptions) *lib.TestPreInitState {
++	tb.Helper()
+ 	if logger == nil {
+ 		logger = testutils.NewLogger(tb)
+ 	}
+@@ -50,6 +51,7 @@ func getTestPreInitState(tb testing.TB, logger logrus.FieldLogger, rtOpts *lib.R
+ }
+ 
+ func getSimpleBundle(tb testing.TB, filename, data string, opts ...interface{}) (*Bundle, error) {
++	tb.Helper()
+ 	fs := fsext.NewMemMapFs()
+ 	var rtOpts *lib.RuntimeOptions
+ 	var logger logrus.FieldLogger
+@@ -65,18 +67,46 @@ func getSimpleBundle(tb testing.TB, filename, data string, opts ...interface{})
+ 			tb.Fatalf("unknown test option %q", opt)
+ 		}
+ 	}
++	preInitState := getTestPreInitState(tb, logger, rtOpts)
+ 
++	filenameURL := &url.URL{Path: filename, Scheme: "file"}
++
++	fss := map[string]fsext.Fs{"file": fs, "https": fsext.NewMemMapFs()}
++	moduleResolver := NewModuleResolver(loader.Dir(filenameURL), preInitState, fss)
+ 	return NewBundle(
+-		getTestPreInitState(tb, logger, rtOpts),
++		preInitState,
+ 		&loader.SourceData{
+-			URL:  &url.URL{Path: filename, Scheme: "file"},
++			URL:  filenameURL,
+ 			Data: []byte(data),
+ 		},
+-		map[string]fsext.Fs{"file": fs, "https": fsext.NewMemMapFs()},
++		fss,
++		moduleResolver,
+ 	)
+ }
+ 
++func getSimpleBundleFromArchive(tb testing.TB, arc *lib.Archive, opts ...interface{}) (*Bundle, error) {
++	tb.Helper()
++	var rtOpts *lib.RuntimeOptions
++	var logger logrus.FieldLogger
++	for _, o := range opts {
++		switch opt := o.(type) {
++		case lib.RuntimeOptions:
++			rtOpts = &opt
++		case logrus.FieldLogger:
++			logger = opt
++		default:
++			tb.Fatalf("unknown test option %q", opt)
++		}
++	}
++	preInitState := getTestPreInitState(tb, logger, rtOpts)
++
++	fss := arc.Filesystems
++	moduleResolver := NewModuleResolver(arc.PwdURL, preInitState, fss)
++	return NewBundleFromArchive(preInitState, arc, moduleResolver)
++}
++
+ func getSimpleBundleStdin(tb testing.TB, pwd *url.URL, data string, opts ...interface{}) (*Bundle, error) {
++	tb.Helper()
+ 	fs := fsext.NewMemMapFs()
+ 	var rtOpts *lib.RuntimeOptions
+ 	var logger logrus.FieldLogger
+@@ -93,14 +123,21 @@ func getSimpleBundleStdin(tb testing.TB, pwd *url.URL, data string, opts ...inte
+ 		}
+ 	}
+ 
++	preInitState := getTestPreInitState(tb, logger, rtOpts)
++
++	filenameURL := &url.URL{Path: "/-", Scheme: "file"}
++
++	fss := map[string]fsext.Fs{"file": fs, "https": fsext.NewMemMapFs()}
++	moduleResolver := NewModuleResolver(pwd, preInitState, fss)
+ 	return NewBundle(
+-		getTestPreInitState(tb, logger, rtOpts),
++		preInitState,
+ 		&loader.SourceData{
+-			URL:  &url.URL{Path: "/-", Scheme: "file"},
++			URL:  filenameURL,
+ 			Data: []byte(data),
+ 			PWD:  pwd,
+ 		},
+-		map[string]fsext.Fs{"file": fs, "https": fsext.NewMemMapFs()},
++		fss,
++		moduleResolver,
+ 	)
+ }
+ 
+@@ -530,7 +567,7 @@ func TestNewBundleFromArchive(t *testing.T) {
+ 	}
+ 
+ 	checkArchive := func(t *testing.T, arc *lib.Archive, rtOpts lib.RuntimeOptions, expError string) {
+-		b, err := NewBundleFromArchive(getTestPreInitState(t, logger, &rtOpts), arc)
++		b, err := getSimpleBundleFromArchive(t, arc, rtOpts, logger)
+ 		if expError != "" {
+ 			require.Error(t, err)
+ 			require.Contains(t, err.Error(), expError)
+@@ -588,10 +625,8 @@ func TestNewBundleFromArchive(t *testing.T) {
+ 		t.Parallel()
+ 		arc, err := getArchive(t, es6Code, extCompatModeRtOpts)
+ 		require.NoError(t, err)
+-		arc.CompatibilityMode = "blah"                                           // intentionally break the archive
+-		checkArchive(t, arc, lib.RuntimeOptions{}, "invalid compatibility mode") // fails when it uses the archive one
+-		checkArchive(t, arc, extCompatModeRtOpts, "")                            // works when I force the compat mode
+-		checkArchive(t, arc, baseCompatModeRtOpts, "")                           // still works as even base compatibility supports ESM
++		checkArchive(t, arc, extCompatModeRtOpts, "")  // works when I force the compat mode
++		checkArchive(t, arc, baseCompatModeRtOpts, "") // still works as even base compatibility supports ESM
+ 	})
+ 
+ 	t.Run("script_options_dont_overwrite_metadata", func(t *testing.T) {
+@@ -606,7 +641,7 @@ func TestNewBundleFromArchive(t *testing.T) {
+ 			PwdURL:      &url.URL{Scheme: "file", Path: "/"},
+ 			Filesystems: nil,
+ 		}
+-		b, err := NewBundleFromArchive(getTestPreInitState(t, logger, nil), arc)
++		b, err := getSimpleBundleFromArchive(t, arc, logger)
+ 		require.NoError(t, err)
+ 		bi, err := b.Instantiate(context.Background(), 0)
+ 		require.NoError(t, err)
+@@ -749,7 +784,7 @@ func TestOpen(t *testing.T) {
+ 					}
+ 					require.NoError(t, err)
+ 
+-					arcBundle, err := NewBundleFromArchive(getTestPreInitState(t, logger, nil), sourceBundle.makeArchive())
++					arcBundle, err := getSimpleBundleFromArchive(t, sourceBundle.makeArchive(), logger)
+ 
+ 					require.NoError(t, err)
+ 
+@@ -847,7 +882,7 @@ func TestBundleEnv(t *testing.T) {
+ 	require.NoError(t, err)
+ 
+ 	logger := testutils.NewLogger(t)
+-	b2, err := NewBundleFromArchive(getTestPreInitState(t, logger, nil), b1.makeArchive())
++	b2, err := getSimpleBundleFromArchive(t, b1.makeArchive(), logger)
+ 	require.NoError(t, err)
+ 
+ 	bundles := map[string]*Bundle{"Source": b1, "Archive": b2}
+@@ -883,7 +918,7 @@ func TestBundleNotSharable(t *testing.T) {
+ 	require.NoError(t, err)
+ 	logger := testutils.NewLogger(t)
+ 
+-	b2, err := NewBundleFromArchive(getTestPreInitState(t, logger, nil), b1.makeArchive())
++	b2, err := getSimpleBundleFromArchive(t, b1.makeArchive(), logger)
+ 	require.NoError(t, err)
+ 
+ 	bundles := map[string]*Bundle{"Source": b1, "Archive": b2}
+@@ -985,7 +1020,7 @@ func TestGlobalTimers(t *testing.T) {
+ 	require.NoError(t, err)
+ 	logger := testutils.NewLogger(t)
+ 
+-	b2, err := NewBundleFromArchive(getTestPreInitState(t, logger, nil), b1.makeArchive())
++	b2, err := getSimpleBundleFromArchive(t, b1.makeArchive(), logger)
+ 	require.NoError(t, err)
+ 
+ 	bundles := map[string]*Bundle{"Source": b1, "Archive": b2}
+@@ -1012,3 +1047,70 @@ func TestTopLevelAwaitErrors(t *testing.T) {
+ 	_, err := getSimpleBundle(t, "/script.js", data)
+ 	require.ErrorContains(t, err, "ReferenceError: something is not defined")
+ }
++
++func TestNewModuleResolver(t *testing.T) {
++	t.Parallel()
++
++	t.Run("creates resolver independently", func(t *testing.T) {
++		t.Parallel()
++		preInitState := getTestPreInitState(t, nil, nil)
++		pwd := &url.URL{Scheme: "file", Path: "/"}
++		fss := map[string]fsext.Fs{"file": fsext.NewMemMapFs(), "https": fsext.NewMemMapFs()}
++		mr := NewModuleResolver(pwd, preInitState, fss)
++		require.NotNil(t, mr)
++	})
++
++	t.Run("LoadMainModule valid script", func(t *testing.T) {
++		t.Parallel()
++		preInitState := getTestPreInitState(t, nil, nil)
++		filenameURL := &url.URL{Scheme: "file", Path: "/script.js"}
++		fss := map[string]fsext.Fs{"file": fsext.NewMemMapFs(), "https": fsext.NewMemMapFs()}
++		mr := NewModuleResolver(loader.Dir(filenameURL), preInitState, fss)
++
++		err := mr.LoadMainModule(loader.Dir(filenameURL), filenameURL.String(), []byte(`export default function() {};`))
++		require.NoError(t, err)
++	})
++
++	t.Run("LoadMainModule syntax error", func(t *testing.T) {
++		t.Parallel()
++		preInitState := getTestPreInitState(t, nil, nil)
++		filenameURL := &url.URL{Scheme: "file", Path: "/script.js"}
++		fss := map[string]fsext.Fs{"file": fsext.NewMemMapFs(), "https": fsext.NewMemMapFs()}
++		mr := NewModuleResolver(loader.Dir(filenameURL), preInitState, fss)
++
++		err := mr.LoadMainModule(loader.Dir(filenameURL), filenameURL.String(), []byte(`1+(=>2)()`))
++		require.Error(t, err)
++	})
++
++	t.Run("LoadMainModule unresolvable import", func(t *testing.T) {
++		t.Parallel()
++		preInitState := getTestPreInitState(t, nil, nil)
++		filenameURL := &url.URL{Scheme: "file", Path: "/script.js"}
++		fss := map[string]fsext.Fs{"file": fsext.NewMemMapFs(), "https": fsext.NewMemMapFs()}
++		mr := NewModuleResolver(loader.Dir(filenameURL), preInitState, fss)
++
++		err := mr.LoadMainModule(
++			loader.Dir(filenameURL), filenameURL.String(),
++			[]byte(`import something from "./nonexistent.js"; export default function() {};`),
++		)
++		require.Error(t, err)
++	})
++
++	t.Run("resolver passed to NewBundle", func(t *testing.T) {
++		t.Parallel()
++		preInitState := getTestPreInitState(t, nil, nil)
++		filenameURL := &url.URL{Scheme: "file", Path: "/script.js"}
++		fss := map[string]fsext.Fs{"file": fsext.NewMemMapFs(), "https": fsext.NewMemMapFs()}
++		mr := NewModuleResolver(loader.Dir(filenameURL), preInitState, fss)
++
++		b, err := NewBundle(
++			preInitState,
++			&loader.SourceData{URL: filenameURL, Data: []byte(`export default function() {};`)},
++			fss,
++			mr,
++		)
++		require.NoError(t, err)
++		require.NotNil(t, b)
++		require.NotNil(t, b.ModuleResolver)
++	})
++}
+diff --git a/internal/js/compiler/compiler_test.go b/internal/js/compiler/compiler_test.go
+index 3702c7f59..8ff17c8ab 100644
+--- a/internal/js/compiler/compiler_test.go
++++ b/internal/js/compiler/compiler_test.go
+@@ -11,7 +11,6 @@ import (
+ 	"github.com/stretchr/testify/require"
+ 
+ 	"go.k6.io/k6/internal/lib/testutils"
+-	"go.k6.io/k6/lib"
+ )
+ 
+ func TestCompile(t *testing.T) {
+@@ -56,7 +55,6 @@ func TestCompile(t *testing.T) {
+ 	t.Run("ES6", func(t *testing.T) {
+ 		t.Parallel()
+ 		c := New(testutils.NewLogger(t))
+-		c.Options.CompatibilityMode = lib.CompatibilityModeExtended
+ 		prg, code, err := c.Parse(`import "something"`, "script.js", false, true)
+ 		require.NoError(t, err)
+ 		assert.Equal(t, `import "something"`, code)
+@@ -70,7 +68,6 @@ func TestCompile(t *testing.T) {
+ 		// This only works with `require` as wrapping means the import/export won't be top level and that is forbidden
+ 		t.Parallel()
+ 		c := New(testutils.NewLogger(t))
+-		c.Options.CompatibilityMode = lib.CompatibilityModeExtended
+ 		prg, code, err := c.Parse(`require("something");`, "script.js", true, false)
+ 		require.NoError(t, err)
+ 		assert.Equal(t, `(function(module, exports){require("something");
+@@ -97,7 +94,6 @@ func TestCompile(t *testing.T) {
+ 	t.Run("Invalid", func(t *testing.T) {
+ 		t.Parallel()
+ 		c := New(testutils.NewLogger(t))
+-		c.Options.CompatibilityMode = lib.CompatibilityModeExtended
+ 		_, _, err := c.Parse(`1+(=>2)()`, "script.js", false, false)
+ 		assert.IsType(t, parser.ErrorList{}, err)
+ 		assert.Contains(t, err.Error(), `Line 1:4 Unexpected token =>`)
+@@ -149,7 +145,6 @@ func TestMinimalSourceMap(t *testing.T) {
+ 
+ 	compiler := New(logger)
+ 	compiler.Options = Options{
+-		CompatibilityMode: lib.CompatibilityModeExtended,
+ 		SourceMapLoader: func(string) ([]byte, error) {
+ 			return corruptSourceMap, nil
+ 		},
+diff --git a/internal/js/console_test.go b/internal/js/console_test.go
+index 63b12828e..2720c267f 100644
+--- a/internal/js/console_test.go
++++ b/internal/js/console_test.go
+@@ -68,20 +68,25 @@ func getSimpleRunner(tb testing.TB, filename, data string, opts ...interface{})
+ 	}
+ 	registry := metrics.NewRegistry()
+ 	builtinMetrics := metrics.RegisterBuiltinMetrics(registry)
++	filenameURL := &url.URL{Path: filename, Scheme: "file"}
++
++	preInitState := &lib.TestPreInitState{
++		Logger:         logger,
++		RuntimeOptions: rtOpts,
++		BuiltinMetrics: builtinMetrics,
++		Registry:       registry,
++		LookupEnv:      func(_ string) (val string, ok bool) { return "", false },
++		Usage:          usage.New(),
++	}
++	moduleResolver := NewModuleResolver(loader.Dir(filenameURL), preInitState, fsResolvers)
+ 	return New(
+-		&lib.TestPreInitState{
+-			Logger:         logger,
+-			RuntimeOptions: rtOpts,
+-			BuiltinMetrics: builtinMetrics,
+-			Registry:       registry,
+-			LookupEnv:      func(_ string) (val string, ok bool) { return "", false },
+-			Usage:          usage.New(),
+-		},
++		preInitState,
+ 		&loader.SourceData{
+-			URL:  &url.URL{Path: filename, Scheme: "file"},
++			URL:  filenameURL,
+ 			Data: []byte(data),
+ 		},
+ 		fsResolvers,
++		moduleResolver,
+ 	)
+ }
+ 
+@@ -107,14 +112,15 @@ func getSimpleArchiveRunner(tb testing.TB, arc *lib.Archive, opts ...interface{}
+ 	}
+ 	registry := metrics.NewRegistry()
+ 	builtinMetrics := metrics.RegisterBuiltinMetrics(registry)
+-	return NewFromArchive(
+-		&lib.TestPreInitState{
+-			Logger:         logger,
+-			RuntimeOptions: rtOpts,
+-			BuiltinMetrics: builtinMetrics,
+-			Registry:       registry,
+-			Usage:          usage.New(),
+-		}, arc)
++	preInitState := &lib.TestPreInitState{
++		Logger:         logger,
++		RuntimeOptions: rtOpts,
++		BuiltinMetrics: builtinMetrics,
++		Registry:       registry,
++		Usage:          usage.New(),
++	}
++	moduleResolver := NewModuleResolver(arc.PwdURL, preInitState, arc.Filesystems)
++	return NewFromArchive(preInitState, arc, moduleResolver)
+ }
+ 
+ // TODO: remove the need for this function, see https://github.com/grafana/k6/issues/2968
+diff --git a/internal/js/init_and_modules_test.go b/internal/js/init_and_modules_test.go
+index 01966e683..0eefe3246 100644
+--- a/internal/js/init_and_modules_test.go
++++ b/internal/js/init_and_modules_test.go
+@@ -59,19 +59,22 @@ func TestNewJSRunnerWithCustomModule(t *testing.T) {
+ 	rtOptions := lib.RuntimeOptions{CompatibilityMode: null.StringFrom("base")}
+ 	registry := metrics.NewRegistry()
+ 	builtinMetrics := metrics.RegisterBuiltinMetrics(registry)
++	preInitState := &lib.TestPreInitState{
++		Logger:         logger,
++		BuiltinMetrics: builtinMetrics,
++		Registry:       registry,
++		RuntimeOptions: rtOptions,
++		Usage:          usage.New(),
++	}
++	moduleResolver := js.NewModuleResolver(&url.URL{}, preInitState, nil)
+ 	runner, err := js.New(
+-		&lib.TestPreInitState{
+-			Logger:         logger,
+-			BuiltinMetrics: builtinMetrics,
+-			Registry:       registry,
+-			RuntimeOptions: rtOptions,
+-			Usage:          usage.New(),
+-		},
++		preInitState,
+ 		&loader.SourceData{
+ 			URL:  &url.URL{Path: "blah", Scheme: "file"},
+ 			Data: []byte(script),
+ 		},
+ 		map[string]fsext.Fs{"file": fsext.NewMemMapFs(), "https": fsext.NewMemMapFs()},
++		moduleResolver,
+ 	)
+ 	require.NoError(t, err)
+ 	assert.Equal(t, 1, checkModule.initCtxCalled)
+@@ -104,7 +107,8 @@ func TestNewJSRunnerWithCustomModule(t *testing.T) {
+ 			Registry:       registry,
+ 			RuntimeOptions: rtOptions,
+ 			Usage:          usage.New(),
+-		}, arc)
++		}, arc,
++		moduleResolver) // fix
+ 	require.NoError(t, err)
+ 	assert.Equal(t, 3, checkModule.initCtxCalled) // changes because we need to get the exported functions
+ 	assert.Equal(t, 2, checkModule.vuCtxCalled)
+diff --git a/internal/js/initcontext_test.go b/internal/js/initcontext_test.go
+index e6f962bfd..6aef63eee 100644
+--- a/internal/js/initcontext_test.go
++++ b/internal/js/initcontext_test.go
+@@ -30,8 +30,7 @@ func TestRequire(t *testing.T) {
+ 		t.Run("Nonexistent", func(t *testing.T) {
+ 			t.Parallel()
+ 			_, err := getSimpleBundle(t, "/script.js", `import "k6/NONEXISTENT";`)
+-			require.Error(t, err)
+-			require.Contains(t, err.Error(), "unknown module: k6/NONEXISTENT")
++			require.ErrorContains(t, err, "GoError: unknown module: k6/NONEXISTENT")
+ 		})
+ 
+ 		t.Run("k6", func(t *testing.T) {
+diff --git a/internal/js/modules/k6/marshalling_test.go b/internal/js/modules/k6/marshalling_test.go
+index 4857390d1..f58b1360b 100644
+--- a/internal/js/modules/k6/marshalling_test.go
++++ b/internal/js/modules/k6/marshalling_test.go
+@@ -99,17 +99,15 @@ func TestSetupDataMarshalling(t *testing.T) {
+ 
+ 	registry := metrics.NewRegistry()
+ 	builtinMetrics := metrics.RegisterBuiltinMetrics(registry)
+-	runner, err := js.New(
+-		&lib.TestPreInitState{
+-			Logger:         testutils.NewLogger(t),
+-			BuiltinMetrics: builtinMetrics,
+-			Registry:       registry,
+-			Usage:          usage.New(),
+-		},
+-
+-		&loader.SourceData{URL: &url.URL{Path: "/script.js"}, Data: script},
+-		nil,
+-	)
++	piState := &lib.TestPreInitState{
++		Logger:         testutils.NewLogger(t),
++		BuiltinMetrics: builtinMetrics,
++		Registry:       registry,
++		Usage:          usage.New(),
++	}
++	sourceData := &loader.SourceData{URL: &url.URL{Path: "/script.js"}, Data: script}
++	moduleResolver := js.NewModuleResolver(loader.Dir(sourceData.URL), piState, nil)
++	runner, err := js.New(piState, sourceData, nil, moduleResolver)
+ 
+ 	require.NoError(t, err)
+ 

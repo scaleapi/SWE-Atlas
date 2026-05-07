@@ -1,0 +1,3199 @@
+diff --git a/.gitignore b/.gitignore
+index fd2a7e6a..f3cf0cf7 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -7,4 +7,5 @@ MANIFEST
+ scapy/VERSION
+ test/*.html
+ .tox
++.mypy_cache
+ doc/scapy/_build
+diff --git a/.travis.yml b/.travis.yml
+index 76910756..02db3ace 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -11,7 +11,7 @@ matrix:
+         - os: linux
+           python: 3.8
+           env:
+-            - TOXENV=docs
++            - TOXENV=apitree,docs
+ 
+         - os: linux
+           python: 3.8
+diff --git a/doc/generate_docs.bat b/doc/generate_docs.bat
+index a8a007ac..a9c7c983 100644
+--- a/doc/generate_docs.bat
++++ b/doc/generate_docs.bat
+@@ -1,3 +1,3 @@
+ @echo off
+ cd ..
+-tox -e generate_docs
+\ No newline at end of file
++tox -e docs2
+\ No newline at end of file
+diff --git a/doc/scapy/_ext/scapy_doc.py b/doc/scapy/_ext/scapy_doc.py
+new file mode 100644
+index 00000000..2624d25e
+--- /dev/null
++++ b/doc/scapy/_ext/scapy_doc.py
+@@ -0,0 +1,138 @@
++# This file is part of Scapy
++# See http://www.secdev.org/projects/scapy for more information
++# Copyright (C) Gabriel Potter <gabriel@potter.fr>
++# This program is published under a GPLv2 license
++
++"""
++A Sphinx Extension for Scapy's doc preprocessing
++"""
++
++from scapy.packet import Packet, _pkt_ls
++
++from sphinx.ext.autodoc import AttributeDocumenter
++
++# Utils
++
++def generate_rest_table(items):
++    """
++    Generates a ReST table from a list of tuples
++    """
++    lengths = [max(len(y) for y in x) for x in zip(*items)]
++    sep = "+%s+" % "+".join("-" * x for x in lengths)
++    sized = "|%s|" % "|".join("{:%ss}" % x for x in lengths)
++    output = []
++    for i in items:
++        output.append(sep)
++        output.append(sized.format(*i))
++    output.append(sep)
++    return output
++
++
++def tab(items):
++    """
++    Tabulize a generator.
++    """
++    for i in items:
++        # Tabs are 3-wide in autodoc
++        yield "   " + i
++
++
++def class_ref(cls):
++    """
++    Get Sphinx reference to a class
++    """
++    return ":class:`~%s`" % (
++        cls.__module__ + '.' + cls.__name__
++    )
++
++
++def get_fields_desc(obj):
++    """
++    Create a readable documentation for fields_desc
++    """
++    output = []
++    for value in _pkt_ls(obj):
++        fname, cls, clsne, dflt, long_attrs = value
++        output.append(
++            (
++                "**%s**" % fname,
++                class_ref(cls) + ((" " + clsne) if clsne else ""),
++                "``%s``" % repr(dflt)
++            )
++        )
++    if output:
++        output = list(
++            tab(
++                generate_rest_table(output)
++            )
++        )
++        # Add header
++        output.insert(0, ".. table:: %s fields" % obj.__name__)
++        output.insert(1, "   :widths: grid")
++        output.insert(2, "   ")
++    return output
++
++# Documenter
++
++class AttrsDocumenter(AttributeDocumenter):
++    """
++    Mock of AttributeDocumenter to handle Scapy settings
++    """
++
++    def add_directive_header(self, *args, **kwargs):
++        def call_parent():
++            """Calls the super.super.add_directive_header"""
++            super(AttributeDocumenter, self).add_directive_header(
++                *args, **kwargs
++            )
++        sourcename = self.get_sourcename()
++        # Custom additions
++        if issubclass(self.parent, Packet):
++            # Packet
++            if self.object_name == "fields_desc":
++                # Display custom field table
++                call_parent()
++                table = list(tab(get_fields_desc(self.parent)))
++                if table:
++                    self.add_line("   ", sourcename)
++                    for line in table:
++                        self.add_line(line, sourcename)
++                    self.add_line("   ", sourcename)
++                return
++            elif self.object_name == "payload_guess":
++                # Display list of possible children
++                call_parent()
++                children = sorted(set(class_ref(x[1]) for x in self.object))
++                if children:
++                    lines = [
++                        "",
++                        "Possible sublayers:",
++                        ", ".join(children),
++                        ""
++                    ]
++                    for line in tab(lines):
++                        self.add_line(line, sourcename)
++                return
++            elif self.object_name in ["aliastypes"]:
++                # Ignore
++                call_parent()
++                return
++        # The field is unknown: continue normally
++        super(AttrsDocumenter, self).add_directive_header(*args, **kwargs)
++
++# Setup
++
++def setup(app):
++    """
++    Entry point of the scapy_doc extension.
++
++    Called by sphinx while booting up.
++    """
++    app.add_autodocumenter(AttrsDocumenter, override=True)
++
++    # Dummy. We won't publish this
++    return {
++        'version': '1.0',
++        'parallel_read_safe': True,
++        'parallel_write_safe': True,
++    }
+diff --git a/doc/scapy/api/scapy.ansmachine.rst b/doc/scapy/api/scapy.ansmachine.rst
+index f9c86b0f..f6da3c88 100644
+--- a/doc/scapy/api/scapy.ansmachine.rst
++++ b/doc/scapy/api/scapy.ansmachine.rst
+@@ -1,5 +1,5 @@
+-scapy.ansmachine module
+-=======================
++scapy.ansmachine
++================
+ 
+ .. automodule:: scapy.ansmachine
+    :members:
+diff --git a/doc/scapy/api/scapy.as_resolvers.rst b/doc/scapy/api/scapy.as_resolvers.rst
+index 0d31f0c6..068b817d 100644
+--- a/doc/scapy/api/scapy.as_resolvers.rst
++++ b/doc/scapy/api/scapy.as_resolvers.rst
+@@ -1,5 +1,5 @@
+-scapy.as\_resolvers module
+-==========================
++scapy.as\_resolvers
++===================
+ 
+ .. automodule:: scapy.as_resolvers
+    :members:
+diff --git a/doc/scapy/api/scapy.asn1.asn1.rst b/doc/scapy/api/scapy.asn1.asn1.rst
+index ea9e7f72..b6f9b7a4 100644
+--- a/doc/scapy/api/scapy.asn1.asn1.rst
++++ b/doc/scapy/api/scapy.asn1.asn1.rst
+@@ -1,5 +1,5 @@
+-scapy.asn1.asn1 module
+-======================
++scapy.asn1.asn1
++===============
+ 
+ .. automodule:: scapy.asn1.asn1
+    :members:
+diff --git a/doc/scapy/api/scapy.asn1.ber.rst b/doc/scapy/api/scapy.asn1.ber.rst
+index b318ae77..cbf26bbe 100644
+--- a/doc/scapy/api/scapy.asn1.ber.rst
++++ b/doc/scapy/api/scapy.asn1.ber.rst
+@@ -1,5 +1,5 @@
+-scapy.asn1.ber module
+-=====================
++scapy.asn1.ber
++==============
+ 
+ .. automodule:: scapy.asn1.ber
+    :members:
+diff --git a/doc/scapy/api/scapy.asn1.mib.rst b/doc/scapy/api/scapy.asn1.mib.rst
+index 4a0c2cd2..eeec6ffa 100644
+--- a/doc/scapy/api/scapy.asn1.mib.rst
++++ b/doc/scapy/api/scapy.asn1.mib.rst
+@@ -1,5 +1,5 @@
+-scapy.asn1.mib module
+-=====================
++scapy.asn1.mib
++==============
+ 
+ .. automodule:: scapy.asn1.mib
+    :members:
+diff --git a/doc/scapy/api/scapy.asn1fields.rst b/doc/scapy/api/scapy.asn1fields.rst
+index 2918fd2c..47e60b50 100644
+--- a/doc/scapy/api/scapy.asn1fields.rst
++++ b/doc/scapy/api/scapy.asn1fields.rst
+@@ -1,5 +1,5 @@
+-scapy.asn1fields module
+-=======================
++scapy.asn1fields
++================
+ 
+ .. automodule:: scapy.asn1fields
+    :members:
+diff --git a/doc/scapy/api/scapy.asn1packet.rst b/doc/scapy/api/scapy.asn1packet.rst
+index 72988217..cf91c9ef 100644
+--- a/doc/scapy/api/scapy.asn1packet.rst
++++ b/doc/scapy/api/scapy.asn1packet.rst
+@@ -1,5 +1,5 @@
+-scapy.asn1packet module
+-=======================
++scapy.asn1packet
++================
+ 
+ .. automodule:: scapy.asn1packet
+    :members:
+diff --git a/doc/scapy/api/scapy.automaton.rst b/doc/scapy/api/scapy.automaton.rst
+index b6114c09..63a63614 100644
+--- a/doc/scapy/api/scapy.automaton.rst
++++ b/doc/scapy/api/scapy.automaton.rst
+@@ -1,5 +1,5 @@
+-scapy.automaton module
+-======================
++scapy.automaton
++===============
+ 
+ .. automodule:: scapy.automaton
+    :members:
+diff --git a/doc/scapy/api/scapy.autorun.rst b/doc/scapy/api/scapy.autorun.rst
+index 2bd4de74..cf60bd7b 100644
+--- a/doc/scapy/api/scapy.autorun.rst
++++ b/doc/scapy/api/scapy.autorun.rst
+@@ -1,5 +1,5 @@
+-scapy.autorun module
+-====================
++scapy.autorun
++=============
+ 
+ .. automodule:: scapy.autorun
+    :members:
+diff --git a/doc/scapy/api/scapy.base_classes.rst b/doc/scapy/api/scapy.base_classes.rst
+index 932e82fe..9d6ea7e0 100644
+--- a/doc/scapy/api/scapy.base_classes.rst
++++ b/doc/scapy/api/scapy.base_classes.rst
+@@ -1,5 +1,5 @@
+-scapy.base\_classes module
+-==========================
++scapy.base\_classes
++===================
+ 
+ .. automodule:: scapy.base_classes
+    :members:
+diff --git a/doc/scapy/api/scapy.compat.rst b/doc/scapy/api/scapy.compat.rst
+index baaae99f..862c7ba6 100644
+--- a/doc/scapy/api/scapy.compat.rst
++++ b/doc/scapy/api/scapy.compat.rst
+@@ -1,5 +1,5 @@
+-scapy.compat module
+-===================
++scapy.compat
++============
+ 
+ .. automodule:: scapy.compat
+    :members:
+diff --git a/doc/scapy/api/scapy.config.rst b/doc/scapy/api/scapy.config.rst
+index 5e20e930..76cf0301 100644
+--- a/doc/scapy/api/scapy.config.rst
++++ b/doc/scapy/api/scapy.config.rst
+@@ -1,5 +1,5 @@
+-scapy.config module
+-===================
++scapy.config
++============
+ 
+ .. automodule:: scapy.config
+    :members:
+diff --git a/doc/scapy/api/scapy.consts.rst b/doc/scapy/api/scapy.consts.rst
+index 2c3fe7e4..10140005 100644
+--- a/doc/scapy/api/scapy.consts.rst
++++ b/doc/scapy/api/scapy.consts.rst
+@@ -1,5 +1,5 @@
+-scapy.consts module
+-===================
++scapy.consts
++============
+ 
+ .. automodule:: scapy.consts
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.altbeacon.rst b/doc/scapy/api/scapy.contrib.altbeacon.rst
+index 1b83eb0e..e21da677 100644
+--- a/doc/scapy/api/scapy.contrib.altbeacon.rst
++++ b/doc/scapy/api/scapy.contrib.altbeacon.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.altbeacon module
+-==============================
++scapy.contrib.altbeacon
++=======================
+ 
+ .. automodule:: scapy.contrib.altbeacon
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.aoe.rst b/doc/scapy/api/scapy.contrib.aoe.rst
+index 3143e96d..058c3836 100644
+--- a/doc/scapy/api/scapy.contrib.aoe.rst
++++ b/doc/scapy/api/scapy.contrib.aoe.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.aoe module
+-========================
++scapy.contrib.aoe
++=================
+ 
+ .. automodule:: scapy.contrib.aoe
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.bmw.enet.rst b/doc/scapy/api/scapy.contrib.automotive.bmw.enet.rst
+index 7ca0adff..a5d8ca4d 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.bmw.enet.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.bmw.enet.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.bmw.enet module
+-========================================
++scapy.contrib.automotive.bmw.enet
++=================================
+ 
+ .. automodule:: scapy.contrib.automotive.bmw.enet
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.bmw.rst b/doc/scapy/api/scapy.contrib.automotive.bmw.rst
+index 4ade4f5a..48c6632a 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.bmw.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.bmw.rst
+@@ -6,9 +6,6 @@ scapy.contrib.automotive.bmw package
+    :undoc-members:
+    :show-inheritance:
+ 
+-Submodules
+-----------
+-
+ .. toctree::
+ 
+    scapy.contrib.automotive.bmw.enet
+diff --git a/doc/scapy/api/scapy.contrib.automotive.ccp.rst b/doc/scapy/api/scapy.contrib.automotive.ccp.rst
+index bd929cd7..ce10034d 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.ccp.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.ccp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.ccp module
+-===================================
++scapy.contrib.automotive.ccp
++============================
+ 
+ .. automodule:: scapy.contrib.automotive.ccp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.ecu.rst b/doc/scapy/api/scapy.contrib.automotive.ecu.rst
+new file mode 100644
+index 00000000..a2da2fa3
+--- /dev/null
++++ b/doc/scapy/api/scapy.contrib.automotive.ecu.rst
+@@ -0,0 +1,7 @@
++scapy.contrib.automotive.ecu
++============================
++
++.. automodule:: scapy.contrib.automotive.ecu
++   :members:
++   :undoc-members:
++   :show-inheritance:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.gm.gmlan.rst b/doc/scapy/api/scapy.contrib.automotive.gm.gmlan.rst
+index 68b7713c..c3b8fd08 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.gm.gmlan.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.gm.gmlan.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.gm.gmlan module
+-========================================
++scapy.contrib.automotive.gm.gmlan
++=================================
+ 
+ .. automodule:: scapy.contrib.automotive.gm.gmlan
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.gm.rst b/doc/scapy/api/scapy.contrib.automotive.gm.rst
+index 5fa8f0ed..677aa0ec 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.gm.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.gm.rst
+@@ -6,9 +6,6 @@ scapy.contrib.automotive.gm package
+    :undoc-members:
+    :show-inheritance:
+ 
+-Submodules
+-----------
+-
+ .. toctree::
+ 
+    scapy.contrib.automotive.gm.gmlan
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.iid.iids.rst b/doc/scapy/api/scapy.contrib.automotive.obd.iid.iids.rst
+index 4cd8122e..a5a045ef 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.iid.iids.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.iid.iids.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.obd.iid.iids module
+-============================================
++scapy.contrib.automotive.obd.iid.iids
++=====================================
+ 
+ .. automodule:: scapy.contrib.automotive.obd.iid.iids
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.iid.rst b/doc/scapy/api/scapy.contrib.automotive.obd.iid.rst
+index b7ca9ed8..28e07083 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.iid.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.iid.rst
+@@ -6,9 +6,6 @@ scapy.contrib.automotive.obd.iid package
+    :undoc-members:
+    :show-inheritance:
+ 
+-Submodules
+-----------
+-
+ .. toctree::
+ 
+    scapy.contrib.automotive.obd.iid.iids
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.mid.mids.rst b/doc/scapy/api/scapy.contrib.automotive.obd.mid.mids.rst
+index 697eac38..03ed1bd6 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.mid.mids.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.mid.mids.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.obd.mid.mids module
+-============================================
++scapy.contrib.automotive.obd.mid.mids
++=====================================
+ 
+ .. automodule:: scapy.contrib.automotive.obd.mid.mids
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.mid.rst b/doc/scapy/api/scapy.contrib.automotive.obd.mid.rst
+index 246e6316..10b48eb3 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.mid.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.mid.rst
+@@ -6,9 +6,6 @@ scapy.contrib.automotive.obd.mid package
+    :undoc-members:
+    :show-inheritance:
+ 
+-Submodules
+-----------
+-
+ .. toctree::
+ 
+    scapy.contrib.automotive.obd.mid.mids
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.obd.rst b/doc/scapy/api/scapy.contrib.automotive.obd.obd.rst
+index 15decee5..2e6df40e 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.obd.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.obd.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.obd.obd module
+-=======================================
++scapy.contrib.automotive.obd.obd
++================================
+ 
+ .. automodule:: scapy.contrib.automotive.obd.obd
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.packet.rst b/doc/scapy/api/scapy.contrib.automotive.obd.packet.rst
+index 5df25210..03a53d26 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.packet.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.packet.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.obd.packet module
+-==========================================
++scapy.contrib.automotive.obd.packet
++===================================
+ 
+ .. automodule:: scapy.contrib.automotive.obd.packet
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids.rst b/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids.rst
+index 5f30a684..24b3cbf0 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.obd.pid.pids module
+-============================================
++scapy.contrib.automotive.obd.pid.pids
++=====================================
+ 
+ .. automodule:: scapy.contrib.automotive.obd.pid.pids
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_00_1F.rst b/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_00_1F.rst
+index 87c9fc0f..3d055852 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_00_1F.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_00_1F.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.obd.pid.pids\_00\_1F module
+-====================================================
++scapy.contrib.automotive.obd.pid.pids\_00\_1F
++=============================================
+ 
+ .. automodule:: scapy.contrib.automotive.obd.pid.pids_00_1F
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_20_3F.rst b/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_20_3F.rst
+index 4f1f8d6e..a9984960 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_20_3F.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_20_3F.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.obd.pid.pids\_20\_3F module
+-====================================================
++scapy.contrib.automotive.obd.pid.pids\_20\_3F
++=============================================
+ 
+ .. automodule:: scapy.contrib.automotive.obd.pid.pids_20_3F
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_40_5F.rst b/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_40_5F.rst
+index f013400d..9fc63794 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_40_5F.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_40_5F.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.obd.pid.pids\_40\_5F module
+-====================================================
++scapy.contrib.automotive.obd.pid.pids\_40\_5F
++=============================================
+ 
+ .. automodule:: scapy.contrib.automotive.obd.pid.pids_40_5F
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_60_7F.rst b/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_60_7F.rst
+index b7c1c8b8..ea2b0e25 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_60_7F.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_60_7F.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.obd.pid.pids\_60\_7F module
+-====================================================
++scapy.contrib.automotive.obd.pid.pids\_60\_7F
++=============================================
+ 
+ .. automodule:: scapy.contrib.automotive.obd.pid.pids_60_7F
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_80_9F.rst b/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_80_9F.rst
+index 76250a88..e650c474 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_80_9F.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_80_9F.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.obd.pid.pids\_80\_9F module
+-====================================================
++scapy.contrib.automotive.obd.pid.pids\_80\_9F
++=============================================
+ 
+ .. automodule:: scapy.contrib.automotive.obd.pid.pids_80_9F
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_A0_C0.rst b/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_A0_C0.rst
+index 4f0d0c60..064ec221 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_A0_C0.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.pid.pids_A0_C0.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.obd.pid.pids\_A0\_C0 module
+-====================================================
++scapy.contrib.automotive.obd.pid.pids\_A0\_C0
++=============================================
+ 
+ .. automodule:: scapy.contrib.automotive.obd.pid.pids_A0_C0
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.pid.rst b/doc/scapy/api/scapy.contrib.automotive.obd.pid.rst
+index c07e8100..0629ffa3 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.pid.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.pid.rst
+@@ -6,9 +6,6 @@ scapy.contrib.automotive.obd.pid package
+    :undoc-members:
+    :show-inheritance:
+ 
+-Submodules
+-----------
+-
+ .. toctree::
+ 
+    scapy.contrib.automotive.obd.pid.pids
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.rst b/doc/scapy/api/scapy.contrib.automotive.obd.rst
+index 03adf566..44d5e20c 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.rst
+@@ -6,9 +6,6 @@ scapy.contrib.automotive.obd package
+    :undoc-members:
+    :show-inheritance:
+ 
+-Subpackages
+------------
+-
+ .. toctree::
+ 
+    scapy.contrib.automotive.obd.iid
+@@ -16,11 +13,9 @@ Subpackages
+    scapy.contrib.automotive.obd.pid
+    scapy.contrib.automotive.obd.tid
+ 
+-Submodules
+-----------
+-
+ .. toctree::
+ 
+    scapy.contrib.automotive.obd.obd
+    scapy.contrib.automotive.obd.packet
++   scapy.contrib.automotive.obd.scanner
+    scapy.contrib.automotive.obd.services
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.scanner.rst b/doc/scapy/api/scapy.contrib.automotive.obd.scanner.rst
+new file mode 100644
+index 00000000..e23bbd47
+--- /dev/null
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.scanner.rst
+@@ -0,0 +1,7 @@
++scapy.contrib.automotive.obd.scanner
++====================================
++
++.. automodule:: scapy.contrib.automotive.obd.scanner
++   :members:
++   :undoc-members:
++   :show-inheritance:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.services.rst b/doc/scapy/api/scapy.contrib.automotive.obd.services.rst
+index 1a081849..07a68586 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.services.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.services.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.obd.services module
+-============================================
++scapy.contrib.automotive.obd.services
++=====================================
+ 
+ .. automodule:: scapy.contrib.automotive.obd.services
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.tid.rst b/doc/scapy/api/scapy.contrib.automotive.obd.tid.rst
+index d3ca25a9..cb63a073 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.tid.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.tid.rst
+@@ -6,9 +6,6 @@ scapy.contrib.automotive.obd.tid package
+    :undoc-members:
+    :show-inheritance:
+ 
+-Submodules
+-----------
+-
+ .. toctree::
+ 
+    scapy.contrib.automotive.obd.tid.tids
+diff --git a/doc/scapy/api/scapy.contrib.automotive.obd.tid.tids.rst b/doc/scapy/api/scapy.contrib.automotive.obd.tid.tids.rst
+index 477d1f2c..0fccf373 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.obd.tid.tids.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.obd.tid.tids.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.obd.tid.tids module
+-============================================
++scapy.contrib.automotive.obd.tid.tids
++=====================================
+ 
+ .. automodule:: scapy.contrib.automotive.obd.tid.tids
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.rst b/doc/scapy/api/scapy.contrib.automotive.rst
+index 75751881..de05bb79 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.rst
+@@ -6,21 +6,16 @@ scapy.contrib.automotive package
+    :undoc-members:
+    :show-inheritance:
+ 
+-Subpackages
+------------
+-
+ .. toctree::
+ 
+    scapy.contrib.automotive.bmw
+    scapy.contrib.automotive.gm
+    scapy.contrib.automotive.obd
+ 
+-Submodules
+-----------
+-
+ .. toctree::
+ 
+    scapy.contrib.automotive.ccp
++   scapy.contrib.automotive.ecu
+    scapy.contrib.automotive.someip
+    scapy.contrib.automotive.someip_sd
+    scapy.contrib.automotive.uds
+diff --git a/doc/scapy/api/scapy.contrib.automotive.someip.rst b/doc/scapy/api/scapy.contrib.automotive.someip.rst
+index c5c9b1bc..79862cb2 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.someip.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.someip.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.someip module
+-======================================
++scapy.contrib.automotive.someip
++===============================
+ 
+ .. automodule:: scapy.contrib.automotive.someip
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.someip_sd.rst b/doc/scapy/api/scapy.contrib.automotive.someip_sd.rst
+index 0d0f0fe3..6618e1ef 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.someip_sd.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.someip_sd.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.someip\_sd module
+-==========================================
++scapy.contrib.automotive.someip\_sd
++===================================
+ 
+ .. automodule:: scapy.contrib.automotive.someip_sd
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.automotive.uds.rst b/doc/scapy/api/scapy.contrib.automotive.uds.rst
+index 371b4cec..fadf5a88 100644
+--- a/doc/scapy/api/scapy.contrib.automotive.uds.rst
++++ b/doc/scapy/api/scapy.contrib.automotive.uds.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.automotive.uds module
+-===================================
++scapy.contrib.automotive.uds
++============================
+ 
+ .. automodule:: scapy.contrib.automotive.uds
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.avs.rst b/doc/scapy/api/scapy.contrib.avs.rst
+index 3c42a774..ef5f19ab 100644
+--- a/doc/scapy/api/scapy.contrib.avs.rst
++++ b/doc/scapy/api/scapy.contrib.avs.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.avs module
+-========================
++scapy.contrib.avs
++=================
+ 
+ .. automodule:: scapy.contrib.avs
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.bgp.rst b/doc/scapy/api/scapy.contrib.bgp.rst
+index 15d31e99..271a5b21 100644
+--- a/doc/scapy/api/scapy.contrib.bgp.rst
++++ b/doc/scapy/api/scapy.contrib.bgp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.bgp module
+-========================
++scapy.contrib.bgp
++=================
+ 
+ .. automodule:: scapy.contrib.bgp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.bier.rst b/doc/scapy/api/scapy.contrib.bier.rst
+index 375b8c3c..0002fe26 100644
+--- a/doc/scapy/api/scapy.contrib.bier.rst
++++ b/doc/scapy/api/scapy.contrib.bier.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.bier module
+-=========================
++scapy.contrib.bier
++==================
+ 
+ .. automodule:: scapy.contrib.bier
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.bp.rst b/doc/scapy/api/scapy.contrib.bp.rst
+index 171d4070..b9bfe5ee 100644
+--- a/doc/scapy/api/scapy.contrib.bp.rst
++++ b/doc/scapy/api/scapy.contrib.bp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.bp module
+-=======================
++scapy.contrib.bp
++================
+ 
+ .. automodule:: scapy.contrib.bp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.carp.rst b/doc/scapy/api/scapy.contrib.carp.rst
+index dad6d8cd..d5bf8d29 100644
+--- a/doc/scapy/api/scapy.contrib.carp.rst
++++ b/doc/scapy/api/scapy.contrib.carp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.carp module
+-=========================
++scapy.contrib.carp
++==================
+ 
+ .. automodule:: scapy.contrib.carp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.cdp.rst b/doc/scapy/api/scapy.contrib.cdp.rst
+index aa1635db..0ab81fa8 100644
+--- a/doc/scapy/api/scapy.contrib.cdp.rst
++++ b/doc/scapy/api/scapy.contrib.cdp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.cdp module
+-========================
++scapy.contrib.cdp
++=================
+ 
+ .. automodule:: scapy.contrib.cdp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.chdlc.rst b/doc/scapy/api/scapy.contrib.chdlc.rst
+index 50389fd9..a2bdd834 100644
+--- a/doc/scapy/api/scapy.contrib.chdlc.rst
++++ b/doc/scapy/api/scapy.contrib.chdlc.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.chdlc module
+-==========================
++scapy.contrib.chdlc
++===================
+ 
+ .. automodule:: scapy.contrib.chdlc
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.coap.rst b/doc/scapy/api/scapy.contrib.coap.rst
+index 5e429d28..34d0e681 100644
+--- a/doc/scapy/api/scapy.contrib.coap.rst
++++ b/doc/scapy/api/scapy.contrib.coap.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.coap module
+-=========================
++scapy.contrib.coap
++==================
+ 
+ .. automodule:: scapy.contrib.coap
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.dce_rpc.rst b/doc/scapy/api/scapy.contrib.dce_rpc.rst
+index 77228622..5002eb97 100644
+--- a/doc/scapy/api/scapy.contrib.dce_rpc.rst
++++ b/doc/scapy/api/scapy.contrib.dce_rpc.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.dce\_rpc module
+-=============================
++scapy.contrib.dce\_rpc
++======================
+ 
+ .. automodule:: scapy.contrib.dce_rpc
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.diameter.rst b/doc/scapy/api/scapy.contrib.diameter.rst
+index 0316f15a..89f381e1 100644
+--- a/doc/scapy/api/scapy.contrib.diameter.rst
++++ b/doc/scapy/api/scapy.contrib.diameter.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.diameter module
+-=============================
++scapy.contrib.diameter
++======================
+ 
+ .. automodule:: scapy.contrib.diameter
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.dtp.rst b/doc/scapy/api/scapy.contrib.dtp.rst
+index e7a3781b..ba18bd1f 100644
+--- a/doc/scapy/api/scapy.contrib.dtp.rst
++++ b/doc/scapy/api/scapy.contrib.dtp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.dtp module
+-========================
++scapy.contrib.dtp
++=================
+ 
+ .. automodule:: scapy.contrib.dtp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.eddystone.rst b/doc/scapy/api/scapy.contrib.eddystone.rst
+index 1fce5b91..790a32d6 100644
+--- a/doc/scapy/api/scapy.contrib.eddystone.rst
++++ b/doc/scapy/api/scapy.contrib.eddystone.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.eddystone module
+-==============================
++scapy.contrib.eddystone
++=======================
+ 
+ .. automodule:: scapy.contrib.eddystone
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.eigrp.rst b/doc/scapy/api/scapy.contrib.eigrp.rst
+index f4de2ebb..dafa98d4 100644
+--- a/doc/scapy/api/scapy.contrib.eigrp.rst
++++ b/doc/scapy/api/scapy.contrib.eigrp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.eigrp module
+-==========================
++scapy.contrib.eigrp
++===================
+ 
+ .. automodule:: scapy.contrib.eigrp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.enipTCP.rst b/doc/scapy/api/scapy.contrib.enipTCP.rst
+index c7a9d2da..b5997535 100644
+--- a/doc/scapy/api/scapy.contrib.enipTCP.rst
++++ b/doc/scapy/api/scapy.contrib.enipTCP.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.enipTCP module
+-============================
++scapy.contrib.enipTCP
++=====================
+ 
+ .. automodule:: scapy.contrib.enipTCP
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.ethercat.rst b/doc/scapy/api/scapy.contrib.ethercat.rst
+index eb1afdf7..7be57602 100644
+--- a/doc/scapy/api/scapy.contrib.ethercat.rst
++++ b/doc/scapy/api/scapy.contrib.ethercat.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.ethercat module
+-=============================
++scapy.contrib.ethercat
++======================
+ 
+ .. automodule:: scapy.contrib.ethercat
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.etherip.rst b/doc/scapy/api/scapy.contrib.etherip.rst
+index ba2405eb..59985e62 100644
+--- a/doc/scapy/api/scapy.contrib.etherip.rst
++++ b/doc/scapy/api/scapy.contrib.etherip.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.etherip module
+-============================
++scapy.contrib.etherip
++=====================
+ 
+ .. automodule:: scapy.contrib.etherip
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.geneve.rst b/doc/scapy/api/scapy.contrib.geneve.rst
+index 6de53a21..9bdb3808 100644
+--- a/doc/scapy/api/scapy.contrib.geneve.rst
++++ b/doc/scapy/api/scapy.contrib.geneve.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.geneve module
+-===========================
++scapy.contrib.geneve
++====================
+ 
+ .. automodule:: scapy.contrib.geneve
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.gtp.rst b/doc/scapy/api/scapy.contrib.gtp.rst
+index d6276578..5c05aa78 100644
+--- a/doc/scapy/api/scapy.contrib.gtp.rst
++++ b/doc/scapy/api/scapy.contrib.gtp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.gtp module
+-========================
++scapy.contrib.gtp
++=================
+ 
+ .. automodule:: scapy.contrib.gtp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.gtp_v2.rst b/doc/scapy/api/scapy.contrib.gtp_v2.rst
+index 3fa35133..e1360d70 100644
+--- a/doc/scapy/api/scapy.contrib.gtp_v2.rst
++++ b/doc/scapy/api/scapy.contrib.gtp_v2.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.gtp\_v2 module
+-============================
++scapy.contrib.gtp\_v2
++=====================
+ 
+ .. automodule:: scapy.contrib.gtp_v2
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.homeplugav.rst b/doc/scapy/api/scapy.contrib.homeplugav.rst
+index 904974fb..4a31f63c 100644
+--- a/doc/scapy/api/scapy.contrib.homeplugav.rst
++++ b/doc/scapy/api/scapy.contrib.homeplugav.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.homeplugav module
+-===============================
++scapy.contrib.homeplugav
++========================
+ 
+ .. automodule:: scapy.contrib.homeplugav
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.http2.rst b/doc/scapy/api/scapy.contrib.http2.rst
+index c221d059..c03cdf53 100644
+--- a/doc/scapy/api/scapy.contrib.http2.rst
++++ b/doc/scapy/api/scapy.contrib.http2.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.http2 module
+-==========================
++scapy.contrib.http2
++===================
+ 
+ .. automodule:: scapy.contrib.http2
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.ibeacon.rst b/doc/scapy/api/scapy.contrib.ibeacon.rst
+index 04382ac2..39c10a0f 100644
+--- a/doc/scapy/api/scapy.contrib.ibeacon.rst
++++ b/doc/scapy/api/scapy.contrib.ibeacon.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.ibeacon module
+-============================
++scapy.contrib.ibeacon
++=====================
+ 
+ .. automodule:: scapy.contrib.ibeacon
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.icmp_extensions.rst b/doc/scapy/api/scapy.contrib.icmp_extensions.rst
+index f2fdca40..a63b3f94 100644
+--- a/doc/scapy/api/scapy.contrib.icmp_extensions.rst
++++ b/doc/scapy/api/scapy.contrib.icmp_extensions.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.icmp\_extensions module
+-=====================================
++scapy.contrib.icmp\_extensions
++==============================
+ 
+ .. automodule:: scapy.contrib.icmp_extensions
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.ife.rst b/doc/scapy/api/scapy.contrib.ife.rst
+index 29288d48..b8a7aca9 100644
+--- a/doc/scapy/api/scapy.contrib.ife.rst
++++ b/doc/scapy/api/scapy.contrib.ife.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.ife module
+-========================
++scapy.contrib.ife
++=================
+ 
+ .. automodule:: scapy.contrib.ife
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.igmp.rst b/doc/scapy/api/scapy.contrib.igmp.rst
+index 91f8c236..d0a99b43 100644
+--- a/doc/scapy/api/scapy.contrib.igmp.rst
++++ b/doc/scapy/api/scapy.contrib.igmp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.igmp module
+-=========================
++scapy.contrib.igmp
++==================
+ 
+ .. automodule:: scapy.contrib.igmp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.igmpv3.rst b/doc/scapy/api/scapy.contrib.igmpv3.rst
+index 12953c23..6233c58a 100644
+--- a/doc/scapy/api/scapy.contrib.igmpv3.rst
++++ b/doc/scapy/api/scapy.contrib.igmpv3.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.igmpv3 module
+-===========================
++scapy.contrib.igmpv3
++====================
+ 
+ .. automodule:: scapy.contrib.igmpv3
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.ikev2.rst b/doc/scapy/api/scapy.contrib.ikev2.rst
+index 387de7eb..5fbe8871 100644
+--- a/doc/scapy/api/scapy.contrib.ikev2.rst
++++ b/doc/scapy/api/scapy.contrib.ikev2.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.ikev2 module
+-==========================
++scapy.contrib.ikev2
++===================
+ 
+ .. automodule:: scapy.contrib.ikev2
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.isis.rst b/doc/scapy/api/scapy.contrib.isis.rst
+index d21417ac..180aa802 100644
+--- a/doc/scapy/api/scapy.contrib.isis.rst
++++ b/doc/scapy/api/scapy.contrib.isis.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.isis module
+-=========================
++scapy.contrib.isis
++==================
+ 
+ .. automodule:: scapy.contrib.isis
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.isotp.rst b/doc/scapy/api/scapy.contrib.isotp.rst
+index 88a1d0cb..d3fed323 100644
+--- a/doc/scapy/api/scapy.contrib.isotp.rst
++++ b/doc/scapy/api/scapy.contrib.isotp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.isotp module
+-==========================
++scapy.contrib.isotp
++===================
+ 
+ .. automodule:: scapy.contrib.isotp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.lacp.rst b/doc/scapy/api/scapy.contrib.lacp.rst
+index 0b82435b..9622d1a8 100644
+--- a/doc/scapy/api/scapy.contrib.lacp.rst
++++ b/doc/scapy/api/scapy.contrib.lacp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.lacp module
+-=========================
++scapy.contrib.lacp
++==================
+ 
+ .. automodule:: scapy.contrib.lacp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.ldp.rst b/doc/scapy/api/scapy.contrib.ldp.rst
+index 0861e59a..34246a84 100644
+--- a/doc/scapy/api/scapy.contrib.ldp.rst
++++ b/doc/scapy/api/scapy.contrib.ldp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.ldp module
+-========================
++scapy.contrib.ldp
++=================
+ 
+ .. automodule:: scapy.contrib.ldp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.lldp.rst b/doc/scapy/api/scapy.contrib.lldp.rst
+index f80188c1..c9963cc7 100644
+--- a/doc/scapy/api/scapy.contrib.lldp.rst
++++ b/doc/scapy/api/scapy.contrib.lldp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.lldp module
+-=========================
++scapy.contrib.lldp
++==================
+ 
+ .. automodule:: scapy.contrib.lldp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.ltp.rst b/doc/scapy/api/scapy.contrib.ltp.rst
+index 220b1dc9..baae1e65 100644
+--- a/doc/scapy/api/scapy.contrib.ltp.rst
++++ b/doc/scapy/api/scapy.contrib.ltp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.ltp module
+-========================
++scapy.contrib.ltp
++=================
+ 
+ .. automodule:: scapy.contrib.ltp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.mac_control.rst b/doc/scapy/api/scapy.contrib.mac_control.rst
+index 578ff96a..0f916647 100644
+--- a/doc/scapy/api/scapy.contrib.mac_control.rst
++++ b/doc/scapy/api/scapy.contrib.mac_control.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.mac\_control module
+-=================================
++scapy.contrib.mac\_control
++==========================
+ 
+ .. automodule:: scapy.contrib.mac_control
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.macsec.rst b/doc/scapy/api/scapy.contrib.macsec.rst
+index a2010de7..413252d5 100644
+--- a/doc/scapy/api/scapy.contrib.macsec.rst
++++ b/doc/scapy/api/scapy.contrib.macsec.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.macsec module
+-===========================
++scapy.contrib.macsec
++====================
+ 
+ .. automodule:: scapy.contrib.macsec
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.modbus.rst b/doc/scapy/api/scapy.contrib.modbus.rst
+index fef95390..fbb418d5 100644
+--- a/doc/scapy/api/scapy.contrib.modbus.rst
++++ b/doc/scapy/api/scapy.contrib.modbus.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.modbus module
+-===========================
++scapy.contrib.modbus
++====================
+ 
+ .. automodule:: scapy.contrib.modbus
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.mount.rst b/doc/scapy/api/scapy.contrib.mount.rst
+new file mode 100644
+index 00000000..865505e5
+--- /dev/null
++++ b/doc/scapy/api/scapy.contrib.mount.rst
+@@ -0,0 +1,7 @@
++scapy.contrib.mount
++===================
++
++.. automodule:: scapy.contrib.mount
++   :members:
++   :undoc-members:
++   :show-inheritance:
+diff --git a/doc/scapy/api/scapy.contrib.mpls.rst b/doc/scapy/api/scapy.contrib.mpls.rst
+index f47e8f5a..ce9693f5 100644
+--- a/doc/scapy/api/scapy.contrib.mpls.rst
++++ b/doc/scapy/api/scapy.contrib.mpls.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.mpls module
+-=========================
++scapy.contrib.mpls
++==================
+ 
+ .. automodule:: scapy.contrib.mpls
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.mqtt.rst b/doc/scapy/api/scapy.contrib.mqtt.rst
+index 813ad2b6..1337f4a8 100644
+--- a/doc/scapy/api/scapy.contrib.mqtt.rst
++++ b/doc/scapy/api/scapy.contrib.mqtt.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.mqtt module
+-=========================
++scapy.contrib.mqtt
++==================
+ 
+ .. automodule:: scapy.contrib.mqtt
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.mqttsn.rst b/doc/scapy/api/scapy.contrib.mqttsn.rst
+index 7a1a5687..3961f0a4 100644
+--- a/doc/scapy/api/scapy.contrib.mqttsn.rst
++++ b/doc/scapy/api/scapy.contrib.mqttsn.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.mqttsn module
+-===========================
++scapy.contrib.mqttsn
++====================
+ 
+ .. automodule:: scapy.contrib.mqttsn
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.nfs.rst b/doc/scapy/api/scapy.contrib.nfs.rst
+new file mode 100644
+index 00000000..8efeeb87
+--- /dev/null
++++ b/doc/scapy/api/scapy.contrib.nfs.rst
+@@ -0,0 +1,7 @@
++scapy.contrib.nfs
++=================
++
++.. automodule:: scapy.contrib.nfs
++   :members:
++   :undoc-members:
++   :show-inheritance:
+diff --git a/doc/scapy/api/scapy.contrib.nlm.rst b/doc/scapy/api/scapy.contrib.nlm.rst
+new file mode 100644
+index 00000000..cc643da8
+--- /dev/null
++++ b/doc/scapy/api/scapy.contrib.nlm.rst
+@@ -0,0 +1,7 @@
++scapy.contrib.nlm
++=================
++
++.. automodule:: scapy.contrib.nlm
++   :members:
++   :undoc-members:
++   :show-inheritance:
+diff --git a/doc/scapy/api/scapy.contrib.nsh.rst b/doc/scapy/api/scapy.contrib.nsh.rst
+index 2a6c23ee..4459761f 100644
+--- a/doc/scapy/api/scapy.contrib.nsh.rst
++++ b/doc/scapy/api/scapy.contrib.nsh.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.nsh module
+-========================
++scapy.contrib.nsh
++=================
+ 
+ .. automodule:: scapy.contrib.nsh
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.oncrpc.rst b/doc/scapy/api/scapy.contrib.oncrpc.rst
+new file mode 100644
+index 00000000..6009f82f
+--- /dev/null
++++ b/doc/scapy/api/scapy.contrib.oncrpc.rst
+@@ -0,0 +1,7 @@
++scapy.contrib.oncrpc
++====================
++
++.. automodule:: scapy.contrib.oncrpc
++   :members:
++   :undoc-members:
++   :show-inheritance:
+diff --git a/doc/scapy/api/scapy.contrib.opc_da.rst b/doc/scapy/api/scapy.contrib.opc_da.rst
+index a5cf4623..ff4673c1 100644
+--- a/doc/scapy/api/scapy.contrib.opc_da.rst
++++ b/doc/scapy/api/scapy.contrib.opc_da.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.opc\_da module
+-============================
++scapy.contrib.opc\_da
++=====================
+ 
+ .. automodule:: scapy.contrib.opc_da
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.openflow.rst b/doc/scapy/api/scapy.contrib.openflow.rst
+index 50358afc..343c126a 100644
+--- a/doc/scapy/api/scapy.contrib.openflow.rst
++++ b/doc/scapy/api/scapy.contrib.openflow.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.openflow module
+-=============================
++scapy.contrib.openflow
++======================
+ 
+ .. automodule:: scapy.contrib.openflow
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.openflow3.rst b/doc/scapy/api/scapy.contrib.openflow3.rst
+index e8a61fdf..c5edc763 100644
+--- a/doc/scapy/api/scapy.contrib.openflow3.rst
++++ b/doc/scapy/api/scapy.contrib.openflow3.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.openflow3 module
+-==============================
++scapy.contrib.openflow3
++=======================
+ 
+ .. automodule:: scapy.contrib.openflow3
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.ospf.rst b/doc/scapy/api/scapy.contrib.ospf.rst
+index 28df20c9..bdd5e7b6 100644
+--- a/doc/scapy/api/scapy.contrib.ospf.rst
++++ b/doc/scapy/api/scapy.contrib.ospf.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.ospf module
+-=========================
++scapy.contrib.ospf
++==================
+ 
+ .. automodule:: scapy.contrib.ospf
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.pnio.rst b/doc/scapy/api/scapy.contrib.pnio.rst
+index ed898144..25fd8534 100644
+--- a/doc/scapy/api/scapy.contrib.pnio.rst
++++ b/doc/scapy/api/scapy.contrib.pnio.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.pnio module
+-=========================
++scapy.contrib.pnio
++==================
+ 
+ .. automodule:: scapy.contrib.pnio
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.pnio_dcp.rst b/doc/scapy/api/scapy.contrib.pnio_dcp.rst
+index 5bfd3e53..fce669ee 100644
+--- a/doc/scapy/api/scapy.contrib.pnio_dcp.rst
++++ b/doc/scapy/api/scapy.contrib.pnio_dcp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.pnio\_dcp module
+-==============================
++scapy.contrib.pnio\_dcp
++=======================
+ 
+ .. automodule:: scapy.contrib.pnio_dcp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.pnio_rpc.rst b/doc/scapy/api/scapy.contrib.pnio_rpc.rst
+index 817a9140..2b274d3f 100644
+--- a/doc/scapy/api/scapy.contrib.pnio_rpc.rst
++++ b/doc/scapy/api/scapy.contrib.pnio_rpc.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.pnio\_rpc module
+-==============================
++scapy.contrib.pnio\_rpc
++=======================
+ 
+ .. automodule:: scapy.contrib.pnio_rpc
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.portmap.rst b/doc/scapy/api/scapy.contrib.portmap.rst
+new file mode 100644
+index 00000000..5016c2bd
+--- /dev/null
++++ b/doc/scapy/api/scapy.contrib.portmap.rst
+@@ -0,0 +1,7 @@
++scapy.contrib.portmap
++=====================
++
++.. automodule:: scapy.contrib.portmap
++   :members:
++   :undoc-members:
++   :show-inheritance:
+diff --git a/doc/scapy/api/scapy.contrib.ppi_cace.rst b/doc/scapy/api/scapy.contrib.ppi_cace.rst
+index c682c633..945a613d 100644
+--- a/doc/scapy/api/scapy.contrib.ppi_cace.rst
++++ b/doc/scapy/api/scapy.contrib.ppi_cace.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.ppi\_cace module
+-==============================
++scapy.contrib.ppi\_cace
++=======================
+ 
+ .. automodule:: scapy.contrib.ppi_cace
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.ppi_geotag.rst b/doc/scapy/api/scapy.contrib.ppi_geotag.rst
+index 0cec759e..b4f0b0ce 100644
+--- a/doc/scapy/api/scapy.contrib.ppi_geotag.rst
++++ b/doc/scapy/api/scapy.contrib.ppi_geotag.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.ppi\_geotag module
+-================================
++scapy.contrib.ppi\_geotag
++=========================
+ 
+ .. automodule:: scapy.contrib.ppi_geotag
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.ripng.rst b/doc/scapy/api/scapy.contrib.ripng.rst
+index e2428af3..977b97e4 100644
+--- a/doc/scapy/api/scapy.contrib.ripng.rst
++++ b/doc/scapy/api/scapy.contrib.ripng.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.ripng module
+-==========================
++scapy.contrib.ripng
++===================
+ 
+ .. automodule:: scapy.contrib.ripng
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.rst b/doc/scapy/api/scapy.contrib.rst
+index 812eecb8..7ada6579 100644
+--- a/doc/scapy/api/scapy.contrib.rst
++++ b/doc/scapy/api/scapy.contrib.rst
+@@ -6,7 +6,6 @@ scapy.contrib package
+    :undoc-members:
+    :show-inheritance:
+ 
+-
+ .. toctree::
+ 
+    scapy.contrib.automotive
+@@ -52,10 +51,14 @@ scapy.contrib package
+    scapy.contrib.mac_control
+    scapy.contrib.macsec
+    scapy.contrib.modbus
++   scapy.contrib.mount
+    scapy.contrib.mpls
+    scapy.contrib.mqtt
+    scapy.contrib.mqttsn
++   scapy.contrib.nfs
++   scapy.contrib.nlm
+    scapy.contrib.nsh
++   scapy.contrib.oncrpc
+    scapy.contrib.opc_da
+    scapy.contrib.openflow
+    scapy.contrib.openflow3
+@@ -63,6 +66,7 @@ scapy.contrib package
+    scapy.contrib.pnio
+    scapy.contrib.pnio_dcp
+    scapy.contrib.pnio_rpc
++   scapy.contrib.portmap
+    scapy.contrib.ppi_cace
+    scapy.contrib.ppi_geotag
+    scapy.contrib.ripng
+diff --git a/doc/scapy/api/scapy.contrib.rsvp.rst b/doc/scapy/api/scapy.contrib.rsvp.rst
+index e01cd4f1..eaa70cf3 100644
+--- a/doc/scapy/api/scapy.contrib.rsvp.rst
++++ b/doc/scapy/api/scapy.contrib.rsvp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.rsvp module
+-=========================
++scapy.contrib.rsvp
++==================
+ 
+ .. automodule:: scapy.contrib.rsvp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.rtr.rst b/doc/scapy/api/scapy.contrib.rtr.rst
+index aaf4332b..207a3363 100644
+--- a/doc/scapy/api/scapy.contrib.rtr.rst
++++ b/doc/scapy/api/scapy.contrib.rtr.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.rtr module
+-========================
++scapy.contrib.rtr
++=================
+ 
+ .. automodule:: scapy.contrib.rtr
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.scada.iec104.iec104.rst b/doc/scapy/api/scapy.contrib.scada.iec104.iec104.rst
+index 3bb5bb40..74e2b61b 100644
+--- a/doc/scapy/api/scapy.contrib.scada.iec104.iec104.rst
++++ b/doc/scapy/api/scapy.contrib.scada.iec104.iec104.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.scada.iec104.iec104 module
+-========================================
++scapy.contrib.scada.iec104.iec104
++=================================
+ 
+ .. automodule:: scapy.contrib.scada.iec104.iec104
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.scada.iec104.iec104_fields.rst b/doc/scapy/api/scapy.contrib.scada.iec104.iec104_fields.rst
+index 430c2c00..7dc651bd 100644
+--- a/doc/scapy/api/scapy.contrib.scada.iec104.iec104_fields.rst
++++ b/doc/scapy/api/scapy.contrib.scada.iec104.iec104_fields.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.scada.iec104.iec104\_fields module
+-================================================
++scapy.contrib.scada.iec104.iec104\_fields
++=========================================
+ 
+ .. automodule:: scapy.contrib.scada.iec104.iec104_fields
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.scada.iec104.iec104_information_elements.rst b/doc/scapy/api/scapy.contrib.scada.iec104.iec104_information_elements.rst
+index 613bc2b1..457fa458 100644
+--- a/doc/scapy/api/scapy.contrib.scada.iec104.iec104_information_elements.rst
++++ b/doc/scapy/api/scapy.contrib.scada.iec104.iec104_information_elements.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.scada.iec104.iec104\_information\_elements module
+-===============================================================
++scapy.contrib.scada.iec104.iec104\_information\_elements
++========================================================
+ 
+ .. automodule:: scapy.contrib.scada.iec104.iec104_information_elements
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.scada.iec104.iec104_information_objects.rst b/doc/scapy/api/scapy.contrib.scada.iec104.iec104_information_objects.rst
+index b24fb325..7dfcf96a 100644
+--- a/doc/scapy/api/scapy.contrib.scada.iec104.iec104_information_objects.rst
++++ b/doc/scapy/api/scapy.contrib.scada.iec104.iec104_information_objects.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.scada.iec104.iec104\_information\_objects module
+-==============================================================
++scapy.contrib.scada.iec104.iec104\_information\_objects
++=======================================================
+ 
+ .. automodule:: scapy.contrib.scada.iec104.iec104_information_objects
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.scada.iec104.rst b/doc/scapy/api/scapy.contrib.scada.iec104.rst
+index dc7389be..3e885ab2 100644
+--- a/doc/scapy/api/scapy.contrib.scada.iec104.rst
++++ b/doc/scapy/api/scapy.contrib.scada.iec104.rst
+@@ -6,9 +6,6 @@ scapy.contrib.scada.iec104 package
+    :undoc-members:
+    :show-inheritance:
+ 
+-Submodules
+-----------
+-
+ .. toctree::
+ 
+    scapy.contrib.scada.iec104.iec104
+diff --git a/doc/scapy/api/scapy.contrib.scada.rst b/doc/scapy/api/scapy.contrib.scada.rst
+index 778cacce..52531c6c 100644
+--- a/doc/scapy/api/scapy.contrib.scada.rst
++++ b/doc/scapy/api/scapy.contrib.scada.rst
+@@ -6,9 +6,6 @@ scapy.contrib.scada package
+    :undoc-members:
+    :show-inheritance:
+ 
+-Subpackages
+------------
+-
+ .. toctree::
+ 
+    scapy.contrib.scada.iec104
+diff --git a/doc/scapy/api/scapy.contrib.sdnv.rst b/doc/scapy/api/scapy.contrib.sdnv.rst
+index 70e64aaf..f69980d7 100644
+--- a/doc/scapy/api/scapy.contrib.sdnv.rst
++++ b/doc/scapy/api/scapy.contrib.sdnv.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.sdnv module
+-=========================
++scapy.contrib.sdnv
++==================
+ 
+ .. automodule:: scapy.contrib.sdnv
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.sebek.rst b/doc/scapy/api/scapy.contrib.sebek.rst
+index ccd2eab1..11bb40d3 100644
+--- a/doc/scapy/api/scapy.contrib.sebek.rst
++++ b/doc/scapy/api/scapy.contrib.sebek.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.sebek module
+-==========================
++scapy.contrib.sebek
++===================
+ 
+ .. automodule:: scapy.contrib.sebek
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.send.rst b/doc/scapy/api/scapy.contrib.send.rst
+index f72b1773..77be86d6 100644
+--- a/doc/scapy/api/scapy.contrib.send.rst
++++ b/doc/scapy/api/scapy.contrib.send.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.send module
+-=========================
++scapy.contrib.send
++==================
+ 
+ .. automodule:: scapy.contrib.send
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.skinny.rst b/doc/scapy/api/scapy.contrib.skinny.rst
+index 00ee2363..8175af25 100644
+--- a/doc/scapy/api/scapy.contrib.skinny.rst
++++ b/doc/scapy/api/scapy.contrib.skinny.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.skinny module
+-===========================
++scapy.contrib.skinny
++====================
+ 
+ .. automodule:: scapy.contrib.skinny
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.socks.rst b/doc/scapy/api/scapy.contrib.socks.rst
+index b4000a93..bd0344f9 100644
+--- a/doc/scapy/api/scapy.contrib.socks.rst
++++ b/doc/scapy/api/scapy.contrib.socks.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.socks module
+-==========================
++scapy.contrib.socks
++===================
+ 
+ .. automodule:: scapy.contrib.socks
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.spbm.rst b/doc/scapy/api/scapy.contrib.spbm.rst
+index 66c0b46e..ac93c3e3 100644
+--- a/doc/scapy/api/scapy.contrib.spbm.rst
++++ b/doc/scapy/api/scapy.contrib.spbm.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.spbm module
+-=========================
++scapy.contrib.spbm
++==================
+ 
+ .. automodule:: scapy.contrib.spbm
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.tacacs.rst b/doc/scapy/api/scapy.contrib.tacacs.rst
+index 2c7261ec..d3264d52 100644
+--- a/doc/scapy/api/scapy.contrib.tacacs.rst
++++ b/doc/scapy/api/scapy.contrib.tacacs.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.tacacs module
+-===========================
++scapy.contrib.tacacs
++====================
+ 
+ .. automodule:: scapy.contrib.tacacs
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.tzsp.rst b/doc/scapy/api/scapy.contrib.tzsp.rst
+index d4ec7333..debacea4 100644
+--- a/doc/scapy/api/scapy.contrib.tzsp.rst
++++ b/doc/scapy/api/scapy.contrib.tzsp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.tzsp module
+-=========================
++scapy.contrib.tzsp
++==================
+ 
+ .. automodule:: scapy.contrib.tzsp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.ubberlogger.rst b/doc/scapy/api/scapy.contrib.ubberlogger.rst
+index 72541a4e..57cd04a7 100644
+--- a/doc/scapy/api/scapy.contrib.ubberlogger.rst
++++ b/doc/scapy/api/scapy.contrib.ubberlogger.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.ubberlogger module
+-================================
++scapy.contrib.ubberlogger
++=========================
+ 
+ .. automodule:: scapy.contrib.ubberlogger
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.vqp.rst b/doc/scapy/api/scapy.contrib.vqp.rst
+index 3f57da86..dea445b8 100644
+--- a/doc/scapy/api/scapy.contrib.vqp.rst
++++ b/doc/scapy/api/scapy.contrib.vqp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.vqp module
+-========================
++scapy.contrib.vqp
++=================
+ 
+ .. automodule:: scapy.contrib.vqp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.vtp.rst b/doc/scapy/api/scapy.contrib.vtp.rst
+index c35d22c5..7a14b2a4 100644
+--- a/doc/scapy/api/scapy.contrib.vtp.rst
++++ b/doc/scapy/api/scapy.contrib.vtp.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.vtp module
+-========================
++scapy.contrib.vtp
++=================
+ 
+ .. automodule:: scapy.contrib.vtp
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.wireguard.rst b/doc/scapy/api/scapy.contrib.wireguard.rst
+index 74a5a117..45130935 100644
+--- a/doc/scapy/api/scapy.contrib.wireguard.rst
++++ b/doc/scapy/api/scapy.contrib.wireguard.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.wireguard module
+-==============================
++scapy.contrib.wireguard
++=======================
+ 
+ .. automodule:: scapy.contrib.wireguard
+    :members:
+diff --git a/doc/scapy/api/scapy.contrib.wpa_eapol.rst b/doc/scapy/api/scapy.contrib.wpa_eapol.rst
+index 1a891c75..f4d314ae 100644
+--- a/doc/scapy/api/scapy.contrib.wpa_eapol.rst
++++ b/doc/scapy/api/scapy.contrib.wpa_eapol.rst
+@@ -1,5 +1,5 @@
+-scapy.contrib.wpa\_eapol module
+-===============================
++scapy.contrib.wpa\_eapol
++========================
+ 
+ .. automodule:: scapy.contrib.wpa_eapol
+    :members:
+diff --git a/doc/scapy/api/scapy.dadict.rst b/doc/scapy/api/scapy.dadict.rst
+index 5a04851a..1ff95a05 100644
+--- a/doc/scapy/api/scapy.dadict.rst
++++ b/doc/scapy/api/scapy.dadict.rst
+@@ -1,5 +1,5 @@
+-scapy.dadict module
+-===================
++scapy.dadict
++============
+ 
+ .. automodule:: scapy.dadict
+    :members:
+diff --git a/doc/scapy/api/scapy.data.rst b/doc/scapy/api/scapy.data.rst
+index d25a8464..1de1f544 100644
+--- a/doc/scapy/api/scapy.data.rst
++++ b/doc/scapy/api/scapy.data.rst
+@@ -1,5 +1,5 @@
+-scapy.data module
+-=================
++scapy.data
++==========
+ 
+ .. automodule:: scapy.data
+    :members:
+diff --git a/doc/scapy/api/scapy.error.rst b/doc/scapy/api/scapy.error.rst
+index a932baa4..f3bae430 100644
+--- a/doc/scapy/api/scapy.error.rst
++++ b/doc/scapy/api/scapy.error.rst
+@@ -1,5 +1,5 @@
+-scapy.error module
+-==================
++scapy.error
++===========
+ 
+ .. automodule:: scapy.error
+    :members:
+diff --git a/doc/scapy/api/scapy.extlib.rst b/doc/scapy/api/scapy.extlib.rst
+index c0dab287..a4297735 100644
+--- a/doc/scapy/api/scapy.extlib.rst
++++ b/doc/scapy/api/scapy.extlib.rst
+@@ -1,5 +1,5 @@
+-scapy.extlib module
+-===================
++scapy.extlib
++============
+ 
+ .. automodule:: scapy.extlib
+    :members:
+diff --git a/doc/scapy/api/scapy.fields.rst b/doc/scapy/api/scapy.fields.rst
+index 651b6d90..5e826bb9 100644
+--- a/doc/scapy/api/scapy.fields.rst
++++ b/doc/scapy/api/scapy.fields.rst
+@@ -1,5 +1,5 @@
+-scapy.fields module
+-===================
++scapy.fields
++============
+ 
+ .. automodule:: scapy.fields
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.bluetooth.rst b/doc/scapy/api/scapy.layers.bluetooth.rst
+index 00d7ca1c..5c082b80 100644
+--- a/doc/scapy/api/scapy.layers.bluetooth.rst
++++ b/doc/scapy/api/scapy.layers.bluetooth.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.bluetooth module
+-=============================
++scapy.layers.bluetooth
++======================
+ 
+ .. automodule:: scapy.layers.bluetooth
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.bluetooth4LE.rst b/doc/scapy/api/scapy.layers.bluetooth4LE.rst
+index f32d3151..3c70190d 100644
+--- a/doc/scapy/api/scapy.layers.bluetooth4LE.rst
++++ b/doc/scapy/api/scapy.layers.bluetooth4LE.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.bluetooth4LE module
+-================================
++scapy.layers.bluetooth4LE
++=========================
+ 
+ .. automodule:: scapy.layers.bluetooth4LE
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.can.rst b/doc/scapy/api/scapy.layers.can.rst
+index fd944724..a605cd06 100644
+--- a/doc/scapy/api/scapy.layers.can.rst
++++ b/doc/scapy/api/scapy.layers.can.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.can module
+-=======================
++scapy.layers.can
++================
+ 
+ .. automodule:: scapy.layers.can
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.clns.rst b/doc/scapy/api/scapy.layers.clns.rst
+index ac981db2..7667192d 100644
+--- a/doc/scapy/api/scapy.layers.clns.rst
++++ b/doc/scapy/api/scapy.layers.clns.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.clns module
+-========================
++scapy.layers.clns
++=================
+ 
+ .. automodule:: scapy.layers.clns
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.dhcp.rst b/doc/scapy/api/scapy.layers.dhcp.rst
+index 969c0115..682a6a18 100644
+--- a/doc/scapy/api/scapy.layers.dhcp.rst
++++ b/doc/scapy/api/scapy.layers.dhcp.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.dhcp module
+-========================
++scapy.layers.dhcp
++=================
+ 
+ .. automodule:: scapy.layers.dhcp
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.dhcp6.rst b/doc/scapy/api/scapy.layers.dhcp6.rst
+index 5b8b0846..fe8d0156 100644
+--- a/doc/scapy/api/scapy.layers.dhcp6.rst
++++ b/doc/scapy/api/scapy.layers.dhcp6.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.dhcp6 module
+-=========================
++scapy.layers.dhcp6
++==================
+ 
+ .. automodule:: scapy.layers.dhcp6
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.dns.rst b/doc/scapy/api/scapy.layers.dns.rst
+index 35f51a5e..e56bc0c3 100644
+--- a/doc/scapy/api/scapy.layers.dns.rst
++++ b/doc/scapy/api/scapy.layers.dns.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.dns module
+-=======================
++scapy.layers.dns
++================
+ 
+ .. automodule:: scapy.layers.dns
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.dot11.rst b/doc/scapy/api/scapy.layers.dot11.rst
+index 7b836bbb..117e7423 100644
+--- a/doc/scapy/api/scapy.layers.dot11.rst
++++ b/doc/scapy/api/scapy.layers.dot11.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.dot11 module
+-=========================
++scapy.layers.dot11
++==================
+ 
+ .. automodule:: scapy.layers.dot11
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.dot15d4.rst b/doc/scapy/api/scapy.layers.dot15d4.rst
+index 970f6635..709dcf7c 100644
+--- a/doc/scapy/api/scapy.layers.dot15d4.rst
++++ b/doc/scapy/api/scapy.layers.dot15d4.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.dot15d4 module
+-===========================
++scapy.layers.dot15d4
++====================
+ 
+ .. automodule:: scapy.layers.dot15d4
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.eap.rst b/doc/scapy/api/scapy.layers.eap.rst
+index 92a76fab..16ec073e 100644
+--- a/doc/scapy/api/scapy.layers.eap.rst
++++ b/doc/scapy/api/scapy.layers.eap.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.eap module
+-=======================
++scapy.layers.eap
++================
+ 
+ .. automodule:: scapy.layers.eap
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.gprs.rst b/doc/scapy/api/scapy.layers.gprs.rst
+index b5149dcf..1b19a093 100644
+--- a/doc/scapy/api/scapy.layers.gprs.rst
++++ b/doc/scapy/api/scapy.layers.gprs.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.gprs module
+-========================
++scapy.layers.gprs
++=================
+ 
+ .. automodule:: scapy.layers.gprs
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.hsrp.rst b/doc/scapy/api/scapy.layers.hsrp.rst
+index cb66d923..6a475903 100644
+--- a/doc/scapy/api/scapy.layers.hsrp.rst
++++ b/doc/scapy/api/scapy.layers.hsrp.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.hsrp module
+-========================
++scapy.layers.hsrp
++=================
+ 
+ .. automodule:: scapy.layers.hsrp
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.http.rst b/doc/scapy/api/scapy.layers.http.rst
+index 21c2ab24..a027de2c 100644
+--- a/doc/scapy/api/scapy.layers.http.rst
++++ b/doc/scapy/api/scapy.layers.http.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.http module
+-========================
++scapy.layers.http
++=================
+ 
+ .. automodule:: scapy.layers.http
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.inet.rst b/doc/scapy/api/scapy.layers.inet.rst
+index b7c1071c..63b7fdd5 100644
+--- a/doc/scapy/api/scapy.layers.inet.rst
++++ b/doc/scapy/api/scapy.layers.inet.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.inet module
+-========================
++scapy.layers.inet
++=================
+ 
+ .. automodule:: scapy.layers.inet
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.inet6.rst b/doc/scapy/api/scapy.layers.inet6.rst
+index 937287a0..dfb478e5 100644
+--- a/doc/scapy/api/scapy.layers.inet6.rst
++++ b/doc/scapy/api/scapy.layers.inet6.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.inet6 module
+-=========================
++scapy.layers.inet6
++==================
+ 
+ .. automodule:: scapy.layers.inet6
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.ipsec.rst b/doc/scapy/api/scapy.layers.ipsec.rst
+index ff3bc818..9482859f 100644
+--- a/doc/scapy/api/scapy.layers.ipsec.rst
++++ b/doc/scapy/api/scapy.layers.ipsec.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.ipsec module
+-=========================
++scapy.layers.ipsec
++==================
+ 
+ .. automodule:: scapy.layers.ipsec
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.ir.rst b/doc/scapy/api/scapy.layers.ir.rst
+index 1223c1a8..45cc890c 100644
+--- a/doc/scapy/api/scapy.layers.ir.rst
++++ b/doc/scapy/api/scapy.layers.ir.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.ir module
+-======================
++scapy.layers.ir
++===============
+ 
+ .. automodule:: scapy.layers.ir
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.isakmp.rst b/doc/scapy/api/scapy.layers.isakmp.rst
+index 5a5c40b0..14284c75 100644
+--- a/doc/scapy/api/scapy.layers.isakmp.rst
++++ b/doc/scapy/api/scapy.layers.isakmp.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.isakmp module
+-==========================
++scapy.layers.isakmp
++===================
+ 
+ .. automodule:: scapy.layers.isakmp
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.l2.rst b/doc/scapy/api/scapy.layers.l2.rst
+index f1803cca..e0203b48 100644
+--- a/doc/scapy/api/scapy.layers.l2.rst
++++ b/doc/scapy/api/scapy.layers.l2.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.l2 module
+-======================
++scapy.layers.l2
++===============
+ 
+ .. automodule:: scapy.layers.l2
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.l2tp.rst b/doc/scapy/api/scapy.layers.l2tp.rst
+index 59f8658a..89716674 100644
+--- a/doc/scapy/api/scapy.layers.l2tp.rst
++++ b/doc/scapy/api/scapy.layers.l2tp.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.l2tp module
+-========================
++scapy.layers.l2tp
++=================
+ 
+ .. automodule:: scapy.layers.l2tp
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.llmnr.rst b/doc/scapy/api/scapy.layers.llmnr.rst
+index 695de253..00cd78c4 100644
+--- a/doc/scapy/api/scapy.layers.llmnr.rst
++++ b/doc/scapy/api/scapy.layers.llmnr.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.llmnr module
+-=========================
++scapy.layers.llmnr
++==================
+ 
+ .. automodule:: scapy.layers.llmnr
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.lltd.rst b/doc/scapy/api/scapy.layers.lltd.rst
+index 2890e36a..ad6bb1d8 100644
+--- a/doc/scapy/api/scapy.layers.lltd.rst
++++ b/doc/scapy/api/scapy.layers.lltd.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.lltd module
+-========================
++scapy.layers.lltd
++=================
+ 
+ .. automodule:: scapy.layers.lltd
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.mgcp.rst b/doc/scapy/api/scapy.layers.mgcp.rst
+index ed1be66f..34095d3b 100644
+--- a/doc/scapy/api/scapy.layers.mgcp.rst
++++ b/doc/scapy/api/scapy.layers.mgcp.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.mgcp module
+-========================
++scapy.layers.mgcp
++=================
+ 
+ .. automodule:: scapy.layers.mgcp
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.mobileip.rst b/doc/scapy/api/scapy.layers.mobileip.rst
+index 9ee3c813..900021d3 100644
+--- a/doc/scapy/api/scapy.layers.mobileip.rst
++++ b/doc/scapy/api/scapy.layers.mobileip.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.mobileip module
+-============================
++scapy.layers.mobileip
++=====================
+ 
+ .. automodule:: scapy.layers.mobileip
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.netbios.rst b/doc/scapy/api/scapy.layers.netbios.rst
+index 5ff9e1b3..138c7263 100644
+--- a/doc/scapy/api/scapy.layers.netbios.rst
++++ b/doc/scapy/api/scapy.layers.netbios.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.netbios module
+-===========================
++scapy.layers.netbios
++====================
+ 
+ .. automodule:: scapy.layers.netbios
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.netflow.rst b/doc/scapy/api/scapy.layers.netflow.rst
+index 8c7e0850..3f1b43d2 100644
+--- a/doc/scapy/api/scapy.layers.netflow.rst
++++ b/doc/scapy/api/scapy.layers.netflow.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.netflow module
+-===========================
++scapy.layers.netflow
++====================
+ 
+ .. automodule:: scapy.layers.netflow
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.ntp.rst b/doc/scapy/api/scapy.layers.ntp.rst
+index 3c104538..4aee2e95 100644
+--- a/doc/scapy/api/scapy.layers.ntp.rst
++++ b/doc/scapy/api/scapy.layers.ntp.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.ntp module
+-=======================
++scapy.layers.ntp
++================
+ 
+ .. automodule:: scapy.layers.ntp
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.pflog.rst b/doc/scapy/api/scapy.layers.pflog.rst
+index 8cfd6520..06572201 100644
+--- a/doc/scapy/api/scapy.layers.pflog.rst
++++ b/doc/scapy/api/scapy.layers.pflog.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.pflog module
+-=========================
++scapy.layers.pflog
++==================
+ 
+ .. automodule:: scapy.layers.pflog
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.ppi.rst b/doc/scapy/api/scapy.layers.ppi.rst
+index 80b25443..a3ab6b91 100644
+--- a/doc/scapy/api/scapy.layers.ppi.rst
++++ b/doc/scapy/api/scapy.layers.ppi.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.ppi module
+-=======================
++scapy.layers.ppi
++================
+ 
+ .. automodule:: scapy.layers.ppi
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.ppp.rst b/doc/scapy/api/scapy.layers.ppp.rst
+index c2708d88..725f4fdf 100644
+--- a/doc/scapy/api/scapy.layers.ppp.rst
++++ b/doc/scapy/api/scapy.layers.ppp.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.ppp module
+-=======================
++scapy.layers.ppp
++================
+ 
+ .. automodule:: scapy.layers.ppp
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.pptp.rst b/doc/scapy/api/scapy.layers.pptp.rst
+index 9bebf5b6..b52a304a 100644
+--- a/doc/scapy/api/scapy.layers.pptp.rst
++++ b/doc/scapy/api/scapy.layers.pptp.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.pptp module
+-========================
++scapy.layers.pptp
++=================
+ 
+ .. automodule:: scapy.layers.pptp
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.radius.rst b/doc/scapy/api/scapy.layers.radius.rst
+index b6f4b63b..f480818b 100644
+--- a/doc/scapy/api/scapy.layers.radius.rst
++++ b/doc/scapy/api/scapy.layers.radius.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.radius module
+-==========================
++scapy.layers.radius
++===================
+ 
+ .. automodule:: scapy.layers.radius
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.rip.rst b/doc/scapy/api/scapy.layers.rip.rst
+index 92666df1..03e2b7f1 100644
+--- a/doc/scapy/api/scapy.layers.rip.rst
++++ b/doc/scapy/api/scapy.layers.rip.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.rip module
+-=======================
++scapy.layers.rip
++================
+ 
+ .. automodule:: scapy.layers.rip
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.rtp.rst b/doc/scapy/api/scapy.layers.rtp.rst
+index 3123b6d9..b0d94f98 100644
+--- a/doc/scapy/api/scapy.layers.rtp.rst
++++ b/doc/scapy/api/scapy.layers.rtp.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.rtp module
+-=======================
++scapy.layers.rtp
++================
+ 
+ .. automodule:: scapy.layers.rtp
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.sctp.rst b/doc/scapy/api/scapy.layers.sctp.rst
+index 6d837596..6710124b 100644
+--- a/doc/scapy/api/scapy.layers.sctp.rst
++++ b/doc/scapy/api/scapy.layers.sctp.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.sctp module
+-========================
++scapy.layers.sctp
++=================
+ 
+ .. automodule:: scapy.layers.sctp
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.sixlowpan.rst b/doc/scapy/api/scapy.layers.sixlowpan.rst
+index a55ced06..11703bf3 100644
+--- a/doc/scapy/api/scapy.layers.sixlowpan.rst
++++ b/doc/scapy/api/scapy.layers.sixlowpan.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.sixlowpan module
+-=============================
++scapy.layers.sixlowpan
++======================
+ 
+ .. automodule:: scapy.layers.sixlowpan
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.skinny.rst b/doc/scapy/api/scapy.layers.skinny.rst
+index ef95da32..fa6a7536 100644
+--- a/doc/scapy/api/scapy.layers.skinny.rst
++++ b/doc/scapy/api/scapy.layers.skinny.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.skinny module
+-==========================
++scapy.layers.skinny
++===================
+ 
+ .. automodule:: scapy.layers.skinny
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.smb.rst b/doc/scapy/api/scapy.layers.smb.rst
+index 9fefc001..a44777e9 100644
+--- a/doc/scapy/api/scapy.layers.smb.rst
++++ b/doc/scapy/api/scapy.layers.smb.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.smb module
+-=======================
++scapy.layers.smb
++================
+ 
+ .. automodule:: scapy.layers.smb
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.snmp.rst b/doc/scapy/api/scapy.layers.snmp.rst
+index b407b64d..a390094f 100644
+--- a/doc/scapy/api/scapy.layers.snmp.rst
++++ b/doc/scapy/api/scapy.layers.snmp.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.snmp module
+-========================
++scapy.layers.snmp
++=================
+ 
+ .. automodule:: scapy.layers.snmp
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tftp.rst b/doc/scapy/api/scapy.layers.tftp.rst
+index 0a394e81..71fcbe61 100644
+--- a/doc/scapy/api/scapy.layers.tftp.rst
++++ b/doc/scapy/api/scapy.layers.tftp.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tftp module
+-========================
++scapy.layers.tftp
++=================
+ 
+ .. automodule:: scapy.layers.tftp
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.all.rst b/doc/scapy/api/scapy.layers.tls.all.rst
+index b7539dbd..288f7b5c 100644
+--- a/doc/scapy/api/scapy.layers.tls.all.rst
++++ b/doc/scapy/api/scapy.layers.tls.all.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.all module
+-===========================
++scapy.layers.tls.all
++====================
+ 
+ .. automodule:: scapy.layers.tls.all
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.automaton.rst b/doc/scapy/api/scapy.layers.tls.automaton.rst
+index 37f41a89..8111f26c 100644
+--- a/doc/scapy/api/scapy.layers.tls.automaton.rst
++++ b/doc/scapy/api/scapy.layers.tls.automaton.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.automaton module
+-=================================
++scapy.layers.tls.automaton
++==========================
+ 
+ .. automodule:: scapy.layers.tls.automaton
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.automaton_cli.rst b/doc/scapy/api/scapy.layers.tls.automaton_cli.rst
+index 27fa48f7..694e7c7f 100644
+--- a/doc/scapy/api/scapy.layers.tls.automaton_cli.rst
++++ b/doc/scapy/api/scapy.layers.tls.automaton_cli.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.automaton\_cli module
+-======================================
++scapy.layers.tls.automaton\_cli
++===============================
+ 
+ .. automodule:: scapy.layers.tls.automaton_cli
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.automaton_srv.rst b/doc/scapy/api/scapy.layers.tls.automaton_srv.rst
+index e408c48c..a1adbd57 100644
+--- a/doc/scapy/api/scapy.layers.tls.automaton_srv.rst
++++ b/doc/scapy/api/scapy.layers.tls.automaton_srv.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.automaton\_srv module
+-======================================
++scapy.layers.tls.automaton\_srv
++===============================
+ 
+ .. automodule:: scapy.layers.tls.automaton_srv
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.basefields.rst b/doc/scapy/api/scapy.layers.tls.basefields.rst
+index b2450d5c..2da3570d 100644
+--- a/doc/scapy/api/scapy.layers.tls.basefields.rst
++++ b/doc/scapy/api/scapy.layers.tls.basefields.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.basefields module
+-==================================
++scapy.layers.tls.basefields
++===========================
+ 
+ .. automodule:: scapy.layers.tls.basefields
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.cert.rst b/doc/scapy/api/scapy.layers.tls.cert.rst
+index 1440780b..87af8125 100644
+--- a/doc/scapy/api/scapy.layers.tls.cert.rst
++++ b/doc/scapy/api/scapy.layers.tls.cert.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.cert module
+-============================
++scapy.layers.tls.cert
++=====================
+ 
+ .. automodule:: scapy.layers.tls.cert
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.all.rst b/doc/scapy/api/scapy.layers.tls.crypto.all.rst
+index ababa33d..32e1076d 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.all.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.all.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.crypto.all module
+-==================================
++scapy.layers.tls.crypto.all
++===========================
+ 
+ .. automodule:: scapy.layers.tls.crypto.all
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.cipher_aead.rst b/doc/scapy/api/scapy.layers.tls.crypto.cipher_aead.rst
+index 7d242b85..77338fa8 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.cipher_aead.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.cipher_aead.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.crypto.cipher\_aead module
+-===========================================
++scapy.layers.tls.crypto.cipher\_aead
++====================================
+ 
+ .. automodule:: scapy.layers.tls.crypto.cipher_aead
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.cipher_block.rst b/doc/scapy/api/scapy.layers.tls.crypto.cipher_block.rst
+index 6fcd1101..891cddee 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.cipher_block.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.cipher_block.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.crypto.cipher\_block module
+-============================================
++scapy.layers.tls.crypto.cipher\_block
++=====================================
+ 
+ .. automodule:: scapy.layers.tls.crypto.cipher_block
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.cipher_stream.rst b/doc/scapy/api/scapy.layers.tls.crypto.cipher_stream.rst
+index 0ac2d437..6d41617e 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.cipher_stream.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.cipher_stream.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.crypto.cipher\_stream module
+-=============================================
++scapy.layers.tls.crypto.cipher\_stream
++======================================
+ 
+ .. automodule:: scapy.layers.tls.crypto.cipher_stream
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.ciphers.rst b/doc/scapy/api/scapy.layers.tls.crypto.ciphers.rst
+index 61fd4b5c..29b60536 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.ciphers.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.ciphers.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.crypto.ciphers module
+-======================================
++scapy.layers.tls.crypto.ciphers
++===============================
+ 
+ .. automodule:: scapy.layers.tls.crypto.ciphers
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.common.rst b/doc/scapy/api/scapy.layers.tls.crypto.common.rst
+index bf726bd5..6c653099 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.common.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.common.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.crypto.common module
+-=====================================
++scapy.layers.tls.crypto.common
++==============================
+ 
+ .. automodule:: scapy.layers.tls.crypto.common
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.compression.rst b/doc/scapy/api/scapy.layers.tls.crypto.compression.rst
+index fcd66fd1..a5868065 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.compression.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.compression.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.crypto.compression module
+-==========================================
++scapy.layers.tls.crypto.compression
++===================================
+ 
+ .. automodule:: scapy.layers.tls.crypto.compression
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.groups.rst b/doc/scapy/api/scapy.layers.tls.crypto.groups.rst
+index 38c949d6..7679913b 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.groups.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.groups.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.crypto.groups module
+-=====================================
++scapy.layers.tls.crypto.groups
++==============================
+ 
+ .. automodule:: scapy.layers.tls.crypto.groups
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.h_mac.rst b/doc/scapy/api/scapy.layers.tls.crypto.h_mac.rst
+index 051daa7a..4b68d3f2 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.h_mac.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.h_mac.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.crypto.h\_mac module
+-=====================================
++scapy.layers.tls.crypto.h\_mac
++==============================
+ 
+ .. automodule:: scapy.layers.tls.crypto.h_mac
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.hash.rst b/doc/scapy/api/scapy.layers.tls.crypto.hash.rst
+index 6b8b9362..1f59a6ed 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.hash.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.hash.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.crypto.hash module
+-===================================
++scapy.layers.tls.crypto.hash
++============================
+ 
+ .. automodule:: scapy.layers.tls.crypto.hash
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.hkdf.rst b/doc/scapy/api/scapy.layers.tls.crypto.hkdf.rst
+index 627f15bf..beda85bf 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.hkdf.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.hkdf.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.crypto.hkdf module
+-===================================
++scapy.layers.tls.crypto.hkdf
++============================
+ 
+ .. automodule:: scapy.layers.tls.crypto.hkdf
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.kx_algs.rst b/doc/scapy/api/scapy.layers.tls.crypto.kx_algs.rst
+index b45532ff..8ba4b245 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.kx_algs.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.kx_algs.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.crypto.kx\_algs module
+-=======================================
++scapy.layers.tls.crypto.kx\_algs
++================================
+ 
+ .. automodule:: scapy.layers.tls.crypto.kx_algs
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.pkcs1.rst b/doc/scapy/api/scapy.layers.tls.crypto.pkcs1.rst
+index 380d4ae4..a2fcfbd9 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.pkcs1.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.pkcs1.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.crypto.pkcs1 module
+-====================================
++scapy.layers.tls.crypto.pkcs1
++=============================
+ 
+ .. automodule:: scapy.layers.tls.crypto.pkcs1
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.prf.rst b/doc/scapy/api/scapy.layers.tls.crypto.prf.rst
+index f389a140..316844b1 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.prf.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.prf.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.crypto.prf module
+-==================================
++scapy.layers.tls.crypto.prf
++===========================
+ 
+ .. automodule:: scapy.layers.tls.crypto.prf
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.rst b/doc/scapy/api/scapy.layers.tls.crypto.rst
+index b6b138f9..8bd50757 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.rst
+@@ -6,9 +6,6 @@ scapy.layers.tls.crypto package
+    :undoc-members:
+    :show-inheritance:
+ 
+-Submodules
+-----------
+-
+ .. toctree::
+ 
+    scapy.layers.tls.crypto.all
+diff --git a/doc/scapy/api/scapy.layers.tls.crypto.suites.rst b/doc/scapy/api/scapy.layers.tls.crypto.suites.rst
+index 710fbc39..6672fe20 100644
+--- a/doc/scapy/api/scapy.layers.tls.crypto.suites.rst
++++ b/doc/scapy/api/scapy.layers.tls.crypto.suites.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.crypto.suites module
+-=====================================
++scapy.layers.tls.crypto.suites
++==============================
+ 
+ .. automodule:: scapy.layers.tls.crypto.suites
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.extensions.rst b/doc/scapy/api/scapy.layers.tls.extensions.rst
+index 9eed4284..00704e59 100644
+--- a/doc/scapy/api/scapy.layers.tls.extensions.rst
++++ b/doc/scapy/api/scapy.layers.tls.extensions.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.extensions module
+-==================================
++scapy.layers.tls.extensions
++===========================
+ 
+ .. automodule:: scapy.layers.tls.extensions
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.handshake.rst b/doc/scapy/api/scapy.layers.tls.handshake.rst
+index da1a8d83..3a3167a4 100644
+--- a/doc/scapy/api/scapy.layers.tls.handshake.rst
++++ b/doc/scapy/api/scapy.layers.tls.handshake.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.handshake module
+-=================================
++scapy.layers.tls.handshake
++==========================
+ 
+ .. automodule:: scapy.layers.tls.handshake
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.handshake_sslv2.rst b/doc/scapy/api/scapy.layers.tls.handshake_sslv2.rst
+index 40b7a2ca..73c11cc2 100644
+--- a/doc/scapy/api/scapy.layers.tls.handshake_sslv2.rst
++++ b/doc/scapy/api/scapy.layers.tls.handshake_sslv2.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.handshake\_sslv2 module
+-========================================
++scapy.layers.tls.handshake\_sslv2
++=================================
+ 
+ .. automodule:: scapy.layers.tls.handshake_sslv2
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.keyexchange.rst b/doc/scapy/api/scapy.layers.tls.keyexchange.rst
+index c3246f04..c0b36606 100644
+--- a/doc/scapy/api/scapy.layers.tls.keyexchange.rst
++++ b/doc/scapy/api/scapy.layers.tls.keyexchange.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.keyexchange module
+-===================================
++scapy.layers.tls.keyexchange
++============================
+ 
+ .. automodule:: scapy.layers.tls.keyexchange
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.keyexchange_tls13.rst b/doc/scapy/api/scapy.layers.tls.keyexchange_tls13.rst
+index 329c61a0..506adb27 100644
+--- a/doc/scapy/api/scapy.layers.tls.keyexchange_tls13.rst
++++ b/doc/scapy/api/scapy.layers.tls.keyexchange_tls13.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.keyexchange\_tls13 module
+-==========================================
++scapy.layers.tls.keyexchange\_tls13
++===================================
+ 
+ .. automodule:: scapy.layers.tls.keyexchange_tls13
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.record.rst b/doc/scapy/api/scapy.layers.tls.record.rst
+index cec8e3ad..43dcd186 100644
+--- a/doc/scapy/api/scapy.layers.tls.record.rst
++++ b/doc/scapy/api/scapy.layers.tls.record.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.record module
+-==============================
++scapy.layers.tls.record
++=======================
+ 
+ .. automodule:: scapy.layers.tls.record
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.record_sslv2.rst b/doc/scapy/api/scapy.layers.tls.record_sslv2.rst
+index 53b5e5b1..bf1f7f07 100644
+--- a/doc/scapy/api/scapy.layers.tls.record_sslv2.rst
++++ b/doc/scapy/api/scapy.layers.tls.record_sslv2.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.record\_sslv2 module
+-=====================================
++scapy.layers.tls.record\_sslv2
++==============================
+ 
+ .. automodule:: scapy.layers.tls.record_sslv2
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.record_tls13.rst b/doc/scapy/api/scapy.layers.tls.record_tls13.rst
+index 91b599c9..aab89a0f 100644
+--- a/doc/scapy/api/scapy.layers.tls.record_tls13.rst
++++ b/doc/scapy/api/scapy.layers.tls.record_tls13.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.record\_tls13 module
+-=====================================
++scapy.layers.tls.record\_tls13
++==============================
+ 
+ .. automodule:: scapy.layers.tls.record_tls13
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.rst b/doc/scapy/api/scapy.layers.tls.rst
+index ffbdd2ac..baaec2e1 100644
+--- a/doc/scapy/api/scapy.layers.tls.rst
++++ b/doc/scapy/api/scapy.layers.tls.rst
+@@ -6,16 +6,10 @@ scapy.layers.tls package
+    :undoc-members:
+    :show-inheritance:
+ 
+-Subpackages
+------------
+-
+ .. toctree::
+ 
+    scapy.layers.tls.crypto
+ 
+-Submodules
+-----------
+-
+ .. toctree::
+ 
+    scapy.layers.tls.all
+diff --git a/doc/scapy/api/scapy.layers.tls.session.rst b/doc/scapy/api/scapy.layers.tls.session.rst
+index 250be190..143f0bb2 100644
+--- a/doc/scapy/api/scapy.layers.tls.session.rst
++++ b/doc/scapy/api/scapy.layers.tls.session.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.session module
+-===============================
++scapy.layers.tls.session
++========================
+ 
+ .. automodule:: scapy.layers.tls.session
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.tls.tools.rst b/doc/scapy/api/scapy.layers.tls.tools.rst
+index a5ac6f4b..70265489 100644
+--- a/doc/scapy/api/scapy.layers.tls.tools.rst
++++ b/doc/scapy/api/scapy.layers.tls.tools.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.tls.tools module
+-=============================
++scapy.layers.tls.tools
++======================
+ 
+ .. automodule:: scapy.layers.tls.tools
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.usb.rst b/doc/scapy/api/scapy.layers.usb.rst
+index eb9d1a45..af0d3730 100644
+--- a/doc/scapy/api/scapy.layers.usb.rst
++++ b/doc/scapy/api/scapy.layers.usb.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.usb module
+-=======================
++scapy.layers.usb
++================
+ 
+ .. automodule:: scapy.layers.usb
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.vrrp.rst b/doc/scapy/api/scapy.layers.vrrp.rst
+index 5d6726b5..d41d70f9 100644
+--- a/doc/scapy/api/scapy.layers.vrrp.rst
++++ b/doc/scapy/api/scapy.layers.vrrp.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.vrrp module
+-========================
++scapy.layers.vrrp
++=================
+ 
+ .. automodule:: scapy.layers.vrrp
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.vxlan.rst b/doc/scapy/api/scapy.layers.vxlan.rst
+index 78c83e22..8650ae0b 100644
+--- a/doc/scapy/api/scapy.layers.vxlan.rst
++++ b/doc/scapy/api/scapy.layers.vxlan.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.vxlan module
+-=========================
++scapy.layers.vxlan
++==================
+ 
+ .. automodule:: scapy.layers.vxlan
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.x509.rst b/doc/scapy/api/scapy.layers.x509.rst
+index 72e08e93..e455c90b 100644
+--- a/doc/scapy/api/scapy.layers.x509.rst
++++ b/doc/scapy/api/scapy.layers.x509.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.x509 module
+-========================
++scapy.layers.x509
++=================
+ 
+ .. automodule:: scapy.layers.x509
+    :members:
+diff --git a/doc/scapy/api/scapy.layers.zigbee.rst b/doc/scapy/api/scapy.layers.zigbee.rst
+index e93dbae5..922dc001 100644
+--- a/doc/scapy/api/scapy.layers.zigbee.rst
++++ b/doc/scapy/api/scapy.layers.zigbee.rst
+@@ -1,5 +1,5 @@
+-scapy.layers.zigbee module
+-==========================
++scapy.layers.zigbee
++===================
+ 
+ .. automodule:: scapy.layers.zigbee
+    :members:
+diff --git a/doc/scapy/api/scapy.main.rst b/doc/scapy/api/scapy.main.rst
+index b98ceab3..35036701 100644
+--- a/doc/scapy/api/scapy.main.rst
++++ b/doc/scapy/api/scapy.main.rst
+@@ -1,5 +1,5 @@
+-scapy.main module
+-=================
++scapy.main
++==========
+ 
+ .. automodule:: scapy.main
+    :members:
+diff --git a/doc/scapy/api/scapy.packet.rst b/doc/scapy/api/scapy.packet.rst
+index b5962c10..80182d39 100644
+--- a/doc/scapy/api/scapy.packet.rst
++++ b/doc/scapy/api/scapy.packet.rst
+@@ -1,5 +1,5 @@
+-scapy.packet module
+-===================
++scapy.packet
++============
+ 
+ .. automodule:: scapy.packet
+    :members:
+diff --git a/doc/scapy/api/scapy.pipetool.rst b/doc/scapy/api/scapy.pipetool.rst
+index aee19575..71b7cf3a 100644
+--- a/doc/scapy/api/scapy.pipetool.rst
++++ b/doc/scapy/api/scapy.pipetool.rst
+@@ -1,5 +1,5 @@
+-scapy.pipetool module
+-=====================
++scapy.pipetool
++==============
+ 
+ .. automodule:: scapy.pipetool
+    :members:
+diff --git a/doc/scapy/api/scapy.plist.rst b/doc/scapy/api/scapy.plist.rst
+index ef09f6d7..b84603de 100644
+--- a/doc/scapy/api/scapy.plist.rst
++++ b/doc/scapy/api/scapy.plist.rst
+@@ -1,5 +1,5 @@
+-scapy.plist module
+-==================
++scapy.plist
++===========
+ 
+ .. automodule:: scapy.plist
+    :members:
+diff --git a/doc/scapy/api/scapy.pton_ntop.rst b/doc/scapy/api/scapy.pton_ntop.rst
+index 27845f89..c01fc23a 100644
+--- a/doc/scapy/api/scapy.pton_ntop.rst
++++ b/doc/scapy/api/scapy.pton_ntop.rst
+@@ -1,5 +1,5 @@
+-scapy.pton\_ntop module
+-=======================
++scapy.pton\_ntop
++================
+ 
+ .. automodule:: scapy.pton_ntop
+    :members:
+diff --git a/doc/scapy/api/scapy.route.rst b/doc/scapy/api/scapy.route.rst
+index 0f15756e..fd2d7eb7 100644
+--- a/doc/scapy/api/scapy.route.rst
++++ b/doc/scapy/api/scapy.route.rst
+@@ -1,5 +1,5 @@
+-scapy.route module
+-==================
++scapy.route
++===========
+ 
+ .. automodule:: scapy.route
+    :members:
+diff --git a/doc/scapy/api/scapy.route6.rst b/doc/scapy/api/scapy.route6.rst
+index 29b3bfff..f8154cbe 100644
+--- a/doc/scapy/api/scapy.route6.rst
++++ b/doc/scapy/api/scapy.route6.rst
+@@ -1,5 +1,5 @@
+-scapy.route6 module
+-===================
++scapy.route6
++============
+ 
+ .. automodule:: scapy.route6
+    :members:
+diff --git a/doc/scapy/api/scapy.rst b/doc/scapy/api/scapy.rst
+index 6731eaa2..3093af15 100644
+--- a/doc/scapy/api/scapy.rst
++++ b/doc/scapy/api/scapy.rst
+@@ -1,5 +1,5 @@
+-Scapy Reference
+-===============
++Scapy API reference
++===================
+ 
+ .. automodule:: scapy
+    :members:
+diff --git a/doc/scapy/api/scapy.scapypipes.rst b/doc/scapy/api/scapy.scapypipes.rst
+index 2c639073..4d1b98ee 100644
+--- a/doc/scapy/api/scapy.scapypipes.rst
++++ b/doc/scapy/api/scapy.scapypipes.rst
+@@ -1,5 +1,5 @@
+-scapy.scapypipes module
+-=======================
++scapy.scapypipes
++================
+ 
+ .. automodule:: scapy.scapypipes
+    :members:
+diff --git a/doc/scapy/api/scapy.sendrecv.rst b/doc/scapy/api/scapy.sendrecv.rst
+index 98e8a55c..fc210dbe 100644
+--- a/doc/scapy/api/scapy.sendrecv.rst
++++ b/doc/scapy/api/scapy.sendrecv.rst
+@@ -1,5 +1,5 @@
+-scapy.sendrecv module
+-=====================
++scapy.sendrecv
++==============
+ 
+ .. automodule:: scapy.sendrecv
+    :members:
+diff --git a/doc/scapy/api/scapy.sessions.rst b/doc/scapy/api/scapy.sessions.rst
+index e523ffb6..a678d6a0 100644
+--- a/doc/scapy/api/scapy.sessions.rst
++++ b/doc/scapy/api/scapy.sessions.rst
+@@ -1,5 +1,5 @@
+-scapy.sessions module
+-=====================
++scapy.sessions
++==============
+ 
+ .. automodule:: scapy.sessions
+    :members:
+diff --git a/doc/scapy/api/scapy.supersocket.rst b/doc/scapy/api/scapy.supersocket.rst
+index 3e86fcbd..ba06c6d8 100644
+--- a/doc/scapy/api/scapy.supersocket.rst
++++ b/doc/scapy/api/scapy.supersocket.rst
+@@ -1,5 +1,5 @@
+-scapy.supersocket module
+-========================
++scapy.supersocket
++=================
+ 
+ .. automodule:: scapy.supersocket
+    :members:
+diff --git a/doc/scapy/api/scapy.themes.rst b/doc/scapy/api/scapy.themes.rst
+index 3e718823..fb32d6c0 100644
+--- a/doc/scapy/api/scapy.themes.rst
++++ b/doc/scapy/api/scapy.themes.rst
+@@ -1,5 +1,5 @@
+-scapy.themes module
+-===================
++scapy.themes
++============
+ 
+ .. automodule:: scapy.themes
+    :members:
+diff --git a/doc/scapy/api/scapy.utils.rst b/doc/scapy/api/scapy.utils.rst
+index 7f6023fc..684c2cf5 100644
+--- a/doc/scapy/api/scapy.utils.rst
++++ b/doc/scapy/api/scapy.utils.rst
+@@ -1,5 +1,5 @@
+-scapy.utils module
+-==================
++scapy.utils
++===========
+ 
+ .. automodule:: scapy.utils
+    :members:
+diff --git a/doc/scapy/api/scapy.utils6.rst b/doc/scapy/api/scapy.utils6.rst
+index efaabc4e..53f17839 100644
+--- a/doc/scapy/api/scapy.utils6.rst
++++ b/doc/scapy/api/scapy.utils6.rst
+@@ -1,5 +1,5 @@
+-scapy.utils6 module
+-===================
++scapy.utils6
++============
+ 
+ .. automodule:: scapy.utils6
+    :members:
+diff --git a/doc/scapy/api/scapy.volatile.rst b/doc/scapy/api/scapy.volatile.rst
+index b73cbeea..5cf3e6f1 100644
+--- a/doc/scapy/api/scapy.volatile.rst
++++ b/doc/scapy/api/scapy.volatile.rst
+@@ -1,5 +1,5 @@
+-scapy.volatile module
+-=====================
++scapy.volatile
++==============
+ 
+ .. automodule:: scapy.volatile
+    :members:
+diff --git a/doc/scapy/conf.py b/doc/scapy/conf.py
+index 0815f71c..eedd1540 100644
+--- a/doc/scapy/conf.py
++++ b/doc/scapy/conf.py
+@@ -21,6 +21,7 @@ import datetime
+ import os
+ import sys
+ sys.path.insert(0, os.path.abspath('../../'))
++sys.path.append(os.path.abspath('_ext'))
+ 
+ 
+ # -- General configuration ------------------------------------------------
+@@ -35,7 +36,8 @@ sys.path.insert(0, os.path.abspath('../../'))
+ extensions = [
+     'sphinx.ext.autodoc',
+     'sphinx.ext.coverage',
+-    'sphinx.ext.napoleon'
++    'sphinx.ext.napoleon',
++    'scapy_doc'
+ ]
+ 
+ # Autodoc configuration
+diff --git a/doc/scapy/index.rst b/doc/scapy/index.rst
+index a045d279..538deb56 100644
+--- a/doc/scapy/index.rst
++++ b/doc/scapy/index.rst
+@@ -50,7 +50,7 @@ This document is under a `Creative Commons Attribution - Non-Commercial
+    backmatter
+  
+ .. toctree::
+-   :maxdepth: 3
++   :maxdepth: 4
+    :caption: API Reference
+ 
+    api/scapy.rst
+diff --git a/doc/scapy/sphinx_apidoc_postprocess.py b/doc/scapy/sphinx_apidoc_postprocess.py
+new file mode 100644
+index 00000000..6bbd6b9e
+--- /dev/null
++++ b/doc/scapy/sphinx_apidoc_postprocess.py
+@@ -0,0 +1,53 @@
++# This file is part of Scapy
++# See http://www.secdev.org/projects/scapy for more information
++# Copyright (C) Gabriel Potter <gabriel@potter.fr>
++# This program is published under a GPLv2 license
++
++"""
++Scapy's post process of sphinx-api command
++"""
++
++import glob
++import os
++import sys
++
++files = list(glob.iglob('./api/*.rst'))
++parents = set(
++    "%s.rst" % x for x in (
++        f.rsplit('.', 1)[0] for f in (
++            f[:-4] for f in files
++        )
++    ) if x
++)
++
++for f in files:
++    # Post process each file
++    _e = False
++    with open(f) as fd:
++        content = fd.readlines()
++    if f in parents:
++        # Process "parent files", i.e. with subfiles
++        # Remove sub categories (better indexation)
++        for name in ["Subpackages", "Submodules"]:
++            try:
++                sub = content.index(name+"\n")
++            except ValueError:
++                continue
++            del content[sub:sub+3]
++            _e = True
++        # Custom
++        if f.endswith("scapy.rst"):
++            content[0] = "Scapy API reference\n"
++            content[1] = "=" * (len(content[0]) - 1) + "\n"
++            _e = True
++    else:
++        # File / module file
++        for name in ["package", "module"]:
++            if name in content[0]:
++                content[0] = content[0].replace(" " + name, "")
++                content[1] = "=" * (len(content[0]) - 1) + "\n"
++                _e = True
++    if _e:
++        print("Post-processed '%s'" % f)
++        with open(f, "w") as fd:
++            fd.writelines(content)
+diff --git a/scapy/packet.py b/scapy/packet.py
+index c240cef9..88d471d1 100644
+--- a/scapy/packet.py
++++ b/scapy/packet.py
+@@ -1934,6 +1934,69 @@ def explore(layer=None):
+     print(pretty_list(rtlst, [("Class", "Name")], borders=True))
+ 
+ 
++def _pkt_ls(obj, verbose=False):
++    """Internal function used to resolve `fields_desc` to display it.
++
++    :param obj: a packet object or class
++    :returns: a list containing tuples [(name, clsname, clsname_extras,
++        default, long_attrs)]
++    """
++    is_pkt = isinstance(obj, Packet)
++    if not issubtype(obj, Packet) and not is_pkt:
++        raise ValueError
++    fields = []
++    for f in obj.fields_desc:
++        cur_fld = f
++        attrs = []
++        long_attrs = []
++        while isinstance(cur_fld, (Emph, ConditionalField)):
++            if isinstance(cur_fld, ConditionalField):
++                attrs.append(cur_fld.__class__.__name__[:4])
++            cur_fld = cur_fld.fld
++        if verbose and isinstance(cur_fld, EnumField) \
++           and hasattr(cur_fld, "i2s"):
++            if len(cur_fld.i2s) < 50:
++                long_attrs.extend(
++                    "%s: %d" % (strval, numval)
++                    for numval, strval in
++                    sorted(six.iteritems(cur_fld.i2s))
++                )
++        elif isinstance(cur_fld, MultiEnumField):
++            fld_depend = cur_fld.depends_on(obj.__class__
++                                            if is_pkt else obj)
++            attrs.append("Depends on %s" % fld_depend.name)
++            if verbose:
++                cur_i2s = cur_fld.i2s_multi.get(
++                    cur_fld.depends_on(obj if is_pkt else obj()), {}
++                )
++                if len(cur_i2s) < 50:
++                    long_attrs.extend(
++                        "%s: %d" % (strval, numval)
++                        for numval, strval in
++                        sorted(six.iteritems(cur_i2s))
++                    )
++        elif verbose and isinstance(cur_fld, FlagsField):
++            names = cur_fld.names
++            long_attrs.append(", ".join(names))
++        cls = cur_fld.__class__
++        class_name_extras = "(%s)" % (
++            ", ".join(attrs)
++        ) if attrs else ""
++        if isinstance(cur_fld, BitField):
++            class_name_extras += " (%d bit%s)" % (
++                cur_fld.size,
++                "s" if cur_fld.size > 1 else ""
++            )
++        fields.append(
++            (f.name,
++             cls,
++             class_name_extras,
++             f.default,
++             long_attrs)
++        )
++    return fields
++
++
+ @conf.commands.register
+ def ls(obj=None, case_sensitive=False, verbose=False):
+     """List  available layers, or infos on a given layer class or name.
+@@ -1970,59 +2033,23 @@ def ls(obj=None, case_sensitive=False, verbose=False):
+             print("\nTIP: You may use explore() to navigate through all "
+                   "layers using a clear GUI")
+     else:
+-        is_pkt = isinstance(obj, Packet)
+-        if issubtype(obj, Packet) or is_pkt:
+-            for f in obj.fields_desc:
+-                cur_fld = f
+-                attrs = []
+-                long_attrs = []
+-                while isinstance(cur_fld, (Emph, ConditionalField)):
+-                    if isinstance(cur_fld, ConditionalField):
+-                        attrs.append(cur_fld.__class__.__name__[:4])
+-                    cur_fld = cur_fld.fld
+-                if verbose and isinstance(cur_fld, EnumField) \
+-                   and hasattr(cur_fld, "i2s"):
+-                    if len(cur_fld.i2s) < 50:
+-                        long_attrs.extend(
+-                            "%s: %d" % (strval, numval)
+-                            for numval, strval in
+-                            sorted(six.iteritems(cur_fld.i2s))
+-                        )
+-                elif isinstance(cur_fld, MultiEnumField):
+-                    fld_depend = cur_fld.depends_on(obj.__class__
+-                                                    if is_pkt else obj)
+-                    attrs.append("Depends on %s" % fld_depend.name)
+-                    if verbose:
+-                        cur_i2s = cur_fld.i2s_multi.get(
+-                            cur_fld.depends_on(obj if is_pkt else obj()), {}
+-                        )
+-                        if len(cur_i2s) < 50:
+-                            long_attrs.extend(
+-                                "%s: %d" % (strval, numval)
+-                                for numval, strval in
+-                                sorted(six.iteritems(cur_i2s))
+-                            )
+-                elif verbose and isinstance(cur_fld, FlagsField):
+-                    names = cur_fld.names
+-                    long_attrs.append(", ".join(names))
+-                class_name = "%s (%s)" % (
+-                    cur_fld.__class__.__name__,
+-                    ", ".join(attrs)) if attrs else cur_fld.__class__.__name__
+-                if isinstance(cur_fld, BitField):
+-                    class_name += " (%d bit%s)" % (cur_fld.size,
+-                                                   "s" if cur_fld.size > 1
+-                                                   else "")
+-                print("%-10s : %-35s =" % (f.name, class_name), end=' ')
++        try:
++            fields = _pkt_ls(obj, verbose=verbose)
++            is_pkt = isinstance(obj, Packet)
++            # Print
++            for fname, cls, clsne, dflt, long_attrs in fields:
++                cls = cls.__name__ + " " + clsne
++                print("%-10s : %-35s =" % (fname, cls), end=' ')
+                 if is_pkt:
+-                    print("%-15r" % (getattr(obj, f.name),), end=' ')
+-                print("(%r)" % (f.default,))
++                    print("%-15r" % (getattr(obj, fname),), end=' ')
++                print("(%r)" % (dflt,))
+                 for attr in long_attrs:
+                     print("%-15s%s" % ("", attr))
++            # Restart for payload if any
+             if is_pkt and not isinstance(obj.payload, NoPayload):
+                 print("--")
+                 ls(obj.payload)
+-
+-        else:
++        except ValueError:
+             print("Not a packet class or name. Type 'ls()' to list packet classes.")  # noqa: E501
+ 
+ 
+diff --git a/scapy/volatile.py b/scapy/volatile.py
+index 796d49b0..d2694c64 100644
+--- a/scapy/volatile.py
++++ b/scapy/volatile.py
+@@ -930,7 +930,7 @@ class RandUUID(RandField):
+ # Automatic timestamp
+ 
+ 
+-class AutoTime(VolatileValue):
++class AutoTime(RandNum):
+     def __init__(self, base=None):
+         if base is None:
+             self.diff = 0
+diff --git a/tox.ini b/tox.ini
+index 620cb320..353ccc3b 100644
+--- a/tox.ini
++++ b/tox.ini
+@@ -112,15 +112,16 @@ deps = codecov
+ commands = codecov -e TOXENV
+ 
+ 
+-[testenv:generate_docs]
++# The files listed in thr sphinx-apidoc are ignored
++# (past the first argument)
++[testenv:apitree]
+ description = "Regenerates the API reference doc tree"
+ skip_install = true
+ changedir = doc/scapy
+ deps = sphinx
+-       sphinx_rtd_theme
+ commands =
+-  sphinx-apidoc --no-toc --separate --module-first --output-dir api ../../scapy ../../scapy/modules/ ../../scapy/tools/ ../../scapy/arch/ ../../scapy/contrib/cansocket* ../../scapy/all.py ../../scapy/layers/all.py
+-  sphinx-build -b html . _build/html
++  sphinx-apidoc -f --no-toc --separate --module-first --output-dir api ../../scapy ../../scapy/modules/ ../../scapy/tools/ ../../scapy/arch/ ../../scapy/contrib/cansocket* ../../scapy/all.py ../../scapy/layers/all.py
++  python sphinx_apidoc_postprocess.py
+ 
+ 
+ [testenv:mypy]
+@@ -140,6 +141,16 @@ commands =
+   sphinx-build -q -W -b html . _build/html
+ 
+ 
++# Debug mode
++[testenv:docs2]
++skip_install = true
++changedir = doc/scapy
++deps = sphinx
++       sphinx_rtd_theme
++commands =
++  sphinx-build -E -b html . _build/html
++
++
+ [testenv:spell]
+ description = "Check code for Grammar mistakes"
+ skip_install = true

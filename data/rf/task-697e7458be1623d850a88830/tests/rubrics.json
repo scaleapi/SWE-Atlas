@@ -1,0 +1,146 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1af0bb963fcd7bf8e98ee9003336ff70",
+    "title": "1.1: Extracts both per-match concerns (result construction and webhook verification) from FromData into a dedicated helper method on customRegexWebhook",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "adc00070965e03df06ce7d06b62a79ce",
+    "title": "1.2: Runs per-match verification concurrently so verification HTTP requests for different permutated regex matches can overlap",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e47f489508f5f2c72a1cc1021e0b3fb9",
+    "title": "1.3: Ensures concurrent workers exit promptly on context cancellation",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "fcc897811bdcdef0d7a770ed4c1d7934",
+    "title": "1.4: Provides an error propagation path from concurrent workers back to FromData's error return",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "32a9f7bbcb4e167b799600e99bef93d6",
+    "title": "1.5: Collects all detectors.Result values from the per-match concurrent workers only after all workers have finished",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7311706b7476899a26a6c66c56b52ae7",
+    "title": "1.6: Processes every element of the matches slice from permutateMatches in FromData of custom_detectors.go producing one detectors.Result per match on the non-error path",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f8afc9d5ff6f6e21e538b913d7553a28",
+    "title": "1.7: Preserves the non-verification fast path by emitting results directly when verify is false",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "edff89910890373692c82e7e5bf6e94b",
+    "title": "1.8: Preserves raw Result construction by concatenating values[0] from each match map entry",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1ab7626f38443a745edf0dfdadb4b4f4",
+    "title": "1.9: Preserves the verification request payload structure keyed by detector name",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "908d00185a31be67e5c72432a21ea6a9",
+    "title": "1.10: Preserves endpoint-iteration semantics by trying each verification config in order until one returns HTTP 200 or all configs are exhausted",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c5db4eb3d7e82679d8f58239cd946b9f",
+    "title": "1.11: Preserves header forwarding by both operations (parsing and trimming) on configured verification request headers",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "35d304378e76f591eb8c13e101bcf426",
+    "title": "1.12: Closes each verification HTTP response body after the request completes",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4fd1dec7aaaecae4729ab2af4d8162a4",
+    "title": "4.1: Changes the function signature of any of the 4 exported functions (NewWebhookCustomRegex, FromData, Keywords, Type) in custom_detectors.go",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ae2440ce08adb5c04df4e1a74a1b3e2d",
+    "title": "4.2: Alters any of the 2 pre-processing steps (regex matching and permutation via permutateMatches) preceding match processing in FromData",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

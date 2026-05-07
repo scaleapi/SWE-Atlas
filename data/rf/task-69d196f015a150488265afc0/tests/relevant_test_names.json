@@ -1,0 +1,10 @@
+{
+  "tests": [
+    {
+      "name": "innodb.lsn_alloc_refactor"
+    },
+    {
+      "name": "sys_vars.sysvars_innodb"
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2604f2ed44316f89fad0e02732139cc0",
+    "title": "1.1: Adds Zod `.transform()` calls in `schema.ts` that convert raw PEP 508 dependency strings into `PackageDependency` objects during schema validation, replacing the removed `DependencyListSchema` and `DependencyRecordSchema`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "eeaf4543d8d2c25b792acef6509b7aa2",
+    "title": "1.2: Exports `parsePyProject()` function from `extract.ts` with signature `(content: string, packageFile?: string) => PyProject | null`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "cd8fa8c101d9b074db15a3d0df4a46fb",
+    "title": "1.3: Removes all calls to and the import of `parseDependencyList` from both processors that use it (hatch.ts and uv.ts)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "30322813ad60a1751bc37ad04f1f092a",
+    "title": "1.4: Removes all calls to and the import of `parseDependencyGroupRecord` from `pdm.ts`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0c3dff4828e6a1d20e15796ad2f5744c",
+    "title": "1.5: Replaces the `is.nullOrUndefined(def)` check with an idiomatic nullish check in `extract.ts`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "60fc9e31c5f24bd6ec21efcf78ae6412",
+    "title": "1.6: Replaces all 7 `is.nullOrUndefined(...)` checks with idiomatic nullish checks only in `pdm.ts` (pdm, pdmSource, project.tool?.pdm, existingLockFileContent, dep.managerData?.depGroup twice, packagesByCMD[commandPrefix])",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "524626370f4daa081f8b21f990f2d359",
+    "title": "1.7: Replaces all 3 `is.nullOrUndefined(...)` checks with idiomatic nullish checks in `uv.ts` (uv, existingLockFileContent, uv_indexes)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "102c0d23c061fecad513de8683d8e991",
+    "title": "1.8: Adds `.catch()` to all 16 schema fields in `schema.ts` for graceful error recovery (project, build-system, dependency-groups, tool, requires-python, dependencies, optional-dependencies, pixi, pdm, hatch, uv, version, build-backend, build-system.requires, PdmSchema.dev-dependencies, UvSchema.dev-dependencies)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "88817f9dc91aa0853e6c9d4ef3078f10",
+    "title": "1.9: Removes both calls to `parseDependencyList` from `extractPackageFile()` in `extract.ts` (for project.dependencies and build-system.requires)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d384e093f2f709c6e45cb3d98799977e",
+    "title": "1.10: Removes both calls to `parseDependencyGroupRecord` from `extractPackageFile()` in `extract.ts` (for dependency-groups and optional-dependencies)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f3165d6f1171735b8a282478d0f9d7ba",
+    "title": "3.1: Removes all 3 obsolete functions (parseDependencyList, parseDependencyGroupRecord, and parsePyProject) from `utils.ts`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  }
+]

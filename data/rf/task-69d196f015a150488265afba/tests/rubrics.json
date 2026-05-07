@@ -1,0 +1,122 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "236ae529b57155a28f814836e58f24e6",
+    "title": "1.1: Exports createNodeGraphFrames as a named function from packages/grafana-o11y-ds-frontend/src/createNodeGraphFrames.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "581cefe7213f320026a3b7c31cfa9637",
+    "title": "1.2: Defines createNodeGraphFrames to accept a DataFrame parameter and return DataFrame[]",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "39c618fb4f07fd7ab6e57fb6060da613",
+    "title": "1.3: Includes trace-to-graph conversion logic that maps span data to node entries with standard node graph fields (id, title, subTitle, mainStat, secondaryStat, color) within the shared package",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b3af8492d893dc36e04d2ee1c65bff18",
+    "title": "1.4: Includes trace-to-graph conversion logic that maps parent-child span relationships to edge entries with standard edge fields (id, source, target) within the shared package",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a084cfa771133b65521db6eaea64b1bc",
+    "title": "1.5: Updates the barrel export in packages/grafana-o11y-ds-frontend/src/index.ts to re-export from the module containing createNodeGraphFrames",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "fc516b4679165aa01bb89c35df01cb39",
+    "title": "1.6: Updates the import in public/app/plugins/datasource/tempo/resultTransformer.ts to import createNodeGraphFrames from @grafana/o11y-ds-frontend",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "92638bd852ba9bbfef6a864101e41607",
+    "title": "1.7: Replaces both createGraphFrames invocations in resultTransformer.ts with createNodeGraphFrames in the transformFromOTLP and transformTrace functions",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c25a9d52304d630dd816f2192b8e8283",
+    "title": "3.1: Removes the createGraphFrames function definition and its private helpers (convertTraceToGraph, findTraceDuration) and associated type definitions (Row, Node, Edge) from graphTransform.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b931066868fa1553d2a96f2f06b5bc1a",
+    "title": "3.2: Removes the unused import of helper functions (getNonOverlappingDuration, getStats, makeFrames, makeSpanMap) from @grafana/o11y-ds-frontend in graphTransform.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "241694042374609b7cb75ae4b9bcf3ba",
+    "title": "4.1: Removes or modifies the mapPromMetricsToServiceMap function or its related metric constants in graphTransform.ts",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4e65b1bd8317adae1b4bce52f32e18f0",
+    "title": "4.2: Modifies any file with a .test.ts or .test.tsx extension",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "276171f5e77220cc4d145f2969b5eb74",
+    "title": "4.3: Alters the function signatures or exported behavior of existing shared utilities (getNonOverlappingDuration, getStats, makeFrames, makeSpanMap) in the @grafana/o11y-ds-frontend package",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

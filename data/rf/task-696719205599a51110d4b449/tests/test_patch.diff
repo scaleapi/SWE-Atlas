@@ -1,0 +1,259 @@
+diff --git a/js/modules/resolution_test.go b/js/modules/resolution_test.go
+new file mode 100644
+index 000000000..c0c34fd01
+--- /dev/null
++++ b/js/modules/resolution_test.go
+@@ -0,0 +1,253 @@
++package modules
++
++import (
++	"context"
++	"net/url"
++	"testing"
++
++	"github.com/dop251/goja"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++
++	"go.k6.io/k6/js/common"
++	"go.k6.io/k6/js/compiler"
++	"go.k6.io/k6/lib"
++	"go.k6.io/k6/lib/testutils"
++	"go.k6.io/k6/loader"
++)
++
++// mockVU implements the VU interface for testing
++type mockVU struct {
++	runtime *goja.Runtime
++	ctx     context.Context
++}
++
++func (m *mockVU) Runtime() *goja.Runtime {
++	return m.runtime
++}
++
++func (m *mockVU) Context() context.Context {
++	return m.ctx
++}
++
++func (m *mockVU) InitEnv() *common.InitEnvironment {
++	return nil
++}
++
++func (m *mockVU) State() *lib.State {
++	return nil
++}
++
++func (m *mockVU) RegisterCallback() func(func() error) {
++	return func(f func() error) { _ = f() }
++}
++
++func newTestCompiler(t testing.TB) *compiler.Compiler {
++	logger := testutils.NewLogger(t)
++	return compiler.New(logger)
++}
++
++func newTestModuleResolver(t testing.TB) *ModuleResolver {
++	c := newTestCompiler(t)
++	return NewModuleResolver(
++		map[string]interface{}{},
++		func(specifier *url.URL, name string) ([]byte, error) {
++			return nil, nil
++		},
++		c,
++	)
++}
++
++func TestResolveLoaded(t *testing.T) {
++	t.Parallel()
++
++	t.Run("CacheMiss", func(t *testing.T) {
++		t.Parallel()
++		mr := newTestModuleResolver(t)
++
++		baseURL, err := url.Parse("file:///test/")
++		require.NoError(t, err)
++
++		data := []byte(`module.exports = { value: 42 };`)
++		mod, err := mr.resolveLoaded(baseURL, "file:///test/module.js", data)
++		require.NoError(t, err)
++		require.NotNil(t, mod)
++
++		// Verify it was cached
++		cached, ok := mr.cache["file:///test/module.js"]
++		require.True(t, ok)
++		require.NotNil(t, cached.mod)
++		require.NoError(t, cached.err)
++	})
++
++	t.Run("CacheHit", func(t *testing.T) {
++		t.Parallel()
++		mr := newTestModuleResolver(t)
++
++		baseURL, err := url.Parse("file:///test/")
++		require.NoError(t, err)
++
++		// First call - cache miss
++		data := []byte(`module.exports = { value: 42 };`)
++		mod1, err := mr.resolveLoaded(baseURL, "file:///test/module.js", data)
++		require.NoError(t, err)
++		require.NotNil(t, mod1)
++
++		// Second call - should hit cache and return same module
++		mod2, err := mr.resolveLoaded(baseURL, "file:///test/module.js", []byte(`different data`))
++		require.NoError(t, err)
++		require.NotNil(t, mod2)
++
++		// Should be the same module (from cache)
++		assert.Equal(t, mod1, mod2)
++	})
++
++	t.Run("ResolveSpecifierError", func(t *testing.T) {
++		t.Parallel()
++		mr := newTestModuleResolver(t)
++
++		// Using an invalid base URL to trigger resolveSpecifier error
++		baseURL := &url.URL{}
++
++		data := []byte(`module.exports = { value: 42 };`)
++		mod, err := mr.resolveLoaded(baseURL, "", data)
++		require.Error(t, err)
++		require.Nil(t, mod)
++	})
++}
++
++func TestRunSourceData(t *testing.T) {
++	t.Parallel()
++
++	t.Run("Success", func(t *testing.T) {
++		t.Parallel()
++		mr := newTestModuleResolver(t)
++
++		vu := &mockVU{
++			runtime: goja.New(),
++			ctx:     context.Background(),
++		}
++		ms := NewModuleSystem(mr, vu)
++
++		sourceURL, err := url.Parse("file:///test/script.js")
++		require.NoError(t, err)
++
++		source := &loader.SourceData{
++			URL:  sourceURL,
++			Data: []byte(`module.exports = { answer: 42 };`),
++		}
++
++		result, err := ms.RunSourceData(source)
++		require.NoError(t, err)
++		require.NotNil(t, result)
++
++		// Verify the exported value
++		obj := result.ToObject(vu.runtime)
++		answer := obj.Get("answer")
++		require.NotNil(t, answer)
++		assert.Equal(t, int64(42), answer.ToInteger())
++	})
++
++	t.Run("CachedModuleReused", func(t *testing.T) {
++		t.Parallel()
++		mr := newTestModuleResolver(t)
++
++		vu := &mockVU{
++			runtime: goja.New(),
++			ctx:     context.Background(),
++		}
++		ms := NewModuleSystem(mr, vu)
++
++		sourceURL, err := url.Parse("file:///test/script.js")
++		require.NoError(t, err)
++
++		source := &loader.SourceData{
++			URL:  sourceURL,
++			Data: []byte(`module.exports = { counter: Math.random() };`),
++		}
++
++		// First call
++		result1, err := ms.RunSourceData(source)
++		require.NoError(t, err)
++		obj1 := result1.ToObject(vu.runtime)
++		counter1 := obj1.Get("counter").ToFloat()
++
++		// Second call with same source URL should return cached module
++		source2 := &loader.SourceData{
++			URL:  sourceURL,
++			Data: []byte(`module.exports = { counter: Math.random() };`),
++		}
++		result2, err := ms.RunSourceData(source2)
++		require.NoError(t, err)
++		obj2 := result2.ToObject(vu.runtime)
++		counter2 := obj2.Get("counter").ToFloat()
++
++		// Should be the same value (cached)
++		assert.Equal(t, counter1, counter2)
++	})
++
++	t.Run("ResolveLoadedError", func(t *testing.T) {
++		t.Parallel()
++		mr := newTestModuleResolver(t)
++
++		vu := &mockVU{
++			runtime: goja.New(),
++			ctx:     context.Background(),
++		}
++		ms := NewModuleSystem(mr, vu)
++
++		// Empty URL will cause resolveSpecifier to fail
++		source := &loader.SourceData{
++			URL:  &url.URL{},
++			Data: []byte(`module.exports = { value: 42 };`),
++		}
++
++		result, err := ms.RunSourceData(source)
++		require.Error(t, err)
++		require.Nil(t, result)
++	})
++
++	t.Run("InterfaceVerification", func(t *testing.T) {
++		t.Parallel()
++		// Verify RunSourceData signature matches interface.txt
++		mr := newTestModuleResolver(t)
++		vu := &mockVU{
++			runtime: goja.New(),
++			ctx:     context.Background(),
++		}
++		ms := NewModuleSystem(mr, vu)
++
++		// Method should exist and accept *loader.SourceData, return (goja.Value, error)
++		var _ func(*loader.SourceData) (goja.Value, error) = ms.RunSourceData
++	})
++}
++
++func TestRunSourceDataSpecifierAndPwd(t *testing.T) {
++	t.Parallel()
++
++	t.Run("CorrectSpecifierExtraction", func(t *testing.T) {
++		t.Parallel()
++		mr := newTestModuleResolver(t)
++
++		vu := &mockVU{
++			runtime: goja.New(),
++			ctx:     context.Background(),
++		}
++		ms := NewModuleSystem(mr, vu)
++
++		sourceURL, err := url.Parse("file:///path/to/script.js")
++		require.NoError(t, err)
++
++		source := &loader.SourceData{
++			URL:  sourceURL,
++			Data: []byte(`module.exports = {};`),
++		}
++
++		_, err = ms.RunSourceData(source)
++		require.NoError(t, err)
++
++		// Verify the specifier was used as cache key
++		_, ok := mr.cache["file:///path/to/script.js"]
++		assert.True(t, ok, "module should be cached with URL as specifier")
++	})
++}

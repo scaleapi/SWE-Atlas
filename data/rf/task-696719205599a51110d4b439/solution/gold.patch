@@ -1,0 +1,502 @@
+diff --git a/internal/js/modules/k6/browser/browser/browser_context_mapping.go b/internal/js/modules/k6/browser/browser/browser_context_mapping.go
+index 225d30bde..56c9e021a 100644
+--- a/internal/js/modules/k6/browser/browser/browser_context_mapping.go
++++ b/internal/js/modules/k6/browser/browser/browser_context_mapping.go
+@@ -11,6 +11,7 @@ import (
+ 	"go.k6.io/k6/internal/js/modules/k6/browser/common"
+ 	"go.k6.io/k6/internal/js/modules/k6/browser/k6error"
+ 	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext"
++	jsCommon "go.k6.io/k6/js/common"
+ )
+ 
+ // mapBrowserContext to the JS module.
+@@ -28,7 +29,7 @@ func mapBrowserContext(vu moduleVU, bc *common.BrowserContext) mapping { //nolin
+ 		},
+ 		"addInitScript": func(script sobek.Value) *sobek.Promise {
+ 			return k6ext.Promise(vu.Context(), func() (any, error) {
+-				if !sobekValueExists(script) {
++				if jsCommon.IsNullish(script) {
+ 					return nil, nil
+ 				}
+ 
+@@ -208,7 +209,7 @@ func parseWaitForEventOptions(
+ 		Timeout: defaultTime,
+ 	}
+ 
+-	if !sobekValueExists(optsOrPredicate) {
++	if jsCommon.IsNullish(optsOrPredicate) {
+ 		return w, nil
+ 	}
+ 	var isCallable bool
+diff --git a/internal/js/modules/k6/browser/browser/helpers.go b/internal/js/modules/k6/browser/browser/helpers.go
+index 3559457f6..b6adf0b3b 100644
+--- a/internal/js/modules/k6/browser/browser/helpers.go
++++ b/internal/js/modules/k6/browser/browser/helpers.go
+@@ -9,6 +9,7 @@ import (
+ 
+ 	"go.k6.io/k6/internal/js/modules/k6/browser/k6error"
+ 	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext"
++	"go.k6.io/k6/js/common"
+ )
+ 
+ func panicIfFatalError(ctx context.Context, err error) {
+@@ -19,7 +20,7 @@ func panicIfFatalError(ctx context.Context, err error) {
+ 
+ // mergeWith merges the Sobek value with the existing Go value.
+ func mergeWith[T any](rt *sobek.Runtime, src T, v sobek.Value) error {
+-	if !sobekValueExists(v) {
++	if common.IsNullish(v) {
+ 		return nil
+ 	}
+ 	return rt.ExportTo(v, &src) //nolint:wrapcheck
+@@ -30,7 +31,7 @@ func mergeWith[T any](rt *sobek.Runtime, src T, v sobek.Value) error {
+ // It's caller's responsibility to check for nilness.
+ func exportTo[T any](rt *sobek.Runtime, obj sobek.Value) (T, error) {
+ 	var t T
+-	if !sobekValueExists(obj) {
++	if common.IsNullish(obj) {
+ 		return t, nil
+ 	}
+ 	err := rt.ExportTo(obj, &t)
+@@ -40,7 +41,7 @@ func exportTo[T any](rt *sobek.Runtime, obj sobek.Value) (T, error) {
+ // exportArg exports the value and returns it.
+ // It returns nil if the value is undefined or null.
+ func exportArg(gv sobek.Value) any {
+-	if !sobekValueExists(gv) {
++	if common.IsNullish(gv) {
+ 		return nil
+ 	}
+ 	return gv.Export()
+@@ -57,13 +58,7 @@ func exportArgs(gargs []sobek.Value) []any {
+ 	return args
+ }
+ 
+-// sobekValueExists returns true if a given value is not nil and exists
+-// (defined and not null) in the sobek runtime.
+-func sobekValueExists(v sobek.Value) bool {
+-	return v != nil && !sobek.IsUndefined(v) && !sobek.IsNull(v)
+-}
+-
+ // sobekEmptyString returns true if a given value is not nil or an empty string.
+ func sobekEmptyString(v sobek.Value) bool {
+-	return !sobekValueExists(v) || strings.TrimSpace(v.String()) == ""
++	return common.IsNullish(v) || strings.TrimSpace(v.String()) == ""
+ }
+diff --git a/internal/js/modules/k6/browser/browser/page_mapping.go b/internal/js/modules/k6/browser/browser/page_mapping.go
+index 15dec1d8d..b997baff7 100644
+--- a/internal/js/modules/k6/browser/browser/page_mapping.go
++++ b/internal/js/modules/k6/browser/browser/page_mapping.go
+@@ -851,7 +851,7 @@ func parseStringOrRegex(v sobek.Value, doubleQuote bool) string {
+ 
+ // parseGetByRoleOptions parses the GetByRole options from the Sobek.Value.
+ func parseGetByRoleOptions(ctx context.Context, opts sobek.Value) *common.GetByRoleOptions {
+-	if !sobekValueExists(opts) {
++	if k6common.IsNullish(opts) {
+ 		return nil
+ 	}
+ 
+@@ -905,7 +905,7 @@ func parseGetByBaseOptions(
+ ) (string, *common.GetByBaseOptions) {
+ 	a := parseStringOrRegex(input, doubleQuote)
+ 
+-	if !sobekValueExists(opts) {
++	if k6common.IsNullish(opts) {
+ 		return a, nil
+ 	}
+ 
+diff --git a/internal/js/modules/k6/browser/browser/route_mapping.go b/internal/js/modules/k6/browser/browser/route_mapping.go
+index 7b6ba240e..61984fd9f 100644
+--- a/internal/js/modules/k6/browser/browser/route_mapping.go
++++ b/internal/js/modules/k6/browser/browser/route_mapping.go
+@@ -46,7 +46,7 @@ func mapRoute(vu moduleVU, route *common.Route) mapping {
+ 
+ func parseContinueOptions(ctx context.Context, opts sobek.Value) (common.ContinueOptions, error) {
+ 	copts := common.ContinueOptions{}
+-	if !sobekValueExists(opts) {
++	if jsCommon.IsNullish(opts) {
+ 		return copts, nil
+ 	}
+ 
+@@ -74,7 +74,7 @@ func parseContinueOptions(ctx context.Context, opts sobek.Value) (common.Continu
+ 
+ func parseFulfillOptions(ctx context.Context, opts sobek.Value) (common.FulfillOptions, error) {
+ 	fopts := common.FulfillOptions{}
+-	if !sobekValueExists(opts) {
++	if jsCommon.IsNullish(opts) {
+ 		return fopts, nil
+ 	}
+ 
+@@ -109,7 +109,7 @@ func parseHeaders(headers *sobek.Object) []common.HTTPHeader {
+ 	for _, hk := range headersKeys {
+ 		value := headers.Get(hk)
+ 		// Skip undefined headers
+-		if !sobekValueExists(value) {
++		if jsCommon.IsNullish(value) {
+ 			continue
+ 		}
+ 
+@@ -125,7 +125,7 @@ func parseWaitForResponseOptions(
+ 	ctx context.Context, opts sobek.Value, defaultTimeout time.Duration,
+ ) (*common.PageWaitForResponseOptions, error) {
+ 	ropts := common.NewPageWaitForResponseOptions(defaultTimeout)
+-	if !sobekValueExists(opts) {
++	if jsCommon.IsNullish(opts) {
+ 		return ropts, nil
+ 	}
+ 
+diff --git a/internal/js/modules/k6/browser/common/element_handle_options.go b/internal/js/modules/k6/browser/common/element_handle_options.go
+index 5fa0a752a..6ef6c3253 100644
+--- a/internal/js/modules/k6/browser/common/element_handle_options.go
++++ b/internal/js/modules/k6/browser/common/element_handle_options.go
+@@ -10,6 +10,7 @@ import (
+ 	"github.com/grafana/sobek"
+ 
+ 	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext"
++	"go.k6.io/k6/js/common"
+ )
+ 
+ type ElementHandleBaseOptions struct {
+@@ -144,7 +145,7 @@ func NewElementHandleBaseOptions(defaultTimeout time.Duration) *ElementHandleBas
+ 
+ // Parse parses the ElementHandleBaseOptions from the given opts.
+ func (o *ElementHandleBaseOptions) Parse(ctx context.Context, opts sobek.Value) error {
+-	if !sobekValueExists(opts) {
++	if common.IsNullish(opts) {
+ 		return nil
+ 	}
+ 	gopts := opts.ToObject(k6ext.Runtime(ctx))
+@@ -176,7 +177,7 @@ func (o *ElementHandleBasePointerOptions) Parse(ctx context.Context, opts sobek.
+ 	if err := o.ElementHandleBaseOptions.Parse(ctx, opts); err != nil {
+ 		return err
+ 	}
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+@@ -215,7 +216,7 @@ func NewElementHandleSetInputFilesOptions(defaultTimeout time.Duration) *Element
+ 
+ // addFile to the struct. Input value can only be a file descriptor object.
+ func (f *Files) addFile(ctx context.Context, file sobek.Value) error {
+-	if !sobekValueExists(file) {
++	if common.IsNullish(file) {
+ 		return nil
+ 	}
+ 	rt := k6ext.Runtime(ctx)
+@@ -237,7 +238,7 @@ func (f *Files) addFile(ctx context.Context, file sobek.Value) error {
+ // Parse parses the Files struct from the given sobek.Value.
+ func (f *Files) Parse(ctx context.Context, files sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if !sobekValueExists(files) {
++	if common.IsNullish(files) {
+ 		return nil
+ 	}
+ 
+@@ -283,7 +284,7 @@ func (o *ElementHandleClickOptions) Parse(ctx context.Context, opts sobek.Value)
+ 		return err
+ 	}
+ 
+-	if !sobekValueExists(opts) {
++	if common.IsNullish(opts) {
+ 		return nil
+ 	}
+ 
+@@ -332,7 +333,7 @@ func (o *ElementHandleDblclickOptions) Parse(ctx context.Context, opts sobek.Val
+ 	if err := o.ElementHandleBasePointerOptions.Parse(ctx, opts); err != nil {
+ 		return err
+ 	}
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+@@ -373,7 +374,7 @@ func (o *ElementHandleHoverOptions) Parse(ctx context.Context, opts sobek.Value)
+ 	if err := o.ElementHandleBasePointerOptions.Parse(ctx, opts); err != nil {
+ 		return err
+ 	}
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			if k == "modifiers" {
+@@ -399,7 +400,7 @@ func NewElementHandlePressOptions(defaultTimeout time.Duration) *ElementHandlePr
+ // Parse parses the ElementHandlePressOptions from the given opts.
+ func (o *ElementHandlePressOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+@@ -435,7 +436,7 @@ func NewElementHandleScreenshotOptions(defaultTimeout time.Duration) *ElementHan
+ 
+ // Parse parses the ElementHandleScreenshotOptions from the given opts.
+ func (o *ElementHandleScreenshotOptions) Parse(ctx context.Context, opts sobek.Value) error {
+-	if !sobekValueExists(opts) {
++	if common.IsNullish(opts) {
+ 		return nil
+ 	}
+ 
+@@ -485,7 +486,7 @@ func (o *ElementHandleSetCheckedOptions) Parse(ctx context.Context, opts sobek.V
+ 		return err
+ 	}
+ 
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			if k == "strict" {
+@@ -509,7 +510,7 @@ func (o *ElementHandleTapOptions) Parse(ctx context.Context, opts sobek.Value) e
+ 	if err := o.ElementHandleBasePointerOptions.Parse(ctx, opts); err != nil {
+ 		return err
+ 	}
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			if k == "modifiers" {
+@@ -535,7 +536,7 @@ func NewElementHandleTypeOptions(defaultTimeout time.Duration) *ElementHandleTyp
+ // Parse parses the ElementHandleTypeOptions from the given opts.
+ func (o *ElementHandleTypeOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+@@ -568,7 +569,7 @@ func NewElementHandleWaitForElementStateOptions(defaultTimeout time.Duration) *E
+ // Parse parses the ElementHandleWaitForElementStateOptions from the given opts.
+ func (o *ElementHandleWaitForElementStateOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			if k == "timeout" {
+diff --git a/internal/js/modules/k6/browser/common/frame_options.go b/internal/js/modules/k6/browser/common/frame_options.go
+index f12ac1dd8..8d90c7f01 100644
+--- a/internal/js/modules/k6/browser/common/frame_options.go
++++ b/internal/js/modules/k6/browser/common/frame_options.go
+@@ -11,6 +11,7 @@ import (
+ 	"github.com/grafana/sobek"
+ 
+ 	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext"
++	"go.k6.io/k6/js/common"
+ )
+ 
+ type FrameBaseOptions struct {
+@@ -211,7 +212,7 @@ func NewFrameBaseOptions(defaultTimeout time.Duration) *FrameBaseOptions {
+ // Parse parses the frame base options.
+ func (o *FrameBaseOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+@@ -300,7 +301,7 @@ func NewFrameGotoOptions(defaultReferer string, defaultTimeout time.Duration) *F
+ // Parse parses the frame goto options.
+ func (o *FrameGotoOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+@@ -497,7 +498,7 @@ func NewFrameSetContentOptions(defaultTimeout time.Duration) *FrameSetContentOpt
+ func (o *FrameSetContentOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+ 
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+@@ -545,7 +546,7 @@ func (o *FrameTapOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	if err := o.ElementHandleBasePointerOptions.Parse(ctx, opts); err != nil {
+ 		return err
+ 	}
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+@@ -617,7 +618,7 @@ func NewFrameWaitForFunctionOptions(defaultTimeout time.Duration) *FrameWaitForF
+ 
+ // Parse JavaScript waitForFunction options.
+ func (o *FrameWaitForFunctionOptions) Parse(ctx context.Context, opts sobek.Value) error {
+-	if !sobekValueExists(opts) {
++	if common.IsNullish(opts) {
+ 		return nil
+ 	}
+ 
+@@ -658,7 +659,7 @@ func NewFrameWaitForLoadStateOptions(defaultTimeout time.Duration) *FrameWaitFor
+ // Parse parses the frame waitForLoadState options.
+ func (o *FrameWaitForLoadStateOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			if k == "timeout" {
+@@ -680,7 +681,7 @@ func NewFrameWaitForNavigationOptions(defaultTimeout time.Duration) *FrameWaitFo
+ // Parse parses the frame waitForNavigation options.
+ func (o *FrameWaitForNavigationOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+@@ -719,7 +720,7 @@ func NewFrameWaitForSelectorOptions(defaultTimeout time.Duration) *FrameWaitForS
+ func (o *FrameWaitForSelectorOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+ 
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+@@ -757,7 +758,7 @@ func parseStrict(ctx context.Context, opts sobek.Value) bool {
+ 	var strict bool
+ 
+ 	rt := k6ext.Runtime(ctx)
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			if k == "strict" {
+@@ -786,7 +787,7 @@ func NewFrameWaitForURLOptions(defaultTimeout time.Duration) *FrameWaitForURLOpt
+ // Parse parses the frame waitForURL options.
+ func (o *FrameWaitForURLOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+diff --git a/internal/js/modules/k6/browser/common/helpers.go b/internal/js/modules/k6/browser/common/helpers.go
+index 79f10c57d..574315060 100644
+--- a/internal/js/modules/k6/browser/common/helpers.go
++++ b/internal/js/modules/k6/browser/common/helpers.go
+@@ -228,12 +228,6 @@ func TrimQuotes(s string) string {
+ 	return s
+ }
+ 
+-// sobekValueExists returns true if a given value is not nil and exists
+-// (defined and not null) in the sobek runtime.
+-func sobekValueExists(v sobek.Value) bool {
+-	return v != nil && !sobek.IsUndefined(v) && !sobek.IsNull(v)
+-}
+-
+ // convert is a helper function to convert any value to a given type.
+ // underneath, it uses json.Marshal and json.Unmarshal to do the conversion.
+ func convert[T any](from any, to *T) error {
+diff --git a/internal/js/modules/k6/browser/common/layout.go b/internal/js/modules/k6/browser/common/layout.go
+index a1f69e494..f98c7a308 100644
+--- a/internal/js/modules/k6/browser/common/layout.go
++++ b/internal/js/modules/k6/browser/common/layout.go
+@@ -8,6 +8,7 @@ import (
+ 	"github.com/grafana/sobek"
+ 
+ 	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext"
++	"go.k6.io/k6/js/common"
+ )
+ 
+ // Position represents a position.
+@@ -55,7 +56,7 @@ func (s Size) enclosingIntSize() *Size {
+ // Parse size details from a given sobek viewport value.
+ func (s *Size) Parse(ctx context.Context, viewport sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if viewport != nil && !sobek.IsUndefined(viewport) && !sobek.IsNull(viewport) {
++	if !common.IsNullish(viewport) {
+ 		viewport := viewport.ToObject(rt)
+ 		for _, k := range viewport.Keys() {
+ 			switch k {
+diff --git a/internal/js/modules/k6/browser/common/mouse_options.go b/internal/js/modules/k6/browser/common/mouse_options.go
+index 470bc9203..a4c48c03d 100644
+--- a/internal/js/modules/k6/browser/common/mouse_options.go
++++ b/internal/js/modules/k6/browser/common/mouse_options.go
+@@ -6,6 +6,7 @@ import (
+ 	"github.com/grafana/sobek"
+ 
+ 	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext"
++	"go.k6.io/k6/js/common"
+ )
+ 
+ type MouseClickOptions struct {
+@@ -39,7 +40,7 @@ func NewMouseClickOptions() *MouseClickOptions {
+ // Parse parses the mouse click options.
+ func (o *MouseClickOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+@@ -72,7 +73,7 @@ func NewMouseDblClickOptions() *MouseDblClickOptions {
+ // Parse parses the mouse double click options.
+ func (o *MouseDblClickOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+@@ -105,7 +106,7 @@ func NewMouseDownUpOptions() *MouseDownUpOptions {
+ // Parse parses the mouse down/up options.
+ func (o *MouseDownUpOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+@@ -128,7 +129,7 @@ func NewMouseMoveOptions() *MouseMoveOptions {
+ // Parse parses the mouse move options.
+ func (o *MouseMoveOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			if k == "steps" {
+diff --git a/internal/js/modules/k6/browser/common/page_options.go b/internal/js/modules/k6/browser/common/page_options.go
+index 386fd103f..05404d029 100644
+--- a/internal/js/modules/k6/browser/common/page_options.go
++++ b/internal/js/modules/k6/browser/common/page_options.go
+@@ -10,6 +10,7 @@ import (
+ 	"github.com/grafana/sobek"
+ 
+ 	"go.k6.io/k6/internal/js/modules/k6/browser/k6ext"
++	"go.k6.io/k6/js/common"
+ )
+ 
+ type PageEmulateMediaOptions struct {
+@@ -43,7 +44,7 @@ func NewPageEmulateMediaOptions(from *Page) *PageEmulateMediaOptions {
+ // Parse parses the page emulate media options.
+ func (o *PageEmulateMediaOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+@@ -69,7 +70,7 @@ func NewPageReloadOptions(defaultWaitUntil LifecycleEvent, defaultTimeout time.D
+ // Parse parses the page reload options.
+ func (o *PageReloadOptions) Parse(ctx context.Context, opts sobek.Value) error {
+ 	rt := k6ext.Runtime(ctx)
+-	if opts != nil && !sobek.IsUndefined(opts) && !sobek.IsNull(opts) {
++	if !common.IsNullish(opts) {
+ 		opts := opts.ToObject(rt)
+ 		for _, k := range opts.Keys() {
+ 			switch k {
+@@ -101,7 +102,7 @@ func NewPageScreenshotOptions() *PageScreenshotOptions {
+ 
+ // Parse parses the page screenshot options.
+ func (o *PageScreenshotOptions) Parse(ctx context.Context, opts sobek.Value) error {
+-	if !sobekValueExists(opts) {
++	if common.IsNullish(opts) {
+ 		return nil
+ 	}
+ 

@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "name": "packages/api-core/src/site-plans/__tests__/fetchers.ts"
+    },
+    {
+      "name": "packages/api-queries/src/__tests__/site-plans.ts"
+    }
+  ]
+}

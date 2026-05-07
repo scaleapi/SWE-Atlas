@@ -1,0 +1,1539 @@
+diff --git a/src/daemon/pulse/pulse-ingestion.c b/src/daemon/pulse/pulse-ingestion.c
+index c7704635e..9bdc9415f 100644
+--- a/src/daemon/pulse/pulse-ingestion.c
++++ b/src/daemon/pulse/pulse-ingestion.c
+@@ -7,7 +7,7 @@ static struct ingest_statistics {
+     uint64_t db_points_stored_per_tier[RRD_STORAGE_TIERS];
+ } ingest_statistics = { 0 };
+ 
+-void pulse_queries_rrdset_collection_completed(size_t *points_read_per_tier_array) {
++ALWAYS_INLINE void pulse_queries_rrdset_collection_completed(size_t *points_read_per_tier_array) {
+     for(size_t tier = 0; tier < nd_profile.storage_tiers;tier++) {
+         __atomic_fetch_add(&ingest_statistics.db_points_stored_per_tier[tier], points_read_per_tier_array[tier], __ATOMIC_RELAXED);
+         points_read_per_tier_array[tier] = 0;
+diff --git a/src/database/contexts/instance.c b/src/database/contexts/instance.c
+index 1be97371a..e58721595 100644
+--- a/src/database/contexts/instance.c
++++ b/src/database/contexts/instance.c
+@@ -512,7 +512,7 @@ inline void rrdinstance_updated_rrdset_flags(RRDSET *st) {
+     rrdinstance_trigger_updates(ri, __FUNCTION__ );
+ }
+ 
+-inline void rrdinstance_collected_rrdset(RRDSET *st) {
++ALWAYS_INLINE void rrdinstance_collected_rrdset(RRDSET *st) {
+     if(st->rrdcontexts.collected)
+         return;
+ 
+diff --git a/src/database/contexts/rrdcontext.c b/src/database/contexts/rrdcontext.c
+index 2032f6f24..7256b7950 100644
+--- a/src/database/contexts/rrdcontext.c
++++ b/src/database/contexts/rrdcontext.c
+@@ -88,7 +88,7 @@ void rrdcontext_updated_rrdset_flags(RRDSET *st) {
+     rrdinstance_updated_rrdset_flags(st);
+ }
+ 
+-void rrdcontext_collected_rrdset(RRDSET *st) {
++ALWAYS_INLINE void rrdcontext_collected_rrdset(RRDSET *st) {
+     rrdinstance_collected_rrdset(st);
+ }
+ 
+diff --git a/src/database/engine/cache.c b/src/database/engine/cache.c
+index 2a175ca81..d364815ee 100644
+--- a/src/database/engine/cache.c
++++ b/src/database/engine/cache.c
+@@ -591,7 +591,7 @@ static void pgc_section_pages_static_aral_init(void) {
+     spinlock_unlock(&spinlock);
+ }
+ 
+-static inline void
++static ALWAYS_INLINE void
+ pgc_stats_queue_judy_change(PGC *cache, struct pgc_queue *ll, size_t mem_before_judyl, size_t mem_after_judyl) {
+     if(mem_after_judyl > mem_before_judyl) {
+         __atomic_add_fetch(&ll->stats->size, mem_after_judyl - mem_before_judyl, __ATOMIC_RELAXED);
+@@ -603,7 +603,7 @@ pgc_stats_queue_judy_change(PGC *cache, struct pgc_queue *ll, size_t mem_before_
+     }
+ }
+ 
+-static inline void pgc_stats_index_judy_change(PGC *cache, size_t mem_before_judyl, size_t mem_after_judyl) {
++static ALWAYS_INLINE void pgc_stats_index_judy_change(PGC *cache, size_t mem_before_judyl, size_t mem_after_judyl) {
+     if(mem_after_judyl > mem_before_judyl) {
+         __atomic_add_fetch(&cache->stats.size, mem_after_judyl - mem_before_judyl, __ATOMIC_RELAXED);
+     }
+@@ -612,7 +612,7 @@ static inline void pgc_stats_index_judy_change(PGC *cache, size_t mem_before_jud
+     }
+ }
+ 
+-static void pgc_queue_add(PGC *cache __maybe_unused, struct pgc_queue *q, PGC_PAGE *page, bool having_lock, WAITQ_PRIORITY prio __maybe_unused) {
++static ALWAYS_INLINE void pgc_queue_add(PGC *cache __maybe_unused, struct pgc_queue *q, PGC_PAGE *page, bool having_lock, WAITQ_PRIORITY prio __maybe_unused) {
+     if(!having_lock)
+         pgc_queue_lock(cache, q, prio);
+ 
+@@ -681,7 +681,7 @@ static void pgc_queue_add(PGC *cache __maybe_unused, struct pgc_queue *q, PGC_PA
+         pgc_size_histogram_add(cache, &q->stats->size_histogram, page);
+ }
+ 
+-static void pgc_queue_del(PGC *cache __maybe_unused, struct pgc_queue *q, PGC_PAGE *page, bool having_lock,
++static ALWAYS_INLINE void pgc_queue_del(PGC *cache __maybe_unused, struct pgc_queue *q, PGC_PAGE *page, bool having_lock,
+     WAITQ_PRIORITY prio __maybe_unused) {
+     if(cache->config.stats)
+         pgc_size_histogram_del(cache, &q->stats->size_histogram, page);
+@@ -735,7 +735,7 @@ static void pgc_queue_del(PGC *cache __maybe_unused, struct pgc_queue *q, PGC_PA
+         pgc_queue_unlock(cache, q);
+ }
+ 
+-static inline void page_has_been_accessed(PGC *cache, PGC_PAGE *page) {
++static ALWAYS_INLINE void page_has_been_accessed(PGC *cache, PGC_PAGE *page) {
+     PGC_PAGE_FLAGS flags = page_flag_check(page, PGC_PAGE_CLEAN | PGC_PAGE_HAS_NO_DATA_IGNORE_ACCESSES);
+ 
+     if (!(flags & PGC_PAGE_HAS_NO_DATA_IGNORE_ACCESSES)) {
+@@ -758,7 +758,7 @@ static inline void page_has_been_accessed(PGC *cache, PGC_PAGE *page) {
+ // ----------------------------------------------------------------------------
+ // state transitions
+ 
+-static inline void page_set_clean(PGC *cache, PGC_PAGE *page, bool having_transition_lock, bool having_clean_lock, WAITQ_PRIORITY prio) {
++static ALWAYS_INLINE void page_set_clean(PGC *cache, PGC_PAGE *page, bool having_transition_lock, bool having_clean_lock, WAITQ_PRIORITY prio) {
+     if(!having_transition_lock)
+         page_transition_lock(cache, page);
+ 
+@@ -783,7 +783,7 @@ static inline void page_set_clean(PGC *cache, PGC_PAGE *page, bool having_transi
+         page_transition_unlock(cache, page);
+ }
+ 
+-static inline void page_set_dirty(PGC *cache, PGC_PAGE *page, bool having_hot_lock, WAITQ_PRIORITY prio) {
++static ALWAYS_INLINE void page_set_dirty(PGC *cache, PGC_PAGE *page, bool having_hot_lock, WAITQ_PRIORITY prio) {
+     if(!having_hot_lock)
+         // to avoid deadlocks, we have to get the hot lock before the page transition
+         // since this is what all_hot_to_dirty() does
+@@ -825,7 +825,7 @@ static inline void page_set_dirty(PGC *cache, PGC_PAGE *page, bool having_hot_lo
+     page_transition_unlock(cache, page);
+ }
+ 
+-static inline void page_set_hot(PGC *cache, PGC_PAGE *page, WAITQ_PRIORITY prio) {
++static ALWAYS_INLINE void page_set_hot(PGC *cache, PGC_PAGE *page, WAITQ_PRIORITY prio) {
+     page_transition_lock(cache, page);
+ 
+     PGC_PAGE_FLAGS flags = page_get_status_flags(page);
+@@ -851,16 +851,16 @@ static inline void page_set_hot(PGC *cache, PGC_PAGE *page, WAITQ_PRIORITY prio)
+ // ----------------------------------------------------------------------------
+ // Referencing
+ 
+-static inline size_t PGC_REFERENCED_PAGES(PGC *cache) {
++static ALWAYS_INLINE size_t PGC_REFERENCED_PAGES(PGC *cache) {
+     return __atomic_load_n(&cache->stats.referenced_entries, __ATOMIC_RELAXED);
+ }
+ 
+-static inline void PGC_REFERENCED_PAGES_PLUS1(PGC *cache, PGC_PAGE *page) {
++static ALWAYS_INLINE void PGC_REFERENCED_PAGES_PLUS1(PGC *cache, PGC_PAGE *page) {
+     __atomic_add_fetch(&cache->stats.referenced_entries, 1, __ATOMIC_RELAXED);
+     __atomic_add_fetch(&cache->stats.referenced_size, page->assumed_size, __ATOMIC_RELAXED);
+ }
+ 
+-static inline void PGC_REFERENCED_PAGES_MINUS1(PGC *cache, size_t assumed_size) {
++static ALWAYS_INLINE void PGC_REFERENCED_PAGES_MINUS1(PGC *cache, size_t assumed_size) {
+     __atomic_sub_fetch(&cache->stats.referenced_entries, 1, __ATOMIC_RELAXED);
+     __atomic_sub_fetch(&cache->stats.referenced_size, assumed_size, __ATOMIC_RELAXED);
+ }
+@@ -868,7 +868,7 @@ static inline void PGC_REFERENCED_PAGES_MINUS1(PGC *cache, size_t assumed_size)
+ // If the page is not already acquired,
+ // YOU HAVE TO HAVE THE QUEUE (hot, dirty, clean - the page is in), LOCKED!
+ // If you don't have it locked, NOTHING PREVENTS THIS PAGE FROM VANISHING WHILE THIS IS CALLED!
+-static inline bool page_acquire(PGC *cache, PGC_PAGE *page) {
++static ALWAYS_INLINE bool page_acquire(PGC *cache, PGC_PAGE *page) {
+     __atomic_add_fetch(&cache->stats.acquires, 1, __ATOMIC_RELAXED);
+ 
+     REFCOUNT rc = refcount_acquire_advanced(&page->refcount);
+@@ -882,7 +882,7 @@ static inline bool page_acquire(PGC *cache, PGC_PAGE *page) {
+     return false;
+ }
+ 
+-static inline void page_release(PGC *cache, PGC_PAGE *page, bool evict_if_necessary) {
++static ALWAYS_INLINE void page_release(PGC *cache, PGC_PAGE *page, bool evict_if_necessary) {
+     __atomic_add_fetch(&cache->stats.releases, 1, __ATOMIC_RELAXED);
+ 
+     size_t assumed_size = page->assumed_size; // take the size before we release it
+@@ -895,7 +895,7 @@ static inline void page_release(PGC *cache, PGC_PAGE *page, bool evict_if_necess
+     }
+ }
+ 
+-static inline bool non_acquired_page_get_for_deletion___while_having_clean_locked(PGC *cache __maybe_unused, PGC_PAGE *page) {
++static ALWAYS_INLINE bool non_acquired_page_get_for_deletion___while_having_clean_locked(PGC *cache __maybe_unused, PGC_PAGE *page) {
+     __atomic_add_fetch(&cache->stats.acquires_for_deletion, 1, __ATOMIC_RELAXED);
+ 
+     internal_fatal(!is_page_clean(page),
+@@ -914,7 +914,7 @@ static inline bool non_acquired_page_get_for_deletion___while_having_clean_locke
+     return false;
+ }
+ 
+-static inline bool acquired_page_get_for_deletion_or_release_it(PGC *cache __maybe_unused, PGC_PAGE *page) {
++static ALWAYS_INLINE bool acquired_page_get_for_deletion_or_release_it(PGC *cache __maybe_unused, PGC_PAGE *page) {
+     __atomic_add_fetch(&cache->stats.acquires_for_deletion, 1, __ATOMIC_RELAXED);
+ 
+     size_t assumed_size = page->assumed_size; // take the size before we release it
+@@ -1489,7 +1489,7 @@ static PGC_PAGE *page_add(PGC *cache, PGC_ENTRY *entry, bool *added) {
+     return page;
+ }
+ 
+-static inline PGC_PAGE *page_find_and_acquire_exact_unsafe(PGC *cache, Pvoid_t *pages_judy_pptr, time_t start_time_s) {
++static ALWAYS_INLINE PGC_PAGE *page_find_and_acquire_exact_unsafe(PGC *cache, Pvoid_t *pages_judy_pptr, time_t start_time_s) {
+     Pvoid_t *page_ptr = JudyLGet(*pages_judy_pptr, start_time_s, PJE0);
+     if(!page_ptr)
+         return NULL;
+@@ -1505,7 +1505,7 @@ static inline PGC_PAGE *page_find_and_acquire_exact_unsafe(PGC *cache, Pvoid_t *
+     return NULL;
+ }
+ 
+-static inline PGC_PAGE *page_find_and_acquire_first_unsafe(PGC *cache, Pvoid_t *pages_judy_pptr, time_t start_time_s) {
++static ALWAYS_INLINE PGC_PAGE *page_find_and_acquire_first_unsafe(PGC *cache, Pvoid_t *pages_judy_pptr, time_t start_time_s) {
+     Word_t time = start_time_s;
+     for(Pvoid_t *page_ptr = JudyLFirst(*pages_judy_pptr, &time, PJE0);
+          page_ptr ;
+@@ -1523,7 +1523,7 @@ static inline PGC_PAGE *page_find_and_acquire_first_unsafe(PGC *cache, Pvoid_t *
+     return NULL;
+ }
+ 
+-static inline PGC_PAGE *page_find_and_acquire_next_unsafe(PGC *cache, Pvoid_t *pages_judy_pptr, time_t start_time_s) {
++static ALWAYS_INLINE PGC_PAGE *page_find_and_acquire_next_unsafe(PGC *cache, Pvoid_t *pages_judy_pptr, time_t start_time_s) {
+     Word_t time = start_time_s;
+     for(Pvoid_t *page_ptr = JudyLNext(*pages_judy_pptr, &time, PJE0);
+          page_ptr ;
+@@ -1541,7 +1541,7 @@ static inline PGC_PAGE *page_find_and_acquire_next_unsafe(PGC *cache, Pvoid_t *p
+     return NULL;
+ }
+ 
+-static inline PGC_PAGE *page_find_and_acquire_last_unsafe(PGC *cache, Pvoid_t *pages_judy_pptr, time_t start_time_s) {
++static ALWAYS_INLINE PGC_PAGE *page_find_and_acquire_last_unsafe(PGC *cache, Pvoid_t *pages_judy_pptr, time_t start_time_s) {
+     Word_t time = start_time_s;
+     for(Pvoid_t *page_ptr = JudyLLast(*pages_judy_pptr, &time, PJE0);
+          page_ptr ;
+@@ -1559,7 +1559,7 @@ static inline PGC_PAGE *page_find_and_acquire_last_unsafe(PGC *cache, Pvoid_t *p
+     return NULL;
+ }
+ 
+-static inline PGC_PAGE *page_find_and_acquire_prev_unsafe(PGC *cache, Pvoid_t *pages_judy_pptr, time_t start_time_s) {
++static ALWAYS_INLINE PGC_PAGE *page_find_and_acquire_prev_unsafe(PGC *cache, Pvoid_t *pages_judy_pptr, time_t start_time_s) {
+     Word_t time = start_time_s;
+     for(Pvoid_t *page_ptr = JudyLPrev(*pages_judy_pptr, &time, PJE0);
+          page_ptr ;
+@@ -1577,7 +1577,7 @@ static inline PGC_PAGE *page_find_and_acquire_prev_unsafe(PGC *cache, Pvoid_t *p
+     return NULL;
+ }
+ 
+-static PGC_PAGE *page_find_and_acquire_once(PGC *cache, Word_t section, Word_t metric_id, time_t start_time_s, PGC_SEARCH method) {
++static ALWAYS_INLINE PGC_PAGE *page_find_and_acquire_once(PGC *cache, Word_t section, Word_t metric_id, time_t start_time_s, PGC_SEARCH method) {
+     PGC_PAGE *page = NULL;
+     size_t partition = pgc_indexing_partition(cache, metric_id);
+ 
+@@ -2126,7 +2126,7 @@ PGC_PAGE *pgc_page_dup(PGC *cache, PGC_PAGE *page) {
+     return page;
+ }
+ 
+-void pgc_page_release(PGC *cache, PGC_PAGE *page) {
++ALWAYS_INLINE void pgc_page_release(PGC *cache, PGC_PAGE *page) {
+     page_release(cache, page, is_page_clean(page));
+ }
+ 
+diff --git a/src/database/engine/rrdengineapi.c b/src/database/engine/rrdengineapi.c
+index 912f2aca3..1546d4e79 100755
+--- a/src/database/engine/rrdengineapi.c
++++ b/src/database/engine/rrdengineapi.c
+@@ -803,7 +803,7 @@ void rrdeng_load_metric_init(STORAGE_METRIC_HANDLE *smh,
+     }
+ }
+ 
+-static inline bool rrdeng_load_page_next(struct storage_engine_query_handle *seqh, bool debug_this __maybe_unused) {
++static ALWAYS_INLINE bool rrdeng_load_page_next(struct storage_engine_query_handle *seqh, bool debug_this __maybe_unused) {
+     struct rrdeng_query_handle *handle = (struct rrdeng_query_handle *)seqh->handle;
+     struct rrdengine_instance *ctx = mrg_metric_ctx(handle->metric);
+ 
+diff --git a/src/database/rrddim-collection.c b/src/database/rrddim-collection.c
+index 7abb9ed53..6cd29ba79 100644
+--- a/src/database/rrddim-collection.c
++++ b/src/database/rrddim-collection.c
+@@ -2,7 +2,7 @@
+ 
+ #include "rrddim-collection.h"
+ 
+-void store_metric_collection_completed() {
++ALWAYS_INLINE void store_metric_collection_completed() {
+     pulse_queries_rrdset_collection_completed(rrdset_done_statistics_points_stored_per_tier);
+ }
+ 
+diff --git a/src/libnetdata/atomics/refcount.h b/src/libnetdata/atomics/refcount.h
+index b6e7a1be5..c7d81a7bd 100644
+--- a/src/libnetdata/atomics/refcount.h
++++ b/src/libnetdata/atomics/refcount.h
+@@ -40,7 +40,7 @@ typedef int32_t REFCOUNT;
+     ((refcount) >= REFCOUNT_DELETED && (refcount) <= -REFCOUNT_MAX))
+ 
+ // returns the non-usable refcount found when it fails, the final refcount when it succeeds
+-static inline REFCOUNT WARNUNUSED refcount_acquire_advanced_with_trace(REFCOUNT *refcount, const char *func __maybe_unused) {
++static ALWAYS_INLINE REFCOUNT WARNUNUSED refcount_acquire_advanced_with_trace(REFCOUNT *refcount, const char *func __maybe_unused) {
+     REFCOUNT expected = refcount_references(refcount);
+     REFCOUNT desired;
+ 
+@@ -60,12 +60,12 @@ static inline REFCOUNT WARNUNUSED refcount_acquire_advanced_with_trace(REFCOUNT
+     return desired;
+ }
+ 
+-static inline bool WARNUNUSED refcount_acquire_with_trace(REFCOUNT *refcount, const char *func) {
++static ALWAYS_INLINE bool WARNUNUSED refcount_acquire_with_trace(REFCOUNT *refcount, const char *func) {
+     return REFCOUNT_ACQUIRED(refcount_acquire_advanced_with_trace(refcount, func));
+ }
+ 
+ // returns the number of references remaining
+-static inline REFCOUNT refcount_release_with_trace(REFCOUNT *refcount, const char *func __maybe_unused) {
++static ALWAYS_INLINE REFCOUNT refcount_release_with_trace(REFCOUNT *refcount, const char *func __maybe_unused) {
+     REFCOUNT expected, desired;
+ 
+     do {
+@@ -84,7 +84,7 @@ static inline REFCOUNT refcount_release_with_trace(REFCOUNT *refcount, const cha
+ }
+ 
+ // returns true when the item can be deleted, false when the item is currently referenced
+-static inline bool WARNUNUSED refcount_acquire_for_deletion_with_trace(REFCOUNT *refcount, const char *func __maybe_unused) {
++static ALWAYS_INLINE bool WARNUNUSED refcount_acquire_for_deletion_with_trace(REFCOUNT *refcount, const char *func __maybe_unused) {
+     REFCOUNT expected = 0;
+     REFCOUNT desired = REFCOUNT_DELETED;
+ 
+@@ -97,7 +97,7 @@ static inline bool WARNUNUSED refcount_acquire_for_deletion_with_trace(REFCOUNT
+     return false;
+ }
+ 
+-static inline bool WARNUNUSED refcount_release_and_acquire_for_deletion_with_trace(REFCOUNT *refcount, const char *func __maybe_unused) {
++static ALWAYS_INLINE bool WARNUNUSED refcount_release_and_acquire_for_deletion_with_trace(REFCOUNT *refcount, const char *func __maybe_unused) {
+     REFCOUNT expected, desired;
+ 
+     do {
+@@ -123,7 +123,7 @@ static inline bool WARNUNUSED refcount_release_and_acquire_for_deletion_with_tra
+ // this sleeps for 1 nanosecond (posix systems), or Sleep(0) on Windows
+ void tinysleep(void);
+ 
+-static inline bool refcount_acquire_for_deletion_and_wait_with_trace(REFCOUNT *refcount, const char *func) {
++static ALWAYS_INLINE bool refcount_acquire_for_deletion_and_wait_with_trace(REFCOUNT *refcount, const char *func) {
+     REFCOUNT expected = refcount_references(refcount);
+     REFCOUNT desired;
+ 
+diff --git a/src/libnetdata/buffer/buffer.c b/src/libnetdata/buffer/buffer.c
+index 56ff3c333..9e239638f 100644
+--- a/src/libnetdata/buffer/buffer.c
++++ b/src/libnetdata/buffer/buffer.c
+@@ -2,13 +2,13 @@
+ 
+ #include "../libnetdata.h"
+ 
+-static inline void buffer_overflow_init(BUFFER *b)
++static ALWAYS_INLINE void buffer_overflow_init(BUFFER *b)
+ {
+     b->buffer[b->size] = '\0';
+     strcpy(&b->buffer[b->size + 1], BUFFER_OVERFLOW_EOF);
+ }
+ 
+-void buffer_reset(BUFFER *wb) {
++ALWAYS_INLINE void buffer_reset(BUFFER *wb) {
+     buffer_flush(wb);
+ 
+     wb->content_type = CT_TEXT_PLAIN;
+@@ -31,7 +31,7 @@ void buffer_char_replace(BUFFER *wb, char from, char to) {
+     buffer_overflow_check(wb);
+ }
+ 
+-void buffer_print_sn_flags(BUFFER *wb, SN_FLAGS flags, bool send_anomaly_bit) {
++ALWAYS_INLINE void buffer_print_sn_flags(BUFFER *wb, SN_FLAGS flags, bool send_anomaly_bit) {
+     if(unlikely(flags == SN_EMPTY_SLOT)) {
+         buffer_fast_strcat(wb, "E", 1);
+         return;
+@@ -90,7 +90,7 @@ void buffer_snprintf(BUFFER *wb, size_t len, const char *fmt, ...)
+     // the buffer is \0 terminated by vsnprintfz
+ }
+ 
+-inline void buffer_vsprintf(BUFFER *wb, const char *fmt, va_list args) {
++void buffer_vsprintf(BUFFER *wb, const char *fmt, va_list args) {
+     if(unlikely(!fmt || !*fmt)) return;
+ 
+     size_t full_size_bytes = 0, need = 2, space_remaining = 0;
+diff --git a/src/libnetdata/buffer/buffer.h b/src/libnetdata/buffer/buffer.h
+index b3db24b0a..21afac077 100644
+--- a/src/libnetdata/buffer/buffer.h
++++ b/src/libnetdata/buffer/buffer.h
+@@ -84,7 +84,7 @@ static inline void _buffer_overflow_check(BUFFER *b __maybe_unused) {
+                    "BUFFER: detected overflow.");
+ }
+ 
+-static inline void buffer_flush(BUFFER *wb) {
++static ALWAYS_INLINE void buffer_flush(BUFFER *wb) {
+     wb->len = 0;
+ 
+     wb->json.depth = 0;
+@@ -117,7 +117,7 @@ void buffer_char_replace(BUFFER *wb, char from, char to);
+ 
+ void buffer_print_sn_flags(BUFFER *wb, SN_FLAGS flags, bool send_anomaly_bit);
+ 
+-static inline void buffer_need_bytes(BUFFER *buffer, size_t needed_free_size) {
++static ALWAYS_INLINE void buffer_need_bytes(BUFFER *buffer, size_t needed_free_size) {
+     if(unlikely(buffer->len + needed_free_size >= buffer->size))
+         buffer_increase(buffer, needed_free_size + 1);
+ }
+@@ -127,7 +127,7 @@ void buffer_json_initialize(BUFFER *wb, const char *key_quote, const char *value
+ 
+ void buffer_json_finalize(BUFFER *wb);
+ 
+-static const char *buffer_tostring(BUFFER *wb)
++static ALWAYS_INLINE const char *buffer_tostring(BUFFER *wb)
+ {
+     if(unlikely(!wb))
+         return NULL;
+@@ -140,7 +140,7 @@ static const char *buffer_tostring(BUFFER *wb)
+     return(wb->buffer);
+ }
+ 
+-static inline void _buffer_json_depth_push(BUFFER *wb, BUFFER_JSON_NODE_TYPE type) {
++static ALWAYS_INLINE void _buffer_json_depth_push(BUFFER *wb, BUFFER_JSON_NODE_TYPE type) {
+ #ifdef NETDATA_INTERNAL_CHECKS
+     assert(wb->json.depth <= BUFFER_JSON_MAX_DEPTH && "BUFFER JSON: max nesting reached");
+ #endif
+@@ -152,18 +152,18 @@ static inline void _buffer_json_depth_push(BUFFER *wb, BUFFER_JSON_NODE_TYPE typ
+     wb->json.stack[wb->json.depth].type = type;
+ }
+ 
+-static inline void _buffer_json_depth_pop(BUFFER *wb) {
++static ALWAYS_INLINE void _buffer_json_depth_pop(BUFFER *wb) {
+     wb->json.depth--;
+ }
+ 
+-static inline void buffer_putc(BUFFER *wb, char c) {
++static ALWAYS_INLINE void buffer_putc(BUFFER *wb, char c) {
+     buffer_need_bytes(wb, 2);
+     wb->buffer[wb->len++] = c;
+     wb->buffer[wb->len] = '\0';
+     buffer_overflow_check(wb);
+ }
+ 
+-static inline void buffer_fast_rawcat(BUFFER *wb, const char *txt, size_t len) {
++static ALWAYS_INLINE void buffer_fast_rawcat(BUFFER *wb, const char *txt, size_t len) {
+     if(unlikely(!txt || !*txt || !len)) return;
+ 
+     buffer_need_bytes(wb, len + 1);
+@@ -182,7 +182,7 @@ static inline void buffer_fast_rawcat(BUFFER *wb, const char *txt, size_t len) {
+     buffer_overflow_check(wb);
+ }
+ 
+-static inline void buffer_fast_strcat(BUFFER *wb, const char *txt, size_t len) {
++static ALWAYS_INLINE void buffer_fast_strcat(BUFFER *wb, const char *txt, size_t len) {
+     if(unlikely(!txt || !*txt || !len)) return;
+ 
+     buffer_need_bytes(wb, len + 1);
+@@ -209,7 +209,7 @@ static inline void buffer_fast_strcat(BUFFER *wb, const char *txt, size_t len) {
+     buffer_overflow_check(wb);
+ }
+ 
+-static inline void buffer_strcat(BUFFER *wb, const char *txt) {
++static ALWAYS_INLINE void buffer_strcat(BUFFER *wb, const char *txt) {
+     if(unlikely(!txt || !*txt)) return;
+ 
+     const char *t = txt;
+@@ -231,7 +231,7 @@ static inline void buffer_strcat(BUFFER *wb, const char *txt) {
+     buffer_overflow_check(wb);
+ }
+ 
+-static inline void buffer_contents_replace(BUFFER *wb, const char *txt, size_t len) {
++static ALWAYS_INLINE void buffer_contents_replace(BUFFER *wb, const char *txt, size_t len) {
+     wb->len = 0;
+     buffer_need_bytes(wb, len + 1);
+ 
+@@ -242,7 +242,7 @@ static inline void buffer_contents_replace(BUFFER *wb, const char *txt, size_t l
+     buffer_overflow_check(wb);
+ }
+ 
+-static inline void buffer_strncat(BUFFER *wb, const char *txt, size_t len) {
++static ALWAYS_INLINE void buffer_strncat(BUFFER *wb, const char *txt, size_t len) {
+     if(unlikely(!txt || !*txt)) return;
+ 
+     buffer_need_bytes(wb, len + 1);
+@@ -255,7 +255,7 @@ static inline void buffer_strncat(BUFFER *wb, const char *txt, size_t len) {
+     buffer_overflow_check(wb);
+ }
+ 
+-static inline void buffer_memcat(BUFFER *wb, const void *mem, size_t bytes) {
++static ALWAYS_INLINE void buffer_memcat(BUFFER *wb, const void *mem, size_t bytes) {
+     if(unlikely(!mem)) return;
+ 
+     buffer_need_bytes(wb, bytes + 1);
+@@ -268,7 +268,7 @@ static inline void buffer_memcat(BUFFER *wb, const void *mem, size_t bytes) {
+     buffer_overflow_check(wb);
+ }
+ 
+-static inline void buffer_json_strcat(BUFFER *wb, const char *txt)
++static ALWAYS_INLINE void buffer_json_strcat(BUFFER *wb, const char *txt)
+ {
+     if(unlikely(!txt || !*txt)) return;
+ 
+@@ -333,7 +333,7 @@ static inline void buffer_json_strcat(BUFFER *wb, const char *txt)
+     buffer_overflow_check(wb);
+ }
+ 
+-static inline void buffer_json_quoted_strcat(BUFFER *wb, const char *txt) {
++static ALWAYS_INLINE void buffer_json_quoted_strcat(BUFFER *wb, const char *txt) {
+     if(unlikely(!txt || !*txt)) return;
+ 
+     if(*txt == '"')
+@@ -372,13 +372,13 @@ static inline void buffer_json_quoted_strcat(BUFFER *wb, const char *txt) {
+ // point the remaining value fits in 32 bits, and then calls
+ // print_number_lu_r() to print the rest with 32 bit arithmetic.
+ 
+-static inline char *print_uint32_reversed(char *dst, uint32_t value) {
++static ALWAYS_INLINE char *print_uint32_reversed(char *dst, uint32_t value) {
+     char *d = dst;
+     do *d++ = (char)('0' + (value % 10)); while((value /= 10));
+     return d;
+ }
+ 
+-static inline char *print_uint64_reversed(char *dst, uint64_t value) {
++static ALWAYS_INLINE char *print_uint64_reversed(char *dst, uint64_t value) {
+ #ifdef ENV32BIT
+     if(value <= (uint64_t)0xffffffff)
+         return print_uint32_reversed(dst, value);
+@@ -394,14 +394,14 @@ static inline char *print_uint64_reversed(char *dst, uint64_t value) {
+ #endif
+ }
+ 
+-static inline char *print_uint32_hex_reversed(char *dst, uint32_t value) {
++static ALWAYS_INLINE char *print_uint32_hex_reversed(char *dst, uint32_t value) {
+     static const char *digits = "0123456789ABCDEF";
+     char *d = dst;
+     do *d++ = digits[value & 0xf]; while((value >>= 4));
+     return d;
+ }
+ 
+-static inline char *print_uint64_hex_reversed(char *dst, uint64_t value) {
++static ALWAYS_INLINE char *print_uint64_hex_reversed(char *dst, uint64_t value) {
+ #ifdef ENV32BIT
+     if(value <= (uint64_t)0xffffffff)
+         return print_uint32_hex_reversed(dst, value);
+@@ -417,7 +417,7 @@ static inline char *print_uint64_hex_reversed(char *dst, uint64_t value) {
+ #endif
+ }
+ 
+-static inline char *print_uint64_hex_reversed_full(char *dst, uint64_t value) {
++static ALWAYS_INLINE char *print_uint64_hex_reversed_full(char *dst, uint64_t value) {
+     char *d = dst;
+     for(size_t c = 0; c < sizeof(uint64_t) * 2; c++) {
+         *d++ = hex_digits[value & 0xf];
+@@ -427,19 +427,19 @@ static inline char *print_uint64_hex_reversed_full(char *dst, uint64_t value) {
+     return d;
+ }
+ 
+-static inline char *print_uint64_base64_reversed(char *dst, uint64_t value) {
++static ALWAYS_INLINE char *print_uint64_base64_reversed(char *dst, uint64_t value) {
+     char *d = dst;
+     do *d++ = base64_digits[value & 63]; while ((value >>= 6));
+     return d;
+ }
+ 
+-static inline void char_array_reverse(char *from, char *to) {
++static ALWAYS_INLINE void char_array_reverse(char *from, char *to) {
+     // from and to are inclusive
+     char *begin = from, *end = to, aux;
+     while (end > begin) aux = *end, *end-- = *begin, *begin++ = aux;
+ }
+ 
+-static inline int print_netdata_double(char *dst, NETDATA_DOUBLE value) {
++static ALWAYS_INLINE int print_netdata_double(char *dst, NETDATA_DOUBLE value) {
+     char *s = dst;
+ 
+     if(unlikely(value < 0)) {
+@@ -502,7 +502,7 @@ static inline int print_netdata_double(char *dst, NETDATA_DOUBLE value) {
+     return (int)(d - dst);
+ }
+ 
+-static inline size_t print_uint64(char *dst, uint64_t value) {
++static ALWAYS_INLINE size_t print_uint64(char *dst, uint64_t value) {
+     char *s = dst;
+     char *d = print_uint64_reversed(s, value);
+     char_array_reverse(s, d - 1);
+@@ -510,7 +510,7 @@ static inline size_t print_uint64(char *dst, uint64_t value) {
+     return d - s;
+ }
+ 
+-static inline size_t print_int64(char *dst, int64_t value) {
++static ALWAYS_INLINE size_t print_int64(char *dst, int64_t value) {
+     size_t len = 0;
+ 
+     if(value < 0) {
+@@ -523,20 +523,20 @@ static inline size_t print_int64(char *dst, int64_t value) {
+ }
+ 
+ #define UINT64_MAX_LENGTH (24) // 21 should be enough
+-static inline void buffer_print_uint64(BUFFER *wb, uint64_t value) {
++static ALWAYS_INLINE void buffer_print_uint64(BUFFER *wb, uint64_t value) {
+     buffer_need_bytes(wb, UINT64_MAX_LENGTH);
+     wb->len += print_uint64(&wb->buffer[wb->len], value);
+     buffer_overflow_check(wb);
+ }
+ 
+-static inline void buffer_print_int64(BUFFER *wb, int64_t value) {
++static ALWAYS_INLINE void buffer_print_int64(BUFFER *wb, int64_t value) {
+     buffer_need_bytes(wb, UINT64_MAX_LENGTH);
+     wb->len += print_int64(&wb->buffer[wb->len], value);
+     buffer_overflow_check(wb);
+ }
+ 
+ #define UINT64_HEX_MAX_LENGTH ((sizeof(HEX_PREFIX) - 1) + (sizeof(uint64_t) * 2) + 1)
+-static inline size_t print_uint64_hex(char *dst, uint64_t value) {
++static ALWAYS_INLINE size_t print_uint64_hex(char *dst, uint64_t value) {
+     char *d = dst;
+ 
+     const char *s = HEX_PREFIX;
+@@ -548,7 +548,7 @@ static inline size_t print_uint64_hex(char *dst, uint64_t value) {
+     return e - dst;
+ }
+ 
+-static inline size_t print_uint64_hex_full(char *dst, uint64_t value) {
++static ALWAYS_INLINE size_t print_uint64_hex_full(char *dst, uint64_t value) {
+     char *d = dst;
+ 
+     const char *s = HEX_PREFIX;
+@@ -560,20 +560,20 @@ static inline size_t print_uint64_hex_full(char *dst, uint64_t value) {
+     return e - dst;
+ }
+ 
+-static inline void buffer_print_uint64_hex(BUFFER *wb, uint64_t value) {
++static ALWAYS_INLINE void buffer_print_uint64_hex(BUFFER *wb, uint64_t value) {
+     buffer_need_bytes(wb, UINT64_HEX_MAX_LENGTH);
+     wb->len += print_uint64_hex(&wb->buffer[wb->len], value);
+     buffer_overflow_check(wb);
+ }
+ 
+-static inline void buffer_print_uint64_hex_full(BUFFER *wb, uint64_t value) {
++static ALWAYS_INLINE void buffer_print_uint64_hex_full(BUFFER *wb, uint64_t value) {
+     buffer_need_bytes(wb, UINT64_HEX_MAX_LENGTH);
+     wb->len += print_uint64_hex_full(&wb->buffer[wb->len], value);
+     buffer_overflow_check(wb);
+ }
+ 
+ #define UINT64_B64_MAX_LENGTH ((sizeof(IEEE754_UINT64_B64_PREFIX) - 1) + (sizeof(uint64_t) * 2) + 1)
+-static inline void buffer_print_uint64_base64(BUFFER *wb, uint64_t value) {
++static ALWAYS_INLINE void buffer_print_uint64_base64(BUFFER *wb, uint64_t value) {
+     buffer_need_bytes(wb, UINT64_B64_MAX_LENGTH);
+ 
+     buffer_fast_strcat(wb, IEEE754_UINT64_B64_PREFIX, sizeof(IEEE754_UINT64_B64_PREFIX) - 1);
+@@ -587,7 +587,7 @@ static inline void buffer_print_uint64_base64(BUFFER *wb, uint64_t value) {
+     buffer_overflow_check(wb);
+ }
+ 
+-static inline void buffer_print_int64_hex(BUFFER *wb, int64_t value) {
++static ALWAYS_INLINE void buffer_print_int64_hex(BUFFER *wb, int64_t value) {
+     buffer_need_bytes(wb, 2);
+ 
+     if(value < 0) {
+@@ -600,7 +600,7 @@ static inline void buffer_print_int64_hex(BUFFER *wb, int64_t value) {
+     buffer_overflow_check(wb);
+ }
+ 
+-static inline void buffer_print_int64_base64(BUFFER *wb, int64_t value) {
++static ALWAYS_INLINE void buffer_print_int64_base64(BUFFER *wb, int64_t value) {
+     buffer_need_bytes(wb, 2);
+ 
+     if(value < 0) {
+@@ -614,7 +614,7 @@ static inline void buffer_print_int64_base64(BUFFER *wb, int64_t value) {
+ }
+ 
+ #define DOUBLE_MAX_LENGTH (512) // 318 should be enough, including null
+-static inline void buffer_print_netdata_double(BUFFER *wb, NETDATA_DOUBLE value) {
++static ALWAYS_INLINE void buffer_print_netdata_double(BUFFER *wb, NETDATA_DOUBLE value) {
+     buffer_need_bytes(wb, DOUBLE_MAX_LENGTH);
+ 
+     if(isnan(value) || isinf(value)) {
+@@ -632,7 +632,7 @@ static inline void buffer_print_netdata_double(BUFFER *wb, NETDATA_DOUBLE value)
+ }
+ 
+ #define DOUBLE_HEX_MAX_LENGTH ((sizeof(IEEE754_DOUBLE_HEX_PREFIX) - 1) + (sizeof(uint64_t) * 2) + 1)
+-static inline void buffer_print_netdata_double_hex(BUFFER *wb, NETDATA_DOUBLE value) {
++static ALWAYS_INLINE void buffer_print_netdata_double_hex(BUFFER *wb, NETDATA_DOUBLE value) {
+     buffer_need_bytes(wb, DOUBLE_HEX_MAX_LENGTH);
+ 
+     uint64_t *ptr = (uint64_t *) (&value);
+@@ -648,7 +648,7 @@ static inline void buffer_print_netdata_double_hex(BUFFER *wb, NETDATA_DOUBLE va
+ }
+ 
+ #define DOUBLE_B64_MAX_LENGTH ((sizeof(IEEE754_DOUBLE_B64_PREFIX) - 1) + (sizeof(uint64_t) * 2) + 1)
+-static inline void buffer_print_netdata_double_base64(BUFFER *wb, NETDATA_DOUBLE value) {
++static ALWAYS_INLINE void buffer_print_netdata_double_base64(BUFFER *wb, NETDATA_DOUBLE value) {
+     buffer_need_bytes(wb, DOUBLE_B64_MAX_LENGTH);
+ 
+     uint64_t *ptr = (uint64_t *) (&value);
+@@ -669,7 +669,7 @@ typedef enum {
+     NUMBER_ENCODING_BASE64,
+ } NUMBER_ENCODING;
+ 
+-static inline void buffer_print_int64_encoded(BUFFER *wb, NUMBER_ENCODING encoding, int64_t value) {
++static ALWAYS_INLINE void buffer_print_int64_encoded(BUFFER *wb, NUMBER_ENCODING encoding, int64_t value) {
+     if(encoding == NUMBER_ENCODING_BASE64)
+         return buffer_print_int64_base64(wb, value);
+ 
+@@ -679,7 +679,7 @@ static inline void buffer_print_int64_encoded(BUFFER *wb, NUMBER_ENCODING encodi
+     return buffer_print_int64(wb, value);
+ }
+ 
+-static inline void buffer_print_uint64_encoded(BUFFER *wb, NUMBER_ENCODING encoding, uint64_t value) {
++static ALWAYS_INLINE void buffer_print_uint64_encoded(BUFFER *wb, NUMBER_ENCODING encoding, uint64_t value) {
+     if(encoding == NUMBER_ENCODING_BASE64)
+         return buffer_print_uint64_base64(wb, value);
+ 
+@@ -689,7 +689,7 @@ static inline void buffer_print_uint64_encoded(BUFFER *wb, NUMBER_ENCODING encod
+     return buffer_print_uint64(wb, value);
+ }
+ 
+-static inline void buffer_print_netdata_double_encoded(BUFFER *wb, NUMBER_ENCODING encoding, NETDATA_DOUBLE value) {
++static ALWAYS_INLINE void buffer_print_netdata_double_encoded(BUFFER *wb, NUMBER_ENCODING encoding, NETDATA_DOUBLE value) {
+     if(encoding == NUMBER_ENCODING_BASE64)
+         return buffer_print_netdata_double_base64(wb, value);
+ 
+@@ -699,7 +699,7 @@ static inline void buffer_print_netdata_double_encoded(BUFFER *wb, NUMBER_ENCODI
+     return buffer_print_netdata_double(wb, value);
+ }
+ 
+-static inline void buffer_print_spaces(BUFFER *wb, size_t spaces) {
++static ALWAYS_INLINE void buffer_print_spaces(BUFFER *wb, size_t spaces) {
+     buffer_need_bytes(wb, spaces * 4 + 1);
+ 
+     char *d = &wb->buffer[wb->len];
+@@ -716,12 +716,12 @@ static inline void buffer_print_spaces(BUFFER *wb, size_t spaces) {
+     buffer_overflow_check(wb);
+ }
+ 
+-static inline void buffer_print_json_comma(BUFFER *wb) {
++static ALWAYS_INLINE void buffer_print_json_comma(BUFFER *wb) {
+     if(wb->json.stack[wb->json.depth].count)
+         buffer_fast_strcat(wb, ",", 1);
+ }
+ 
+-static inline void buffer_print_json_comma_newline_spacing(BUFFER *wb) {
++static ALWAYS_INLINE void buffer_print_json_comma_newline_spacing(BUFFER *wb) {
+     buffer_print_json_comma(wb);
+ 
+     if((wb->json.options & BUFFER_JSON_OPTIONS_MINIFY) ||
+@@ -732,13 +732,13 @@ static inline void buffer_print_json_comma_newline_spacing(BUFFER *wb) {
+     buffer_print_spaces(wb, wb->json.depth + 1);
+ }
+ 
+-static inline void buffer_print_json_key(BUFFER *wb, const char *key) {
++static ALWAYS_INLINE void buffer_print_json_key(BUFFER *wb, const char *key) {
+     buffer_strcat(wb, wb->json.key_quote);
+     buffer_json_strcat(wb, key);
+     buffer_strcat(wb, wb->json.key_quote);
+ }
+ 
+-static inline void buffer_json_add_string_value(BUFFER *wb, const char *value) {
++static ALWAYS_INLINE void buffer_json_add_string_value(BUFFER *wb, const char *value) {
+     if(value) {
+         buffer_strcat(wb, wb->json.value_quote);
+         buffer_json_strcat(wb, value);
+@@ -748,7 +748,7 @@ static inline void buffer_json_add_string_value(BUFFER *wb, const char *value) {
+         buffer_fast_strcat(wb, "null", 4);
+ }
+ 
+-static inline void buffer_json_add_quoted_string_value(BUFFER *wb, const char *value) {
++static ALWAYS_INLINE void buffer_json_add_quoted_string_value(BUFFER *wb, const char *value) {
+     if(value) {
+         buffer_strcat(wb, wb->json.value_quote);
+         buffer_json_quoted_strcat(wb, value);
+diff --git a/src/libnetdata/inlined.h b/src/libnetdata/inlined.h
+index 792452459..a0f408388 100644
+--- a/src/libnetdata/inlined.h
++++ b/src/libnetdata/inlined.h
+@@ -351,7 +351,7 @@ static inline NETDATA_DOUBLE str2ndd(const char *src, char **endptr) {
+     return sign * result;
+ }
+ 
+-static inline unsigned long long str2ull_encoded(const char *s) {
++static ALWAYS_INLINE unsigned long long str2ull_encoded(const char *s) {
+     if(*s == IEEE754_UINT64_B64_PREFIX[0])
+         return str2uint64_base64(s + sizeof(IEEE754_UINT64_B64_PREFIX) - 1, NULL);
+ 
+@@ -361,14 +361,14 @@ static inline unsigned long long str2ull_encoded(const char *s) {
+     return str2uint64_t(s, NULL);
+ }
+ 
+-static inline long long str2ll_encoded(const char *s) {
++static ALWAYS_INLINE long long str2ll_encoded(const char *s) {
+     if(*s == '-')
+         return -(long long) str2ull_encoded(&s[1]);
+     else
+         return (long long) str2ull_encoded(s);
+ }
+ 
+-static inline NETDATA_DOUBLE str2ndd_encoded(const char *src, char **endptr) {
++static ALWAYS_INLINE NETDATA_DOUBLE str2ndd_encoded(const char *src, char **endptr) {
+     if (*src == IEEE754_DOUBLE_B64_PREFIX[0]) {
+         // double parsing from base64
+         uint64_t n = str2uint64_base64(src + sizeof(IEEE754_DOUBLE_B64_PREFIX) - 1, endptr);
+diff --git a/src/libnetdata/line_splitter/line_splitter.h b/src/libnetdata/line_splitter/line_splitter.h
+index 157d91786..77b3cb1bb 100644
+--- a/src/libnetdata/line_splitter/line_splitter.h
++++ b/src/libnetdata/line_splitter/line_splitter.h
+@@ -31,7 +31,7 @@ extern bool isspace_map_config[256];
+ extern bool isspace_map_group_by_label[256];
+ extern bool isspace_dyncfg_id_map[256];
+ 
+-static inline size_t quoted_strings_splitter(char *str, char **words, size_t max_words, bool *isspace_map) {
++static ALWAYS_INLINE size_t quoted_strings_splitter(char *str, char **words, size_t max_words, bool *isspace_map) {
+     char *s = str, quote = 0;
+     size_t i = 0;
+ 
+@@ -123,7 +123,7 @@ static inline size_t quoted_strings_splitter(char *str, char **words, size_t max
+ #define quoted_strings_splitter_dyncfg_id(str, words, max_words) \
+         quoted_strings_splitter(str, words, max_words, isspace_dyncfg_id_map)
+ 
+-static inline char *get_word(char **words, size_t num_words, size_t index) {
++static ALWAYS_INLINE char *get_word(char **words, size_t num_words, size_t index) {
+     if (unlikely(index >= num_words))
+         return NULL;
+ 
+diff --git a/src/ml/ml.cc b/src/ml/ml.cc
+index f6afc771c..6e7c2ef44 100644
+--- a/src/ml/ml.cc
++++ b/src/ml/ml.cc
+@@ -761,8 +761,8 @@ ml_dimension_predict(ml_dimension_t *dim, calculated_number_t value, bool exists
+             continue;
+ 
+         if (anomaly_score < (100 * Cfg.dimension_anomaly_score_threshold)) {
+-            pulse_ml_models_consulted(models_consulted);
+             spinlock_unlock(&dim->slock);
++            pulse_ml_models_consulted(models_consulted);
+             return false;
+         }
+ 
+diff --git a/src/ml/ml_public.cc b/src/ml/ml_public.cc
+index 03f5ba0a7..e3a49c6e9 100644
+--- a/src/ml/ml_public.cc
++++ b/src/ml/ml_public.cc
+@@ -242,9 +242,9 @@ void ml_chart_delete(RRDSET *rs)
+     rs->ml_chart = NULL;
+ }
+ 
+-bool ml_chart_update_begin(RRDSET *rs)
++ALWAYS_INLINE_ONLY bool ml_chart_update_begin(RRDSET *rs)
+ {
+-    ml_chart_t *chart = (ml_chart_t *) rs->ml_chart;
++    ml_chart_t *chart = (ml_chart_t *)rs->ml_chart;
+     if (!chart)
+         return false;
+ 
+@@ -320,7 +320,7 @@ void ml_dimension_delete(RRDDIM *rd)
+     rd->ml_dimension = NULL;
+ }
+ 
+-void ml_dimension_received_anomaly(RRDDIM *rd, bool is_anomalous) {
++ALWAYS_INLINE_ONLY void ml_dimension_received_anomaly(RRDDIM *rd, bool is_anomalous) {
+     ml_dimension_t *dim = (ml_dimension_t *) rd->ml_dimension;
+     if (!dim)
+         return;
+diff --git a/src/plugins.d/pluginsd_internals.h b/src/plugins.d/pluginsd_internals.h
+index af0f6baa8..c55f52ab1 100644
+--- a/src/plugins.d/pluginsd_internals.h
++++ b/src/plugins.d/pluginsd_internals.h
+@@ -15,7 +15,7 @@ PARSER_RC PLUGINSD_DISABLE_PLUGIN(PARSER *parser, const char *keyword, const cha
+ 
+ ssize_t send_to_plugin(const char *txt, PARSER *parser, STREAM_TRAFFIC_TYPE type);
+ 
+-static inline RRDHOST *pluginsd_require_scope_host(PARSER *parser, const char *cmd) {
++static ALWAYS_INLINE RRDHOST *pluginsd_require_scope_host(PARSER *parser, const char *cmd) {
+     RRDHOST *host = parser->user.host;
+ 
+     if(unlikely(!host))
+@@ -24,7 +24,7 @@ static inline RRDHOST *pluginsd_require_scope_host(PARSER *parser, const char *c
+     return host;
+ }
+ 
+-static inline RRDSET *pluginsd_require_scope_chart(PARSER *parser, const char *cmd, const char *parent_cmd) {
++static ALWAYS_INLINE RRDSET *pluginsd_require_scope_chart(PARSER *parser, const char *cmd, const char *parent_cmd) {
+     RRDSET *st = parser->user.st;
+ 
+     if(unlikely(!st))
+@@ -57,7 +57,7 @@ static inline bool rrdset_data_collection_unlock_with_trace(PARSER *parser, cons
+ #define rrdset_data_collection_lock(parser) rrdset_data_collection_lock_with_trace(parser, __FUNCTION__)
+ #define rrdset_data_collection_unlock(parser) rrdset_data_collection_unlock_with_trace(parser, __FUNCTION__)
+ 
+-static inline void rrdset_previous_scope_chart_unlock(PARSER *parser, const char *keyword, bool stale) {
++static ALWAYS_INLINE void rrdset_previous_scope_chart_unlock(PARSER *parser, const char *keyword, bool stale) {
+     if(unlikely(rrdset_data_collection_unlock(parser))) {
+         if(stale)
+             netdata_log_error("PLUGINSD: 'host:%s/chart:%s/' stale data collection lock found during %s; it has been unlocked",
+@@ -88,7 +88,7 @@ static inline void pluginsd_clear_scope_chart(PARSER *parser, const char *keywor
+     parser->user.cleanup_slots = false;
+ }
+ 
+-static inline bool pluginsd_set_scope_chart(PARSER *parser, RRDSET *st, const char *keyword) {
++static ALWAYS_INLINE bool pluginsd_set_scope_chart(PARSER *parser, RRDSET *st, const char *keyword) {
+     RRDSET *old_st = parser->user.st;
+     pid_t old_collector_tid = (old_st) ? old_st->pluginsd.collector_tid : 0;
+     pid_t my_collector_tid = gettid_cached();
+@@ -159,7 +159,7 @@ static inline void pluginsd_rrddim_put_to_slot(PARSER *parser, RRDSET *st, RRDDI
+     }
+ }
+ 
+-static inline RRDDIM *pluginsd_acquire_dimension(RRDHOST *host, RRDSET *st, const char *dimension, ssize_t slot, const char *cmd) {
++static ALWAYS_INLINE RRDDIM *pluginsd_acquire_dimension(RRDHOST *host, RRDSET *st, const char *dimension, ssize_t slot, const char *cmd) {
+     if (unlikely(!dimension || !*dimension)) {
+         netdata_log_error("PLUGINSD: 'host:%s/chart:%s' got a %s, without a dimension.",
+                           rrdhost_hostname(host), rrdset_id(st), cmd);
+@@ -265,7 +265,7 @@ static inline RRDSET *pluginsd_find_chart(RRDHOST *host, const char *chart, cons
+     return st;
+ }
+ 
+-static inline ssize_t pluginsd_parse_rrd_slot(char **words, size_t num_words) {
++static ALWAYS_INLINE ssize_t pluginsd_parse_rrd_slot(char **words, size_t num_words) {
+     ssize_t slot = -1;
+     char *id = get_word(words, num_words, 1);
+     if(id && id[0] == PLUGINSD_KEYWORD_SLOT[0] && id[1] == PLUGINSD_KEYWORD_SLOT[1] &&
+@@ -311,7 +311,7 @@ static inline void pluginsd_rrdset_cache_put_to_slot(PARSER *parser, RRDSET *st,
+     parser->user.cleanup_slots = obsolete;
+ }
+ 
+-static inline RRDSET *pluginsd_rrdset_cache_get_from_slot(PARSER *parser, RRDHOST *host, const char *id, ssize_t slot, const char *keyword) {
++static ALWAYS_INLINE RRDSET *pluginsd_rrdset_cache_get_from_slot(PARSER *parser, RRDHOST *host, const char *id, ssize_t slot, const char *keyword) {
+     if(unlikely(slot < 1 || (size_t)slot > host->stream.rcv.pluginsd_chart_slots.size))
+         return pluginsd_find_chart(host, id, keyword);
+ 
+diff --git a/src/plugins.d/pluginsd_parser.c b/src/plugins.d/pluginsd_parser.c
+index 163cd62d9..a0ab25ae5 100644
+--- a/src/plugins.d/pluginsd_parser.c
++++ b/src/plugins.d/pluginsd_parser.c
+@@ -698,7 +698,7 @@ static inline PARSER_RC pluginsd_clabel_commit(char **words __maybe_unused, size
+     return PARSER_RC_OK;
+ }
+ 
+-static inline PARSER_RC pluginsd_begin_v2(char **words, size_t num_words, PARSER *parser) {
++static ALWAYS_INLINE PARSER_RC pluginsd_begin_v2(char **words, size_t num_words, PARSER *parser) {
+     timing_init();
+ 
+     int idx = 1;
+@@ -838,7 +838,7 @@ static inline PARSER_RC pluginsd_begin_v2(char **words, size_t num_words, PARSER
+     return PARSER_RC_OK;
+ }
+ 
+-static inline PARSER_RC pluginsd_set_v2(char **words, size_t num_words, PARSER *parser) {
++static ALWAYS_INLINE PARSER_RC pluginsd_set_v2(char **words, size_t num_words, PARSER *parser) {
+     timing_init();
+ 
+     int idx = 1;
+@@ -977,7 +977,7 @@ static inline PARSER_RC pluginsd_set_v2(char **words, size_t num_words, PARSER *
+     return PARSER_RC_OK;
+ }
+ 
+-static inline PARSER_RC pluginsd_end_v2(char **words __maybe_unused, size_t num_words __maybe_unused, PARSER *parser) {
++static ALWAYS_INLINE PARSER_RC pluginsd_end_v2(char **words __maybe_unused, size_t num_words __maybe_unused, PARSER *parser) {
+     timing_init();
+ 
+     RRDHOST *host = pluginsd_require_scope_host(parser, PLUGINSD_KEYWORD_END_V2);
+@@ -1229,7 +1229,7 @@ inline size_t pluginsd_process(RRDHOST *host, struct plugind *cd, int fd_input,
+ 
+ #include "gperf-hashtable.h"
+ 
+-PARSER_RC parser_execute(PARSER *parser, const PARSER_KEYWORD *keyword, char **words, size_t num_words) {
++ALWAYS_INLINE PARSER_RC parser_execute(PARSER *parser, const PARSER_KEYWORD *keyword, char **words, size_t num_words) {
+     // put all the keywords ordered by the frequency they are used
+ 
+     switch(keyword->id) {
+diff --git a/src/plugins.d/pluginsd_replication.c b/src/plugins.d/pluginsd_replication.c
+index 5d93180ce..e8308e8bc 100644
+--- a/src/plugins.d/pluginsd_replication.c
++++ b/src/plugins.d/pluginsd_replication.c
+@@ -109,7 +109,7 @@ PARSER_RC pluginsd_chart_definition_end(char **words, size_t num_words, PARSER *
+     return ok ? PARSER_RC_OK : PARSER_RC_ERROR;
+ }
+ 
+-PARSER_RC pluginsd_replay_begin(char **words, size_t num_words, PARSER *parser) {
++ALWAYS_INLINE PARSER_RC pluginsd_replay_begin(char **words, size_t num_words, PARSER *parser) {
+     int idx = 1;
+     ssize_t slot = pluginsd_parse_rrd_slot(words, num_words);
+     if(slot >= 0) idx++;
+@@ -214,7 +214,7 @@ PARSER_RC pluginsd_replay_begin(char **words, size_t num_words, PARSER *parser)
+     return PARSER_RC_OK;
+ }
+ 
+-PARSER_RC pluginsd_replay_set(char **words, size_t num_words, PARSER *parser) {
++ALWAYS_INLINE PARSER_RC pluginsd_replay_set(char **words, size_t num_words, PARSER *parser) {
+     int idx = 1;
+     ssize_t slot = pluginsd_parse_rrd_slot(words, num_words);
+     if(slot >= 0) idx++;
+@@ -290,7 +290,7 @@ PARSER_RC pluginsd_replay_set(char **words, size_t num_words, PARSER *parser) {
+     return PARSER_RC_OK;
+ }
+ 
+-PARSER_RC pluginsd_replay_rrddim_collection_state(char **words, size_t num_words, PARSER *parser) {
++ALWAYS_INLINE PARSER_RC pluginsd_replay_rrddim_collection_state(char **words, size_t num_words, PARSER *parser) {
+     if(parser->user.replay.rset_enabled == false)
+         return PARSER_RC_OK;
+ 
+@@ -333,7 +333,7 @@ PARSER_RC pluginsd_replay_rrddim_collection_state(char **words, size_t num_words
+     return PARSER_RC_OK;
+ }
+ 
+-PARSER_RC pluginsd_replay_rrdset_collection_state(char **words, size_t num_words, PARSER *parser) {
++ALWAYS_INLINE PARSER_RC pluginsd_replay_rrdset_collection_state(char **words, size_t num_words, PARSER *parser) {
+     if(parser->user.replay.rset_enabled == false)
+         return PARSER_RC_OK;
+ 
+@@ -367,7 +367,7 @@ PARSER_RC pluginsd_replay_rrdset_collection_state(char **words, size_t num_words
+     return PARSER_RC_OK;
+ }
+ 
+-PARSER_RC pluginsd_replay_end(char **words, size_t num_words, PARSER *parser) {
++ALWAYS_INLINE PARSER_RC pluginsd_replay_end(char **words, size_t num_words, PARSER *parser) {
+     if (num_words < 7) { // accepts 7, but the 7th is optional
+         nd_log(NDLS_DAEMON, NDLP_ERR, "REPLAY: malformed " PLUGINSD_KEYWORD_REPLAY_END " command");
+         return PARSER_RC_ERROR;
+diff --git a/src/streaming/protocol/command-begin-set-end-init.c b/src/streaming/protocol/command-begin-set-end-init.c
+index e8e004b15..1ed2832e7 100644
+--- a/src/streaming/protocol/command-begin-set-end-init.c
++++ b/src/streaming/protocol/command-begin-set-end-init.c
+@@ -11,7 +11,7 @@ static BUFFER *preferred_sender_buffer(RRDHOST *host) {
+         return sender_thread_buffer(host->sender);
+ }
+ 
+-RRDSET_STREAM_BUFFER stream_send_metrics_init(RRDSET *st, time_t wall_clock_time) {
++ALWAYS_INLINE RRDSET_STREAM_BUFFER stream_send_metrics_init(RRDSET *st, time_t wall_clock_time) {
+     RRDHOST *host = st->rrdhost;
+ 
+     // fetch the flags we need to check with one atomic operation
+diff --git a/src/streaming/protocol/command-begin-set-end-v2.c b/src/streaming/protocol/command-begin-set-end-v2.c
+index de69beaec..f3150440e 100644
+--- a/src/streaming/protocol/command-begin-set-end-v2.c
++++ b/src/streaming/protocol/command-begin-set-end-v2.c
+@@ -65,7 +65,7 @@ void stream_send_rrddim_metrics_v2(RRDSET_STREAM_BUFFER *rsb, RRDDIM *rd, usec_t
+     buffer_fast_strcat(wb, "\n", 1);
+ }
+ 
+-void stream_send_rrdset_metrics_finished(RRDSET_STREAM_BUFFER *rsb, RRDSET *st) {
++ALWAYS_INLINE void stream_send_rrdset_metrics_finished(RRDSET_STREAM_BUFFER *rsb, RRDSET *st) {
+     if(!rsb->wb)
+         return;
+ 
+diff --git a/src/streaming/protocol/command-nodeid.c b/src/streaming/protocol/command-nodeid.c
+index 27dca6f9c..60f60a279 100644
+--- a/src/streaming/protocol/command-nodeid.c
++++ b/src/streaming/protocol/command-nodeid.c
+@@ -12,7 +12,7 @@ void stream_sender_clear_parent_claim_id(RRDHOST *host) {
+ 
+ // the parent sends to the child its claim id, node id and cloud url
+ void stream_receiver_send_node_and_claim_id_to_child(RRDHOST *host) {
+-    if(host == localhost || UUIDiszero(host->node_id)) return;
++    if(rrdhost_is_local(host) || UUIDiszero(host->node_id)) return;
+ 
+     rrdhost_receiver_lock(host);
+     if(stream_has_capability(host->receiver, STREAM_CAP_NODE_ID)) {
+diff --git a/src/streaming/stream-connector.c b/src/streaming/stream-connector.c
+index 77f67c7aa..f4f860558 100644
+--- a/src/streaming/stream-connector.c
++++ b/src/streaming/stream-connector.c
+@@ -394,6 +394,8 @@ struct connector {
+     ND_THREAD *thread;
+     struct completion completion;
+ 
++    Word_t idx;
++
+     size_t nodes;
+ 
+     struct {
+@@ -404,6 +406,12 @@ struct connector {
+     } queue;
+ };
+ 
++static inline Word_t get_unique_idx(struct connector *cn, STRCNT_CMD cmd) {
++    Word_t t = STRCNT_CMD_MAX - 1;
++    Word_t reserved_bits = (sizeof(Word_t) * 8) - __builtin_clz(t);
++    return (__atomic_add_fetch(&cn->idx, 1, __ATOMIC_RELAXED) << reserved_bits) | cmd;
++}
++
+ static struct {
+     int id;
+     struct connector connectors[MAX_CONNECTORS];
+@@ -441,20 +449,29 @@ struct connector *stream_connector_get(struct sender_state *s) {
+     return sc;
+ }
+ 
+-void stream_connector_requeue(struct sender_state *s) {
++void stream_connector_requeue(struct sender_state *s, STRCNT_CMD cmd) {
+     struct connector *sc = stream_connector_get(s);
+ 
+-    nd_log(NDLS_DAEMON, NDLP_DEBUG,
+-           "STREAM CONNECT '%s' [to parent]: adding host in connector queue...",
+-           rrdhost_hostname(s->host));
++    switch(cmd) {
++        case STRCNT_CMD_CONNECT:
++            nd_log(NDLS_DAEMON, NDLP_DEBUG,
++                "STREAM CONNECT '%s' [to parent]: adding host in connector queue...",
++                rrdhost_hostname(s->host));
++
++            pulse_host_status(s->host, PULSE_HOST_STATUS_SND_PENDING, 0);
++            break;
++
++        case STRCNT_CMD_REMOVE:
++            break;
++
++        default:
++            fatal("STREAM CONNECT '%s': invalid cmd %d", rrdhost_hostname(s->host), cmd);
++    }
+ 
+     spinlock_lock(&sc->queue.spinlock);
+-    internal_fatal(SENDERS_GET(&sc->queue.senders, (Word_t)s) != NULL, "Sender is already in the connector queue");
+-    SENDERS_SET(&sc->queue.senders, (Word_t)s, s);
++    SENDERS_SET(&sc->queue.senders, get_unique_idx(sc, cmd), s);
+     spinlock_unlock(&sc->queue.spinlock);
+ 
+-    pulse_host_status(s->host, PULSE_HOST_STATUS_SND_PENDING, 0);
+-
+     // signal the connector to catch the job
+     completion_mark_complete_a_job(&sc->completion);
+ }
+@@ -482,7 +499,7 @@ void stream_connector_add(struct sender_state *s) {
+     s->parent_using_h2o = stream_send.parents.h2o;
+ 
+     // do not call this with any locks held
+-    stream_connector_requeue(s);
++    stream_connector_requeue(s, STRCNT_CMD_CONNECT);
+ }
+ 
+ static void stream_connector_remove(struct sender_state *s) {
+@@ -507,6 +524,7 @@ static void *stream_connector_thread(void *ptr) {
+     worker_register("STREAMCNT");
+     worker_register_job_name(WORKER_SENDER_CONNECTOR_JOB_CONNECTING, "connect");
+     worker_register_job_name(WORKER_SENDER_CONNECTOR_JOB_CONNECTED, "connected");
++    worker_register_job_name(WORKER_SENDER_CONNECTOR_JOB_REMOVED, "removed");
+     worker_register_job_name(WORKER_SENDER_CONNECTOR_JOB_DISCONNECT_BAD_HANDSHAKE, "bad handshake");
+     worker_register_job_name(WORKER_SENDER_CONNECTOR_JOB_DISCONNECT_TIMEOUT, "timeout");
+     worker_register_job_name(WORKER_SENDER_CONNECTOR_JOB_DISCONNECT_CANT_UPGRADE_CONNECTION, "cant upgrade");
+@@ -539,31 +557,61 @@ static void *stream_connector_thread(void *ptr) {
+ 
+             if(stream_connector_is_signaled_to_stop(s)) {
+                 cancelled_nodes++;
+-                SENDERS_DEL(&sc->queue.senders, (Word_t)s);
++                SENDERS_DEL(&sc->queue.senders, idx);
++                spinlock_unlock(&sc->queue.spinlock);
++
++                // do not have the connector lock when calling these
+                 stream_connector_remove(s);
++
++                spinlock_lock(&sc->queue.spinlock);
+                 continue;
+             }
+ 
+-            spinlock_unlock(&sc->queue.spinlock);
+-            worker_is_busy(WORKER_SENDER_CONNECTOR_JOB_CONNECTING);
+-            bool move_to_sender = stream_connect(s, stream_send.parents.default_port, stream_send.parents.timeout_s);
+-            spinlock_lock(&sc->queue.spinlock);
++            STRCNT_CMD cmd = idx & (STRCNT_CMD_CONNECT| STRCNT_CMD_REMOVE);
++            switch(cmd) {
++                case STRCNT_CMD_CONNECT:
++                    spinlock_unlock(&sc->queue.spinlock);
++                    worker_is_busy(WORKER_SENDER_CONNECTOR_JOB_CONNECTING);
+ 
+-            if(move_to_sender) {
+-                connected_nodes++;
+-                stream_sender_on_connect(s);
++                    // do not have the connector lock when calling these
++                    bool move_to_sender =
++                        stream_connect(s, stream_send.parents.default_port, stream_send.parents.timeout_s);
+ 
+-                worker_is_busy(WORKER_SENDER_CONNECTOR_JOB_CONNECTED);
+-                SENDERS_DEL(&sc->queue.senders, (Word_t)s);
+-                spinlock_unlock(&sc->queue.spinlock);
++                    spinlock_lock(&sc->queue.spinlock);
+ 
+-                // do not have the connector lock when calling this
+-                stream_sender_add_to_queue(s);
++                    if (move_to_sender) {
++                        connected_nodes++;
+ 
+-                spinlock_lock(&sc->queue.spinlock);
++                        worker_is_busy(WORKER_SENDER_CONNECTOR_JOB_CONNECTED);
++                        SENDERS_DEL(&sc->queue.senders, idx);
++                        spinlock_unlock(&sc->queue.spinlock);
++
++                        // do not have the connector lock when calling these
++                        stream_sender_on_connect(s);
++                        stream_sender_add_to_queue(s);
++
++                        spinlock_lock(&sc->queue.spinlock);
++                    }
++                    else
++                        failed_nodes++;
++
++                    break;
++
++                case STRCNT_CMD_REMOVE:
++                    worker_is_busy(WORKER_SENDER_CONNECTOR_JOB_REMOVED);
++                    SENDERS_DEL(&sc->queue.senders, idx);
++                    spinlock_unlock(&sc->queue.spinlock);
++
++                    // do not have the connector lock when calling these
++                    stream_sender_on_disconnect(s);
++                    stream_sender_remove(s, s->exit.reason);
++
++                    spinlock_lock(&sc->queue.spinlock);
++                    break;
++
++                default:
++                    fatal("STREAM CONNECT '%s': invalid cmd %d", rrdhost_hostname(s->host), cmd);
+             }
+-            else
+-                failed_nodes++;
+ 
+             worker_is_idle();
+         }
+diff --git a/src/streaming/stream-receiver.c b/src/streaming/stream-receiver.c
+index a88f6c530..b8a10aea6 100644
+--- a/src/streaming/stream-receiver.c
++++ b/src/streaming/stream-receiver.c
+@@ -291,9 +291,11 @@ static inline ssize_t receiver_read_compressed(struct receiver_state *r) {
+ 
+ // --------------------------------------------------------------------------------------------------------------------
+ 
+-static void receiver_set_exit_reason(struct receiver_state *rpt, STREAM_HANDSHAKE reason, bool force) {
++static STREAM_HANDSHAKE receiver_set_exit_reason(struct receiver_state *rpt, STREAM_HANDSHAKE reason, bool force) {
+     if(force || !rpt->exit.reason)
+         rpt->exit.reason = reason;
++
++    return rpt->exit.reason;
+ }
+ 
+ static inline bool receiver_should_stop(struct receiver_state *rpt) {
+@@ -516,6 +518,8 @@ void stream_receiver_move_entire_queue_to_running_unsafe(struct stream_thread *s
+ static void stream_receiver_remove(struct stream_thread *sth, struct receiver_state *rpt, STREAM_HANDSHAKE reason) {
+     internal_fatal(sth->tid != gettid_cached(), "Function %s() should only be used by the dispatcher thread", __FUNCTION__ );
+ 
++    receiver_set_exit_reason(rpt, reason, false);
++
+     ND_LOG_STACK lgs[] = {
+         ND_LOG_FIELD_STR(NDF_NIDL_NODE, rpt->host->hostname),
+         ND_LOG_FIELD_TXT(NDF_SRC_IP, rpt->remote_ip),
+@@ -593,9 +597,11 @@ static bool stream_receiver_dequeue_senders(struct stream_thread *sth, struct re
+ 
+     if(rpt->host->sender &&                                         // the host has a sender
+         rpt->host->stream.snd.status.tid == gettid_cached() &&      // the sender is mine
+-        (rpt->host->sender->thread.wanted & ND_POLL_WRITE))         // the sender needs to send data
+-        if(!stream_sender_send_data(sth, rpt->host->sender, now_ut, false))
+-            return false;
++        (rpt->host->sender->thread.wanted & ND_POLL_WRITE)) {       // the sender needs to send data
++        // we return true even if this fais,
++        // so that we will not disconnect the receiver because the sender failed
++        stream_sender_send_data(sth, rpt->host->sender, now_ut, false);
++    }
+ 
+     return true;
+ }
+@@ -627,7 +633,6 @@ stream_receive_and_process(struct stream_thread *sth, struct receiver_state *rpt
+ 
+                         while (buffered_reader_next_line(&rpt->thread.uncompressed, rpt->thread.line_buffer)) {
+                             if (unlikely(parser_action(parser, rpt->thread.line_buffer->buffer))) {
+-                                receiver_set_exit_reason(rpt, STREAM_HANDSHAKE_RCV_DISCONNECT_PARSER_FAILED, false);
+                                 stream_receiver_remove(sth, rpt, STREAM_HANDSHAKE_RCV_DISCONNECT_PARSER_FAILED);
+                                 *removed = true;
+                                 return -1;
+@@ -641,7 +646,6 @@ stream_receive_and_process(struct stream_thread *sth, struct receiver_state *rpt
+                         break;
+ 
+                     else {
+-                        receiver_set_exit_reason(rpt, STREAM_HANDSHAKE_RCV_DISCONNECT_PARSER_FAILED, false);
+                         stream_receiver_remove(sth, rpt, STREAM_HANDSHAKE_RCV_DECOMPRESSION_FAILED);
+                         *removed = true;
+                         return -1;
+@@ -651,7 +655,6 @@ stream_receive_and_process(struct stream_thread *sth, struct receiver_state *rpt
+             else if (feed_rc == DECOMPRESS_NEED_MORE_DATA)
+                 break;
+             else {
+-                receiver_set_exit_reason(rpt, STREAM_HANDSHAKE_RCV_DISCONNECT_PARSER_FAILED, false);
+                 stream_receiver_remove(sth, rpt, STREAM_HANDSHAKE_RCV_DECOMPRESSION_FAILED);
+                 *removed = true;
+                 return -1;
+@@ -659,9 +662,7 @@ stream_receive_and_process(struct stream_thread *sth, struct receiver_state *rpt
+         }
+ 
+         if(receiver_should_stop(rpt)) {
+-            STREAM_HANDSHAKE reason = rpt->exit.reason ? rpt->exit.reason : STREAM_HANDSHAKE_DISCONNECT_SIGNALED_TO_STOP;
+-            receiver_set_exit_reason(rpt, reason, false);
+-            stream_receiver_remove(sth, rpt, reason);
++            stream_receiver_remove(sth, rpt, STREAM_HANDSHAKE_DISCONNECT_SIGNALED_TO_STOP);
+             *removed = true;
+             return -1;
+         }
+@@ -673,7 +674,6 @@ stream_receive_and_process(struct stream_thread *sth, struct receiver_state *rpt
+ 
+         while(buffered_reader_next_line(&rpt->thread.uncompressed, rpt->thread.line_buffer)) {
+             if(unlikely(parser_action(parser, rpt->thread.line_buffer->buffer))) {
+-                receiver_set_exit_reason(rpt, STREAM_HANDSHAKE_RCV_DISCONNECT_PARSER_FAILED, false);
+                 stream_receiver_remove(sth, rpt, STREAM_HANDSHAKE_RCV_DISCONNECT_PARSER_FAILED);
+                 *removed = true;
+                 return -1;
+@@ -755,27 +755,27 @@ bool stream_receiver_send_data(struct stream_thread *sth, struct receiver_state
+                    sth->id, rrdhost_hostname(rpt->host), rpt->remote_ip, rpt->remote_port,
+                    stream_handshake_error_to_string(reason), rc, rpt->sock.fd, stats->bytes_sent, stats->sends);
+ 
+-            receiver_set_exit_reason(rpt, reason, false);
+-
+             if(process_opcodes_and_enable_removal) {
+                 // this is not executed from the opcode handling mechanism
+                 // so we can safely remove the receiver.
+                 stream_receiver_remove(sth, rpt, reason);
+             }
+             else {
+-                 // protection against this case:
+-                 //
+-                 // 1. receiver gets a replication request
+-                 // 2. parser processes the request
+-                 // 3. parser decides to send back a message to the child (REPLAY_CHART)
+-                 // 4. send_to_child appends the data to the sending circular buffer
+-                 // 5. send_to_child sends opcode to enable sending
+-                 // 6. opcode bypasses the signal and runs this function inline to dispatch immediately
+-                 // 7. sending fails (child disconnected)
+-                 // 8. receiver is removed
+-                 //
+-                 // Point 2 above crashes. The parser is no longer there (freed at point 7)
+-                 // and there is no way for point 2 to know...
++                receiver_set_exit_reason(rpt, reason, false);
++
++                // protection against this case:
++                //
++                // 1. receiver gets a replication request
++                // 2. parser processes the request
++                // 3. parser decides to send back a message to the child (REPLAY_CHART)
++                // 4. send_to_child appends the data to the sending circular buffer
++                // 5. send_to_child sends opcode to enable sending
++                // 6. opcode bypasses the signal and runs this function inline to dispatch immediately
++                // 7. sending fails (child disconnected)
++                // 8. receiver is removed
++                //
++                // Point 2 above crashes. The parser is no longer there (freed at point 7)
++                // and there is no way for point 2 to know...
+             }
+         }
+         else if(process_opcodes_and_enable_removal &&
+@@ -840,7 +840,6 @@ bool stream_receiver_receive_data(struct stream_thread *sth, struct receiver_sta
+                    sth->id, rrdhost_hostname(rpt->host), rpt->remote_ip, rpt->remote_port,
+                    stream_handshake_error_to_string(reason), rpt->sock.fd);
+ 
+-            receiver_set_exit_reason(rpt, reason, false);
+             stream_receiver_remove(sth, rpt, reason);
+         }
+         else if(status == EVLOOP_STATUS_CONTINUE && process_opcodes && stream_thread_process_opcodes(sth, &rpt->thread.meta))
+@@ -866,9 +865,7 @@ bool stream_receive_process_poll_events(struct stream_thread *sth, struct receiv
+     ND_LOG_STACK_PUSH(lgs);
+ 
+     if (receiver_should_stop(rpt)) {
+-        STREAM_HANDSHAKE reason = rpt->exit.reason ? rpt->exit.reason : STREAM_HANDSHAKE_DISCONNECT_SIGNALED_TO_STOP;
+-        receiver_set_exit_reason(rpt, reason, false);
+-        stream_receiver_remove(sth, rpt, reason);
++        stream_receiver_remove(sth, rpt, STREAM_HANDSHAKE_DISCONNECT_SIGNALED_TO_STOP);
+         return false;
+     }
+ 
+@@ -884,7 +881,6 @@ bool stream_receive_process_poll_events(struct stream_thread *sth, struct receiv
+                sth->id, rrdhost_hostname(rpt->host), rpt->remote_ip, rpt->remote_port,
+                stream_handshake_error_to_string(reason));
+ 
+-        receiver_set_exit_reason(rpt, reason, false);
+         stream_receiver_remove(sth, rpt, reason);
+         return false;
+     }
+@@ -953,7 +949,6 @@ void stream_receiver_check_all_nodes_from_poll(struct stream_thread *sth, usec_t
+                    sth->id, rrdhost_hostname(rpt->host), rpt->remote_ip, timeout_s,
+                    stats.bytes_sent, stats.sends, duration, pending, stats.buffer_ratio);
+ 
+-            receiver_set_exit_reason(rpt, STREAM_HANDSHAKE_DISCONNECT_TIMEOUT, false);
+             stream_receiver_remove(sth, rpt, STREAM_HANDSHAKE_DISCONNECT_TIMEOUT);
+             continue;
+         }
+@@ -1044,7 +1039,6 @@ void stream_receiver_replication_check_from_poll(struct stream_thread *sth, usec
+                    __atomic_load_n(&host->stream.rcv.status.replication.counter_out, __ATOMIC_RELAXED),
+                    __atomic_load_n(&host->stream.rcv.status.replication.counter_in, __ATOMIC_RELAXED));
+ 
+-            receiver_set_exit_reason(rpt, STREAM_HANDSHAKE_DISCONNECT_REPLICATION_STALLED, false);
+             stream_receiver_remove(sth, rpt, STREAM_HANDSHAKE_DISCONNECT_REPLICATION_STALLED);
+         }
+ 
+diff --git a/src/streaming/stream-sender-internals.h b/src/streaming/stream-sender-internals.h
+index ca9038c98..5bd921bdf 100644
+--- a/src/streaming/stream-sender-internals.h
++++ b/src/streaming/stream-sender-internals.h
+@@ -13,13 +13,14 @@
+ // connector thread
+ #define WORKER_SENDER_CONNECTOR_JOB_CONNECTING                          0
+ #define WORKER_SENDER_CONNECTOR_JOB_CONNECTED                           1
+-#define WORKER_SENDER_CONNECTOR_JOB_DISCONNECT_BAD_HANDSHAKE            2
+-#define WORKER_SENDER_CONNECTOR_JOB_DISCONNECT_TIMEOUT                  3
+-#define WORKER_SENDER_CONNECTOR_JOB_DISCONNECT_CANT_UPGRADE_CONNECTION  4
+-#define WORKER_SENDER_CONNECTOR_JOB_QUEUED_NODES                        5
+-#define WORKER_SENDER_CONNECTOR_JOB_CONNECTED_NODES                     6
+-#define WORKER_SENDER_CONNECTOR_JOB_FAILED_NODES                        7
+-#define WORKER_SENDER_CONNECTOR_JOB_CANCELLED_NODES                     8
++#define WORKER_SENDER_CONNECTOR_JOB_REMOVED                             2
++#define WORKER_SENDER_CONNECTOR_JOB_DISCONNECT_BAD_HANDSHAKE            3
++#define WORKER_SENDER_CONNECTOR_JOB_DISCONNECT_TIMEOUT                  4
++#define WORKER_SENDER_CONNECTOR_JOB_DISCONNECT_CANT_UPGRADE_CONNECTION  5
++#define WORKER_SENDER_CONNECTOR_JOB_QUEUED_NODES                        6
++#define WORKER_SENDER_CONNECTOR_JOB_CONNECTED_NODES                     7
++#define WORKER_SENDER_CONNECTOR_JOB_FAILED_NODES                        8
++#define WORKER_SENDER_CONNECTOR_JOB_CANCELLED_NODES                     9
+ 
+ #define CONNECTED_TO_SIZE 100
+ 
+@@ -143,13 +144,23 @@ void stream_sender_send_opcode(struct sender_state *s, struct stream_opcode msg)
+ void stream_sender_add_to_queue(struct sender_state *s);
+ 
+ // stream connector
++typedef enum __attribute__((packed)) {
++    STRCNT_CMD_NONE = 0,
++    STRCNT_CMD_CONNECT,
++    STRCNT_CMD_REMOVE,
++
++    // terminator
++    STRCNT_CMD_MAX,
++} STRCNT_CMD;
++
+ bool stream_connector_init(struct sender_state *s);
+ void stream_connector_cancel_threads(void);
+ void stream_connector_add(struct sender_state *s);
+-void stream_connector_requeue(struct sender_state *s);
++void stream_connector_requeue(struct sender_state *s, STRCNT_CMD cmd);
+ bool stream_connector_is_signaled_to_stop(struct sender_state *s);
+ 
+ void stream_sender_on_connect(struct sender_state *s);
++void stream_sender_on_disconnect(struct sender_state *s);
+ 
+ void stream_sender_remove(struct sender_state *s, STREAM_HANDSHAKE reason);
+ 
+diff --git a/src/streaming/stream-sender.c b/src/streaming/stream-sender.c
+index aca95597a..d426944db 100644
+--- a/src/streaming/stream-sender.c
++++ b/src/streaming/stream-sender.c
+@@ -68,7 +68,7 @@ void stream_sender_log_payload(struct sender_state *s, BUFFER *payload, STREAM_T
+ 
+ // --------------------------------------------------------------------------------------------------------------------
+ 
+-static void stream_sender_charts_and_replication_reset(struct sender_state *s) {
++void stream_sender_charts_and_replication_reset(struct sender_state *s) {
+     // stop all replication commands inflight
+     replication_sender_delete_pending_requests(s);
+ 
+@@ -111,6 +111,15 @@ static void stream_sender_charts_and_replication_reset(struct sender_state *s) {
+ 
+ // --------------------------------------------------------------------------------------------------------------------
+ 
++static void stream_sender_on_connect_and_disconnect(struct sender_state *s) {
++    stream_sender_execute_commands_cleanup(s);
++    stream_sender_charts_and_replication_reset(s);
++
++    stream_sender_lock(s);
++    stream_circular_buffer_flush_unsafe(s->scb, stream_send.buffer_max_size);
++    stream_sender_unlock(s);
++}
++
+ void stream_sender_on_connect(struct sender_state *s) {
+     nd_log(NDLS_DAEMON, NDLP_DEBUG,
+            "STREAM SND [%s]: running on-connect hooks...",
+@@ -118,11 +127,7 @@ void stream_sender_on_connect(struct sender_state *s) {
+ 
+     rrdhost_flag_set(s->host, RRDHOST_FLAG_STREAM_SENDER_CONNECTED);
+ 
+-    stream_sender_charts_and_replication_reset(s);
+-
+-    stream_sender_lock(s);
+-    stream_circular_buffer_flush_unsafe(s->scb, stream_send.buffer_max_size);
+-    stream_sender_unlock(s);
++    stream_sender_on_connect_and_disconnect(s);
+ 
+     s->thread.last_traffic_ut = now_monotonic_usec();
+     s->rbuf.read_len = 0;
+@@ -136,7 +141,7 @@ static void stream_sender_on_ready_to_dispatch(struct sender_state *s) {
+     // set this flag before sending any data, or the data will not be sent
+     rrdhost_flag_set(s->host, RRDHOST_FLAG_STREAM_SENDER_READY_4_METRICS);
+ 
+-    stream_sender_execute_commands_cleanup(s);
++    // send our global metadata to the parent
+     stream_sender_send_custom_host_variables(s->host);
+     stream_path_send_to_parent(s->host);
+     stream_sender_send_claimed_id(s->host);
+@@ -144,21 +149,16 @@ static void stream_sender_on_ready_to_dispatch(struct sender_state *s) {
+     stream_send_global_functions(s->host);
+ }
+ 
+-static void stream_sender_on_disconnect(struct sender_state *s) {
++void stream_sender_on_disconnect(struct sender_state *s) {
+     nd_log(NDLS_DAEMON, NDLP_DEBUG,
+            "STREAM SND '%s': running on-disconnect hooks...",
+            rrdhost_hostname(s->host));
+ 
+-    stream_sender_lock(s);
+-    stream_circular_buffer_flush_unsafe(s->scb, stream_send.buffer_max_size);
+-    stream_sender_unlock(s);
++    stream_sender_on_connect_and_disconnect(s);
+ 
+-    stream_sender_execute_commands_cleanup(s);
+-    stream_sender_charts_and_replication_reset(s);
+-    stream_sender_clear_parent_claim_id(s->host);
+-    stream_receiver_send_node_and_claim_id_to_child(s->host);
++    // update the child (the receiver side) for this parent
+     stream_path_parent_disconnected(s->host);
+-    sender_host_buffer_free(s->host);
++    stream_receiver_send_node_and_claim_id_to_child(s->host);
+ }
+ 
+ // --------------------------------------------------------------------------------------------------------------------
+@@ -344,10 +344,10 @@ void stream_sender_remove(struct sender_state *s, STREAM_HANDSHAKE reason) {
+ 
+     stream_sender_lock(s);
+ 
+-    if(reason == STREAM_HANDSHAKE_DISCONNECT_SIGNALED_TO_STOP && s->exit.reason) {
++    if(reason == STREAM_HANDSHAKE_DISCONNECT_SIGNALED_TO_STOP && s->exit.reason)
+         reason = s->exit.reason;
+-        s->exit.reason = 0;
+-    }
++
++    s->exit.reason = 0;
+ 
+     __atomic_store_n(&s->exit.shutdown, false, __ATOMIC_RELAXED);
+     rrdhost_flag_clear(s->host,
+@@ -357,7 +357,6 @@ void stream_sender_remove(struct sender_state *s, STREAM_HANDSHAKE reason) {
+     s->last_state_since_t = now_realtime_sec();
+     stream_parent_set_disconnect_reason(s->host->stream.snd.parents.current, reason, s->last_state_since_t);
+     s->connector.id = -1;
+-    s->exit.reason = 0;
+ 
+     stream_sender_unlock(s);
+ 
+@@ -422,6 +421,10 @@ static void stream_sender_move_running_to_connector_or_remove(struct stream_thre
+     // clear these asap, to make sender_commit() stop processing data for this host
+     stream_sender_lock(s);
+ 
++    if(reason == STREAM_HANDSHAKE_DISCONNECT_SIGNALED_TO_STOP && s->exit.reason)
++        reason = s->exit.reason;
++
++    s->exit.reason = reason;
+     s->thread.msg.session = 0;
+     s->thread.msg.meta = NULL;
+ 
+@@ -433,18 +436,15 @@ static void stream_sender_move_running_to_connector_or_remove(struct stream_thre
+     nd_sock_close(&s->sock);
+ 
+     stream_parent_set_disconnect_reason(s->host->stream.snd.parents.current, reason, now_realtime_sec());
+-    stream_sender_on_disconnect(s);
++    stream_sender_clear_parent_claim_id(s->host);
++    sender_host_buffer_free(s->host);
+ 
+-    bool should_remove = !reconnect || stream_connector_is_signaled_to_stop(s);
++    pulse_host_status(s->host, PULSE_HOST_STATUS_SND_OFFLINE, reason);
+ 
+     stream_thread_node_removed(s->host);
+ 
+-    pulse_host_status(s->host, PULSE_HOST_STATUS_SND_OFFLINE, reason);
+-
+-    if (should_remove)
+-        stream_sender_remove(s, reason);
+-    else
+-        stream_connector_requeue(s);
++    stream_connector_requeue(
++        s, reconnect && !stream_connector_is_signaled_to_stop(s) ? STRCNT_CMD_CONNECT : STRCNT_CMD_REMOVE);
+ }
+ 
+ void stream_sender_check_all_nodes_from_poll(struct stream_thread *sth, usec_t now_ut) {

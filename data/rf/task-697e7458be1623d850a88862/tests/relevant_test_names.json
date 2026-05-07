@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "Silence create/edit > creates a new silence"
+    },
+    {
+      "name": "Silence create/edit > populates form with existing silence information"
+    },
+    {
+      "name": "Silence create/edit > populates form with existing silence information that has __alert_rule_uid__"
+    },
+    {
+      "name": "Silence create/edit > shows an error when existing silence cannot be found"
+    },
+    {
+      "name": "Silence create/edit > shows an error when user cannot edit/recreate silence"
+    },
+    {
+      "name": "Silence create/edit > silences page should contain alertmanager parameter after creating a silence"
+    },
+    {
+      "name": "Silences > filters silences by matchers"
+    },
+    {
+      "name": "Silences > loads and shows silences"
+    }
+  ]
+}

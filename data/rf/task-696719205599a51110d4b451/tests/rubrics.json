@@ -1,0 +1,170 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2b799a826d19edc3b13be09f02bee8eb",
+    "title": "1.1: Introduces the ControlSurface struct in api/v1/ with all 5 required fields (RunCtx, Samples, MetricsEngine, Scheduler, RunState)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "31806c79eb20fd86c9e6d0d8810a0594",
+    "title": "1.2: Updates all 10 handler functions in api/v1/ (handleGetGroups, handleGetGroup, handleGetMetrics, handleGetMetric, handleGetSetupData, handleSetSetupData, handleRunSetup, handleRunTeardown, handleGetStatus, handlePatchStatus) to receive *ControlSurface instead of extracting the Engine from request context",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a6c56713cb3237b64baba3ffa9e17246",
+    "title": "1.3: Updates NewHandler in api/v1/routes.go to thread *ControlSurface to all 10 route handlers (handleGetGroups, handleGetGroup, handleGetMetrics, handleGetMetric, handleGetSetupData, handleSetSetupData, handleRunSetup, handleRunTeardown, handleGetStatus, handlePatchStatus)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5e330dd02bb3743b5783ee8ced63841d",
+    "title": "1.4: Updates GetServer in api/server.go to accept individual dependencies instead of *core.Engine",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "69bc83d6296dfdf95a7a7ebd39766eeb",
+    "title": "1.5: Moves periodic threshold evaluation from core/engine.go into MetricsEngine via StartThresholdCalculations",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "fe8cef1533911b918f7a3f53c7d5c0b1",
+    "title": "1.6: Renames GetIngester to CreateIngester on MetricsEngine so it stores the ingester reference internally",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "dadf165511a50b9ca33493a551182455",
+    "title": "1.7: Handles threshold abort-on-fail within MetricsEngine via the abortRun callback passed to StartThresholdCalculations",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "364639564ba93964aa97821ebeb4d60b",
+    "title": "1.8: Adds GetMetricsWithBreachedThresholdsCount on MetricsEngine to query breached-threshold status directly",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "094ea2035a59cf09d1aacf2810c18270",
+    "title": "1.9: Removes all 4 stop-mechanism members (Stop, IsStopped, stopChan, stopOnce) from core.Engine",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "184bd414f63eb77b501058fcfc2ed396",
+    "title": "1.10: Adds the AbortFn func(error) field on core.Engine as the unified abort mechanism",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "eb92abcb0040313aae642e84540a7ce0",
+    "title": "1.11: Removes the GetRunner() method from execution.Scheduler so callers access the runner directly from the test run state",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f4498841238842520dd475263e026198",
+    "title": "1.12: Moves the test run context creation out of the scheduler's Run method so the caller in cmd/run.go manages it",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "ba953edb257a4c5a1b99c5b19bd7c42e",
+    "title": "2.1: Adds a documentation comment to the ControlSurface struct explaining its purpose",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "23163b956fe375777586979570f4fc90",
+    "title": "3.1: Removes all 3 public context-based Engine injection items in api/common/context.go (WithEngine, GetEngine, ContextKey)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c183934caaf1f5bbf04cfa48507024bb",
+    "title": "3.2: Removes the withEngine middleware function from api/server.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8a2b746a0fba6f7dec12bdd982cdbc3f",
+    "title": "4.1: Changes the URL paths of existing REST API endpoints (such as /v1/status, /v1/metrics, /v1/groups, /v1/setup, /v1/teardown)",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "cbb9d1e4e9d44b4c3db70fc696f09ba5",
+    "title": "4.2: Removes existing public methods from core.Engine (such as IsTainted) that are still called by code outside the api/ package",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

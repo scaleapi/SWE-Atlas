@@ -1,0 +1,162 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "12420f5ae82459e73155558ab092491b",
+    "title": "1.1: Exports useIsMarketplaceRedesignEnabled from client/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f8aa22b8a5957a2fa944a6e939263ebb",
+    "title": "1.2: Returns false from useIsMarketplaceRedesignEnabled when a site is selected",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "407e10ea829675e46b4a8423099590df",
+    "title": "1.3: Returns true from useIsMarketplaceRedesignEnabled for logged-out users without a site selected",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b5849f393aa4129629c372405a51ea4a",
+    "title": "1.4: Returns true from useIsMarketplaceRedesignEnabled for hosting dashboard opt-in users without a site selected",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "851f223a19506b73a37d8489316aa8db",
+    "title": "1.5: Returns false from useIsMarketplaceRedesignEnabled when the feature flag is disabled",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7bb8fd05852c53923ab560963be9840f",
+    "title": "1.6: Adds an enabled prop to FullWidthSection at client/components/full-width-section/index.jsx",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "81ac550b73828f41a22cd0f57a764a56",
+    "title": "1.7: Defaults FullWidthSection to returning children without wrapping when enabled is omitted",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "918f84caa0fac7892bb0bfb3673e726b",
+    "title": "1.8: Accepts an isMarketplaceRedesignEnabled parameter in getCategories at client/my-sites/plugins/categories/use-categories.tsx",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ae671df505b2780a3a79ae1495842533",
+    "title": "1.9: Varies all 9 getCategories category fields (paid title, paid description, popular title, featured title, featured description, monetization title, monetization description, business title, business description) based on the isMarketplaceRedesignEnabled parameter",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b3c2ac02c178b3b0f4576cc2fefdcdaf",
+    "title": "1.10: Replaces all 14 pre-existing direct isEnabled('marketplace-redesign') call sites (full-width-section/index.jsx, categories/index.tsx, use-categories.tsx, education-footer/index.tsx, plugin-details-header/index.jsx, plugin-details.jsx, plugins-browser-item/index.jsx, collection-list-view/index.tsx, plugins-browser/index.jsx, single-list-view/index.jsx, plugins-category-results-page/index.jsx, plugins-discovery-page/index.jsx, plugins-search-results-page/index.jsx, related-plugins/index.tsx) with useIsMarketplaceRedesignEnabled",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a8e53cccfebfb39bfe1fd665b0e9ccab",
+    "title": "1.11: Converts both static module-level flag-dependent constants (COLLECTION_LIST_LENGTH in collection-list-view/index.tsx, SHORT_LIST_LENGTH in single-list-view/index.jsx) into runtime computations",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2ff3407c91e93c5d458fe96a1b4d010f",
+    "title": "1.12: Enables the marketplace-redesign feature flag in the config",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c376b46b3b4e88e85ef3eaf2b03c4e7f",
+    "title": "1.13: Adapts the Browse plugins link rendering in client/dashboard/plugins/plugins-menu/index.tsx based on the marketplace-redesign feature flag",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "4317b5697d5204934241e8289aa72cb7",
+    "title": "2.1: Documents the visibility conditions near useIsMarketplaceRedesignEnabled",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "381c081fa0bd7b8c929fd623a4084d8b",
+    "title": "3.1: Removes all 13 isEnabled imports from '@automattic/calypso-config' (including full-width-section/index.jsx, categories/index.tsx, use-categories.tsx, education-footer/index.tsx, plugin-details-header/index.jsx, plugin-details.jsx, plugins-browser-item/index.jsx, collection-list-view/index.tsx, ...) where isEnabled was only used for the marketplace-redesign check",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "11e0704bd27f05bedb8a012ed80a57ad",
+    "title": "4.1: Adds an isMarketplaceRedesignEnabled parameter to getFirstCategoryFromTags in client/my-sites/plugins/categories/use-categories.tsx",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

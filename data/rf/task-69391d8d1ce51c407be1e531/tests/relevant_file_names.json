@@ -1,0 +1,16 @@
+{
+  "files": [
+    {
+      "name": "pkg/gitparse/gitparse_test.go"
+    },
+    {
+      "name": "pkg/writers/buffer/buffer_test.go"
+    },
+    {
+      "name": "pkg/writers/buffer_writer/bufferwriter_test.go"
+    },
+    {
+      "name": "pkg/writers/buffered_file_writer/bufferedfilewriter_test.go"
+    }
+  ]
+}

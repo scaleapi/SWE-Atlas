@@ -1,0 +1,40 @@
+{
+  "tests": [
+    {
+      "name": "rust::filecontainer_tests::tests::test_file_container_default"
+    },
+    {
+      "name": "rust::filecontainer_tests::tests::test_file_container_default_debug_format"
+    },
+    {
+      "name": "rust::filecontainer_tests::tests::test_file_container_file_append_data"
+    },
+    {
+      "name": "rust::filecontainer_tests::tests::test_file_container_file_append_empty_data"
+    },
+    {
+      "name": "rust::filecontainer_tests::tests::test_file_container_file_append_empty_gap"
+    },
+    {
+      "name": "rust::filecontainer_tests::tests::test_file_container_file_append_gap"
+    },
+    {
+      "name": "rust::filecontainer_tests::tests::test_file_container_file_close"
+    },
+    {
+      "name": "rust::filecontainer_tests::tests::test_file_container_file_close_with_flags"
+    },
+    {
+      "name": "rust::filecontainer_tests::tests::test_file_container_file_open"
+    },
+    {
+      "name": "rust::filecontainer_tests::tests::test_file_container_file_open_with_flags"
+    },
+    {
+      "name": "rust::filecontainer_tests::tests::test_file_container_free"
+    },
+    {
+      "name": "rust::filecontainer_tests::tests::test_file_container_full_lifecycle"
+    }
+  ]
+}

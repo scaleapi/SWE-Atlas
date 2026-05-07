@@ -1,0 +1,9 @@
+{
+  "task_id": "696719205599a51110d4b43d",
+  "repo": "grafana_k6",
+  "base_commit": "55eb8bca07286ccf4f14e417e07de491f5912acc",
+  "language": "Go",
+  "mount_path": "/src",
+  "initial_complexity": "Mid",
+  "uid": "0f1a823e-3191-4800-a0ea-b9cfccb19f64"
+}

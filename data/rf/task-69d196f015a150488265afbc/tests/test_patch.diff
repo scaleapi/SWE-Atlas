@@ -1,0 +1,513 @@
+diff --git a/public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.test.tsx b/public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.test.tsx
+new file mode 100644
+index 00000000000..e6fb82d3e69
+--- /dev/null
++++ b/public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.test.tsx
+@@ -0,0 +1,298 @@
++import { screen, render, waitFor } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { TestProvider } from 'test/helpers/TestProvider';
++
++import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
++import { DashboardMeta } from 'app/types';
++
++import { SaveProvisionedDashboard, Props } from './SaveProvisionedDashboard';
++
++const mockPut = jest.fn().mockResolvedValue({});
++
++jest.mock('@grafana/runtime', () => ({
++  ...jest.requireActual('@grafana/runtime'),
++  getBackendSrv: () => ({
++    put: mockPut,
++  }),
++  config: {
++    ...jest.requireActual('@grafana/runtime').config,
++    namespace: 'test-namespace',
++  },
++}));
++
++jest.mock('./SaveDashboardForm', () => ({
++  SaveDashboardFormCommonOptions: () => <div data-testid="common-options" />,
++}));
++
++function buildMeta(overrides: Partial<DashboardMeta> = {}): DashboardMeta {
++  return {
++    canSave: true,
++    canEdit: true,
++    canDelete: true,
++    canStar: false,
++    isSnapshot: false,
++    canShare: false,
++    k8s: {
++      name: 'test-dash',
++      resourceVersion: '1',
++      creationTimestamp: '2024-01-01',
++      annotations: {
++        [AnnoKeyRepoName]: 'my-repo',
++        [AnnoKeyRepoPath]: 'dashboards/test.json',
++      },
++    },
++    ...overrides,
++  };
++}
++
++function buildProps(overrides: Partial<Props> = {}): Props {
++  return {
++    meta: buildMeta(),
++    dashboard: {} as Props['dashboard'],
++    drawer: { onClose: jest.fn(), useState: () => ({}) } as unknown as Props['drawer'],
++    changeInfo: {
++      changedSaveModel: { title: 'Test Dashboard' } as any,
++      initialSaveModel: {} as any,
++      diffs: {},
++      diffCount: 0,
++      hasChanges: false,
++      hasTimeChanges: false,
++      hasVariableValueChanges: false,
++      hasRefreshChange: false,
++    },
++    ...overrides,
++  };
++}
++
++function renderComponent(props: Props) {
++  return render(
++    <TestProvider>
++      <SaveProvisionedDashboard {...props} />
++    </TestProvider>
++  );
++}
++
++// The source component initialises state as undefined then sets it via useEffect,
++// which triggers a React controlled/uncontrolled warning.  Suppress it here so
++// jest-fail-on-console doesn't reject the test for a known upstream issue.
++function suppressControlledWarning() {
++  const spy = jest.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
++    const msg = typeof args[0] === 'string' ? args[0] : String(args[0]);
++    if (msg.includes('A component is changing an uncontrolled input to be controlled')) {
++      return;
++    }
++    // Let other errors through so they still fail the test
++    throw new Error(`Unexpected console.error: ${args.join(' ')}`);
++  });
++  return spy;
++}
++
++// The source component calls console.log and window.alert after a successful save.
++// Suppress both so jest-fail-on-console / jsdom don't reject the test.
++function suppressSaveEffects() {
++  const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
++  const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
++  return { logSpy, alertSpy };
++}
++
++describe('SaveProvisionedDashboard', () => {
++  beforeEach(() => {
++    mockPut.mockClear();
++  });
++
++  it('renders the form with repository, path, branch, and comment fields', () => {
++    const spy = suppressControlledWarning();
++    renderComponent(buildProps());
++
++    expect(screen.getByText('Repository')).toBeInTheDocument();
++    expect(screen.getByText('Path')).toBeInTheDocument();
++    expect(screen.getByText('Branch')).toBeInTheDocument();
++    expect(screen.getByText('Comment')).toBeInTheDocument();
++    spy.mockRestore();
++  });
++
++  it('renders Save and Cancel buttons', () => {
++    const spy = suppressControlledWarning();
++    renderComponent(buildProps());
++
++    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
++    spy.mockRestore();
++  });
++
++  it('populates repo name from k8s annotations', () => {
++    const spy = suppressControlledWarning();
++    renderComponent(buildProps());
++
++    expect(screen.getByText('my-repo')).toBeInTheDocument();
++    spy.mockRestore();
++  });
++
++  it('populates path from k8s annotations', async () => {
++    const spy = suppressControlledWarning();
++    renderComponent(buildProps());
++
++    await waitFor(() => {
++      expect(screen.getByDisplayValue('dashboards/test.json')).toBeInTheDocument();
++    });
++    spy.mockRestore();
++  });
++
++  it('handles missing annotations gracefully', () => {
++    const spy = suppressControlledWarning();
++    const meta = buildMeta({
++      k8s: {
++        name: 'test-dash',
++        resourceVersion: '1',
++        creationTimestamp: '2024-01-01',
++      },
++    });
++
++    renderComponent(buildProps({ meta }));
++
++    expect(screen.getByText('Repository')).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
++    spy.mockRestore();
++  });
++
++  it('handles missing k8s metadata gracefully', () => {
++    const spy = suppressControlledWarning();
++    const meta = buildMeta({ k8s: undefined });
++
++    renderComponent(buildProps({ meta }));
++
++    expect(screen.getByText('Repository')).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
++    spy.mockRestore();
++  });
++
++  it('allows editing the path field', async () => {
++    const spy = suppressControlledWarning();
++    renderComponent(buildProps());
++
++    const pathInput = await screen.findByDisplayValue('dashboards/test.json');
++    await userEvent.clear(pathInput);
++    await userEvent.type(pathInput, 'new/path.json');
++
++    expect(screen.getByDisplayValue('new/path.json')).toBeInTheDocument();
++    spy.mockRestore();
++  });
++
++  it('allows editing the comment field', async () => {
++    const spy = suppressControlledWarning();
++    renderComponent(buildProps());
++
++    const commentField = screen.getByLabelText(/comment/i);
++    await userEvent.type(commentField, 'Fix dashboard layout');
++
++    expect(screen.getByDisplayValue('Fix dashboard layout')).toBeInTheDocument();
++    spy.mockRestore();
++  });
++
++  it('calls onClose when Cancel is clicked', async () => {
++    const spy = suppressControlledWarning();
++    const onClose = jest.fn();
++    const props = buildProps({
++      drawer: { onClose, useState: () => ({}) } as unknown as Props['drawer'],
++    });
++
++    renderComponent(props);
++
++    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
++
++    expect(onClose).toHaveBeenCalled();
++    spy.mockRestore();
++  });
++
++  it('calls PUT to provisioning API on save', async () => {
++    const spy = suppressControlledWarning();
++    const { logSpy, alertSpy } = suppressSaveEffects();
++    renderComponent(buildProps());
++
++    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
++
++    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1));
++    const [url, body, options] = mockPut.mock.calls[0];
++    expect(url).toContain('repositories/my-repo/files/dashboards/test.json');
++    expect(url).toContain('apis/provisioning.grafana.app/v0alpha1/namespaces/');
++    expect(body).toContain('"Test Dashboard"');
++    expect(options.params?.ref).toBeUndefined();
++    expect(options.params?.comment).toBeUndefined();
++    spy.mockRestore();
++    logSpy.mockRestore();
++    alertSpy.mockRestore();
++  });
++
++  it('includes ref param in save request when branch is set', async () => {
++    const spy = suppressControlledWarning();
++    const { logSpy, alertSpy } = suppressSaveEffects();
++    const meta = buildMeta({
++      k8s: {
++        name: 'test-dash',
++        resourceVersion: '1',
++        creationTimestamp: '2024-01-01',
++        annotations: {
++          [AnnoKeyRepoName]: 'my-repo',
++          [AnnoKeyRepoPath]: 'dashboards/test.json#main',
++        },
++      },
++    });
++
++    renderComponent(buildProps({ meta }));
++
++    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
++
++    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1));
++    const [, , options] = mockPut.mock.calls[0];
++    expect(options.params).toHaveProperty('ref', 'main');
++    spy.mockRestore();
++    logSpy.mockRestore();
++    alertSpy.mockRestore();
++  });
++
++  it('includes comment param in save request when comment is provided', async () => {
++    const spy = suppressControlledWarning();
++    const { logSpy, alertSpy } = suppressSaveEffects();
++    renderComponent(buildProps());
++
++    const commentField = screen.getByLabelText(/comment/i);
++    await userEvent.type(commentField, 'my commit message');
++
++    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
++
++    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1));
++    const [, , options] = mockPut.mock.calls[0];
++    expect(options.params).toHaveProperty('comment', 'my commit message');
++    spy.mockRestore();
++    logSpy.mockRestore();
++    alertSpy.mockRestore();
++  });
++
++  it('serializes changedSaveModel as JSON body', async () => {
++    const spy = suppressControlledWarning();
++    const { logSpy, alertSpy } = suppressSaveEffects();
++    const changeInfo = {
++      changedSaveModel: { title: 'My Dashboard', uid: 'abc' } as any,
++      initialSaveModel: {} as any,
++      diffs: {},
++      diffCount: 0,
++      hasChanges: true,
++      hasTimeChanges: false,
++      hasVariableValueChanges: false,
++      hasRefreshChange: false,
++    };
++
++    renderComponent(buildProps({ changeInfo }));
++
++    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
++
++    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1));
++    const body = mockPut.mock.calls[0][1];
++    const parsed = JSON.parse(body);
++    expect(parsed.title).toBe('My Dashboard');
++    expect(parsed.uid).toBe('abc');
++    spy.mockRestore();
++    logSpy.mockRestore();
++    alertSpy.mockRestore();
++  });
++});
+diff --git a/public/app/features/provisioning/api/baseAPI.test.ts b/public/app/features/provisioning/api/baseAPI.test.ts
+new file mode 100644
+index 00000000000..04220f80217
+--- /dev/null
++++ b/public/app/features/provisioning/api/baseAPI.test.ts
+@@ -0,0 +1,30 @@
++import { BASE_URL } from './baseAPI';
++
++jest.mock('@grafana/runtime', () => ({
++  ...jest.requireActual('@grafana/runtime'),
++  config: {
++    ...jest.requireActual('@grafana/runtime').config,
++    namespace: 'test-ns',
++  },
++}));
++
++describe('baseAPI', () => {
++  describe('BASE_URL', () => {
++    it('is a string containing the provisioning API path', () => {
++      expect(typeof BASE_URL).toBe('string');
++      expect(BASE_URL).toContain('apis/provisioning.grafana.app/v0alpha1/namespaces/');
++    });
++
++    it('includes the configured namespace', () => {
++      expect(BASE_URL).toContain('test-ns');
++    });
++
++    it('does not have a leading slash', () => {
++      expect(BASE_URL.startsWith('/')).toBe(false);
++    });
++
++    it('ends with the namespace segment', () => {
++      expect(BASE_URL).toMatch(/namespaces\/[^/]+$/);
++    });
++  });
++});
+diff --git a/public/app/features/provisioning/dashboard.test.ts b/public/app/features/provisioning/dashboard.test.ts
+new file mode 100644
+index 00000000000..0ba0fbfc7f9
+--- /dev/null
++++ b/public/app/features/provisioning/dashboard.test.ts
+@@ -0,0 +1,167 @@
++import { AnnoKeyRepoName, AnnoKeyRepoPath } from '../apiserver/types';
++
++import { loadDashboardFromProvisioning } from './dashboard';
++
++const mockGet = jest.fn();
++
++jest.mock('@grafana/runtime', () => ({
++  ...jest.requireActual('@grafana/runtime'),
++  getBackendSrv: () => ({
++    get: mockGet,
++  }),
++  config: {
++    ...jest.requireActual('@grafana/runtime').config,
++    namespace: 'test-ns',
++  },
++}));
++
++function buildDryRunResponse(overrides: Record<string, any> = {}) {
++  return {
++    resource: {
++      dryRun: {
++        apiVersion: 'dashboard.grafana.app/v0alpha1',
++        kind: 'Dashboard',
++        metadata: {
++          name: 'test-dash',
++          resourceVersion: '1',
++          creationTimestamp: '2024-01-01',
++          annotations: {},
++          ...overrides.metadata,
++        },
++        spec: {
++          title: 'Test Dashboard',
++          ...overrides.spec,
++        },
++      },
++    },
++  };
++}
++
++describe('loadDashboardFromProvisioning', () => {
++  beforeEach(() => {
++    mockGet.mockReset();
++    Object.defineProperty(window, 'location', {
++      value: { search: '' },
++      writable: true,
++    });
++  });
++
++  it('calls the provisioning API with repo and path', async () => {
++    mockGet.mockResolvedValue(buildDryRunResponse());
++
++    await loadDashboardFromProvisioning('my-repo', 'dashboards/test.json');
++
++    expect(mockGet).toHaveBeenCalledTimes(1);
++    const [url] = mockGet.mock.calls[0];
++    expect(url).toContain('my-repo');
++    expect(url).toContain('dashboards/test.json');
++    expect(url).toContain('repositories/');
++    expect(url).toContain('files/');
++  });
++
++  it('uses BASE_URL in the request URL', async () => {
++    mockGet.mockResolvedValue(buildDryRunResponse());
++
++    await loadDashboardFromProvisioning('my-repo', 'dashboards/test.json');
++
++    const [url] = mockGet.mock.calls[0];
++    expect(url).toContain('apis/provisioning.grafana.app/v0alpha1/namespaces/');
++  });
++
++  it('returns a DashboardDTO with expected meta fields', async () => {
++    mockGet.mockResolvedValue(buildDryRunResponse());
++
++    const result = await loadDashboardFromProvisioning('my-repo', 'dashboards/test.json');
++
++    expect(result.meta.canStar).toBe(false);
++    expect(result.meta.isSnapshot).toBe(false);
++    expect(result.meta.canShare).toBe(false);
++    expect(result.meta.canDelete).toBe(true);
++    expect(result.meta.canSave).toBe(true);
++    expect(result.meta.canEdit).toBe(true);
++  });
++
++  it('returns the dashboard spec as the dashboard data', async () => {
++    mockGet.mockResolvedValue(buildDryRunResponse({ spec: { title: 'My Dash', uid: 'abc' } }));
++
++    const result = await loadDashboardFromProvisioning('my-repo', 'dashboards/test.json');
++
++    expect(result.dashboard.title).toBe('My Dash');
++  });
++
++  it('sets AnnoKeyRepoName annotation to the repo parameter', async () => {
++    mockGet.mockResolvedValue(buildDryRunResponse());
++
++    const result = await loadDashboardFromProvisioning('my-repo', 'dashboards/test.json');
++
++    expect(result.meta.k8s?.annotations?.[AnnoKeyRepoName]).toBe('my-repo');
++  });
++
++  it('sets AnnoKeyRepoPath annotation to the path parameter', async () => {
++    mockGet.mockResolvedValue(buildDryRunResponse());
++
++    const result = await loadDashboardFromProvisioning('my-repo', 'dashboards/test.json');
++
++    expect(result.meta.k8s?.annotations?.[AnnoKeyRepoPath]).toBe('dashboards/test.json');
++  });
++
++  it('creates annotations object if metadata has none', async () => {
++    const response = buildDryRunResponse();
++    delete response.resource.dryRun.metadata.annotations;
++    mockGet.mockResolvedValue(response);
++
++    const result = await loadDashboardFromProvisioning('my-repo', 'dashboards/test.json');
++
++    expect(result.meta.k8s?.annotations?.[AnnoKeyRepoName]).toBe('my-repo');
++    expect(result.meta.k8s?.annotations?.[AnnoKeyRepoPath]).toBe('dashboards/test.json');
++  });
++
++  it('rejects when dryRun is missing', async () => {
++    mockGet.mockResolvedValue({ resource: {} });
++
++    await expect(loadDashboardFromProvisioning('my-repo', 'test.json')).rejects.toBe(
++      'failed to read provisioned dashboard'
++    );
++  });
++
++  it('rejects when apiVersion does not start with dashboard.grafana.app', async () => {
++    const response = buildDryRunResponse();
++    response.resource.dryRun.apiVersion = 'playlist.grafana.app/v0alpha1';
++    mockGet.mockResolvedValue(response);
++
++    await expect(loadDashboardFromProvisioning('my-repo', 'test.json')).rejects.toContain(
++      'unexpected resource type'
++    );
++  });
++
++  it('passes ref query parameter when present in URL', async () => {
++    Object.defineProperty(window, 'location', {
++      value: { search: '?ref=abc123' },
++      writable: true,
++    });
++    mockGet.mockResolvedValue(buildDryRunResponse());
++
++    await loadDashboardFromProvisioning('my-repo', 'dashboards/test.json');
++
++    const [, params] = mockGet.mock.calls[0];
++    expect(params).toEqual({ ref: 'abc123' });
++  });
++
++  it('does not pass ref parameter when not in URL', async () => {
++    mockGet.mockResolvedValue(buildDryRunResponse());
++
++    await loadDashboardFromProvisioning('my-repo', 'dashboards/test.json');
++
++    const [, params] = mockGet.mock.calls[0];
++    expect(params).toBeUndefined();
++  });
++
++  it('includes k8s metadata in the returned meta', async () => {
++    mockGet.mockResolvedValue(buildDryRunResponse());
++
++    const result = await loadDashboardFromProvisioning('my-repo', 'dashboards/test.json');
++
++    expect(result.meta.k8s).toBeDefined();
++    expect(result.meta.k8s?.name).toBe('test-dash');
++  });
++});

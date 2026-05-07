@@ -1,0 +1,70 @@
+{
+  "tests": [
+    {
+      "name": "getConfirmText > activate action shows plugin name and inactive site count"
+    },
+    {
+      "name": "getConfirmText > deactivate action shows plugin name and active site count"
+    },
+    {
+      "name": "getConfirmText > update action shows plugin name and update site count"
+    },
+    {
+      "name": "getConfirmText > enable-autoupdate action shows plugin name and not-autoupdated count"
+    },
+    {
+      "name": "getConfirmText > disable-autoupdate action shows plugin name and autoupdated count"
+    },
+    {
+      "name": "getConfirmText > delete with deactivate and disable-autoupdate extra actions"
+    },
+    {
+      "name": "getConfirmText > delete with deactivate extra action only"
+    },
+    {
+      "name": "getConfirmText > delete with disable-autoupdate extra action only"
+    },
+    {
+      "name": "getConfirmText > delete with no extra actions"
+    },
+    {
+      "name": "getConfirmText > unknown action shows fallback message"
+    },
+    {
+      "name": "buildSuccessPrefix > activate success notice includes plugin name"
+    },
+    {
+      "name": "buildSuccessPrefix > deactivate success notice includes plugin name"
+    },
+    {
+      "name": "buildSuccessPrefix > update success notice includes plugin name"
+    },
+    {
+      "name": "buildSuccessPrefix > enable-autoupdate success notice includes plugin name"
+    },
+    {
+      "name": "buildSuccessPrefix > disable-autoupdate success notice includes plugin name"
+    },
+    {
+      "name": "buildSuccessPrefix > delete success notice includes plugin name"
+    },
+    {
+      "name": "buildErrorPrefix > activate error notice includes plugin name"
+    },
+    {
+      "name": "buildErrorPrefix > deactivate error notice includes plugin name"
+    },
+    {
+      "name": "buildErrorPrefix > update error notice includes plugin name"
+    },
+    {
+      "name": "buildErrorPrefix > enable-autoupdate error notice includes plugin name"
+    },
+    {
+      "name": "buildErrorPrefix > disable-autoupdate error notice includes plugin name"
+    },
+    {
+      "name": "buildErrorPrefix > delete error notice includes plugin name"
+    }
+  ]
+}

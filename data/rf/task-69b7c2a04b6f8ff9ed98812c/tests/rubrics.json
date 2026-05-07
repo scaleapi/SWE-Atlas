@@ -1,0 +1,130 @@
+[
+  {
+    "id": "9d139e06e8db686a4ced167461fdbc1c",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2aadbed01b84d427b519d31b0338ad1b",
+    "title": "1.1: Fixes is_page_doublewritebuffer in extra/innochecksum.cc to determine doublewrite pages from actual TRX_SYS block locations instead of a hardcoded page range",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "177bd3d614699437c0eaacf53b650bab",
+    "title": "1.2: Reads and stores doublewrite block locations from the TRX_SYS page during page parsing in extra/innochecksum.cc",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "739859378a11a1767d8bf572fab80f79",
+    "title": "1.3: Refactors page-size initialization in extra/innochecksum.cc to accept tablespace flags directly rather than reading them from a page buffer",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7b96126d0171af46eb8789b315d0a8b6",
+    "title": "1.4: Adds --tablespace-flags CLI option in extra/innochecksum.cc",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3590df65f8bac67234cb625fa179d248",
+    "title": "1.5: Rejects invalid --tablespace-flags values in extra/innochecksum.cc by printing 'Error: Provided --tablespace-flags is not valid.'",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6cc9453aab162265fc5e7dfbf6e1e9d9",
+    "title": "1.6: Refactors page-0 reading logic in main() in extra/innochecksum.cc to cleanly handle both user-supplied and FSP-derived flags",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c9fbb6dd84603c8add53fb1670cfd587",
+    "title": "1.7: Excludes doublewrite buffer pages from the summary output in extra/innochecksum.cc when skip-freed-pages (-r) is active",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "78c599b9f4efeeea40a1ba0eecc35f72",
+    "title": "1.8: Guards the rewrite_checksum call in the per-page loop in main() in extra/innochecksum.cc to skip doublewrite buffer pages",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "75d5f21682fdee5a3c173c13b18b0bbd",
+    "title": "1.9: Adjusts UNIV_INNOCHECKSUM preprocessor guards in all 3 header files (trx0sys.h, trx0undo.h, fsp0types.h) to expose doublewrite constants",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4cd85fdf625aaec75ae5c83f481ea724",
+    "title": "1.10: Exits with an error in extra/innochecksum.cc directing the user to --tablespace-flags when the first page is not page 0 and no flags are supplied",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "229ac7e9554f467dc3bc6c639c4020c1",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3e1219b90b9b3955b48de969303db83b",
+    "title": "4.1: Modifies test files (such as .test, .result, .opt, or .inc files under mysql-test/)",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "bd0f1525c776a3aa725a6c9ad0cbecd1",
+    "title": "4.2: Exposes server-dependent code (such as struct/class definitions, function declarations, or server-only includes) to the innochecksum build",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "582136b308a268710b2c4840af8ae021",
+    "title": "4.3: Removes existing page type identification branches (such as FIL_PAGE_INDEX, FIL_PAGE_TYPE_FSP_HDR, FIL_PAGE_TYPE_XDES, or FIL_PAGE_TRX_SYS cases) from parse_page",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "539f5e02644ad8ed20b17f96ab08fa08",
+    "title": "4.4: Alters checksum verification behavior (such as removing or modifying verify_checksum calls) for non-doublewrite pages",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

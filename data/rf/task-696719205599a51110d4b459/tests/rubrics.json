@@ -1,0 +1,162 @@
+[
+  {
+    "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7",
+    "title": "1.1: Removes the --useoldmanifestkinds flag from the Makefile generate command",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6",
+    "title": "1.2: Adds --genoperatorstate=false to the Makefile generate command",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9",
+    "title": "1.3: Restructures manifest.cue to organize kinds under a versions block",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+    "title": "1.4: Removes the nested versions block from the Investigation kind in investigation.cue",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1",
+    "title": "1.5: Removes the nested versions block from the InvestigationIndex kind in investigationindex.cue",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7",
+    "title": "1.6: Renames the Investigation kind identifier to be version-aware in investigation.cue",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8",
+    "title": "1.7: Renames the InvestigationIndex kind identifier to be version-aware in investigationindex.cue",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2",
+    "title": "1.8: Removes the Status field from the Investigation struct in investigation_object_gen.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3",
+    "title": "1.9: Removes the Status field from the InvestigationIndex struct in investigationindex_object_gen.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4",
+    "title": "1.10: Removes the UpdateStatus method from investigation_client_gen.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5",
+    "title": "1.11: Removes the UpdateStatus method from investigationindex_client_gen.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8",
+    "title": "3.1: Deletes the investigation_status_gen.go file",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9",
+    "title": "3.2: Removes status subresource handling from GetSubresources in investigation_object_gen.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0",
+    "title": "3.3: Removes status subresource handling from GetSubresources in investigationindex_object_gen.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3",
+    "title": "4.1: Removes spec schema content from investigation.cue",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4",
+    "title": "4.2: Removes spec schema content from investigationindex.cue",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

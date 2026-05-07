@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "name": "public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.test.tsx"
+    },
+    {
+      "name": "public/app/features/provisioning/api/endpoints.test.ts"
+    }
+  ]
+}

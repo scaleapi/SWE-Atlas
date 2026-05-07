@@ -1,0 +1,178 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f1d07f2cba86e0bb6aea1d8bc3c10792",
+    "title": "1.1: Adds source files for a new insights package under output/cloud/ for the extracted Insights functionality",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7bd8f924b6699c275747872a389cb8c2",
+    "title": "1.2: Implements a CollectRequestMetadatas method on the collector struct in the new insights package that processes HTTP request trail data",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "97f3123fbf4f733cf8813ff7728a8b6f",
+    "title": "1.3: Implements a PopAll method on the collector struct in the new insights package that returns the buffered request metadata",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6883767b2915ca694bcd5c75b86de554",
+    "title": "1.4: Implements a flusher struct in the new insights package with an exported Flush method for sending collected data",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ca3125bed7f3f6f3ddf22e2ed1ce1236",
+    "title": "1.5: Implements an Enabled function definition in the new insights package that checks if tracing is enabled based on the cloud config",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b14709bc98cb4e4594a63533c3cac32f",
+    "title": "1.6: Exports the RequestMetadatasCollector interface in the new insights package",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6966ba36486ea27c50aeece5d02fee8c",
+    "title": "1.7: Exports a Client interface definition in the new insights package for the insights API dependency",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a71fa73c111b19f0cd3e57bb553ceb77",
+    "title": "1.8: Exports the RequestMetadatasFlusher interface in the new insights package",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "34688977b874e8c1bffa940e5e6952be",
+    "title": "1.9: Implements the NewCollector constructor in the new insights package for creating collector instances",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c7deaff362b286c1ca7cda37353267a5",
+    "title": "1.10: Implements the NewFlusher constructor in the new insights package for creating flusher instances",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "88d9d85aa17b0f36fd6620e6dfd40d86",
+    "title": "1.11: Replaces the internal tracingEnabled() call with insightsOutput.Enabled() from the new insights package in output/cloud/expv2/output.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a2c7d91f3e48b05c6df1209e84a5b7d3",
+    "title": "1.12: Replaces the internal newRequestMetadatasCollector() call with insightsOutput.NewCollector() from the new insights package in output/cloud/expv2/output.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b3d8e02f4f59c16d7e02310f95b6c8e4",
+    "title": "1.13: Replaces the internal newTracesFlusher() call with insightsOutput.NewFlusher() from the new insights package in output/cloud/expv2/output.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "dac008e741c80f2862488c47affa4e64",
+    "title": "1.14: Increases the insights client dial timeout to 10 seconds in output/cloud/expv2/output.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "de4a8ee68aa21fa2a9cf8d56282bce78",
+    "title": "3.1: Removes the tracingEnabled method from output/cloud/expv2/output.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "dadf9ba095f99b2cf9b416e2f2f62db5",
+    "title": "3.2: Removes the requestMetadatasCollector interface from output/cloud/expv2/output.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f39713758623a9d78bdbfb3866679e0a",
+    "title": "4.1: Introduces compilation error in output/cloud/expv2/ files after the refactoring",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "869c0961a76c7f3071391f29695643ef",
+    "title": "4.2: Modifies existing test files in the repository",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

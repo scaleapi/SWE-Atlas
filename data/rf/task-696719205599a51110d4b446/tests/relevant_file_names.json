@@ -1,0 +1,37 @@
+{
+  "files": [
+    {
+      "name": "api/v1/group_routes_test.go"
+    },
+    {
+      "name": "api/v1/setup_teardown_routes_test.go"
+    },
+    {
+      "name": "api/v1/status_routes_test.go"
+    },
+    {
+      "name": "js/runner_test.go"
+    },
+    {
+      "name": "js/summary_test.go"
+    },
+    {
+      "name": "metrics/engine/engine_test.go"
+    },
+    {
+      "name": "metrics/engine/ingester_test.go"
+    },
+    {
+      "name": "metrics/metric_test.go"
+    },
+    {
+      "name": "metrics/sample_test.go"
+    },
+    {
+      "name": "metrics/sink_test.go"
+    },
+    {
+      "name": "metrics/thresholds_test.go"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "name": "pkg/detectors/github/v1/github_old_test.go"
+    },
+    {
+      "name": "pkg/detectors/github/v2/github_test.go"
+    }
+  ]
+}

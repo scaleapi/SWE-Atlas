@@ -1,0 +1,1007 @@
+diff --git a/client/components/full-width-section/index.jsx b/client/components/full-width-section/index.jsx
+index d6bb2296f89..0fec64c3902 100644
+--- a/client/components/full-width-section/index.jsx
++++ b/client/components/full-width-section/index.jsx
+@@ -1,14 +1,10 @@
+-import { isEnabled } from '@automattic/calypso-config';
+ import clsx from 'clsx';
+ import PropTypes from 'prop-types';
+ 
+ import './style.scss';
+ 
+-const FullWidthSection = ( { children, className } ) => {
+-	const isMarketplaceRedesignEnabled = isEnabled( 'marketplace-redesign' );
+-
+-	// TODO: Remove this when the marketplace redesign is enabled by default
+-	if ( ! isMarketplaceRedesignEnabled ) {
++const FullWidthSection = ( { children, className, enabled = false } ) => {
++	if ( ! enabled ) {
+ 		return children;
+ 	}
+ 
+@@ -22,6 +18,7 @@ const FullWidthSection = ( { children, className } ) => {
+ FullWidthSection.propTypes = {
+ 	children: PropTypes.node,
+ 	className: PropTypes.string,
++	enabled: PropTypes.bool,
+ };
+ 
+ export default FullWidthSection;
+diff --git a/client/dashboard/plugins/plugins-menu/index.tsx b/client/dashboard/plugins/plugins-menu/index.tsx
+index 181074833b1..08cdc0572a1 100644
+--- a/client/dashboard/plugins/plugins-menu/index.tsx
++++ b/client/dashboard/plugins/plugins-menu/index.tsx
+@@ -1,22 +1,37 @@
++import { isEnabled } from '@automattic/calypso-config';
++import { Button } from '@wordpress/components';
+ import { __ } from '@wordpress/i18n';
+ import MenuDivider from '../../components/menu-divider';
+ import ResponsiveMenu from '../../components/responsive-menu';
+ import { wpcomLink } from '../../utils/link';
+ 
+ const PluginsMenu = () => {
++	const isRedesignEnabled = isEnabled( 'marketplace-redesign' );
++	const browsePluginsLabel = __( 'Browse plugins' );
++
+ 	return (
+ 		<ResponsiveMenu prefix={ <MenuDivider /> }>
+ 			<ResponsiveMenu.Item to="/plugins/manage">{ __( 'Manage plugins' ) }</ResponsiveMenu.Item>
+ 			<ResponsiveMenu.Item to="/plugins/scheduled-updates">
+ 				{ __( 'Scheduled updates' ) }
+ 			</ResponsiveMenu.Item>
+-			<ResponsiveMenu.Item
+-				href={ wpcomLink( '/plugins' ) }
+-				target="_blank"
+-				rel="noopener noreferrer"
+-			>
+-				{ __( 'Browse plugins' ) }
+-			</ResponsiveMenu.Item>
++			{ isRedesignEnabled ? (
++				<Button
++					className="dashboard-menu__item"
++					variant="tertiary"
++					href={ wpcomLink( '/plugins' ) }
++				>
++					{ browsePluginsLabel }
++				</Button>
++			) : (
++				<ResponsiveMenu.Item
++					href={ wpcomLink( '/plugins' ) }
++					target="_blank"
++					rel="noopener noreferrer"
++				>
++					{ browsePluginsLabel }
++				</ResponsiveMenu.Item>
++			) }
+ 		</ResponsiveMenu>
+ 	);
+ };
+diff --git a/client/my-sites/marketplace/components/reviews-cards/index.tsx b/client/my-sites/marketplace/components/reviews-cards/index.tsx
+index 9effc45a029..3413005b075 100644
+--- a/client/my-sites/marketplace/components/reviews-cards/index.tsx
++++ b/client/my-sites/marketplace/components/reviews-cards/index.tsx
+@@ -6,6 +6,7 @@ import {
+ 	useMarketplaceReviewsQuery,
+ 	ProductProps,
+ } from 'calypso/data/marketplace/use-marketplace-reviews';
++import { useIsMarketplaceRedesignEnabled } from 'calypso/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled';
+ import { getCurrentUserId } from 'calypso/state/current-user/selectors';
+ import { MarketplaceReviewCard } from './review-card';
+ import './style.scss';
+@@ -15,6 +16,7 @@ type MarketplaceReviewsCardsProps = { showMarketplaceReviews?: () => void } & Pr
+ export const MarketplaceReviewsCards = ( props: MarketplaceReviewsCardsProps ) => {
+ 	const translate = useTranslate();
+ 	const currentUserId = useSelector( getCurrentUserId );
++	const isMarketplaceRedesignEnabled = useIsMarketplaceRedesignEnabled();
+ 	const { data: userReviews = [] } = useMarketplaceReviewsQuery( {
+ 		...props,
+ 		perPage: 1,
+@@ -37,7 +39,10 @@ export const MarketplaceReviewsCards = ( props: MarketplaceReviewsCardsProps ) =
+ 	const addEmptyCard = reviews.length === 0;
+ 
+ 	return (
+-		<FullWidthSection className="plugin-details__reviews-section full-width-section--gray full-width-section--double-padding">
++		<FullWidthSection
++			className="plugin-details__reviews-section full-width-section--gray full-width-section--double-padding"
++			enabled={ isMarketplaceRedesignEnabled }
++		>
+ 			<div className="plugin-details__reviews">
+ 				<div className="marketplace-reviews-cards__container">
+ 					<div className="marketplace-reviews-cards__reviews">
+diff --git a/client/my-sites/plugins/categories/index.tsx b/client/my-sites/plugins/categories/index.tsx
+index 989ba081c76..256e5d6ad34 100644
+--- a/client/my-sites/plugins/categories/index.tsx
++++ b/client/my-sites/plugins/categories/index.tsx
+@@ -1,8 +1,8 @@
+-import { isEnabled } from '@automattic/calypso-config';
+ import page from '@automattic/calypso-router';
+ import { ResponsiveToolbarGroup } from '@automattic/components';
+ import { Icon, starEmpty } from '@wordpress/icons';
+ import clsx from 'clsx';
++import { useIsMarketplaceRedesignEnabled } from 'calypso/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled';
+ import { useDispatch, useSelector } from 'calypso/state';
+ import { recordTracksEvent } from 'calypso/state/analytics/actions';
+ import { isUserLoggedIn } from 'calypso/state/current-user/selectors';
+@@ -46,6 +46,7 @@ const Categories = ( {
+ 	const dispatch = useDispatch();
+ 	const getCategoryUrl = useGetCategoryUrl();
+ 	const isLoggedIn = useSelector( isUserLoggedIn );
++	const isMarketplaceRedesignEnabled = useIsMarketplaceRedesignEnabled();
+ 
+ 	// We hide these special categories from the category selector
+ 	const displayCategories = allowedCategories.filter(
+@@ -82,7 +83,7 @@ const Categories = ( {
+ 		>
+ 			{ categories.map( ( category ) => (
+ 				<span key={ `category-${ category.slug }` } title={ category.menu }>
+-					{ category.slug === 'discover' && isEnabled( 'marketplace-redesign' ) && (
++					{ category.slug === 'discover' && isMarketplaceRedesignEnabled && (
+ 						<Icon icon={ starEmpty } size={ 22 } />
+ 					) }
+ 
+diff --git a/client/my-sites/plugins/categories/use-categories.tsx b/client/my-sites/plugins/categories/use-categories.tsx
+index 491f77a93ec..2b56c915179 100644
+--- a/client/my-sites/plugins/categories/use-categories.tsx
++++ b/client/my-sites/plugins/categories/use-categories.tsx
+@@ -1,5 +1,5 @@
+-import { isEnabled } from '@automattic/calypso-config';
+ import { __, _x } from '@wordpress/i18n';
++import { useIsMarketplaceRedesignEnabled } from 'calypso/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled';
+ import { useSelector } from 'calypso/state';
+ import isAtomicSite from 'calypso/state/selectors/is-site-automated-transfer';
+ import { isJetpackSite } from 'calypso/state/sites/selectors';
+@@ -78,7 +78,9 @@ export const ALLOWED_CATEGORIES = [
+ 	'wpbeginner',
+ ];
+ 
+-export const getCategories: () => Record< string, Category > = () => ( {
++export const getCategories = (
++	isMarketplaceRedesignEnabled = false
++): Record< string, Category > => ( {
+ 	discover: {
+ 		menu: __( 'Discover' ),
+ 		title: __( 'Discover' ),
+@@ -88,10 +90,10 @@ export const getCategories: () => Record< string, Category > = () => ( {
+ 	},
+ 	paid: {
+ 		menu: __( 'Premium plugins' ),
+-		title: isEnabled( 'marketplace-redesign' )
++		title: isMarketplaceRedesignEnabled
+ 			? __( 'Must-have plugins' )
+ 			: __( 'Must-have premium plugins' ),
+-		description: isEnabled( 'marketplace-redesign' )
++		description: isMarketplaceRedesignEnabled
+ 			? __( 'Add the most popular plugins on WordPress.com.' )
+ 			: __( 'Take your site further with these premium plugins.' ),
+ 		slug: 'paid',
+@@ -100,9 +102,7 @@ export const getCategories: () => Record< string, Category > = () => ( {
+ 	},
+ 	popular: {
+ 		menu: __( 'Popular plugins' ),
+-		title: isEnabled( 'marketplace-redesign' )
+-			? __( 'The free essentials' )
+-			: __( 'Popular plugins' ),
++		title: isMarketplaceRedesignEnabled ? __( 'The free essentials' ) : __( 'Popular plugins' ),
+ 		description: __( 'Add and install the most popular free plugins.' ),
+ 		slug: 'popular',
+ 		tags: [],
+@@ -110,10 +110,8 @@ export const getCategories: () => Record< string, Category > = () => ( {
+ 	},
+ 	featured: {
+ 		menu: __( 'Developer favorites' ),
+-		title: isEnabled( 'marketplace-redesign' )
+-			? __( 'Our favorites' )
+-			: __( 'Our developers’ favorites' ),
+-		description: isEnabled( 'marketplace-redesign' )
++		title: isMarketplaceRedesignEnabled ? __( 'Our favorites' ) : __( 'Our developers’ favorites' ),
++		description: isMarketplaceRedesignEnabled
+ 			? __( "Start faster with the WordPress.com team's picks." )
+ 			: __( 'Start fast with these WordPress.com team picks.' ),
+ 		slug: 'featured',
+@@ -437,11 +435,11 @@ export const getCategories: () => Record< string, Category > = () => ( {
+ 	},
+ 	monetization: {
+ 		menu: __( 'Monetization' ),
+-		title: isEnabled( 'marketplace-redesign' )
++		title: isMarketplaceRedesignEnabled
+ 			? __( 'Do more, sell more, earn more' )
+ 			: __( 'Supercharging and monetizing your blog' ),
+ 		slug: 'monetization',
+-		description: isEnabled( 'marketplace-redesign' )
++		description: isMarketplaceRedesignEnabled
+ 			? __( 'Making money with your site is easier than you`d think.' )
+ 			: __( 'Building a money-making blog doesn’t have to be as hard as you might think.' ),
+ 		tags: [ 'affiliate-marketing', 'advertising', 'adwords' ],
+@@ -578,11 +576,11 @@ export const getCategories: () => Record< string, Category > = () => ( {
+ 	},
+ 	business: {
+ 		menu: _x( 'Business', 'category name' ),
+-		title: isEnabled( 'marketplace-redesign' )
++		title: isMarketplaceRedesignEnabled
+ 			? __( 'Set up your business' )
+ 			: __( 'Setting up your local business' ),
+ 		slug: 'business',
+-		description: isEnabled( 'marketplace-redesign' )
++		description: isMarketplaceRedesignEnabled
+ 			? __( 'Find the perfect plugin to build and grow.' )
+ 			: __( 'These plugins are here to keep your business on track.' ),
+ 		tags: [ 'google', 'testimonials', 'crm', 'business-directory' ],
+@@ -1085,6 +1083,7 @@ export function useCategories(
+ 	allowedCategories = ALLOWED_CATEGORIES
+ ): Record< string, Category > {
+ 	const siteId = useSelector( getSelectedSiteId ) as number;
++	const isMarketplaceRedesignEnabled = useIsMarketplaceRedesignEnabled();
+ 
+ 	const isJetpack = useSelector(
+ 		( state ) => isJetpackSite( state, siteId ) && ! isAtomicSite( state, siteId )
+@@ -1099,6 +1098,8 @@ export function useCategories(
+ 	}
+ 
+ 	return Object.fromEntries(
+-		Object.entries( getCategories() ).filter( ( [ key ] ) => allowed.includes( key ) )
++		Object.entries( getCategories( isMarketplaceRedesignEnabled ) ).filter( ( [ key ] ) =>
++			allowed.includes( key )
++		)
+ 	);
+ }
+diff --git a/client/my-sites/plugins/education-footer/index.tsx b/client/my-sites/plugins/education-footer/index.tsx
+index c1cbaddfd69..c0cc45cd792 100644
+--- a/client/my-sites/plugins/education-footer/index.tsx
++++ b/client/my-sites/plugins/education-footer/index.tsx
+@@ -1,4 +1,3 @@
+-import { isEnabled } from '@automattic/calypso-config';
+ import { useOpenArticleInHelpCenter } from '@automattic/help-center/src/hooks';
+ import { useLocalizeUrl } from '@automattic/i18n-utils';
+ import styled from '@emotion/styled';
+@@ -11,6 +10,7 @@ import FeatureItem from 'calypso/components/feature-item';
+ import LinkCard from 'calypso/components/link-card';
+ import Section, { SectionContainer } from 'calypso/components/section';
+ import { addQueryArgs } from 'calypso/lib/route';
++import { useIsMarketplaceRedesignEnabled } from 'calypso/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled';
+ import PluginsResultsHeader from 'calypso/my-sites/plugins/plugins-results-header';
+ import { useDispatch, useSelector } from 'calypso/state';
+ import { recordTracksEvent } from 'calypso/state/analytics/actions/record';
+@@ -181,8 +181,12 @@ interface FeatureHeaderProps {
+ 	title: string;
+ }
+ 
+-const FeatureHeader = ( { icon, title }: FeatureHeaderProps ) => {
+-	if ( ! isEnabled( 'marketplace-redesign' ) ) {
++const FeatureHeader = ( {
++	icon,
++	title,
++	isMarketplaceRedesignEnabled,
++}: FeatureHeaderProps & { isMarketplaceRedesignEnabled: boolean } ) => {
++	if ( ! isMarketplaceRedesignEnabled ) {
+ 		return title;
+ 	}
+ 
+@@ -201,6 +205,7 @@ export const MarketplaceFooter = () => {
+ 	const currentUserSiteCount = useSelector( getCurrentUserSiteCount );
+ 	const sectionName = useSelector( getSectionName );
+ 	const showCta = ! isLoggedIn || currentUserSiteCount === 0;
++	const isMarketplaceRedesignEnabled = useIsMarketplaceRedesignEnabled();
+ 
+ 	const startUrl = addQueryArgs(
+ 		{
+@@ -209,7 +214,7 @@ export const MarketplaceFooter = () => {
+ 		sectionName === 'plugins' ? '/start/business' : '/start'
+ 	);
+ 
+-	const headerTitle = isEnabled( 'marketplace-redesign' )
++	const headerTitle = isMarketplaceRedesignEnabled
+ 		? translate( "You pick the plugin,{{br}}{{/br}}we'll take care of the rest", {
+ 				components: { br: <br /> },
+ 		  } )
+@@ -217,7 +222,7 @@ export const MarketplaceFooter = () => {
+ 
+ 	const ctaButton = showCta ? (
+ 		<Button
+-			variant={ isEnabled( 'marketplace-redesign' ) ? 'secondary' : 'primary' }
++			variant={ isMarketplaceRedesignEnabled ? 'secondary' : 'primary' }
+ 			className="marketplace-cta"
+ 			href={ startUrl }
+ 		>
+@@ -234,10 +239,11 @@ export const MarketplaceFooter = () => {
+ 							<FeatureHeader
+ 								icon={ <Icon icon={ shield } size={ 24 } /> }
+ 								title={ __( 'Fully managed' ) }
++								isMarketplaceRedesignEnabled={ isMarketplaceRedesignEnabled }
+ 							/>
+ 						}
+ 					>
+-						{ isEnabled( 'marketplace-redesign' )
++						{ isMarketplaceRedesignEnabled
+ 							? __(
+ 									'Plugins authored by WordPress.com are fully managed by our team. No security patches. No update nags. It just works.'
+ 							  )
+@@ -250,6 +256,7 @@ export const MarketplaceFooter = () => {
+ 							<FeatureHeader
+ 								icon={ <Icon icon={ plugins } size={ 24 } /> }
+ 								title={ __( 'Thousands of plugins' ) }
++								isMarketplaceRedesignEnabled={ isMarketplaceRedesignEnabled }
+ 							/>
+ 						}
+ 					>
+@@ -262,10 +269,11 @@ export const MarketplaceFooter = () => {
+ 							<FeatureHeader
+ 								icon={ <Icon icon={ currencyDollar } size={ 24 } /> }
+ 								title={ __( 'Flexible pricing' ) }
++								isMarketplaceRedesignEnabled={ isMarketplaceRedesignEnabled }
+ 							/>
+ 						}
+ 					>
+-						{ isEnabled( 'marketplace-redesign' )
++						{ isMarketplaceRedesignEnabled
+ 							? __(
+ 									'Pay yearly and save. Or keep it flexible with monthly plugin pricing. It’s entirely up to you.'
+ 							  )
+@@ -299,7 +307,7 @@ const EducationFooter = () => {
+ 		[ dispatch, openArticleInHelpCenter, isLoggedIn ]
+ 	);
+ 
+-	const isMarketplaceRedesignEnabled = isEnabled( 'marketplace-redesign' );
++	const isMarketplaceRedesignEnabled = useIsMarketplaceRedesignEnabled();
+ 
+ 	const links = {
+ 		websiteBuilding: localizeUrl( 'https://wordpress.com/support/plugins/' ),
+diff --git a/client/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled.ts b/client/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled.ts
+new file mode 100644
+index 00000000000..8a33ceab883
+--- /dev/null
++++ b/client/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled.ts
+@@ -0,0 +1,36 @@
++import { isEnabled } from '@automattic/calypso-config';
++import { useSelector } from 'react-redux';
++import { isUserLoggedIn } from 'calypso/state/current-user/selectors';
++import { hasHostingDashboardOptIn } from 'calypso/state/sites/selectors/has-hosting-dashboard-opt-in';
++import { getSelectedSiteId } from 'calypso/state/ui/selectors';
++
++/**
++ * Hook to determine if the marketplace redesign feature should be applied.
++ *
++ * The marketplace redesign is shown when ALL of the following are true:
++ * 1. The 'marketplace-redesign' feature flag is enabled
++ * 2. No site is selected
++ * 3. Either the user is logged out OR the user has opted into the dashboard/v2 (hosting dashboard opt-in)
++ *
++ * This ensures the redesign is applied for:
++ * - Logged-out users (chromeless experience)
++ * - Logged-in users with dashboard opt-in but no site selected (MSD context)
++ *
++ * And is NOT applied for:
++ * - Any user with a site selected (Calypso admin context)
++ * - Logged-in users without dashboard opt-in and no site selected (v1 dashboard)
++ * @returns {boolean} Whether the marketplace redesign should be applied.
++ */
++export function useIsMarketplaceRedesignEnabled(): boolean {
++	const siteId = useSelector( getSelectedSiteId );
++	const isLoggedIn = useSelector( isUserLoggedIn );
++	const hostingDashboardOptIn = useSelector( hasHostingDashboardOptIn );
++
++	// Never show redesign when a site is selected
++	if ( siteId ) {
++		return false;
++	}
++
++	// Show redesign for logged-out users or logged-in users with dashboard opt-in
++	return isEnabled( 'marketplace-redesign' ) && ( ! isLoggedIn || hostingDashboardOptIn );
++}
+diff --git a/client/my-sites/plugins/plugin-details-header/index.jsx b/client/my-sites/plugins/plugin-details-header/index.jsx
+index 52e69a97d3c..cdbb2f5d033 100644
+--- a/client/my-sites/plugins/plugin-details-header/index.jsx
++++ b/client/my-sites/plugins/plugin-details-header/index.jsx
+@@ -1,4 +1,3 @@
+-import { isEnabled } from '@automattic/calypso-config';
+ import { Badge, Button } from '@automattic/components';
+ import { formatNumberCompact } from '@automattic/number-formatters';
+ import { useTranslate } from 'i18n-calypso';
+@@ -11,6 +10,7 @@ import {
+ } from 'calypso/data/marketplace/use-marketplace-reviews';
+ import { gaRecordEvent } from 'calypso/lib/analytics/ga';
+ import { preventWidows } from 'calypso/lib/formatting';
++import { useIsMarketplaceRedesignEnabled } from 'calypso/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled';
+ import PluginIcon from 'calypso/my-sites/plugins/plugin-icon/plugin-icon';
+ import { useLocalizedPlugins, formatPluginRating } from 'calypso/my-sites/plugins/utils';
+ import { getSelectedSite } from 'calypso/state/ui/selectors';
+@@ -28,6 +28,7 @@ const PluginDetailsHeader = ( {
+ 	const moment = useLocalizedMoment();
+ 	const translate = useTranslate();
+ 	const { localizePath } = useLocalizedPlugins();
++	const isMarketplaceRedesignEnabled = useIsMarketplaceRedesignEnabled();
+ 
+ 	const selectedSite = useSelector( getSelectedSite );
+ 
+@@ -101,7 +102,7 @@ const PluginDetailsHeader = ( {
+ 				<PluginIcon
+ 					className="plugin-details-header__icon"
+ 					image={ plugin.icon }
+-					size={ isEnabled( 'marketplace-redesign' ) ? 80 : undefined }
++					size={ isMarketplaceRedesignEnabled ? 80 : undefined }
+ 				/>
+ 				<div className="plugin-details-header__title-container">
+ 					<h1 className="plugin-details-header__name">{ plugin.name }</h1>
+@@ -139,13 +140,11 @@ const PluginDetailsHeader = ( {
+ 				{ rating !== null && (
+ 					<div className="plugin-details-header__info">
+ 						<div className="plugin-details-header__info-title">
+-							{ isEnabled( 'marketplace-redesign' )
+-								? translate( 'Ratings' )
+-								: translate( 'Rating' ) }
++							{ isMarketplaceRedesignEnabled ? translate( 'Ratings' ) : translate( 'Rating' ) }
+ 						</div>
+ 						<div className="plugin-details-header__info-value">
+ 							{ rating !== 0 &&
+-								( isEnabled( 'marketplace-redesign' ) ? (
++								( isMarketplaceRedesignEnabled ? (
+ 									<div className="plugin-details-header__rating">
+ 										<Rating rating={ rating } size={ 20 } />
+ 										<span>{ formatPluginRating( rating, true ) }</span>
+diff --git a/client/my-sites/plugins/plugin-details.jsx b/client/my-sites/plugins/plugin-details.jsx
+index e0c2b00b1b0..b5256fd1e01 100644
+--- a/client/my-sites/plugins/plugin-details.jsx
++++ b/client/my-sites/plugins/plugin-details.jsx
+@@ -1,4 +1,3 @@
+-import { isEnabled } from '@automattic/calypso-config';
+ import { Button } from '@automattic/components';
+ import { localizeUrl } from '@automattic/i18n-utils';
+ import { useBreakpoint } from '@automattic/viewport-react';
+@@ -82,6 +81,7 @@ import {
+ } from 'calypso/state/sites/selectors';
+ import { getSelectedSite } from 'calypso/state/ui/selectors';
+ import { MarketplaceFooter } from './education-footer';
++import { useIsMarketplaceRedesignEnabled } from './hooks/use-is-marketplace-redesign-enabled';
+ import NoPermissionsError from './no-permissions-error';
+ import { usePluginIsMaintained } from './use-plugin-is-maintained';
+ 
+@@ -296,7 +296,7 @@ function PluginDetails( props ) {
+ 		setBreadcrumbs( breadcrumbs );
+ 	}, [ fullPlugin.name, props.pluginSlug, selectedSite, dispatch, localizePath ] );
+ 
+-	const isMarketplaceRedesignEnabled = isEnabled( 'marketplace-redesign' );
++	const isMarketplaceRedesignEnabled = useIsMarketplaceRedesignEnabled();
+ 	const isMaintained = usePluginIsMaintained( fullPlugin?.tested );
+ 
+ 	const getPageTitle = () => {
+@@ -415,7 +415,10 @@ function PluginDetails( props ) {
+ 			<QueryProductsList persist={ ! wporgPluginNotFound } />
+ 			<QueryUserPurchases />
+ 			<QuerySitePurchases siteId={ selectedSite?.ID } />
+-			<FullWidthSection className="plugin-details__navigation-header-section">
++			<FullWidthSection
++				className="plugin-details__navigation-header-section"
++				enabled={ isMarketplaceRedesignEnabled }
++			>
+ 				<NavigationHeader compactBreadcrumb={ ! isWide } navigationItems={ breadcrumbs } />
+ 				<PluginNotices
+ 					pluginId={ fullPlugin.id }
+@@ -465,7 +468,10 @@ function PluginDetails( props ) {
+ 						event="calypso_marketplace_reviews_plugin_banner"
+ 					/>
+ 				) }
+-			<FullWidthSection className="plugin-details__main-section">
++			<FullWidthSection
++				className="plugin-details__main-section"
++				enabled={ isMarketplaceRedesignEnabled }
++			>
+ 				<div className="plugin-details__page">
+ 					<div className={ clsx( 'plugin-details__layout', { 'is-logged-in': isLoggedIn } ) }>
+ 						<div className="plugin-details__header">
+@@ -563,7 +569,10 @@ function PluginDetails( props ) {
+ 				/>
+ 			) }
+ 			{ isMarketplaceProduct && ! showPlaceholder && (
+-				<FullWidthSection className="plugins__marketplace-footer">
++				<FullWidthSection
++					className="plugins__marketplace-footer"
++					enabled={ isMarketplaceRedesignEnabled }
++				>
+ 					<MarketplaceFooter />
+ 				</FullWidthSection>
+ 			) }
+diff --git a/client/my-sites/plugins/plugins-browser-item/index.jsx b/client/my-sites/plugins/plugins-browser-item/index.jsx
+index 4287243d54c..9f7e80efbe8 100644
+--- a/client/my-sites/plugins/plugins-browser-item/index.jsx
++++ b/client/my-sites/plugins/plugins-browser-item/index.jsx
+@@ -1,4 +1,3 @@
+-import { isEnabled } from '@automattic/calypso-config';
+ import { WPCOM_FEATURES_INSTALL_PLUGINS } from '@automattic/calypso-products';
+ import page from '@automattic/calypso-router';
+ import { Badge, Gridicon } from '@automattic/components';
+@@ -13,6 +12,7 @@ import { recordTracksEvent } from 'calypso/lib/analytics/tracks';
+ import { getSoftwareSlug } from 'calypso/lib/plugins/utils';
+ import version_compare from 'calypso/lib/version-compare';
+ import { IntervalLength } from 'calypso/my-sites/marketplace/components/billing-interval-switcher/constants';
++import { useIsMarketplaceRedesignEnabled } from 'calypso/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled';
+ import { isCompatiblePlugin } from 'calypso/my-sites/plugins/plugin-compatibility';
+ import PluginIcon from 'calypso/my-sites/plugins/plugin-icon/plugin-icon';
+ import { PluginPrice } from 'calypso/my-sites/plugins/plugin-price';
+@@ -70,6 +70,7 @@ const PluginsBrowserListElement = ( props ) => {
+ 	);
+ 
+ 	const { isPreinstalledPremiumPluginUpgraded } = usePreinstalledPremiumPlugin( plugin.slug );
++	const isMarketplaceRedesignEnabled = useIsMarketplaceRedesignEnabled();
+ 
+ 	const pluginLink = useMemo( () => {
+ 		if ( plugin.link ) {
+@@ -237,11 +238,11 @@ const PluginsBrowserListElement = ( props ) => {
+ 								</div>
+ 							</>
+ 						) }
+-						{ isEnabled( 'marketplace-redesign' ) && (
++						{ isMarketplaceRedesignEnabled && (
+ 							<div className="plugins-browser-item__description">{ plugin.short_description }</div>
+ 						) }
+ 					</div>
+-					{ ! isEnabled( 'marketplace-redesign' ) && (
++					{ ! isMarketplaceRedesignEnabled && (
+ 						<div className="plugins-browser-item__description">{ plugin.short_description }</div>
+ 					) }
+ 				</div>
+@@ -443,6 +444,8 @@ function InstalledInOrPricing( {
+ }
+ 
+ function Placeholder( { variant } ) {
++	const isMarketplaceRedesignEnabled = useIsMarketplaceRedesignEnabled();
++
+ 	return (
+ 		<li className={ clsx( 'plugins-browser-item is-placeholder', variant ) }>
+ 			<span className="plugins-browser-item__link">
+@@ -451,11 +454,11 @@ function Placeholder( { variant } ) {
+ 						<PluginIcon isPlaceholder />
+ 						<div className="plugins-browser-item__title">…</div>
+ 						<div className="plugins-browser-item__author">…</div>
+-						{ isEnabled( 'marketplace-redesign' ) && (
++						{ isMarketplaceRedesignEnabled && (
+ 							<div className="plugins-browser-item__description">…</div>
+ 						) }
+ 					</div>
+-					{ ! isEnabled( 'marketplace-redesign' ) && (
++					{ ! isMarketplaceRedesignEnabled && (
+ 						<div className="plugins-browser-item__description">…</div>
+ 					) }
+ 				</div>
+diff --git a/client/my-sites/plugins/plugins-browser/collection-list-view/index.tsx b/client/my-sites/plugins/plugins-browser/collection-list-view/index.tsx
+index a1d1fb6f16c..e0103ab49fd 100644
+--- a/client/my-sites/plugins/plugins-browser/collection-list-view/index.tsx
++++ b/client/my-sites/plugins/plugins-browser/collection-list-view/index.tsx
+@@ -1,8 +1,8 @@
+-import { isEnabled } from '@automattic/calypso-config';
+ import { useViewportMatch } from '@wordpress/compose';
+ import { ReactElement } from 'react';
+ import { useCategories } from 'calypso/my-sites/plugins/categories/use-categories';
+ import { useGetCategoryUrl } from 'calypso/my-sites/plugins/categories/use-get-category-url';
++import { useIsMarketplaceRedesignEnabled } from 'calypso/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled';
+ import PluginsBrowserList from 'calypso/my-sites/plugins/plugins-browser-list';
+ import { PluginsBrowserListVariant } from 'calypso/my-sites/plugins/plugins-browser-list/types';
+ import { useSelector } from 'calypso/state';
+@@ -10,8 +10,6 @@ import isSiteAutomatedTransfer from 'calypso/state/selectors/is-site-automated-t
+ import { isJetpackSite } from 'calypso/state/sites/selectors';
+ import { getSelectedSiteId } from 'calypso/state/ui/selectors';
+ 
+-const COLLECTION_LIST_LENGTH = isEnabled( 'marketplace-redesign' ) ? 18 : 6;
+-
+ export default function CollectionListView( {
+ 	category,
+ 	siteSlug,
+@@ -29,10 +27,13 @@ export default function CollectionListView( {
+ 	const getCategoryUrl = useGetCategoryUrl();
+ 	const categories = useCategories( [ category ] );
+ 
+-	const isUseCarousel = isEnabled( 'marketplace-redesign' );
++	const isUseCarousel = useIsMarketplaceRedesignEnabled();
+ 	const isLargeOrAbove = useViewportMatch( 'large' );
+ 	const isWideOrAbove = useViewportMatch( 'wide' );
+ 
++	// Use shorter list length when redesign is not enabled
++	const collectionListLength = isUseCarousel ? 18 : 6;
++
+ 	let carouselPageSize = 6;
+ 	if ( ! isLargeOrAbove ) {
+ 		carouselPageSize = 2;
+@@ -40,7 +41,7 @@ export default function CollectionListView( {
+ 		carouselPageSize = 4;
+ 	}
+ 
+-	const plugins = categories[ category ].preview.slice( 0, COLLECTION_LIST_LENGTH );
++	const plugins = categories[ category ].preview.slice( 0, collectionListLength );
+ 
+ 	if ( isJetpackSelfHosted ) {
+ 		return null;
+diff --git a/client/my-sites/plugins/plugins-browser/index.jsx b/client/my-sites/plugins/plugins-browser/index.jsx
+index 32f624c78fc..fe94e55eb55 100644
+--- a/client/my-sites/plugins/plugins-browser/index.jsx
++++ b/client/my-sites/plugins/plugins-browser/index.jsx
+@@ -16,6 +16,7 @@ import useScrollAboveElement from 'calypso/lib/use-scroll-above-element';
+ import Categories from 'calypso/my-sites/plugins/categories';
+ import { useCategories } from 'calypso/my-sites/plugins/categories/use-categories';
+ import { MarketplaceFooter } from 'calypso/my-sites/plugins/education-footer';
++import { useIsMarketplaceRedesignEnabled } from 'calypso/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled';
+ import NoPermissionsError from 'calypso/my-sites/plugins/no-permissions-error';
+ import useIsVisible from 'calypso/my-sites/plugins/plugins-browser/use-is-visible';
+ import { PluginsFAQ } from 'calypso/my-sites/plugins/plugins-faq';
+@@ -116,7 +117,7 @@ const PluginsBrowser = ( { trackPageViews = true, category, search } ) => {
+ 	const shouldUseLoggedInView =
+ 		isEnabled( 'plugins/universal-header' ) && hostingDashboardOptIn ? siteId : isLoggedIn;
+ 
+-	const isMarketplaceRedesignEnabled = isEnabled( 'marketplace-redesign' );
++	const isMarketplaceRedesignEnabled = useIsMarketplaceRedesignEnabled();
+ 
+ 	// this is a temporary hack until we merge Phase 4 of the refactor
+ 	const renderList = () => {
+@@ -191,7 +192,10 @@ const PluginsBrowser = ( { trackPageViews = true, category, search } ) => {
+ 					<JetpackConnectionHealthBanner siteId={ siteId } />
+ 				) }
+ 				{ shouldUseLoggedInView ? (
+-					<FullWidthSection className="plugins-browser__search-categories full-width-section--no-padding">
++					<FullWidthSection
++						className="plugins-browser__search-categories full-width-section--no-padding"
++						enabled={ isMarketplaceRedesignEnabled }
++					>
+ 						<div ref={ loggedInSearchBoxRef } />
+ 						<SearchCategories
+ 							category={ category }
+@@ -204,7 +208,10 @@ const PluginsBrowser = ( { trackPageViews = true, category, search } ) => {
+ 					</FullWidthSection>
+ 				) : (
+ 					<>
+-						<FullWidthSection className="plugins-browser__search-header full-width-section--gray">
++						<FullWidthSection
++							className="plugins-browser__search-header full-width-section--gray"
++							enabled={ isMarketplaceRedesignEnabled }
++						>
+ 							<SearchBoxHeader
+ 								searchRef={ searchRef }
+ 								categoriesRef={ categoriesRef }
+@@ -230,7 +237,10 @@ const PluginsBrowser = ( { trackPageViews = true, category, search } ) => {
+ 								renderTitleInH1={ ! category }
+ 							/>
+ 						</FullWidthSection>
+-						<FullWidthSection className="plugins-browser__categories">
++						<FullWidthSection
++							className="plugins-browser__categories"
++							enabled={ isMarketplaceRedesignEnabled }
++						>
+ 							<div ref={ categoriesRef }>
+ 								<Categories selected={ category } noSelection={ !! search } />
+ 							</div>
+@@ -239,12 +249,18 @@ const PluginsBrowser = ( { trackPageViews = true, category, search } ) => {
+ 				) }
+ 				<div className="plugins-browser__main-container">{ renderList() }</div>
+ 				{ ! category && ! search && (
+-					<FullWidthSection className="plugins__marketplace-footer">
++					<FullWidthSection
++						className="plugins__marketplace-footer"
++						enabled={ isMarketplaceRedesignEnabled }
++					>
+ 						<MarketplaceFooter />
+ 					</FullWidthSection>
+ 				) }
+ 				{ ! category && ! search && isMarketplaceRedesignEnabled && (
+-					<FullWidthSection className="plugins-browser__faq full-width-section--double-padding">
++					<FullWidthSection
++						className="plugins-browser__faq full-width-section--double-padding"
++						enabled={ isMarketplaceRedesignEnabled }
++					>
+ 						<PluginsFAQ />
+ 					</FullWidthSection>
+ 				) }
+diff --git a/client/my-sites/plugins/plugins-browser/single-list-view/index.jsx b/client/my-sites/plugins/plugins-browser/single-list-view/index.jsx
+index 79169b39333..36cb926a6e9 100644
+--- a/client/my-sites/plugins/plugins-browser/single-list-view/index.jsx
++++ b/client/my-sites/plugins/plugins-browser/single-list-view/index.jsx
+@@ -1,8 +1,8 @@
+-import { isEnabled } from '@automattic/calypso-config';
+ import { useViewportMatch } from '@wordpress/compose';
+ import { useTranslate } from 'i18n-calypso';
+ import { useSelector } from 'react-redux';
+ import { useCategories } from 'calypso/my-sites/plugins/categories/use-categories';
++import { useIsMarketplaceRedesignEnabled } from 'calypso/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled';
+ import PluginsBrowserList from 'calypso/my-sites/plugins/plugins-browser-list';
+ import { PluginsBrowserListVariant } from 'calypso/my-sites/plugins/plugins-browser-list/types';
+ import { siteObjectsToSiteIds, useLocalizedPlugins } from 'calypso/my-sites/plugins/utils';
+@@ -13,7 +13,7 @@ import { getSelectedSiteId } from 'calypso/state/ui/selectors';
+ /**
+  * Module variables
+  */
+-export const SHORT_LIST_LENGTH = isEnabled( 'marketplace-redesign' ) ? 9 : 6;
++export const SHORT_LIST_LENGTH = 9;
+ 
+ const PLUGIN_SLUGS_BLOCKLIST = [];
+ 
+@@ -43,10 +43,13 @@ const SingleListView = ( { category, plugins, isFetching, siteSlug, sites, noHea
+ 	const categoryName = categories[ category ]?.title || translate( 'Plugins' );
+ 	const categoryDescription = categories[ category ]?.description || null;
+ 
+-	const isUseCarousel = isEnabled( 'marketplace-redesign' );
++	const isUseCarousel = useIsMarketplaceRedesignEnabled();
+ 	const isLargeOrAbove = useViewportMatch( 'large' );
+ 	const isWideOrAbove = useViewportMatch( 'wide' );
+ 
++	// Use shorter list length when redesign is not enabled
++	const listLength = isUseCarousel ? SHORT_LIST_LENGTH : 6;
++
+ 	const { localizePath } = useLocalizedPlugins();
+ 
+ 	const installedPlugins = useSelector( ( state ) =>
+@@ -75,14 +78,14 @@ const SingleListView = ( { category, plugins, isFetching, siteSlug, sites, noHea
+ 
+ 	return (
+ 		<PluginsBrowserList
+-			plugins={ plugins.slice( 0, SHORT_LIST_LENGTH ) }
++			plugins={ plugins.slice( 0, listLength ) }
+ 			listName={ category }
+ 			listType="discovery"
+ 			title={ categoryName }
+ 			subtitle={ categoryDescription }
+ 			site={ siteSlug }
+-			browseAllLink={ plugins.length > SHORT_LIST_LENGTH ? localizePath( listLink ) : false }
+-			size={ SHORT_LIST_LENGTH }
++			browseAllLink={ plugins.length > listLength ? localizePath( listLink ) : false }
++			size={ listLength }
+ 			showPlaceholders={ isFetching }
+ 			currentSites={ sites }
+ 			variant={ PluginsBrowserListVariant.Fixed }
+diff --git a/client/my-sites/plugins/plugins-category-results-page/index.jsx b/client/my-sites/plugins/plugins-category-results-page/index.jsx
+index 38aa335a8eb..7e13916c182 100644
+--- a/client/my-sites/plugins/plugins-category-results-page/index.jsx
++++ b/client/my-sites/plugins/plugins-category-results-page/index.jsx
+@@ -1,4 +1,3 @@
+-import { isEnabled } from '@automattic/calypso-config';
+ import { useTranslate } from 'i18n-calypso';
+ import FullWidthSection from 'calypso/components/full-width-section';
+ import InfiniteScroll from 'calypso/components/infinite-scroll';
+@@ -8,6 +7,7 @@ import PluginsBrowserList from 'calypso/my-sites/plugins/plugins-browser-list';
+ import { PluginsBrowserListVariant } from 'calypso/my-sites/plugins/plugins-browser-list/types';
+ import UpgradeNudge from 'calypso/my-sites/plugins/plugins-discovery-page/upgrade-nudge';
+ import { WPBEGINNER_PLUGINS } from '../constants';
++import { useIsMarketplaceRedesignEnabled } from '../hooks/use-is-marketplace-redesign-enabled';
+ import usePlugins from '../use-plugins';
+ 
+ const PluginsCategoryResultsPage = ( { category, siteSlug, sites } ) => {
+@@ -33,10 +33,13 @@ const PluginsCategoryResultsPage = ( { category, siteSlug, sites } ) => {
+ 		} );
+ 	}
+ 
+-	const isMarketplaceRedesign = isEnabled( 'marketplace-redesign' );
++	const isMarketplaceRedesign = useIsMarketplaceRedesignEnabled();
+ 
+ 	return (
+-		<FullWidthSection className="plugins-browser__category-results">
++		<FullWidthSection
++			className="plugins-browser__category-results"
++			enabled={ isMarketplaceRedesign }
++		>
+ 			<UpgradeNudge siteSlug={ siteSlug } paidPlugins />
+ 			<PluginsBrowserList
+ 				title={ categoryName }
+diff --git a/client/my-sites/plugins/plugins-discovery-page/index.jsx b/client/my-sites/plugins/plugins-discovery-page/index.jsx
+index fdc5468f7da..e5df7bc3e6f 100644
+--- a/client/my-sites/plugins/plugins-discovery-page/index.jsx
++++ b/client/my-sites/plugins/plugins-discovery-page/index.jsx
+@@ -1,6 +1,6 @@
+-import { isEnabled } from '@automattic/calypso-config';
+ import { useSelector } from 'react-redux';
+ import FullWidthSection from 'calypso/components/full-width-section';
++import { useIsMarketplaceRedesignEnabled } from 'calypso/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled';
+ import { isCompatiblePlugin } from 'calypso/my-sites/plugins/plugin-compatibility';
+ import { isUserLoggedIn } from 'calypso/state/current-user/selectors';
+ import { getSiteOption } from 'calypso/state/sites/selectors';
+@@ -108,10 +108,14 @@ const PluginsDiscoveryPage = ( props ) => {
+ 		getSiteOption( state, siteId, 'site_partner_bundle' )
+ 	);
+ 	const isWPBeginnerSpecial = sitePartnerBundle === 'wpbeginner-special';
++	const isMarketplaceRedesignEnabled = useIsMarketplaceRedesignEnabled();
+ 
+ 	return (
+ 		<>
+-			<FullWidthSection className="plugins-discovery-page__hero">
++			<FullWidthSection
++				className="plugins-discovery-page__hero"
++				enabled={ isMarketplaceRedesignEnabled }
++			>
+ 				<UpgradeNudge { ...props } paidPlugins />
+ 				{ isWPBeginnerSpecial && (
+ 					<FeaturePartnerBundlePlugins { ...props } category="wpbeginner" />
+@@ -119,23 +123,35 @@ const PluginsDiscoveryPage = ( props ) => {
+ 				<PaidPluginsSection { ...props } />
+ 			</FullWidthSection>
+ 
+-			<FullWidthSection className="plugins-discovery-page__do-more full-width-section--gray">
++			<FullWidthSection
++				className="plugins-discovery-page__do-more full-width-section--gray"
++				enabled={ isMarketplaceRedesignEnabled }
++			>
+ 				<CollectionListView category="monetization" { ...props } />
+ 			</FullWidthSection>
+ 
+-			<FullWidthSection className="plugins-discovery-page__education-footer">
++			<FullWidthSection
++				className="plugins-discovery-page__education-footer"
++				enabled={ isMarketplaceRedesignEnabled }
++			>
+ 				<EducationFooter />
+ 			</FullWidthSection>
+ 
+-			{ ! isLoggedIn && ! isEnabled( 'marketplace-redesign' ) && <InPageCTASection /> }
++			{ ! isLoggedIn && ! isMarketplaceRedesignEnabled && <InPageCTASection /> }
+ 
+-			{ isEnabled( 'marketplace-redesign' ) && (
+-				<FullWidthSection className="plugins-discovery-page__telex-banner full-width-section--double-padding">
++			{ isMarketplaceRedesignEnabled && (
++				<FullWidthSection
++					className="plugins-discovery-page__telex-banner full-width-section--double-padding"
++					enabled={ isMarketplaceRedesignEnabled }
++				>
+ 					<TelexBanner />
+ 				</FullWidthSection>
+ 			) }
+ 
+-			<FullWidthSection className="plugins-discovery-page__favorites full-width-section--double-padding full-width-section--gray">
++			<FullWidthSection
++				className="plugins-discovery-page__favorites full-width-section--double-padding full-width-section--gray"
++				enabled={ isMarketplaceRedesignEnabled }
++			>
+ 				<FeaturedPluginsSection
+ 					{ ...props }
+ 					pluginsByCategoryFeatured={ pluginsByCategoryFeatured }
+@@ -143,24 +159,36 @@ const PluginsDiscoveryPage = ( props ) => {
+ 				/>
+ 			</FullWidthSection>
+ 
+-			<FullWidthSection className="plugins-discovery-page__business">
++			<FullWidthSection
++				className="plugins-discovery-page__business"
++				enabled={ isMarketplaceRedesignEnabled }
++			>
+ 				<CollectionListView category="business" { ...props } />
+ 			</FullWidthSection>
+ 
+-			{ isEnabled( 'marketplace-redesign' ) && (
+-				<FullWidthSection className="plugins-discovery-page__business-plan-banner">
++			{ isMarketplaceRedesignEnabled && (
++				<FullWidthSection
++					className="plugins-discovery-page__business-plan-banner"
++					enabled={ isMarketplaceRedesignEnabled }
++				>
+ 					<BusinessPlanBanner />
+ 				</FullWidthSection>
+ 			) }
+ 
+-			<FullWidthSection className="plugins-discovery-page__free-essentials full-width-section--double-padding">
++			<FullWidthSection
++				className="plugins-discovery-page__free-essentials full-width-section--double-padding"
++				enabled={ isMarketplaceRedesignEnabled }
++			>
+ 				<PopularPluginsSection
+ 					{ ...props }
+ 					pluginsByCategoryFeatured={ pluginsByCategoryFeatured }
+ 				/>
+ 			</FullWidthSection>
+ 
+-			<FullWidthSection className="plugins-discovery-page__power-store full-width-section--gray">
++			<FullWidthSection
++				className="plugins-discovery-page__power-store full-width-section--gray"
++				enabled={ isMarketplaceRedesignEnabled }
++			>
+ 				<CollectionListView category="ecommerce" { ...props } />
+ 			</FullWidthSection>
+ 		</>
+diff --git a/client/my-sites/plugins/plugins-search-results-page/index.jsx b/client/my-sites/plugins/plugins-search-results-page/index.jsx
+index ffea3e2970a..26438403eeb 100644
+--- a/client/my-sites/plugins/plugins-search-results-page/index.jsx
++++ b/client/my-sites/plugins/plugins-search-results-page/index.jsx
+@@ -1,4 +1,3 @@
+-import { isEnabled } from '@automattic/calypso-config';
+ import { useTranslate } from 'i18n-calypso';
+ import { useEffect } from 'react';
+ import { useDispatch } from 'react-redux';
+@@ -11,6 +10,7 @@ import { PluginsBrowserListVariant } from 'calypso/my-sites/plugins/plugins-brow
+ import UpgradeNudge from 'calypso/my-sites/plugins/plugins-discovery-page/upgrade-nudge';
+ import { recordTracksEvent } from 'calypso/state/analytics/actions';
+ import { UNLISTED_PLUGINS } from '../constants';
++import { useIsMarketplaceRedesignEnabled } from '../hooks/use-is-marketplace-redesign-enabled';
+ import ClearSearchButton from '../plugins-browser/clear-search-button';
+ import { PaidPluginsSection } from '../plugins-discovery-page';
+ import usePlugins from '../use-plugins';
+@@ -72,7 +72,7 @@ const PluginsSearchResultPage = ( {
+ 		}
+ 	}, [ searchTerm, pluginsPagination.page, pluginsPagination.results, dispatch, siteId ] );
+ 
+-	const isMarketplaceRedesign = isEnabled( 'marketplace-redesign' );
++	const isMarketplaceRedesign = useIsMarketplaceRedesignEnabled();
+ 
+ 	if ( pluginsBySearchTerm.length > 0 || isFetchingPluginsBySearchTerm ) {
+ 		let title = translate( 'Search results for "%(searchTerm)s"', {
+@@ -112,7 +112,10 @@ const PluginsSearchResultPage = ( {
+ 		}
+ 
+ 		return (
+-			<FullWidthSection className="plugins-browser__search-results">
++			<FullWidthSection
++				className="plugins-browser__search-results"
++				enabled={ isMarketplaceRedesign }
++			>
+ 				<UpgradeNudge siteSlug={ siteSlug } paidPlugins />
+ 				<PluginsBrowserList
+ 					plugins={ pluginsBySearchTerm.filter( isNotBlocked ) }
+@@ -142,7 +145,7 @@ const PluginsSearchResultPage = ( {
+ 
+ 	return (
+ 		// eslint-disable-next-line wpcalypso/jsx-classname-namespace
+-		<FullWidthSection>
++		<FullWidthSection enabled={ isMarketplaceRedesign }>
+ 			<div className="plugins-browser__no-results">
+ 				<NoResults
+ 					text={ translate( 'No matches found' ) }
+diff --git a/client/my-sites/plugins/related-plugins/index.tsx b/client/my-sites/plugins/related-plugins/index.tsx
+index bc4d3f418bb..dc6085f63d2 100644
+--- a/client/my-sites/plugins/related-plugins/index.tsx
++++ b/client/my-sites/plugins/related-plugins/index.tsx
+@@ -1,4 +1,3 @@
+-import { isEnabled } from '@automattic/calypso-config';
+ import { Gridicon, Button, DotPager } from '@automattic/components';
+ import { useViewportMatch } from '@wordpress/compose';
+ import { useTranslate } from 'i18n-calypso';
+@@ -7,6 +6,7 @@ import FullWidthSection from 'calypso/components/full-width-section';
+ import { RelatedPlugin } from 'calypso/data/marketplace/types';
+ import { useGetRelatedPlugins } from 'calypso/data/marketplace/use-get-related-plugins';
+ import { IntervalLength } from 'calypso/my-sites/marketplace/components/billing-interval-switcher/constants';
++import { useIsMarketplaceRedesignEnabled } from 'calypso/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled';
+ import PluginIcon from 'calypso/my-sites/plugins/plugin-icon/plugin-icon';
+ import { PluginPrice } from 'calypso/my-sites/plugins/plugin-price';
+ import PreinstalledPremiumPluginPriceDisplay from 'calypso/my-sites/plugins/plugin-price/preinstalled-premium-plugin-price-display';
+@@ -47,7 +47,7 @@ function chunkItems< T >( items: T[], chunkSize: number ): T[][] {
+ 
+ export function RelatedPlugins( { slug, size, seeAllLink, options }: RelatedPluginProps ) {
+ 	const translate = useTranslate();
+-	const isUseCarousel = isEnabled( 'marketplace-redesign' );
++	const isUseCarousel = useIsMarketplaceRedesignEnabled();
+ 	const isLargeOrAbove = useViewportMatch( 'large' );
+ 	const isWideOrAbove = useViewportMatch( 'wide' );
+ 
+@@ -119,7 +119,7 @@ export function RelatedPlugins( { slug, size, seeAllLink, options }: RelatedPlug
+ 	};
+ 
+ 	return (
+-		<FullWidthSection className="full-width-section--gray">
++		<FullWidthSection className="full-width-section--gray" enabled={ isUseCarousel }>
+ 			<div className="related-plugins">
+ 				<div className="related-plugins__header">
+ 					<h2>{ translate( 'Related plugins' ) }</h2>
+@@ -139,6 +139,7 @@ export function RelatedPlugins( { slug, size, seeAllLink, options }: RelatedPlug
+ function RelatedPluginCard( { plugin }: { plugin: RelatedPlugin } ): JSX.Element {
+ 	const translate = useTranslate();
+ 	const selectedSite = useSelector( getSelectedSite );
++	const isMarketplaceRedesignEnabled = useIsMarketplaceRedesignEnabled();
+ 
+ 	const pluginLink = useMemo( () => {
+ 		let url = '/plugins/' + plugin.slug;
+@@ -155,12 +156,12 @@ function RelatedPluginCard( { plugin }: { plugin: RelatedPlugin } ): JSX.Element
+ 			<PluginIcon
+ 				image={ plugin.icon }
+ 				className="related-plugins-item__icon"
+-				size={ isEnabled( 'marketplace-redesign' ) ? 40 : undefined }
++				size={ isMarketplaceRedesignEnabled ? 40 : undefined }
+ 			/>
+ 			<div className="related-plugins-item__info">
+ 				<h3 className="related-plugins-item__title">{ plugin.name }</h3>
+ 				<div className="related-plugins-item__excerpt">{ plugin.short_description }</div>
+-				{ ! isEnabled( 'marketplace-redesign' ) && (
++				{ ! isMarketplaceRedesignEnabled && (
+ 					<div className="related-plugins-item__details">
+ 						<PluginPrice plugin={ plugin } billingPeriod={ IntervalLength.MONTHLY }>
+ 							{ ( {
+diff --git a/config/wpcalypso.json b/config/wpcalypso.json
+index 1c4e39fc2a3..e8eb4eb79e4 100644
+--- a/config/wpcalypso.json
++++ b/config/wpcalypso.json
+@@ -101,7 +101,7 @@
+ 		"marketing-force-facebook-display": true,
+ 		"marketplace-fetch-all-dynamic-products": true,
+ 		"marketplace-personal-premium": false,
+-		"marketplace-redesign": false,
++		"marketplace-redesign": true,
+ 		"marketplace-reviews-notification": false,
+ 		"marketplace-test": true,
+ 		"me/account-close": true,

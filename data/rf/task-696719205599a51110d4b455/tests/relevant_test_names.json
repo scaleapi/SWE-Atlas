@@ -1,0 +1,37 @@
+{
+  "tests": [
+    {
+      "name": "github.com/grafana/grafana/pkg/storage/unified/sql/TestIntegrationListIter"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/storage/unified/sql/TestUnifiedStorageQueries"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager/TestResourceVersionManager"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager/TestResourceVersionResponse_HasExpectedFields"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager/TestSqlResourceUpdateRVRequest_RendersHistoryWithTemplate"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager/TestSqlResourceUpdateRVRequest_RendersWithTemplate"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager/TestSqlResourceVersionGetRequest_RendersWithTemplate"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager/TestSqlResourceVersionUpsertRequest_RendersInsertWithTemplate"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager/TestSqlResourceVersionUpsertRequest_RendersUpdateWithTemplate"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager/TestTemplateVariablesAreLoaded"
+    },
+    {
+      "name": "github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager/TestTypesWorkAcrossDialects"
+    }
+  ]
+}

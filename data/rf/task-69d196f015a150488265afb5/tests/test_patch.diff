@@ -1,0 +1,577 @@
+diff --git a/packages/api-core/src/site-plans/__tests__/fetchers.ts b/packages/api-core/src/site-plans/__tests__/fetchers.ts
+new file mode 100644
+index 00000000000..33e476ae3a7
+--- /dev/null
++++ b/packages/api-core/src/site-plans/__tests__/fetchers.ts
+@@ -0,0 +1,349 @@
++import { fetchSitePlans } from '../fetchers';
++import { wpcom } from '../../wpcom-fetcher';
++import type { SiteContextualPlan } from '../types';
++
++jest.mock( '../../wpcom-fetcher', () => ( {
++	wpcom: {
++		req: {
++			get: jest.fn(),
++		},
++	},
++} ) );
++
++const mockGet = jest.mocked( wpcom.req.get );
++
++function makePlan( overrides: Partial< SiteContextualPlan > = {} ): SiteContextualPlan {
++	return {
++		formatted_original_price: '$10.00',
++		original_price: { amount: 10, currency: 'USD' },
++		raw_price: 10,
++		raw_price_integer: 1000,
++		formatted_price: '$10.00',
++		raw_discount: 0,
++		raw_discount_integer: 0,
++		formatted_discount: '$0.00',
++		currency_code: 'USD',
++		product_id: 1,
++		product_slug: 'business-bundle',
++		product_name: 'Business',
++		discount_reason: null,
++		cost_overrides: [],
++		is_domain_upgrade: false,
++		...overrides,
++	};
++}
++
++describe( 'fetchSitePlans', () => {
++	beforeEach( () => {
++		mockGet.mockReset();
++	} );
++
++	it( 'returns a normalized array of plans', async () => {
++		const apiResponse: Record< string, SiteContextualPlan > = {
++			'1': makePlan( { product_id: 1, product_slug: 'free_plan' } ),
++			'2': makePlan( { product_id: 2, product_slug: 'business-bundle' } ),
++		};
++		mockGet.mockResolvedValue( apiResponse );
++
++		const result = await fetchSitePlans( 123 );
++
++		expect( Array.isArray( result ) ).toBe( true );
++		expect( result ).toHaveLength( 2 );
++		expect( result[ 0 ].product_slug ).toBe( 'free_plan' );
++		expect( result[ 1 ].product_slug ).toBe( 'business-bundle' );
++	} );
++
++	it( 'calls the correct API endpoint with siteId', async () => {
++		mockGet.mockResolvedValue( {} );
++
++		await fetchSitePlans( 456 );
++
++		expect( mockGet ).toHaveBeenCalledWith( {
++			path: '/sites/456/plans',
++			apiVersion: '1.3',
++			query: '',
++		} );
++	} );
++
++	it( 'passes coupon_code as a query parameter when coupon is provided', async () => {
++		mockGet.mockResolvedValue( {} );
++
++		await fetchSitePlans( 789, 'SAVE20' );
++
++		expect( mockGet ).toHaveBeenCalledWith(
++			expect.objectContaining( {
++				query: 'coupon_code=SAVE20',
++			} )
++		);
++	} );
++
++	it( 'does not include coupon_code when coupon is undefined', async () => {
++		mockGet.mockResolvedValue( {} );
++
++		await fetchSitePlans( 100 );
++
++		expect( mockGet ).toHaveBeenCalledWith(
++			expect.objectContaining( {
++				query: '',
++			} )
++		);
++	} );
++
++	it( 'returns an empty array when API returns an empty object', async () => {
++		mockGet.mockResolvedValue( {} );
++
++		const result = await fetchSitePlans( 100 );
++
++		expect( result ).toEqual( [] );
++	} );
++
++	it( 'normalizes string numeric fields to numbers', async () => {
++		const planWithStrings = makePlan( {
++			raw_price: '9.99' as unknown as number,
++			raw_price_integer: '999' as unknown as number,
++			raw_discount: '1' as unknown as number,
++			raw_discount_integer: '100' as unknown as number,
++			product_id: '42' as unknown as number,
++			original_price: {
++				amount: '10.50' as unknown as number,
++				currency: 'USD',
++			},
++		} );
++		mockGet.mockResolvedValue( { '1': planWithStrings } );
++
++		const result = await fetchSitePlans( 100 );
++
++		expect( typeof result[ 0 ].raw_price ).toBe( 'number' );
++		expect( result[ 0 ].raw_price ).toBe( 9.99 );
++		expect( typeof result[ 0 ].raw_price_integer ).toBe( 'number' );
++		expect( result[ 0 ].raw_price_integer ).toBe( 999 );
++		expect( typeof result[ 0 ].raw_discount ).toBe( 'number' );
++		expect( result[ 0 ].raw_discount ).toBe( 1 );
++		expect( typeof result[ 0 ].raw_discount_integer ).toBe( 'number' );
++		expect( result[ 0 ].raw_discount_integer ).toBe( 100 );
++		expect( typeof result[ 0 ].product_id ).toBe( 'number' );
++		expect( result[ 0 ].product_id ).toBe( 42 );
++		expect( typeof result[ 0 ].original_price.amount ).toBe( 'number' );
++		expect( result[ 0 ].original_price.amount ).toBe( 10.5 );
++	} );
++
++	it( 'normalizes cost_overrides numeric fields', async () => {
++		const planWithOverrides = makePlan( {
++			cost_overrides: [
++				{
++					old_price: '20' as unknown as number,
++					new_price: '15' as unknown as number,
++					override_code: 'PROMO',
++					does_override_original_cost: true,
++					human_readable_reason: 'Promotion',
++					percentage: '25' as unknown as number,
++					first_unit_only: false,
++				},
++			],
++		} );
++		mockGet.mockResolvedValue( { '1': planWithOverrides } );
++
++		const result = await fetchSitePlans( 100 );
++
++		expect( typeof result[ 0 ].cost_overrides[ 0 ].old_price ).toBe( 'number' );
++		expect( result[ 0 ].cost_overrides[ 0 ].old_price ).toBe( 20 );
++		expect( typeof result[ 0 ].cost_overrides[ 0 ].new_price ).toBe( 'number' );
++		expect( result[ 0 ].cost_overrides[ 0 ].new_price ).toBe( 15 );
++		expect( typeof result[ 0 ].cost_overrides[ 0 ].percentage ).toBe( 'number' );
++		expect( result[ 0 ].cost_overrides[ 0 ].percentage ).toBe( 25 );
++	} );
++
++	it( 'preserves non-numeric cost_override fields', async () => {
++		const planWithOverrides = makePlan( {
++			cost_overrides: [
++				{
++					old_price: 20,
++					new_price: 15,
++					override_code: 'PROMO',
++					does_override_original_cost: true,
++					human_readable_reason: 'Promo applied',
++					percentage: 25,
++					first_unit_only: true,
++				},
++			],
++		} );
++		mockGet.mockResolvedValue( { '1': planWithOverrides } );
++
++		const result = await fetchSitePlans( 100 );
++
++		expect( result[ 0 ].cost_overrides[ 0 ].override_code ).toBe( 'PROMO' );
++		expect( result[ 0 ].cost_overrides[ 0 ].does_override_original_cost ).toBe( true );
++		expect( result[ 0 ].cost_overrides[ 0 ].human_readable_reason ).toBe( 'Promo applied' );
++		expect( result[ 0 ].cost_overrides[ 0 ].first_unit_only ).toBe( true );
++	} );
++
++	it( 'normalizes optional interval field when present', async () => {
++		const plan = makePlan( { interval: '365' as unknown as number } );
++		mockGet.mockResolvedValue( { '1': plan } );
++
++		const result = await fetchSitePlans( 100 );
++
++		expect( typeof result[ 0 ].interval ).toBe( 'number' );
++		expect( result[ 0 ].interval ).toBe( 365 );
++	} );
++
++	it( 'does not add interval when it is not present in the source', async () => {
++		const plan = makePlan();
++		delete ( plan as Record< string, unknown > ).interval;
++		mockGet.mockResolvedValue( { '1': plan } );
++
++		const result = await fetchSitePlans( 100 );
++
++		expect( result[ 0 ].interval ).toBeUndefined();
++	} );
++
++	it( 'normalizes optional introductory offer fields when present', async () => {
++		const plan = makePlan( {
++			introductory_offer_raw_price: '5' as unknown as number,
++			introductory_offer_raw_price_integer: '500' as unknown as number,
++			introductory_offer_interval_count: '3' as unknown as number,
++		} );
++		mockGet.mockResolvedValue( { '1': plan } );
++
++		const result = await fetchSitePlans( 100 );
++
++		expect( typeof result[ 0 ].introductory_offer_raw_price ).toBe( 'number' );
++		expect( result[ 0 ].introductory_offer_raw_price ).toBe( 5 );
++		expect( typeof result[ 0 ].introductory_offer_raw_price_integer ).toBe( 'number' );
++		expect( result[ 0 ].introductory_offer_raw_price_integer ).toBe( 500 );
++		expect( typeof result[ 0 ].introductory_offer_interval_count ).toBe( 'number' );
++		expect( result[ 0 ].introductory_offer_interval_count ).toBe( 3 );
++	} );
++
++	it( 'does not add introductory offer fields when not present', async () => {
++		const plan = makePlan();
++		mockGet.mockResolvedValue( { '1': plan } );
++
++		const result = await fetchSitePlans( 100 );
++
++		expect( result[ 0 ].introductory_offer_raw_price ).toBeUndefined();
++		expect( result[ 0 ].introductory_offer_raw_price_integer ).toBeUndefined();
++		expect( result[ 0 ].introductory_offer_interval_count ).toBeUndefined();
++	} );
++
++	it( 'normalizes optional id field when present', async () => {
++		const plan = makePlan( { id: '12345' as unknown as number } );
++		mockGet.mockResolvedValue( { '1': plan } );
++
++		const result = await fetchSitePlans( 100 );
++
++		expect( typeof result[ 0 ].id ).toBe( 'number' );
++		expect( result[ 0 ].id ).toBe( 12345 );
++	} );
++
++	it( 'preserves null id as null', async () => {
++		const plan = makePlan( { id: null } );
++		mockGet.mockResolvedValue( { '1': plan } );
++
++		const result = await fetchSitePlans( 100 );
++
++		expect( result[ 0 ].id ).toBeNull();
++	} );
++
++	it( 'does not add id field when it is not present', async () => {
++		const plan = makePlan();
++		mockGet.mockResolvedValue( { '1': plan } );
++
++		const result = await fetchSitePlans( 100 );
++
++		expect( result[ 0 ].id ).toBeUndefined();
++	} );
++
++	it( 'propagates API errors', async () => {
++		mockGet.mockRejectedValue( new Error( 'Network error' ) );
++
++		await expect( fetchSitePlans( 100 ) ).rejects.toThrow( 'Network error' );
++	} );
++
++	it( 'handles multiple plans from different product IDs', async () => {
++		const plans: Record< string, SiteContextualPlan > = {
++			'100': makePlan( { product_slug: 'free_plan', product_name: 'Free' } ),
++			'200': makePlan( { product_slug: 'personal-bundle', product_name: 'Personal' } ),
++			'300': makePlan( { product_slug: 'business-bundle', product_name: 'Business' } ),
++		};
++		mockGet.mockResolvedValue( plans );
++
++		const result = await fetchSitePlans( 100 );
++
++		expect( result ).toHaveLength( 3 );
++		const slugs = result.map( ( p ) => p.product_slug );
++		expect( slugs ).toContain( 'free_plan' );
++		expect( slugs ).toContain( 'personal-bundle' );
++		expect( slugs ).toContain( 'business-bundle' );
++	} );
++
++	it( 'preserves already-numeric fields as numbers', async () => {
++		const plan = makePlan( {
++			raw_price: 10,
++			raw_price_integer: 1000,
++			product_id: 42,
++		} );
++		mockGet.mockResolvedValue( { '1': plan } );
++
++		const result = await fetchSitePlans( 100 );
++
++		expect( result[ 0 ].raw_price ).toBe( 10 );
++		expect( result[ 0 ].raw_price_integer ).toBe( 1000 );
++		expect( result[ 0 ].product_id ).toBe( 42 );
++	} );
++
++	it( 'handles plans with empty cost_overrides array', async () => {
++		const plan = makePlan( { cost_overrides: [] } );
++		mockGet.mockResolvedValue( { '1': plan } );
++
++		const result = await fetchSitePlans( 100 );
++
++		expect( result[ 0 ].cost_overrides ).toEqual( [] );
++	} );
++
++	it( 'handles plans with multiple cost_overrides', async () => {
++		const plan = makePlan( {
++			cost_overrides: [
++				{
++					old_price: '20' as unknown as number,
++					new_price: '15' as unknown as number,
++					override_code: 'PROMO1',
++					does_override_original_cost: true,
++					human_readable_reason: 'First promo',
++					percentage: '25' as unknown as number,
++					first_unit_only: false,
++				},
++				{
++					old_price: '15' as unknown as number,
++					new_price: '10' as unknown as number,
++					override_code: 'PROMO2',
++					does_override_original_cost: false,
++					human_readable_reason: 'Second promo',
++					percentage: '33' as unknown as number,
++					first_unit_only: true,
++				},
++			],
++		} );
++		mockGet.mockResolvedValue( { '1': plan } );
++
++		const result = await fetchSitePlans( 100 );
++
++		expect( result[ 0 ].cost_overrides ).toHaveLength( 2 );
++		expect( result[ 0 ].cost_overrides[ 0 ].old_price ).toBe( 20 );
++		expect( result[ 0 ].cost_overrides[ 0 ].new_price ).toBe( 15 );
++		expect( result[ 0 ].cost_overrides[ 1 ].old_price ).toBe( 15 );
++		expect( result[ 0 ].cost_overrides[ 1 ].new_price ).toBe( 10 );
++	} );
++
++	it( 'does not include coupon_code when coupon is empty string', async () => {
++		mockGet.mockResolvedValue( {} );
++
++		await fetchSitePlans( 100, '' );
++
++		expect( mockGet ).toHaveBeenCalledWith(
++			expect.objectContaining( {
++				query: '',
++			} )
++		);
++	} );
++} );
+diff --git a/packages/api-queries/src/__tests__/site-plans.ts b/packages/api-queries/src/__tests__/site-plans.ts
+new file mode 100644
+index 00000000000..72a8345dd32
+--- /dev/null
++++ b/packages/api-queries/src/__tests__/site-plans.ts
+@@ -0,0 +1,216 @@
++import {
++	sitePlansQuery,
++	siteCurrentPlanQuery,
++	sitePlanBySlugQuery,
++} from '../site-plans';
++import { fetchSitePlans } from '@automattic/api-core';
++import type { SiteContextualPlan } from '@automattic/api-core';
++
++jest.mock( '@automattic/api-core', () => ( {
++	fetchSitePlans: jest.fn(),
++	restoreSitePlanSoftware: jest.fn(),
++} ), { virtual: true } );
++
++const mockFetchSitePlans = jest.mocked( fetchSitePlans );
++
++function makePlan( overrides: Partial< SiteContextualPlan > = {} ): SiteContextualPlan {
++	return {
++		formatted_original_price: '$10.00',
++		original_price: { amount: 10, currency: 'USD' },
++		raw_price: 10,
++		raw_price_integer: 1000,
++		formatted_price: '$10.00',
++		raw_discount: 0,
++		raw_discount_integer: 0,
++		formatted_discount: '$0.00',
++		currency_code: 'USD',
++		product_id: 1,
++		product_slug: 'business-bundle',
++		product_name: 'Business',
++		discount_reason: null,
++		cost_overrides: [],
++		is_domain_upgrade: false,
++		...overrides,
++	};
++}
++
++describe( 'sitePlansQuery', () => {
++	it( 'returns query options with correct queryKey for siteId only', () => {
++		const options = sitePlansQuery( 123 );
++
++		expect( options.queryKey ).toEqual( [ 'site', 123, 'plans', { coupon: undefined } ] );
++	} );
++
++	it( 'returns query options with correct queryKey including coupon', () => {
++		const options = sitePlansQuery( 456, 'SAVE10' );
++
++		expect( options.queryKey ).toEqual( [ 'site', 456, 'plans', { coupon: 'SAVE10' } ] );
++	} );
++
++	it( 'queryFn calls fetchSitePlans with siteId and coupon', async () => {
++		const plans = [ makePlan() ];
++		mockFetchSitePlans.mockResolvedValue( plans );
++
++		const options = sitePlansQuery( 789, 'DEAL' );
++		const result = await options.queryFn!( {} as any );
++
++		expect( mockFetchSitePlans ).toHaveBeenCalledWith( 789, 'DEAL' );
++		expect( result ).toBe( plans );
++	} );
++
++	it( 'queryFn calls fetchSitePlans without coupon when none provided', async () => {
++		const plans = [ makePlan() ];
++		mockFetchSitePlans.mockResolvedValue( plans );
++
++		const options = sitePlansQuery( 100 );
++		await options.queryFn!( {} as any );
++
++		expect( mockFetchSitePlans ).toHaveBeenCalledWith( 100, undefined );
++	} );
++
++	it( 'uses different queryKeys for different coupons on same site', () => {
++		const noCoupon = sitePlansQuery( 100 );
++		const withCoupon = sitePlansQuery( 100, 'PROMO' );
++
++		expect( noCoupon.queryKey ).not.toEqual( withCoupon.queryKey );
++	} );
++} );
++
++describe( 'siteCurrentPlanQuery', () => {
++	beforeEach( () => {
++		mockFetchSitePlans.mockReset();
++	} );
++
++	it( 'returns the plan with current_plan set to true', async () => {
++		const currentPlan = makePlan( { product_slug: 'premium', current_plan: true } );
++		const otherPlan = makePlan( { product_slug: 'free_plan' } );
++		mockFetchSitePlans.mockResolvedValue( [ otherPlan, currentPlan ] );
++
++		const options = siteCurrentPlanQuery( 100 );
++		const result = await options.queryFn!( {} as any );
++
++		expect( result.product_slug ).toBe( 'premium' );
++		expect( result.current_plan ).toBe( true );
++	} );
++
++	it( 'throws when no current plan is found', async () => {
++		const plans = [
++			makePlan( { product_slug: 'free_plan' } ),
++			makePlan( { product_slug: 'business-bundle' } ),
++		];
++		mockFetchSitePlans.mockResolvedValue( plans );
++
++		const options = siteCurrentPlanQuery( 100 );
++
++		await expect( options.queryFn!( {} as any ) ).rejects.toThrow(
++			'No current plan found'
++		);
++	} );
++
++	it( 'throws when plans array is empty', async () => {
++		mockFetchSitePlans.mockResolvedValue( [] );
++
++		const options = siteCurrentPlanQuery( 100 );
++
++		await expect( options.queryFn!( {} as any ) ).rejects.toThrow(
++			'No current plan found'
++		);
++	} );
++
++	it( 'has correct queryKey structure', () => {
++		const options = siteCurrentPlanQuery( 555 );
++
++		expect( options.queryKey ).toEqual( [ 'site', 555, 'plans', 'current' ] );
++	} );
++
++	it( 'returns the first matching current plan when multiple have current_plan', async () => {
++		const plan1 = makePlan( { product_slug: 'plan-a', current_plan: true } );
++		const plan2 = makePlan( { product_slug: 'plan-b', current_plan: true } );
++		mockFetchSitePlans.mockResolvedValue( [ plan1, plan2 ] );
++
++		const options = siteCurrentPlanQuery( 100 );
++		const result = await options.queryFn!( {} as any );
++
++		expect( result.product_slug ).toBe( 'plan-a' );
++	} );
++
++	it( 'passes siteId to fetchSitePlans', async () => {
++		mockFetchSitePlans.mockResolvedValue( [
++			makePlan( { current_plan: true } ),
++		] );
++
++		const options = siteCurrentPlanQuery( 999 );
++		await options.queryFn!( {} as any );
++
++		expect( mockFetchSitePlans ).toHaveBeenCalledWith( 999 );
++	} );
++} );
++
++describe( 'sitePlanBySlugQuery', () => {
++	beforeEach( () => {
++		mockFetchSitePlans.mockReset();
++	} );
++
++	it( 'returns the plan matching the given slug', async () => {
++		const plans = [
++			makePlan( { product_slug: 'free_plan' } ),
++			makePlan( { product_slug: 'business-bundle', product_name: 'Business' } ),
++		];
++		mockFetchSitePlans.mockResolvedValue( plans );
++
++		const options = sitePlanBySlugQuery( 100, 'business-bundle' );
++		const result = await options.queryFn!( {} as any );
++
++		expect( result.product_slug ).toBe( 'business-bundle' );
++		expect( result.product_name ).toBe( 'Business' );
++	} );
++
++	it( 'throws when no plan with the given slug is found', async () => {
++		const plans = [ makePlan( { product_slug: 'free_plan' } ) ];
++		mockFetchSitePlans.mockResolvedValue( plans );
++
++		const options = sitePlanBySlugQuery( 100, 'nonexistent-plan' );
++
++		await expect( options.queryFn!( {} as any ) ).rejects.toThrow(
++			'The plan nonexistent-plan cannot be found'
++		);
++	} );
++
++	it( 'throws when plans array is empty', async () => {
++		mockFetchSitePlans.mockResolvedValue( [] );
++
++		const options = sitePlanBySlugQuery( 100, 'business-bundle' );
++
++		await expect( options.queryFn!( {} as any ) ).rejects.toThrow();
++	} );
++
++	it( 'has correct queryKey structure with slug', () => {
++		const options = sitePlanBySlugQuery( 100, 'premium' );
++
++		expect( options.queryKey ).toEqual( [ 'site', 100, 'plans', 'premium' ] );
++	} );
++
++	it( 'passes siteId to fetchSitePlans', async () => {
++		mockFetchSitePlans.mockResolvedValue( [
++			makePlan( { product_slug: 'free_plan' } ),
++		] );
++
++		const options = sitePlanBySlugQuery( 888, 'free_plan' );
++		await options.queryFn!( {} as any );
++
++		expect( mockFetchSitePlans ).toHaveBeenCalledWith( 888 );
++	} );
++
++	it( 'returns the first match when multiple plans share the same slug', async () => {
++		const plans = [
++			makePlan( { product_slug: 'free_plan', product_name: 'First' } ),
++			makePlan( { product_slug: 'free_plan', product_name: 'Second' } ),
++		];
++		mockFetchSitePlans.mockResolvedValue( plans );
++
++		const options = sitePlanBySlugQuery( 100, 'free_plan' );
++		const result = await options.queryFn!( {} as any );
++
++		expect( result.product_name ).toBe( 'First' );
++	} );
++} );

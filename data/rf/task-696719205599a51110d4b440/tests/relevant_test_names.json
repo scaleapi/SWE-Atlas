@@ -1,0 +1,52 @@
+{
+  "tests": [
+    {
+      "name": "go.k6.io/k6/js/compiler/TestCompile"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestCompile/ES5"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestCompile/ES5_Invalid"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestCompile/ES5_Wrap"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestCompile/ES6"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestCompile/Invalid"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestCompile/Wrap"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestCompile_experimental_enhanced"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestCompile_experimental_enhanced/experimental_enhanced"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestCompile_experimental_enhanced/experimental_enhanced_Invalid"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestCompile_experimental_enhanced/experimental_enhanced_sourcemap"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestCorruptSourceMap"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestCorruptSourceMapOnlyForBabel"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestMinimalSourceMap"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestMixingImportExport"
+    },
+    {
+      "name": "go.k6.io/k6/js/compiler/TestParseWrapWithInlineSourceMap"
+    }
+  ]
+}

@@ -1,0 +1,154 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2e5b991c5412a5c50a6ea1a42eaf96ac",
+    "title": "1.1: Changes the `Logger` field type in `TestPreInitState` struct within `lib/test_state.go` from `*logrus.Logger` to `logrus.FieldLogger`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3c06ac104561918c97334f35845328e4",
+    "title": "1.2: Changes the `Logger` field type in `State` struct within `lib/vu_state.go` from `*logrus.Logger` to `logrus.FieldLogger`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "525a5bd8e6cf05d159dd4e40fe410fad",
+    "title": "1.3: Adds a `NewLogHook` function in `lib/testutils/logrus_hook.go` that accepts variadic `logrus.Level` arguments and returns a `*SimpleLogrusHook`, defaulting to all levels when none are provided",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "165da8f5fd8cea79acd86e5d64f5d078",
+    "title": "1.4: Adds a `Reset` method on `SimpleLogrusHook` in `lib/testutils/logrus_hook.go` that clears captured entries without returning them",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6f49196c78d049b536c2bcbd69e8ffd9",
+    "title": "1.5: Adds a `LastEntry` method on `SimpleLogrusHook` in `lib/testutils/logrus_hook.go` that returns the most recent captured `*logrus.Entry` or nil if none exist",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d13b763c1399a75ebdf707c9f4e1efc9",
+    "title": "1.6: Changes the return type of `NewLogger` in `lib/testutils/test_output.go` from `*logrus.Logger` to `logrus.FieldLogger`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "36288e9b8c1a8d8323dfd88312dce2e8",
+    "title": "1.7: Adds a `NewLoggerWithHook` function in `lib/testutils/test_output.go` that accepts `t testing.TB` and variadic `logrus.Level` arguments, returning both a `logrus.FieldLogger` and a `*SimpleLogrusHook`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9ca5bb7e649296a74302b8ef3f9c084b",
+    "title": "1.8: Changes the `logger` parameter of `ParseArg` in `output/csv/config.go` from `*logrus.Logger` to `logrus.FieldLogger`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5707c90947012813077434537eacc0d9",
+    "title": "1.9: Changes the `logger` parameter of `GetConsolidatedConfig` in `output/csv/config.go` from `*logrus.Logger` to `logrus.FieldLogger`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "72fb7267d07d536d0361fa256b83e296",
+    "title": "1.10: Replaces the direct `r.preInitState.Logger.Formatter` access in `Runner.SetOptions` in `js/runner.go` with a type assertion that extracts the `logrus.Formatter` through the `logrus.FieldLogger` interface",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6b8852de8a13fc2c5a2b4aa1a4aa9cce",
+    "title": "1.11: Changes the `loadSystemCertPool` function parameter in `cmd/test_load.go` from `*logrus.Logger` to `logrus.FieldLogger`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "99ff094520b1a606c188fd324de5d9b7",
+    "title": "1.12: Adds a linter rule in `.golangci.yml` that flags direct usage of the concrete `logrus.Logger` type to prevent regressions",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2dfef12fc617c6e553fa72362a612cf3",
+    "title": "1.13: Removes the `NewMemLogger` function from `lib/testutils/logrus_hook.go` that returned `(*logrus.Logger, *SimpleLogrusHook)` with a concrete logger type",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "eab74d277113702b38589574540be84a",
+    "title": "1.14: Removes the TODO comment from `lib/test_state.go` that references replacing the Logger type with an interface",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6735e8bc54cd68c3d193b141c63b7b56",
+    "title": "1.15: Removes the TODO comment from `lib/vu_state.go` that references changing the Logger type to an interface",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b8db8602767ed75bf96367f1eb68fd50",
+    "title": "4.1: Removes or changes the signatures of existing `SimpleLogrusHook` methods `Levels`, `Fire`, `Drain`, or `Lines` in `lib/testutils/logrus_hook.go`",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "27a9cd57b89dcabf456c49260e1f1af3",
+    "title": "4.2: Modifies any existing Go test file (`*_test.go`) as part of the refactoring",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

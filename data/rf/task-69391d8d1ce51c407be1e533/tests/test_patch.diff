@@ -1,0 +1,97 @@
+diff --git a/tests/test_custom_domain_utils.py b/tests/test_custom_domain_utils.py
+index af6ab70e..856028fc 100644
+--- a/tests/test_custom_domain_utils.py
++++ b/tests/test_custom_domain_utils.py
+@@ -1,16 +1,17 @@
+ from typing import Optional
+ 
+ from app import config
+-from app.config import ALIAS_DOMAINS
++from app.config import ALIAS_DOMAINS, JOB_DELETE_DOMAIN
+ from app.custom_domain_utils import (
+     can_domain_be_used,
+     create_custom_domain,
++    delete_custom_domain,
+     is_valid_domain,
+     sanitize_domain,
+     CannotUseDomainReason,
+ )
+ from app.db import Session
+-from app.models import User, CustomDomain, Mailbox
++from app.models import User, CustomDomain, Mailbox, Job
+ from tests.utils import get_proton_partner
+ from tests.utils import create_new_user, random_string, random_domain
+ 
+@@ -147,3 +148,72 @@ def test_creates_custom_domain_with_partner_id():
+     assert res.instance.domain == domain
+     assert res.instance.user_id == user.id
+     assert res.instance.partner_id == proton_partner.id
++
++
++# delete_custom_domain
++def test_delete_custom_domain_sets_pending_deletion():
++    """Test that delete_custom_domain sets pending_deletion to True."""
++    domain = random_domain()
++    custom_domain = CustomDomain.create(
++        user_id=user.id,
++        domain=domain,
++        commit=True,
++    )
++    assert custom_domain.pending_deletion is False
++
++    delete_custom_domain(custom_domain)
++
++    assert custom_domain.pending_deletion is True
++
++
++def test_delete_custom_domain_creates_job():
++    """Test that delete_custom_domain creates a Job with correct parameters."""
++    domain = random_domain()
++    custom_domain = CustomDomain.create(
++        user_id=user.id,
++        domain=domain,
++        commit=True,
++    )
++
++    delete_custom_domain(custom_domain)
++
++    job = Job.filter_by(
++        name=JOB_DELETE_DOMAIN,
++    ).order_by(Job.id.desc()).first()
++
++    assert job is not None
++    assert job.payload == {"custom_domain_id": custom_domain.id}
++    assert job.run_at is not None
++
++
++def test_delete_custom_domain_returns_none():
++    """Test that delete_custom_domain returns None (interface verification)."""
++    domain = random_domain()
++    custom_domain = CustomDomain.create(
++        user_id=user.id,
++        domain=domain,
++        commit=True,
++    )
++
++    result = delete_custom_domain(custom_domain)
++    assert result is None
++
++
++def test_delete_custom_domain_already_pending():
++    """Test that calling delete_custom_domain on an already-pending domain still works."""
++    domain = random_domain()
++    custom_domain = CustomDomain.create(
++        user_id=user.id,
++        domain=domain,
++        commit=True,
++    )
++    custom_domain.pending_deletion = True
++    Session.commit()
++
++    delete_custom_domain(custom_domain)
++
++    assert custom_domain.pending_deletion is True
++    job = Job.filter_by(
++        name=JOB_DELETE_DOMAIN,
++    ).order_by(Job.id.desc()).first()
++    assert job is not None

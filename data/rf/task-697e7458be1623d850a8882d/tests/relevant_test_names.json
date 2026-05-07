@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/git/TestNormalizeConfig_BranchResolution"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/git/TestNormalizeConfig_ErrorHandling"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/git/TestNormalizeConfig_MergeBase"
+    },
+    {
+      "name": "github.com/trufflesecurity/trufflehog/v3/pkg/sources/git/TestScanRepo_WithRemote"
+    }
+  ]
+}

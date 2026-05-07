@@ -1,0 +1,170 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8b888267fb8046b7ae1e82cea941b7a8",
+    "title": "1.1: Removes the `dict_locked` parameter from `dict_table_close()` in `storage/innobase/include/dict0dict.h` so it accepts only `dict_table_t* table`, `THD *thd`, and `MDL_ticket *mdl`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "23dda115d7688e532e1ba783d9d82522",
+    "title": "1.2: Removes statistics invalidation logic from `dict_table_close()` in `storage/innobase/include/dict0dict.h` so the function body only releases the `dict_table_t` table handle and calls `mdl_release()`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8c254c83fe386fc16a8697f3b7e1624d",
+    "title": "1.3: Introduces `mdl_release()` function in `storage/innobase/include/dict0dict.h` accepting `THD *thd` and `MDL_ticket *mdl` and returning `void`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b68dda399eeac256f2d1f2274469d1ff",
+    "title": "1.4: Removes the monolithic `dict_stats_update()` function from `storage/innobase/`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "13643e1db825bf18951bf07de50ecf6d",
+    "title": "1.5: Removes the `dict_stats_upd_option_t` dispatch enum from `storage/innobase/include/dict0stats.h`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "83403fd5fdcc714f931a666a522f65c7",
+    "title": "1.6: Introduces `dict_stats_update_transient()` in `storage/innobase/include/dict0stats.h` accepting `dict_table_t *table` and returning `dberr_t`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9049e2bfa31cdac72c520e2743fe7c10",
+    "title": "1.7: Introduces `dict_stats_update_persistent()` in `storage/innobase/include/dict0stats.h` accepting `dict_table_t *table` and returning `dberr_t`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1b27b58324abc20e890766df0516a4f6",
+    "title": "1.8: Introduces `dict_stats_update_persistent_try()` in `storage/innobase/include/dict0stats.h` accepting `dict_table_t *table` and returning `dberr_t`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f9c9ec4832054186e4d040ea8f3705de",
+    "title": "1.9: Introduces `dict_stats_empty_table_and_save()` in `storage/innobase/include/dict0stats.h` accepting `dict_table_t *table` and returning `void`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ab3bb5a89cdd93b37d33e25c0239331d",
+    "title": "1.10: Introduces `ha_innobase::statistics_init()` method in `storage/innobase/handler/ha_innodb.h` accepting `dict_table_t *table, bool recalc` and returning `dberr_t`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "80a30e8fb25e1f05825fec63929fb7cf",
+    "title": "1.11: Changes `dict_stats_persistent_storage_check(bool dict_already_locked)` in `storage/innobase/include/dict0stats.h` to return the `dict_stats_schema_check` enum with values distinguishing tables not existing, schema valid, and schema invalid",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "90c5a8cb5b596a9d0498341d6688f3ca",
+    "title": "1.12: Performs persistent statistics deinitialization during the `RENAME TABLE` code path so that statistics are reloaded on the next table open after a rename",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3e5b7b87c3d15674c278be68bbd35135",
+    "title": "1.13: Consolidates `stats_error_printed` tracking to `dict_table_t` only, removing the per-index flag from `dict_index_t`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "234409bbdabc590eb47aeed68a4ed31c",
+    "title": "1.14: Makes `dict_stats_save()` in `storage/innobase/include/dict0stats.h` a public function accepting `dict_table_t* table` and `index_id_t index_id` with a default of `0` and returning `dberr_t`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "bd1e2e25ac3d34740df23b01a9c0cc41",
+    "title": "1.15: Makes `dict_stats_fetch_from_ps()` in `storage/innobase/include/dict0stats.h` a public function accepting `dict_table_t *table` and returning `dberr_t`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2324c779215b101cf8ba4241ed429944",
+    "title": "1.16: Updates 49 `dict_table_close()` call sites (including dict0defrag_bg.cc, dict0stats.cc, dict0stats_bg.cc, fts0opt.cc, ha_innodb.cc, handler0alter.cc, i_s.cc, trx0purge.cc, ...) across `storage/innobase/` to remove the `dict_locked` boolean argument",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c72f32261d8e8a7d0f788109a3e5f939",
+    "title": "3.1: Removes the `dict0stats.inl` inline file from `storage/innobase/include/`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "4b37e1fc1201314ddc02d0f7183292d7",
+    "title": "4.1: Breaks the `RENAME TABLE` stats reload mechanism so that `RENAME TABLE t TO tmp, tmp TO t` no longer forces persistent statistics to be recalculated on the next table open",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

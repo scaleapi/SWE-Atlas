@@ -1,0 +1,13 @@
+{
+  "files": [
+    {
+      "name": "pkg/sources/chunker_test.go"
+    },
+    {
+      "name": "pkg/sources/chunker_coverage_test.go"
+    },
+    {
+      "name": "pkg/sources/filesystem/filesystem_coverage_test.go"
+    }
+  ]
+}

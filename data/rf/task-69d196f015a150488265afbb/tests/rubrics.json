@@ -1,0 +1,162 @@
+[
+  {
+    "id": "5c2b96dd2baffe888a185189234368c6",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f85fa682275f4fdbaa6101a20acd7e32",
+    "title": "1.1: Replaces all 4 individual useState hooks (repo, path, ref, comment) with react-hook-form for form state management in SaveProvisionedDashboard",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e58a959a9393499854ee29bfa7a65eb2",
+    "title": "1.2: Extracts annotation parsing logic into a helper function for computing form default values",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "fe1fd7f82b49075e4363845d7a062c15",
+    "title": "1.3: Replaces the raw getBackendSrv() call with the useUpdateRepositoryFilesMutation hook from the provisioning API",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9c98e4deb0fa729e6e5f3e3ccea6db5c",
+    "title": "1.4: Publishes a success app event notification upon save mutation success",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "01457fcfcb0b360f15519bfbd7101ef3",
+    "title": "1.5: Clears dashboard dirty state upon successful save",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d276a2349ed4a33ced00d3534d85a67a",
+    "title": "1.6: Publishes an error app event notification upon save mutation failure",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "cd6b67a46f3b275327c5297e3e4457ca",
+    "title": "1.7: Wraps the form content in a form element with proper submit handling",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "cd225482a8081ff2a94d58e7aa5ec203",
+    "title": "1.8: Makes the repository input field read-only",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b2bc6e90cd62bd5c8425e575239e444b",
+    "title": "1.9: Renames all 9 connect-prefixed endpoints to standard CRUD naming (getRepositoryExport, createRepositoryExport, getRepositoryFiles, updateRepositoryFiles, createRepositoryFiles, deleteRepositoryFiles, getRepositoryHello, getRepositoryWebhook, createRepositoryWebhook) in endpoints.ts and updates exported hooks",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "437b94975adefad2db65008425617f44",
+    "title": "1.10: Removes the unused watchRepositoryList and watchRepository endpoints",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3a9ef8094821afa1dce3a8c24098d000",
+    "title": "1.11: Adds optional ref field to FileOperationArg in types.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8d699a14a6cc85409438df2889050152",
+    "title": "1.12: Renames commit to ref in GetFileArg in types.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9d8634486beb546d95c6bf7511c0eca0",
+    "title": "1.13: Passes the ref parameter through in all 4 file operation endpoint query definitions (getRepositoryFiles, updateRepositoryFiles, createRepositoryFiles, deleteRepositoryFiles)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "22b40f120cd1479ebd913860f0a4b5f2",
+    "title": "1.14: Fixes missing semicolons in dashboard.ts and SaveDashboardDrawer.tsx",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c6642a9807f00b7614004c35d9f752bf",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "02ac6e6d0924c6a25576302676259010",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "625f88a36fbf9ba5915e5c358e646e42",
+    "title": "3.1: Removes the unused WatchEvent type import from endpoints.ts",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "488ec8d58d9a5332a3e75a05212dde33",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b7dd510e856d547b582f8f25d16fb0e2",
+    "title": "4.1: Retains the raw getBackendSrv().put() call or console.log/alert() feedback in SaveProvisionedDashboard",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]
