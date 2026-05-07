@@ -1,0 +1,128 @@
+agent:
+  system_template: |
+    You are a helpful assistant that can interact with a computer to solve tasks.
+  instance_template: |
+    {{task}}
+
+    You can execute bash commands to explore the codebase and modify source files in the repository.
+
+    ## Command Execution Rules
+
+    You are operating in an environment where
+
+    1. You issue at least one command
+    2. The system executes the command(s) in a subshell
+    3. You see the result(s)
+    4. You write your next command(s)
+
+    Each response should include:
+
+    1. **Reasoning text** where you explain your analysis and plan
+    2. At least one tool call with your command
+
+    **CRITICAL REQUIREMENTS:**
+
+    - Your response SHOULD include reasoning text explaining what you're doing
+    - Your response MUST include AT LEAST ONE bash tool call
+    - Directory or environment variable changes are not persistent. Every action is executed in a new subshell.
+    - However, you can prefix any action with `MY_ENV_VAR=MY_VALUE cd /path/to/working/dir && ...` or write/load environment variables from files
+    - **Your shell starts at `/`**, NOT inside the repo. **Your first command MUST locate the repository root and `cd` into it**, then prefix every subsequent command with `cd <repo_root> && ...`. Example first command:
+      ```bash
+      for d in /workspace /app /code /grafana /testbed /src /repo /opt/netdata.git /go/src/go.k6.io/k6 /home/circleci/wp-calypso /app/source /app/suricata /src/suricata; do [ -d "$d/.git" ] && echo "REPO_ROOT=$d" && break; done
+      ```
+      Or, if you prefer: `find / -maxdepth 4 -name .git -type d 2>/dev/null | head -1` to discover it. Save the path and use it for every later command.
+    - **Do NOT modify any test files.** This includes anything under `tests/`, `test/`, files matching `*_test.go`, `test_*.py`, `*_test.py`, `*.test.*`, `*.spec.*`, or `.uts` files. The verifier will reject your trial if test files are touched.
+    - Make the minimal source-file edits needed to satisfy the task instruction.
+    - When you are done editing, submit by running this command (and ONLY this command) on its own:
+      ```bash
+      echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT
+      ```
+      <important>After the submit command, you cannot continue working on this task.</important>
+
+    Example of a CORRECT response:
+    <example_response>
+    I need to understand the structure of the repository first. Let me check what files are in the current directory to get a better understanding of the codebase.
+
+    [Makes bash tool call with {"command": "ls -la"} as arguments]
+    </example_response>
+
+    <system_information>
+    {{system}} {{release}} {{version}} {{machine}}
+    </system_information>
+
+    ## Useful command examples
+
+    ### View file content:
+
+    ```bash
+    # View specific lines with numbers
+    nl -ba filename.py | sed -n '10,20p'
+    ```
+
+    ### Search for patterns (substitute the actual repo root):
+
+    ```bash
+    cd "$REPO_ROOT" && grep -rn "pattern" .
+    ```
+
+    ### Explore directory structure:
+
+    ```bash
+    cd "$REPO_ROOT" && find . -type f -name "*.go" | head -20
+    ```
+
+    ### Inspect your in-progress diff:
+
+    ```bash
+    cd "$REPO_ROOT" && git status && git diff --stat
+    ```
+  step_limit: 250
+  cost_limit: 0.
+environment:
+  cwd: /
+  timeout: 1800
+  env:
+    PAGER: cat
+    MANPAGER: cat
+    LESS: -R
+    PIP_PROGRESS_BAR: 'off'
+    TQDM_DISABLE: '1'
+model:
+  observation_template: |
+    {%- if output.output | length < 10000 -%}
+    {
+      "returncode": {{ output.returncode }},
+      "output": {{ output.output | tojson }}
+      {%- if output.exception_info %}, "exception_info": {{ output.exception_info | tojson }}{% endif %}
+    }
+    {%- else -%}
+    {
+      "returncode": {{ output.returncode }},
+      "output_head": {{ output.output[:5000] | tojson }},
+      "output_tail": {{ output.output[-5000:] | tojson }},
+      "elided_chars": {{ output.output | length - 10000 }},
+      "warning": "Output too long."
+      {%- if output.exception_info %}, "exception_info": {{ output.exception_info | tojson }}{% endif %}
+    }
+    {%- endif -%}
+  format_error_template: |
+    Tool call error:
+
+    <error>
+    {{error}}
+    </error>
+
+    Here is general guidance on how to submit correct toolcalls:
+
+    Every response needs to use the 'bash' tool at least once to execute commands.
+
+    Call the bash tool with your command as the argument:
+    - Tool: bash
+    - Arguments: {"command": "your_command_here"}
+
+    If you want to end the task, please issue the following command: `echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT`
+    without any other command.
+  cost_tracking: ignore_errors
+  model_kwargs:
+    drop_params: true
+    temperature: 1.0
