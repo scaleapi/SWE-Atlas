@@ -1,6 +1,6 @@
-# SWE-Atlas
+# SWE Atlas
 
-SWE-Atlas is a benchmark for evaluating AI coding agents across a spectrum of professional software engineering tasks. Rather than measuring a single skill in isolation, SWE-Atlas consists of multiple leaderboards that target distinct and complementary capabilities in the Software Development Cycle. 
+SWE Atlas is a benchmark for evaluating AI coding agents across a spectrum of professional software engineering tasks. Rather than measuring a single skill in isolation, SWE Atlas consists of multiple leaderboards that target distinct and complementary capabilities in the Software Development Cycle. 
 
 This repository has the data and instructions on running [SWE Atlas - Codebase QnA](https://labs.scale.com/leaderboard/sweatlas-qna), [SWE Atlas - Test Writing](https://labs.scale.com/leaderboard/sweatlas-tw) and [SWE Atlas - Refactoring](https://labs.scale.com/leaderboard/sweatlas-refactoring) 
 
