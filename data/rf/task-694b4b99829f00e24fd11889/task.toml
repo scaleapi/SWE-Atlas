@@ -14,7 +14,7 @@ EVAL_BASE_URL = "${OPENAI_API_BASE}"
 EVAL_MODEL = "${EVAL_MODEL:-anthropic/claude-opus-4-5-20251101}"
 
 [agent]
-timeout_sec = 3600
+timeout_sec = 10800
 
 [environment]
 docker_image = "ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_trufflesecurity_trufflehog_694b4b99829f00e24fd11889_1.0@sha256:68f800df9360a8b9aac766a3f2345a70899f127fa4d7c0b78961c7ca72ea48f4"

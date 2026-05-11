@@ -14,7 +14,7 @@ EVAL_BASE_URL = "${OPENAI_API_BASE}"
 EVAL_MODEL = "${EVAL_MODEL:-anthropic/claude-opus-4-5-20251101}"
 
 [agent]
-timeout_sec = 3600
+timeout_sec = 10800
 
 [environment]
 docker_image = "ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_Automattic_wp-calypso_69d196f015a150488265afbe_1.0@sha256:75355b4ec77c3fa4d3ee05465909c54294222d14f235de5a754097ed4f6d8f5a"
