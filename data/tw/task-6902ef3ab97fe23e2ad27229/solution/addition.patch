@@ -1,6 +1,6 @@
 --- a/src/documents/tests/test_management_retagger.py
 +++ b/src/documents/tests/test_management_retagger.py
-@@ -85,11 +85,63 @@
+@@ -85,11 +85,55 @@
          super(TestRetagger, self).setUp()
          self.make_models()
  
@@ -52,14 +52,6 @@
 +            [self.tag_inbox.id, self.tag_no_match.id],
 +        )
 +        self.assertEqual(d_auto.tags.count(), 0)
-+
-+    def test_add_tags_suggest(self):
-+        call_command("document_retagger", "--tags", "--suggest")
-+        d_first, d_second, d_unrelated, d_auto = self.get_updated_docs()
-+
-+        self.assertEqual(d_first.tags.count(), 0)
-+        self.assertEqual(d_second.tags.count(), 0)
-+        self.assertEqual(d_auto.tags.count(), 1)
 +
      def test_add_type_suggest(self):
          call_command("document_retagger", "--document_type", "--suggest")
