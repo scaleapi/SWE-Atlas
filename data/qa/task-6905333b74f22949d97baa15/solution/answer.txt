@@ -18,7 +18,7 @@ Output:
 237:	return q.start(maxParallelism)
 ```
 
-This reveals the default configuration: maxParallelism is 16 concurrent deliveries, initialRetryTime is 15 minutes, retryTimeScale is 2 for exponential backoff, and maxTries is 8 attempts before bouncing.
+This reveals the default configuration: maxParallelism is 16 concurrent deliveries, initialRetryTime is 15 minutes, retryTimeScale is 2 for exponential backoff, and maxTries is 8. Because the initial delivery attempt is followed by up to 8 retries, a message is attempted 9 total times before it is bounced: the initial delivery attempt plus 8 retries.
 
 The queue controls concurrent deliveries through a buffered channel acting as a semaphore. Looking at the initialization code:
 
@@ -190,7 +190,7 @@ Note: This never occurs because TriesCount++ happens before delay calculation
 
 The verification script confirms the timing calculations. With 16 parallel workers processing 500 messages where each takes 2 seconds, the initial delivery pass completes in approximately 64 seconds. The calculation works because all 16 deliveries run simultaneously, so each batch of 16 messages completes in 2 seconds rather than 32 seconds.
 
-The total time until bounce messages are generated is 63 hours and 45 minutes. This comes from summing all eight retry delays: 15 minutes plus 30 minutes plus 1 hour plus 2 hours plus 4 hours plus 8 hours plus 16 hours plus 32 hours. After the ninth delivery attempt, when TriesCount reaches 8, the check on line 390 triggers bounce generation.
+The total time until bounce messages are generated is 63 hours and 45 minutes. This comes from summing all eight retry delays: 15 minutes plus 30 minutes plus 1 hour plus 2 hours plus 4 hours plus 8 hours plus 16 hours plus 32 hours. In other words, a message goes through 9 total delivery attempts before it is bounced — the initial delivery attempt plus 8 retries — and once TriesCount reaches 8 (after the eighth retry), the check on line 390 triggers bounce generation.
 
 The edge case analysis reveals an interesting quirk of Go's type system. If TriesCount were zero when the formula executes, math.Pow(2, -1) returns 0.5. However, time.Duration is an int64 representing nanoseconds, so converting 0.5 to time.Duration truncates it to zero. The resulting delay would be 15 minutes times 0, which equals 0 seconds rather than the mathematically expected 7.5 minutes.
 

@@ -190,6 +190,10 @@ Once `apply_spf` returns a `CheckResult` where `Reason != nil` but both `Reject`
 
 Finally, you can verify everything using only observable signals (SMTP responses + server logs) by correlating the end-of-`DATA` response line with the presence/absence of the deferral/no-action logs. Enforcement cases (A/C) show end-of-`DATA` `550 5.7.23 SPF authentication failed (msg ID = <id>)` alongside a `smtp: DATA error ... {"check":"apply_spf", ...}` log. The deferral case (B) shows end-of-`DATA` `250 2.0.0 OK: queued` while logs show `apply_spf: deferring action due to a DMARC policy` plus `smtp/pipeline: no check action` (containing the suppressed 550/5.7.23 error fields) and then `smtp: accepted`.
 
+Crucially, Case B ends up accepted because no later pipeline component enforces DMARC after the SPF deferral. `apply_spf` is the only stage that evaluates the SPF result and the DMARC-based deferral, and it runs at end-of-`DATA`; once it returns a `CheckResult` with `Reject=false` and `Quarantine=false`, the message pipeline's check runner just logs `no check action` and continues. There is no separate downstream DMARC-enforcement check configured after it that would independently apply the domain's `p=reject` policy, so the failing (but deferred) SPF result is never converted into a rejection or quarantine — nothing downstream re-enforces it, and the message is accepted.
+
+To be precise about naming: the module that owns this SPF check and the deferral decision is `apply_spf` — that is the runtime check name that appears in every log line (e.g. `"check":"apply_spf"`), not `check.spf`. (The Go source lives under the `internal/check/spf` package, but the check's runtime/config name is `apply_spf`; there is no check called `check.spf`.)
+
 ```shellscript
 cd /app
 go build -tags debugflags -o /tmp/maddy-debugflags ./cmd/maddy

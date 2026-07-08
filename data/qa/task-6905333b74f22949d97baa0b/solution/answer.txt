@@ -144,4 +144,6 @@ By doing this, the API program races with the notifier workers and steals result
 
 When I remove that loop and instead read counts from `eng.GetMetrics()` after calling `Finish()`, the API and CLI produce the same results for the same directory on this commit.
 
+It is also worth clarifying what does not drive the difference: the filesystem scan does not rely on credential-based environment variables to activate detectors. Detectors are registered and run against the scanned content regardless of any credentials in the environment; credential-based environment variables primarily affect remote source configuration (for example, cloud or service scans of remote sources), not local filesystem scans. So the discrepancy in counts comes from how results are consumed and filtered, not from environment variables enabling or disabling detectors on a filesystem scan.
+
 That is the concrete, runtime reason the CLI and API can report different numbers of findings, even though they share the same detection engine.

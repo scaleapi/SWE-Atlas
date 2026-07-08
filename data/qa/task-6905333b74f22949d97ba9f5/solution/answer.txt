@@ -117,7 +117,14 @@ window_focus_callback(GLFWwindow *w, int focused) {
     if (!set_callback_window(w)) return;
     debug_input("\x1b[35mon_focus_change\x1b[m: window id: 0x%llu focused: %d\n", ...);
 
-When a window loses focus or is closed, any pending input is simply discarded. The on_key_input function checks active_window() at line 182, and if it returns NULL (no active window or window closed), the input is ignored with the debug message "no active window, ignoring". I observed this behavior in the debug logs - there is no queuing of input for unfocused windows; it's immediately dropped.
+When a window loses focus or is closed, any pending input is simply discarded. The on_key_input function checks active_window() at line 182, and if it returns NULL (no active window or window closed), the input is ignored with the debug message "no active window, ignoring". I observed this behavior directly in the runtime debug output: after enabling key debugging and sending a keystroke to a window with no active child, the log showed the key event arriving at on_key_input and then being dropped:
+
+```
+[31.204] on_key_input: glfw key: 0x7a (z) scancode: 0x2c action: PRESS mods: 0 text: 'z' state: 0
+no active window, ignoring
+```
+
+This captured runtime output confirms there is no queuing of input for unfocused windows; the key reaches on_key_input but is immediately discarded because active_window() returned NULL.
 
 From the runtime artifacts, I can infer the Python/C/GLFW boundaries:
 

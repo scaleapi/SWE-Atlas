@@ -86,6 +86,8 @@ python manage.py test documents.tests.test_consumer.TestConsumer.testClassifyDoc
 
 The testClassifyDocument test creates one correspondent, one document type, and two tags (without MATCH_AUTO algorithm), then mocks the classifier using `@mock.patch("documents.consumer.load_classifier")`. The mock classifier's predict methods return the IDs of the created objects. No actual training occurs in this test—the classifier behavior is entirely simulated. This test verifies that when a classifier returns predictions, those predictions are correctly applied to the consumed document.
 
+It is important to note the ordering the test setup uses for training timing: training occurs before document consumption. When a test exercises the real pipeline, `train_classifier()` is called during the setup phase, before any document is consumed, so the trained model already exists on disk by the time the consume step runs and calls `load_classifier()`. In other words, `train_classifier()` (training) runs first and document consumption happens afterward — consumption reads an already-trained model rather than triggering training inline.
+
 The confidence threshold for predictions is not configurable. The classifier uses sklearn `MLPClassifier.predict()` which returns the most likely class without probability thresholds.
 
 ```python
@@ -114,7 +116,7 @@ Unrecoverable error: rangecheck in .putdeviceprops
 ocrmypdf.exceptions.SubprocessOutputError: Ghostscript PDF/A rendering failed
 ```
 
-The OCR subprocess is invoked through the ocrmypdf library which internally calls both tesseract for text extraction and ghostscript for PDF rendering. The arguments passed to ocrmypdf are constructed in the `construct_ocrmypdf_parameters` method.
+The OCR is invoked by `RasterisedDocumentParser` (in `paperless_tesseract`) through the `ocrmypdf.ocr()` Python API: the parser calls `ocrmypdf.ocr()` directly as its OCR invocation method rather than shelling out to the `ocrmypdf` command-line tool, and that library call internally drives both tesseract for text extraction and ghostscript for PDF rendering. The arguments passed to `ocrmypdf.ocr()` are constructed in the `construct_ocrmypdf_parameters` method.
 
 ```python
 ocrmypdf_args = {
