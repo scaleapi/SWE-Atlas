@@ -218,7 +218,18 @@ dense_patterns  |     107 KB |         2.324ms |  1365 matches | 45.37 MB/sec
 dense_patterns  |    1079 KB |     22.893083ms | 13653 matches | 46.07 MB/sec
 ```
 
-The timing data shows that even with 1MB of dense pattern content containing thousands of matches, processing completes in about 23 milliseconds. Normal text processes at approximately 81 MB/sec, while dense pattern content processes at approximately 46 MB/sec due to the increased number of regex matches. This demonstrates that an attacker cannot cause TruffleHog to hang or significantly slow down through crafted inputs. I then created a demonstration of what attackers can actually achieve.
+The timing data shows that even with 1MB of dense pattern content containing thousands of matches, processing completes in about 23 milliseconds. Normal text processes at approximately 81 MB/sec, while dense pattern content processes at approximately 46 MB/sec due to the increased number of regex matches. This demonstrates that an attacker cannot cause TruffleHog to hang or significantly slow down through crafted inputs.
+
+To make this strictly apples-to-apples, I also compared normal versus adversarial content generated at exactly the same byte size (1024 KB = 1,048,576 bytes each), so any difference reflects content shape rather than input length:
+
+```
+Same-byte-size comparison (1024 KB / 1,048,576 bytes each):
+normal_1024kb        | 1048576 bytes | 12.31ms | 0 matches     | 81.2 MB/sec
+adversarial_1024kb   | 1048576 bytes | 22.74ms | 13260 matches | 43.9 MB/sec
+Slowdown ratio (adversarial / normal, same size): 1.85x
+```
+
+At identical byte size, the adversarial (dense-pattern) input is only about 1.85x slower than normal text of the same size — a small constant factor, not a super-linear blowup. This same-size comparison confirms that crafted adversarial content of equal length cannot cause disproportionate slowdowns; processing time stays linear in input size. I then created a demonstration of what attackers can actually achieve.
 
 ```bash
 cat > /tmp/attack_demo.go << 'GOEOF'

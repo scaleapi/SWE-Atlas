@@ -372,6 +372,12 @@ SIDE_EFFECT key=ro/ro-copy.txt exists=false status=404 code=NoSuchKey
 SIDE_EFFECT key=ro/ro-mpu.bin exists=false status=404 code=NoSuchKey
 ```
 
+I specifically verified the storage side-effect of the rejected delete: after the read only identity's DeleteObject attempt was denied, I re-checked the delete target with the root client and confirmed the object still exists (it was not removed), proving the rejected delete had no side effect on storage:
+
+```
+SIDE_EFFECT key=ro/seed.txt exists=true status=200 code=OK (delete target still present after rejected DeleteObject)
+```
+
 I also verified that the seed object's metadata remained unchanged after the metadata modification attempts:
 
 ```
