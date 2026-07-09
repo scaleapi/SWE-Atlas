@@ -152,6 +152,8 @@ def _candidate_test_name_forms(full_name):
 def _candidate_relevant_name_forms(relevant_name):
     """Generate exact candidate forms from manifest identifiers."""
     forms = {relevant_name}
+    if "/" in relevant_name:
+        forms.add("/".join(part.replace(" ", "_") for part in relevant_name.split("/")))
     if " > " in relevant_name:
         parts = [p.strip() for p in relevant_name.split(" > ") if p.strip()]
         if len(parts) >= 2:

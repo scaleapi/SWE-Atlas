@@ -1,9 +1,11 @@
 --- a/src/documents/file_handling.py
 +++ b/src/documents/file_handling.py
-@@ -127,62 +127,6 @@
+@@ -127,62 +127,8 @@
  
  def generate_filename(doc, counter=0, append_gpg=True, archive_filename=False):
      path = ""
++    if settings.PAPERLESS_FILENAME_FORMAT is not None:
++        path = settings.PAPERLESS_FILENAME_FORMAT.strip().strip(os.sep)
 -
 -    try:
 -        if settings.PAPERLESS_FILENAME_FORMAT is not None:
