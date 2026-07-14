@@ -13,6 +13,7 @@ HARBOR_BIN="${HARBOR_BIN:-/mnt/efs/mohitraghavendra/.local/bin/harbor}"
   -p ./data/tw \
   -a oracle \
   -e modal \
+  --ek 'keepalive=["-c","sleep infinity"]' \
   -n 48 \
   -o results/tw/ \
   --job-name "oracle" \

@@ -13,6 +13,7 @@ harbor run \
   -a mini-swe-agent \
   -m "openai/anthropic/claude-opus-4-6" \
   -e modal \
+  --ek 'keepalive=["-c","sleep infinity"]' \
   -k 3 \
   -n 16 \
   --ak config_file="${SCRIPT_DIR}/mswea_tw_config.yaml" \
