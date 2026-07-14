@@ -13,6 +13,7 @@ harbor run \
   -a claude-code \
   -m "anthropic/claude-opus-4-6" \
   -e modal \
+  --ek modal_vm_runtime=true \
   -k 3 \
   -n 16 \
   --ak reasoning_effort=high \
