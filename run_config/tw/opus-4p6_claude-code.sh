@@ -13,6 +13,7 @@ harbor run \
   -a claude-code \
   -m "anthropic/claude-opus-4-6" \
   -e modal \
+  --ek 'keepalive=["-c","sleep infinity"]' \
   -k 3 \
   -n 24 \
   --ak reasoning_effort=high \
