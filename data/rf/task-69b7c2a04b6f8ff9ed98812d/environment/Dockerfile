@@ -1,1 +1,3 @@
 FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_MariaDB_server_69b7c2a04b6f8ff9ed98812d_1.0@sha256:5cffe9e1c3013073887b2badbe3e4e751306fcdeb2d18512608e8da5f6e42762
+
+ENTRYPOINT []

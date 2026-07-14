@@ -13,6 +13,7 @@ HARBOR_BIN="${HARBOR_BIN:-/mnt/efs/mohitraghavendra/.local/bin/harbor}"
   -p ./data/rf \
   -a oracle \
   -e modal \
+  --ek modal_vm_runtime=true \
   -n 48 \
   -o results/rf/ \
   --job-name "oracle" \

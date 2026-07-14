@@ -13,6 +13,7 @@ harbor run \
   -a mini-swe-agent \
   -m "openai/anthropic/claude-opus-4-6" \
   -e modal \
+  --ek modal_vm_runtime=true \
   -k 3 \
   -n 16 \
   --ak config_file="${SCRIPT_DIR}/mswea_rf_config.yaml" \
