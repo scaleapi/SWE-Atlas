@@ -49,7 +49,7 @@
   },
   {
     "id": "76104ea06b5e0bbe2a31cd91f7dc6939",
-    "title": "2.1 Avoids attributing the behavior to external factors outside the executor (e.g., OS scheduling jitter, Go runtime quirks, network latency, test script errors)",
+    "title": "2.1 Attributes the behavior to external factors outside the executor (e.g., OS scheduling jitter, Go runtime quirks, network latency, test script errors)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "10d75e60499d852aea62086ebdbd13c9",
-    "title": "2.2 Avoids dismissing the user's observations as invalid or suggesting the test configuration is incorrect ",
+    "title": "2.2 Dismisses the user's observations as invalid or suggests the test configuration is incorrect",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
