@@ -7,7 +7,7 @@ source "$(dirname "$0")/../../.env"
 set +a
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-HARBOR_BIN="${HARBOR_BIN:-/mnt/efs/mohitraghavendra/.local/bin/harbor}"
+HARBOR_BIN="${HARBOR_BIN:-harbor}"
 
 "$HARBOR_BIN" run \
   -p ./data/rf \
