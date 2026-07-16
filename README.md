@@ -10,7 +10,7 @@ This repository has the data and instructions on running [SWE Atlas - Codebase Q
 
 Install [harbor](https://github.com/laude-institute/harbor):
 ```bash
-git clone https://github.com/laude-institute/harbor.git
+git clone --branch v0.18.0 --depth 1 https://github.com/laude-institute/harbor.git
 cd harbor
 uv tool install .
 ```
@@ -28,9 +28,25 @@ Create a .env with the following in the root of the repository:
 ```bash
 # Agent under evaluation (Claude). If using a different agent, set the appropriate API key.
 export ANTHROPIC_API_KEY=<your-anthropic-api-key>
+```
 
-# LLM Judge (any OpenAI-compatible endpoint). We use Claude Opus 4.5 as the Judge model for rubric grading.
-# You can set the following credentials to access the Judge model
+To prevent solution lookup, the QnA and Test Writing tasks restrict network access during `agent.run()`.
+
+Set `HARBOR_AGENT_ALLOWED_HOST` to the hostname of the API endpoint used by the agent under evaluation.
+Enter only the hostname, without `https://` or a path. The provided run configs pass it to Harbor through
+`--allow-agent-host`.
+
+Examples include `api.openai.com`, `api.anthropic.com`, or the hostname of your LiteLLM proxy. Harbor adds
+this hostname to the task's agent-phase allowlist; hosts outside the allowlist remain blocked.
+
+```bash
+export HARBOR_AGENT_ALLOWED_HOST=<your-agent-api-hostname>
+```
+
+LLM Judge (any OpenAI-compatible endpoint). We use Claude Opus 4.5 as the Judge model for rubric grading.
+You can set the following credentials to access the Judge model.
+
+```bash
 export OPENAI_API_KEY=<your-judge-api-key>
 export OPENAI_API_BASE=<your-judge-base-url>  # e.g. https://api.openai.com/v1
 ```
@@ -62,4 +78,3 @@ If you use SWE Atlas in your research, please cite our paper:
       url={https://arxiv.org/abs/2605.08366}, 
 }
 ```
-
