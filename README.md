@@ -6,6 +6,8 @@ SWE Atlas is a benchmark for evaluating AI coding agents across a spectrum of pr
 
 This repository has the data and instructions on running [SWE Atlas - Codebase QnA](https://labs.scale.com/leaderboard/sweatlas-qna), [SWE Atlas - Test Writing](https://labs.scale.com/leaderboard/sweatlas-tw) and [SWE Atlas - Refactoring](https://labs.scale.com/leaderboard/sweatlas-refactoring) 
 
+> **UPDATE:** The SWE Atlas Test Writing (TW) tasks now run with internet access disabled — agents can reach only an allowlist of select domains (package registries and language toolchains) required to build and run tests, so reference solutions cannot be looked up online.
+
 ## Requirements
 
 Install [harbor](https://github.com/laude-institute/harbor):
