@@ -13,13 +13,15 @@ HARBOR_BIN="${HARBOR_BIN:-harbor}"
 "${HARBOR_BIN}" run \
   -p ./data/rf \
   -a claude-code \
-  -m "anthropic/claude-opus-4-6" \
+  -m "anthropic/claude-opus-4-8" \
   -e modal \
   --ek modal_vm_runtime=true \
   -k 3 \
-  -n 24 \
-  --ak reasoning_effort=high \
+  -n 32 \
+  --max-retries 3 \
+  --ak reasoning_effort=xhigh \
   --ak disallowed_tools=WebSearch,WebFetch \
   --allow-agent-host "${HARBOR_AGENT_ALLOWED_HOST}" \
   -o results/rf/ \
-  --job-name "opus-4p6_claude-code"
+  --job-name "opus-4p8-xhigh_claude-code" \
+  -y
