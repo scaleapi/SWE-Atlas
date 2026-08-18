@@ -21,6 +21,8 @@ HARBOR_BIN="${HARBOR_BIN:-harbor}"
   --max-retries 3 \
   --ak reasoning_effort=xhigh \
   --ak disallowed_tools=WebSearch,WebFetch \
+  --ae CLAUDE_ENABLE_STREAM_WATCHDOG=0 \
+  --agent-timeout-multiplier 3 \
   --allow-agent-host "${HARBOR_AGENT_ALLOWED_HOST}" \
   -o results/rf/ \
   --job-name "opus-4p8-xhigh_claude-code" \
