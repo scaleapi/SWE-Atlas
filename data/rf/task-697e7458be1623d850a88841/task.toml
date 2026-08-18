@@ -15,9 +15,26 @@ EVAL_MODEL = "${EVAL_MODEL:-anthropic/claude-opus-4-5-20251101}"
 
 [agent]
 timeout_sec = 10800
+network_mode = "allowlist"
+allowed_hosts = [
+  "pypi.org",
+  "files.pythonhosted.org",
+  "deb.debian.org",
+  "security.debian.org",
+  "ftp.debian.org",
+  "snapshot.debian.org",
+  "archive.ubuntu.com",
+  "security.ubuntu.com",
+  "ports.ubuntu.com",
+  "dl-cdn.alpinelinux.org",
+  "go.dev",
+  "dl.google.com",
+  "registry.npmjs.org",
+  "registry.yarnpkg.com",
+  "nodejs.org",
+]
 
 [environment]
-docker_image = "ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_trufflesecurity_trufflehog_697e7458be1623d850a88841_1.0@sha256:689d93eb032e59d2651a0c8c3f64c50cc83f1b015666d3a3ede5ffe3a21b24c9"
 build_timeout_sec = 1800
 allow_internet = true
 cpus = 16

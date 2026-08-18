@@ -15,9 +15,26 @@ EVAL_MODEL = "${EVAL_MODEL:-anthropic/claude-opus-4-5-20251101}"
 
 [agent]
 timeout_sec = 10800
+network_mode = "allowlist"
+allowed_hosts = [
+  "pypi.org",
+  "files.pythonhosted.org",
+  "deb.debian.org",
+  "security.debian.org",
+  "ftp.debian.org",
+  "snapshot.debian.org",
+  "archive.ubuntu.com",
+  "security.ubuntu.com",
+  "ports.ubuntu.com",
+  "dl-cdn.alpinelinux.org",
+  "go.dev",
+  "dl.google.com",
+  "registry.npmjs.org",
+  "registry.yarnpkg.com",
+  "nodejs.org",
+]
 
 [environment]
-docker_image = "ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_grafana_k6_696719205599a51110d4b441_1.0@sha256:9da4905045175cce58a722e8e0b4e74f1bdf9beb1d615f0a7cb088aff0b94fbf"
 build_timeout_sec = 1800
 allow_internet = true
 cpus = 16
