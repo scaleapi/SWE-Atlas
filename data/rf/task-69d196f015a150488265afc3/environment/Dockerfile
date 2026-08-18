@@ -5,3 +5,4 @@ FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_renovatebot_renovate_69d196f015a150
 ENV GIT_ALLOW_PROTOCOL=file:git:https:ssh
 
 ENTRYPOINT []
+CMD ["/bin/bash"]
