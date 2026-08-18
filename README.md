@@ -67,6 +67,24 @@ bash run_config/tw/opus-4p6_claude-code.sh
 
 To create your own config, copy an existing one and modify the agent, model, and parameters.
 
+### Gemini via the Antigravity CLI
+
+`run_config/*/gemini-3p6-flash_antigravity.sh` runs Gemini under Google's own
+Antigravity CLI (`agy`) instead of Claude Code or mini-swe-agent. Set
+`GEMINI_API_KEY` in `.env`; the allowed agent host is
+`generativelanguage.googleapis.com`.
+
+Two things to know before trusting the numbers:
+
+- Harbor's `antigravity-cli` agent needs the fixes in
+  [harbor#2780](https://github.com/harbor-framework/harbor/pull/2780). Without
+  them settings are written where `agy` does not read them, `GEMINI_API_KEY` is
+  ignored in favour of an interactive login that hangs headless, and no
+  trajectory is collected.
+- `agy` rejects model ids outside its client-side allowlist before any request
+  leaves the process, so `--model` failures are not quota or auth problems.
+  Which ids are accepted depends on your key's entitlement.
+
 ## Citation
 
 If you use SWE Atlas in your research, please cite our paper:
