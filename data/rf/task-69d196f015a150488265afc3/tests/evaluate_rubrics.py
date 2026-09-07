@@ -38,33 +38,31 @@ def read_file(path):
 
 
 def _parse_llm_response(text):
+    """Parse the judge reply into a JSON object, tolerating fences, control chars and prose."""
     if not text:
         return None
     text = text.strip()
-    if "```json" in text:
-        after = text[text.find("```json") + 7:]
-        end = after.find("```")
-        if end != -1:
-            text = after[:end].strip()
-    if not text.startswith("{"):
-        for pattern in ['{"ratings"', '{ "ratings"']:
-            start = text.find(pattern)
-            if start != -1:
-                text = text[start:]
-                brace_count = 0
-                for i, char in enumerate(text):
-                    if char == "{":
-                        brace_count += 1
-                    elif char == "}":
-                        brace_count -= 1
-                    if brace_count == 0:
-                        text = text[:i + 1]
-                        break
-                break
     try:
-        return json.loads(text)
+        parsed = json.loads(text, strict=False)
+        return parsed if isinstance(parsed, dict) else None
     except json.JSONDecodeError:
-        return None
+        pass
+    decoder = json.JSONDecoder(strict=False)
+    start = text.find("```json") + 7 if "```json" in text else 0
+    first_dict = None
+    idx = text.find("{", start)
+    while idx != -1:
+        try:
+            obj, _ = decoder.raw_decode(text[idx:])
+            if isinstance(obj, dict):
+                if "ratings" in obj:
+                    return obj
+                if first_dict is None:
+                    first_dict = obj
+        except json.JSONDecodeError:
+            pass
+        idx = text.find("{", idx + 1)
+    return first_dict
 
 
 def llm_call(client, model, system_prompt, user_content):
