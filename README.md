@@ -130,15 +130,17 @@ bash run_config/oracle.sh rf -- -i task-69391d8d1ce51c407be1e533
 | `K` | 3 attempts per task (pass@k only; the oracle runs once) |
 | `EFFORT` | `high` (`--ak reasoning_effort`) |
 | `N` | concurrent trials: 24 claude-code, 16 codex and mini-swe-agent, 48 oracle |
-| `JOB_NAME`, `RESULTS_DIR` | `<model>_<agent>_<effort>` (`oracle` for the oracle), `results/` (results go in `results/<lane>/`) |
+| `JOB_NAME`, `RESULTS_DIR` | `<model>_<agent>_<effort>`, with `/` in the model replaced by `-` (`oracle` for the oracle); `results/` (results go in `results/<lane>/`) |
 | `DRY_RUN=1` | print the `harbor run` commands without running them |
+
+These can also be set in `.env`. A value passed on the command line takes priority over `.env`,
+which takes priority over the default.
 
 mini-swe-agent uses the lane's prompt config in `run_config/mswea/<lane>.yaml`.
 
 Rerunning with the same job name resumes that job, and harbor refuses to resume it with a
 different config (`FileExistsError`). Set `JOB_NAME` when you rerun with anything changed: a
-different `K`, task filter or extra flags. Only the part of `MODEL` after the last `/` goes into
-the default name.
+different `K`, task filter or extra flags.
 
 To browse results, run `harbor view results/<lane>`.
 
