@@ -40,6 +40,13 @@ K="${K:-3}"
 RESULTS_DIR="${RESULTS_DIR:-$REPO_ROOT/results}"
 EFFORT="${EFFORT:-high}"
 
+# rf and tw restrict the agent's network to an allowlist; the agent's API host must be on it.
+# Checked for every requested lane up front, so a later lane can't fail after an earlier one ran.
+for lane in "${LANES[@]}"; do
+  [[ "$lane" == qa ]] && continue
+  : "${HARBOR_AGENT_ALLOWED_HOST:?Set HARBOR_AGENT_ALLOWED_HOST for $lane (the agent API hostname)}"
+done
+
 rc=0
 for lane in "${LANES[@]}"; do
   args=(run -p "$REPO_ROOT/data/$lane" -a "$AGENT" -m "$MODEL" -e modal -k "$K" -n "$N"
@@ -50,9 +57,7 @@ for lane in "${LANES[@]}"; do
     mini-swe-agent) args+=(--ak version="$MINI_SWE_AGENT_VERSION"
                            --ak config_file="$RUN_CONFIG/mswea/$lane.yaml") ;;
   esac
-  # rf and tw restrict the agent's network to an allowlist; the agent's API host must be on it.
   if [[ "$lane" != qa ]]; then
-    : "${HARBOR_AGENT_ALLOWED_HOST:?Set HARBOR_AGENT_ALLOWED_HOST for $lane (the agent API hostname)}"
     args+=(--allow-agent-host "$HARBOR_AGENT_ALLOWED_HOST")
     [[ "$AGENT" == claude-code ]] && args+=(--ak disallowed_tools=WebSearch,WebFetch)
   fi

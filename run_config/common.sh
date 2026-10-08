@@ -12,6 +12,8 @@ load_env() {
     # shellcheck disable=SC1090
     source "$env_file"
     set +a
+  else
+    echo "warning: no env file at $env_file; using only variables already in the environment (set ENV_FILE to override)" >&2
   fi
 }
 
