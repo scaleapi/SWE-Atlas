@@ -1,6 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_MariaDB_server_69b7c2a04b6f8ff9ed98812d_1.0@sha256:5cffe9e1c3013073887b2badbe3e4e751306fcdeb2d18512608e8da5f6e42762
-
-ENTRYPOINT []
-CMD ["/bin/bash"]
-
-ENV CMAKE_FLAGS="-DWITH_UNIT_TESTS=ON -DENABLE_UNIT_TESTS=ON -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Debug -DPLUGIN_ROCKSDB=NO"
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_RF_MariaDB_server_69b7c2a04b6f8ff9ed98812d_1.1@sha256:02a4bdfdaa2d3ec8d94f03e7b9d83b5cb6520cec04979241a4f4c4ff0a0baf0a

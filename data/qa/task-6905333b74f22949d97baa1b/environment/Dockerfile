@@ -1,1 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_QnA_minio_minio_1.0
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_QnA_minio_minio_1.1@sha256:577dea90313023e9f3b5ad41a756bc37a88e2a305f69c95a189bde1e6b8a33c9

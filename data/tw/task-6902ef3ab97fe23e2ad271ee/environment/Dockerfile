@@ -1,3 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_TW_Automattic_wp-calypso_6902ef3ab97fe23e2ad271ee_1.0
-
-WORKDIR /app
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_TW_Automattic_wp-calypso_6902ef3ab97fe23e2ad271ee_1.1@sha256:3b75540969af26cc7637e43fd74a3dee7f97862955fa09bbd2208f81c29426ab

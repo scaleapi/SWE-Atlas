@@ -1,4 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_OISF_suricata_69b7c2a04b6f8ff9ed988134_1.0@sha256:ec78c9fc018106e06883b92f6358685b0f227f4eceedb44ca756662e427677a7
-
-ENTRYPOINT []
-CMD ["/bin/bash"]
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_RF_OISF_suricata_69b7c2a04b6f8ff9ed988134_1.1@sha256:0d189be3640e184bdeb0e7814eaa84ab84576c2160827ce740b8c9d1f37fb2e8

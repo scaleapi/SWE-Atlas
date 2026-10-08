@@ -1,4 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_netdata_netdata_69b7c2a04b6f8ff9ed98813a_1.0@sha256:f618f776c886bab213219c8b11c162af84870e7393684bfe1d94f9ddc22bfb88
-
-ENTRYPOINT []
-CMD ["/bin/bash"]
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_RF_netdata_netdata_69b7c2a04b6f8ff9ed98813a_1.1@sha256:d4689460830d94cafef2fa24c750ce163ab7aa3a6ad2a0d8017497ccc4dc5147

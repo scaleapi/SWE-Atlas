@@ -1,8 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_renovatebot_renovate_69d196f015a150488265afc4_1.0@sha256:b839cb6f798a0ce50f4dc285d352b548615897b0ca85bff3bec736a234e5728d
-
-# Allow git-over-https so harbor's codex installer can bootstrap Node via nvm
-# (image locks git to file-only by default). file:// still allowed -> verifier unaffected.
-ENV GIT_ALLOW_PROTOCOL=file:git:https:ssh
-
-ENTRYPOINT []
-CMD ["/bin/bash"]
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_RF_renovatebot_renovate_69d196f015a150488265afc4_1.1@sha256:ac88b1c1d889df4560efb774f1ecee7fd38e4c82a50ca05a28b81ffb52d5015e

@@ -1,1 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_QnA_simple-login_app_1.0
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_QnA_simple-login_app_1.1@sha256:4b279c5276d58ba9c30489755ad7e2cbec6be8ad8f8984f81256bee22d7005e8

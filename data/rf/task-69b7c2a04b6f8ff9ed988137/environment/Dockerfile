@@ -1,14 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_OISF_suricata_69b7c2a04b6f8ff9ed988137_1.0@sha256:543b0599b340194f6676b07058db8a279ced51c2161d8b6997c0332072fb499e
-
-ENTRYPOINT []
-CMD ["/bin/bash"]
-
-RUN python3 -m ensurepip --default-pip \
-    && python3 -m pip install --no-cache-dir setuptools \
-    && python3 -c "import distutils"
-
-RUN printf '%s\n' \
-      '/suricata.yaml' \
-      '/scripts/suricatasc/suricatasc' \
-      '/scripts/suricatasc/build/' \
-      >> /app/suricata/.git/info/exclude
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_RF_OISF_suricata_69b7c2a04b6f8ff9ed988137_1.1@sha256:a29133c968fb3c4635a9b13b30b0de104272608e02d11dd2113f1b9038241d9f

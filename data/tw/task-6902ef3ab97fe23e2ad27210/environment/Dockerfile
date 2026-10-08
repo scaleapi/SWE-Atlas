@@ -1,3 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_TW_grafana_grafana_6902ef3ab97fe23e2ad27210_1.0
-
-WORKDIR /app
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_TW_grafana_grafana_6902ef3ab97fe23e2ad27210_1.1@sha256:a21a6b6ec901eeb3f434ab49bc3e16e1c4977a527e9a449918c13467974d70f9

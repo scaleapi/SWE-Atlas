@@ -20,7 +20,7 @@ timeout_sec = 10800.0
 
 [environment]
 build_timeout_sec = 600.0
-docker_image = "ghcr.io/scaleapi/swe-atlas:swe_atlas_QnA_grafana_grafana_1.0"
+docker_image = "ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_QnA_grafana_grafana_1.1@sha256:376c04961741fc29377390e41dd6e5a520914be985e8011a95ff738449b4dbe9"
 cpus = 16
 memory_mb = 16384
 storage_mb = 20480

@@ -35,6 +35,7 @@ allowed_hosts = [
 ]
 
 [environment]
+docker_image = "ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_TW_grafana_k6_6902ef3ab97fe23e2ad27211_1.1@sha256:c63c4f869e1613c288e33e2426ce9d4ec89dcaf58989a78056995b09b7e815ca"
 build_timeout_sec = 1800.0
 cpus = 16
 memory_mb = 16384

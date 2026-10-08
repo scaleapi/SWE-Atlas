@@ -20,7 +20,7 @@ timeout_sec = 10800.0
 
 [environment]
 build_timeout_sec = 600.0
-docker_image = "ghcr.io/scaleapi/swe-atlas:swe_atlas_QnA_drakkan_sftpgo_1.0"
+docker_image = "ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_QnA_drakkan_sftpgo_1.1@sha256:b26b205750f440c77bf42603b95b8d03d2c793fefc24b1418c220a136a7162a1"
 cpus = 16
 memory_mb = 16384
 storage_mb = 20480

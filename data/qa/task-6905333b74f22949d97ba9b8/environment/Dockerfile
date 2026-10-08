@@ -1,1 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_QnA_grafana_grafana_1.0
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_QnA_grafana_grafana_1.1@sha256:376c04961741fc29377390e41dd6e5a520914be985e8011a95ff738449b4dbe9
