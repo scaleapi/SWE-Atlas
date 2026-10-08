@@ -1,4 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_MariaDB_server_69d196f015a150488265afc0_1.0@sha256:3af166536b0b4caf2053eacf41d91798cc337f208a2e2aa104b605d0527e5ee3
-
-ENTRYPOINT []
-CMD ["/bin/bash"]
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_RF_MariaDB_server_69d196f015a150488265afc0_1.1@sha256:00c300f347d025e3ec821b2806f3429091b61a7bca8191f1331fc324ef6e448b

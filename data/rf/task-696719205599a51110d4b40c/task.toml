@@ -1,3 +1,9 @@
+[task]
+name = "scale-ai/task-696719205599a51110d4b40c"
+description = ""
+authors = []
+keywords = []
+
 [metadata]
 author_name = "ScaleAI"
 author_email = "unknown"
@@ -35,6 +41,7 @@ allowed_hosts = [
 ]
 
 [environment]
+docker_image = "ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_RF_trufflesecurity_trufflehog_696719205599a51110d4b40c_1.1@sha256:0be5c9c0883c1e179265a098fcdb420b2e88e8a999a477ec5f8cd8ac70b1b351"
 build_timeout_sec = 1800
 allow_internet = true
 cpus = 16

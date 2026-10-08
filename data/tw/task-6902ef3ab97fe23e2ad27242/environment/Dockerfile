@@ -1,3 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_TW_kovidgoyal_kitty_6902ef3ab97fe23e2ad27242_1.0
-
-WORKDIR /app
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_TW_kovidgoyal_kitty_6902ef3ab97fe23e2ad27242_1.1@sha256:986e82f2bdab383956b8b86b1547a15223908011bb4af3574e772f419c9819aa

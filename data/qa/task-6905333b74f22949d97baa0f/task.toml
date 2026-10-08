@@ -20,7 +20,7 @@ timeout_sec = 10800.0
 
 [environment]
 build_timeout_sec = 600.0
-docker_image = "ghcr.io/scaleapi/swe-atlas:swe_atlas_QnA_trufflesecurity_trufflehog_1.0"
+docker_image = "ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_QnA_trufflesecurity_trufflehog_1.1@sha256:12bd3899ab7b7a1a7b81d493f34815fcd47820a7f34dd05f29ca5f08b4fc8afd"
 cpus = 16
 memory_mb = 16384
 storage_mb = 20480

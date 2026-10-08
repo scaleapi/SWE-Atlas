@@ -1,10 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_TW_drakkan_sftpgo_6902ef3ab97fe23e2ad27281_1.0
-
-WORKDIR /app
-
-# Populate the repository pinned Go module graph while the image build has
-# network access. Agent and verifier runtime must use only this baked cache.
-RUN go mod download
-
-ENV GOPROXY=off \
-    GOSUMDB=off
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_TW_drakkan_sftpgo_6902ef3ab97fe23e2ad27281_1.1@sha256:d52da5bd818c6abeceb2d44ee24bd092860b7b95967b35989dddee14987ea10b

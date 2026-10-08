@@ -1,1 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_RF_simple-login_app_69391d8d1ce51c407be1e533_1.0@sha256:312f4320950e218babc8cab47a2c3617582d3c0fcc44859e1e95536539a712f5
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_RF_simple-login_app_69391d8d1ce51c407be1e533_1.1@sha256:72b73538a3fdbf2e162b2f49dde08a3d6fa42611b588d5fb39b67757a70a9f9c

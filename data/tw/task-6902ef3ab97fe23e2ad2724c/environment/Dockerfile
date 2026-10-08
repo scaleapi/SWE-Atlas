@@ -1,3 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_TW_paperless-ngx_paperless-ngx_6902ef3ab97fe23e2ad2724c_1.0
-
-WORKDIR /app
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_TW_paperless-ngx_paperless-ngx_6902ef3ab97fe23e2ad2724c_1.1@sha256:15845dce5ff5ab47dca376a413a06af1bc7816f38c9d20afcc59db8cdc144477

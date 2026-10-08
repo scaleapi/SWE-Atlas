@@ -1,3 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas:swe_atlas_TW_secdev_scapy_6902ef3ab97fe23e2ad2721b_1.0
-
-WORKDIR /app
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_TW_secdev_scapy_6902ef3ab97fe23e2ad2721b_1.1@sha256:ebe4033373b309b4626e5f2ab26a1fe925551656998ee5c7083ea953f1318242

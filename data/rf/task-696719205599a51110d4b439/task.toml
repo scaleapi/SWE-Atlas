@@ -1,3 +1,9 @@
+[task]
+name = "scale-ai/task-696719205599a51110d4b439"
+description = ""
+authors = []
+keywords = []
+
 [metadata]
 author_name = "ScaleAI"
 author_email = "unknown"
@@ -35,6 +41,7 @@ allowed_hosts = [
 ]
 
 [environment]
+docker_image = "ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_RF_grafana_k6_696719205599a51110d4b439_1.1@sha256:6e40798b3c490c92752bffd739ca10139aeeea518dc58c963c19a808eb706236"
 build_timeout_sec = 1800
 allow_internet = true
 cpus = 16
