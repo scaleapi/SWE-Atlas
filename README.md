@@ -144,6 +144,27 @@ different `K`, task filter or extra flags.
 
 To browse results, run `harbor view results/<lane>`.
 
+### Gemini via the Antigravity CLI
+
+`run_config/*/gemini-3p6-flash_antigravity.sh` runs Gemini under Google's own
+Antigravity CLI (`agy`) instead of Claude Code or mini-swe-agent. Set
+`GEMINI_API_KEY` in `.env`; the allowed agent host is
+`generativelanguage.googleapis.com`.
+
+Two things to know before trusting the numbers:
+
+- Harbor's `antigravity-cli` agent needs
+  [harbor#2776](https://github.com/harbor-framework/harbor/pull/2776) and
+  [harbor#2687](https://github.com/harbor-framework/harbor/pull/2687), both open
+  but unmerged as of 2026-08-18. Without them, settings are written where `agy`
+  does not read them, `GEMINI_API_KEY` is ignored in favour of an interactive
+  login that hangs headless, no trajectory is collected, and — absent
+  `--add-dir` — file-producing tasks can write outside the workdir and score
+  zero. Test Writing is the track most exposed to that last one.
+- `agy` rejects model ids outside its client-side allowlist before any request
+  leaves the process, so `--model` failures are not quota or auth problems.
+  Which ids are accepted depends on your key's entitlement.
+
 ## Citation
 
 If you use SWE Atlas in your research, please cite our paper:
