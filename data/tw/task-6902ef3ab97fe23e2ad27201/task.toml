@@ -50,5 +50,6 @@ EVAL_BASE_URL = "${OPENAI_API_BASE}"
 EVAL_MODEL = "${EVAL_MODEL:-anthropic/claude-opus-4-5-20251101}"
 
 [environment.env]
+UV_PYTHON_DOWNLOADS = "manual"
 
 [solution.env]
