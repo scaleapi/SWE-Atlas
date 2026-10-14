@@ -166,50 +166,48 @@ def evaluate_single_rubric(client, model, system_prompt, user_prompt_template,
     return None
 
 
-def _parse_response(text):
-    """Parse JSON response and extract first rating."""
+def _extract_json_object(text, preferred_keys=("ratings",)):
+    """Parse the judge reply into a JSON object, tolerating fences, control chars and prose."""
     if not text:
         return None
     text = text.strip()
-
-    # Try to find ```json block
-    if "```json" in text:
-        after = text[text.find("```json") + 7:]
-        end = after.find("```")
-        if end != -1:
-            text = after[:end].strip()
-
-    # Try to find {"ratings" pattern
-    if not text.startswith("{"):
-        start = text.find('{"ratings"')
-        if start == -1:
-            start = text.find('{ "ratings"')
-        if start != -1:
-            text = text[start:]
-            brace_count = 0
-            for i, char in enumerate(text):
-                if char == '{':
-                    brace_count += 1
-                elif char == '}':
-                    brace_count -= 1
-                if brace_count == 0:
-                    text = text[:i+1]
-                    break
-
     try:
-        parsed = json.loads(text)
-        if isinstance(parsed, dict) and "ratings" in parsed:
-            ratings = parsed["ratings"]
-            if isinstance(ratings, list) and len(ratings) > 0:
-                r = ratings[0]
-                return {
-                    "rubric_statement": r.get("rubric_statement"),
-                    "status": r.get("status"),
-                    "score": r.get("score"),
-                    "justification": r.get("justification"),
-                }
+        parsed = json.loads(text, strict=False)
+        return parsed if isinstance(parsed, dict) else None
     except json.JSONDecodeError:
         pass
+    decoder = json.JSONDecoder(strict=False)
+    start = text.find("```json") + 7 if "```json" in text else 0
+    first_dict = None
+    idx = text.find("{", start)
+    while idx != -1:
+        try:
+            obj, _ = decoder.raw_decode(text[idx:])
+            if isinstance(obj, dict):
+                if any(key in obj for key in preferred_keys):
+                    return obj
+                if first_dict is None:
+                    first_dict = obj
+        except json.JSONDecodeError:
+            pass
+        idx = text.find("{", idx + 1)
+    return first_dict
+
+
+def _parse_response(text):
+    """Parse JSON response and extract first rating."""
+    parsed = _extract_json_object(text, preferred_keys=("ratings",))
+    if not isinstance(parsed, dict):
+        return None
+    ratings = parsed.get("ratings")
+    if isinstance(ratings, list) and ratings and isinstance(ratings[0], dict):
+        r = ratings[0]
+        return {
+            "rubric_statement": r.get("rubric_statement"),
+            "status": r.get("status"),
+            "score": r.get("score"),
+            "justification": r.get("justification"),
+        }
     return None
 
 
