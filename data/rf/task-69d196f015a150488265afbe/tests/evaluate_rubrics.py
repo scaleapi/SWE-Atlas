@@ -41,30 +41,55 @@ def _parse_llm_response(text):
     if not text:
         return None
     text = text.strip()
-    if "```json" in text:
-        after = text[text.find("```json") + 7:]
-        end = after.find("```")
-        if end != -1:
-            text = after[:end].strip()
-    if not text.startswith("{"):
-        for pattern in ['{"ratings"', '{ "ratings"']:
-            start = text.find(pattern)
-            if start != -1:
-                text = text[start:]
-                brace_count = 0
-                for i, char in enumerate(text):
-                    if char == "{":
-                        brace_count += 1
-                    elif char == "}":
-                        brace_count -= 1
-                    if brace_count == 0:
-                        text = text[:i + 1]
-                        break
+
+    # The reply may be bare JSON, wrapped in a ```json fence, or prose with the
+    # object embedded. Fences and braces also occur *inside* justification
+    # strings, so no single delimiter search is reliable on its own. Collect
+    # every plausible slice and let json.loads decide which one is really JSON.
+    candidates = [text]
+
+    marker = "```json"
+    fence_start = text.find(marker)
+    if fence_start != -1:
+        body = text[fence_start + len(marker):]
+        # Closing-fence candidates outermost first: a ```python block quoted
+        # inside a justification would truncate a first-match search.
+        end = len(body)
+        while True:
+            end = body.rfind("```", 0, end)
+            if end == -1:
                 break
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        return None
+            candidates.append(body[:end].strip())
+        candidates.append(body.strip())
+
+    for pattern in ['{"ratings"', '{ "ratings"']:
+        start = text.find(pattern)
+        if start == -1:
+            continue
+        brace_count = 0
+        for i in range(start, len(text)):
+            if text[i] == "{":
+                brace_count += 1
+            elif text[i] == "}":
+                brace_count -= 1
+                if brace_count == 0:
+                    candidates.append(text[start:i + 1])
+                    break
+        break
+
+    # Prefer the rubric object itself. A top-level array parses cleanly but the
+    # caller's `"ratings" in parsed` check then silently skips the rubric.
+    fallback = None
+    for candidate in candidates:
+        try:
+            value = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict) and "ratings" in value:
+            return value
+        if fallback is None:
+            fallback = value
+    return fallback
 
 
 def llm_call(client, model, system_prompt, user_content):
