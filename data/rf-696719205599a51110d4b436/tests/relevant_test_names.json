@@ -1,0 +1,76 @@
+{
+  "tests": [
+    {
+      "name": "go.k6.io/k6/internal/js/TestBundleEnv"
+    },
+    {
+      "name": "go.k6.io/k6/internal/js/TestBundleNotSharable"
+    },
+    {
+      "name": "go.k6.io/k6/internal/js/compiler/TestCompile"
+    },
+    {
+      "name": "go.k6.io/k6/internal/execution/TestDNSResolverCache"
+    },
+    {
+      "name": "go.k6.io/k6/internal/execution/TestExecutionInfoAll"
+    },
+    {
+      "name": "go.k6.io/k6/internal/execution/TestExecutionInfoScenarioIter"
+    },
+    {
+      "name": "go.k6.io/k6/internal/execution/TestExecutionInfoVUSharing"
+    },
+    {
+      "name": "go.k6.io/k6/internal/js/TestGlobalTimers"
+    },
+    {
+      "name": "go.k6.io/k6/internal/js/compiler/TestMinimalSourceMap"
+    },
+    {
+      "name": "go.k6.io/k6/internal/js/TestNewBundleFromArchive"
+    },
+    {
+      "name": "go.k6.io/k6/internal/js/TestNewJSRunnerWithCustomModule"
+    },
+    {
+      "name": "go.k6.io/k6/internal/js/TestNewModuleResolver"
+    },
+    {
+      "name": "go.k6.io/k6/internal/execution/TestNewSchedulerHasWork"
+    },
+    {
+      "name": "go.k6.io/k6/internal/js/TestOpen"
+    },
+    {
+      "name": "go.k6.io/k6/internal/execution/TestRealTimeAndSetupTeardownMetrics"
+    },
+    {
+      "name": "go.k6.io/k6/internal/js/TestRequire"
+    },
+    {
+      "name": "go.k6.io/k6/internal/execution/TestSchedulerRunCustomConfigNoCrossover"
+    },
+    {
+      "name": "go.k6.io/k6/internal/execution/TestSchedulerRunCustomTags"
+    },
+    {
+      "name": "go.k6.io/k6/internal/execution/TestSchedulerRunEnv"
+    },
+    {
+      "name": "go.k6.io/k6/internal/execution/TestSchedulerRunNonDefault"
+    },
+    {
+      "name": "go.k6.io/k6/internal/execution/TestSchedulerSystemTags"
+    },
+    {
+      "name": "go.k6.io/k6/api/v1/TestSetupData"
+    },
+    {
+      "name": "go.k6.io/k6/internal/js/modules/k6/TestSetupDataMarshalling"
+    },
+    {
+      "name": "go.k6.io/k6/internal/execution/TestSharedIterationsStable"
+    }
+  ]
+}

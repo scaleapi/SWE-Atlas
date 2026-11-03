@@ -1,0 +1,74 @@
+# SWE Atlas benchmark run, as a single harbor job config.
+#
+# Runs one agent, pass@k, over all three lanes (qa, rf, tw) in data/. Edit the two values marked
+# "EDIT:" below (the model under evaluation and the agent's API hostname), put your keys in .env,
+# and run:
+#
+#   harbor run -c run_config/job.yaml --env-file .env -y
+#
+# The agent's API key comes from .env (ANTHROPIC_API_KEY for claude-code; OPENAI_API_KEY for codex
+# and mini-swe-agent) and the judge from OPENAI_API_KEY / OPENAI_API_BASE (or the JUDGE_* overrides);
+# see the README's Environment Variables section. To run one lane, add a task filter on the command
+# line, e.g. -i 'rf-*'. To run the reference solutions or a do-nothing agent for the release record,
+# use run_config/oracle.sh and run_config/nop.sh.
+
+n_attempts: 3                 # pass@k: attempts per task
+n_concurrent_trials: 24       # concurrent trials
+
+# Retry only infrastructure and agent-timeout failures, not the submission; the excluded exceptions
+# below are real outcomes and are graded as they ran. Each retry deletes the failed attempt first.
+retry:
+  max_retries: 3
+  wait_multiplier: 2.0
+  min_wait_sec: 1.0
+  max_wait_sec: 60.0
+  exclude_exceptions:
+    - AgentSafetyRefusalError
+    - AgentAuthenticationError
+    - ModelNotFoundError
+    - ApiUsageLimitError
+    - OutputTokenExceededError
+    - ContextWindowExceededError
+    - OutputLengthExceededError
+    - ContextLengthExceededError
+    - VerifierOutputParseError
+    - RewardFileEmptyError
+
+environment:
+  type: modal
+
+# Every task restricts the agent's network to an allowlist during agent.run(); the host of the API
+# the agent calls has to be added to it. Build timeouts (1800 s) and verifier timeouts (per lane in
+# qa and tw, per task in rf) are set in each task.toml, so no timeout multiplier is needed here.
+agents:
+  - name: claude-code
+    model_name: anthropic/claude-opus-4-6   # EDIT: the model under evaluation
+    extra_allowed_hosts:
+      - api.anthropic.com                    # EDIT: the agent API hostname (no https://, no path)
+    kwargs:
+      reasoning_effort: high
+      version: 2.1.293                       # the validated claude-code version
+      disallowed_tools: WebSearch,WebFetch   # no web lookup of reference solutions
+
+# For codex, replace the agent block above with:
+#   - name: codex
+#     model_name: openai/gpt-5.4             # EDIT: the model under evaluation
+#     extra_allowed_hosts:
+#       - api.openai.com                     # EDIT: the agent API hostname
+#     kwargs:
+#       reasoning_effort: high
+#       version: 0.142.1
+#       web_search: disabled
+#
+# For mini-swe-agent, replace it with (run one lane at a time and set that lane's config file):
+#   - name: mini-swe-agent
+#     model_name: openai/anthropic/claude-opus-4-6   # EDIT: the model under evaluation
+#     extra_allowed_hosts:
+#       - api.anthropic.com                  # EDIT: the agent API hostname
+#     kwargs:
+#       reasoning_effort: high
+#       version: 2.4.6
+#       config_file: run_config/mswea/rf.yaml   # EDIT: qa.yaml, rf.yaml or tw.yaml, and filter -i '<lane>-*'
+
+datasets:
+  - path: data

@@ -1,0 +1,58 @@
+{
+  "tests": [
+    {
+      "name": "go.k6.io/k6/api/v1/TestSetupData"
+    },
+    {
+      "name": "go.k6.io/k6/api/v1/TestPatchStatus"
+    },
+    {
+      "name": "go.k6.io/k6/js/TestDataIsolation"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestNewMetricsEngineWithThresholds"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestMetricsEngineGetThresholdMetricOrSubmetricError"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestNewMetricsEngineNoThresholds"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestMetricsEngineEvaluateThresholdNoAbort"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestMetricsEngineEvaluateIgnoreEmptySink"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestIngesterOutputFlushMetrics"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestIngesterOutputFlushSubmetrics"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/engine/TestOutputFlushMetricsTimeSeriesWarning"
+    },
+    {
+      "name": "go.k6.io/k6/api/v1/TestNewMetric"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/TestNewMetric"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/TestNewSink"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/TestTrendSink"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/TestTrendSinkIsEmpty"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/TestThresholdsRun"
+    },
+    {
+      "name": "go.k6.io/k6/metrics/TestGetResolversForTrendColumnsCalculation"
+    }
+  ]
+}

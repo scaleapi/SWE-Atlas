@@ -1,0 +1,1 @@
+FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_MariaDB_server_69d196f015a150488265afc1_1.1_v10197_bake@sha256:a9ee15553a33a261562121473cac3e9d37a0f6a7a914175441db4d60bae9b0af

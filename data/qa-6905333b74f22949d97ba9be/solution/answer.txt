@@ -1,0 +1,476 @@
+I started by setting up a minimal Maddy configuration to test sender identity enforcement and DKIM signing behavior. The goal was to observe actual runtime behavior rather than infer from code or documentation.
+
+First, I created the necessary directory structure and generated a DKIM key pair for signing:
+
+mkdir -p /tmp/maddy-test/dkim
+cd /app
+openssl genrsa -out /tmp/maddy-test/dkim/example.com.default.key 2048
+openssl rsa -in /tmp/maddy-test/dkim/example.com.default.key -pubout -out /tmp/maddy-test/dkim/example.com.default.pub
+
+Then I created a test configuration file that sets up submission with authentication, DKIM signing, and local delivery:
+
+cat > /tmp/maddy-test/maddy.conf << 'EOF'
+hostname test.example.com
+state /tmp/maddy-test/state
+runtime /tmp/maddy-test/run
+
+tls off
+
+sql local_mailboxes local_authdb {
+    driver sqlite3
+    dsn /tmp/maddy-test/all.db
+}
+
+submission tcp://127.0.0.1:5587 {
+    auth &local_authdb
+    
+    source example.com {
+        modify {
+            sign_dkim example.com default {
+                key_path /tmp/maddy-test/dkim/example.com.default.key
+                require_sender_match off
+            }
+        }
+        destination example.com {
+            deliver_to &local_mailboxes
+        }
+        default_destination {
+            reject 550 5.1.1 "No external delivery configured"
+        }
+    }
+    
+    default_source {
+        reject 501 5.1.8 "Sender domain not allowed"
+    }
+}
+EOF
+
+This configuration restricts senders to the example.com domain via the source block. The `require_sender_match off` setting in sign_dkim disables the default checks that would otherwise prevent signing when the From header doesn't match the MAIL FROM address or authenticated identity. This allows me to test DKIM signing behavior independently of sender validation. I wanted to see if source block enforcement actually happens at runtime and how it interacts with authenticated identity.
+
+The repository ships the prebuilt `maddy` binary but no `maddyctl`, so I built `maddyctl` from the repository's `cmd/maddyctl` into the test directory. Then I started Maddy with debug logging, writing its log (stderr) to a file so I could capture the SMTP transactions:
+
+ls /app/maddy /app/maddyctl
+PATH=/usr/local/go/bin:$PATH go build -o /tmp/maddy-test/maddyctl ./cmd/maddyctl
+./maddy -config /tmp/maddy-test/maddy.conf -debug 2> /tmp/maddy-test/maddy.log &
+MADDY_PID=$!
+sleep 3
+cat /tmp/maddy-test/maddy.log
+
+Output:
+ls: cannot access '/app/maddyctl': No such file or directory
+/app/maddy
+[debug] sql: go-imap-sql version 0.4.0
+[debug] /tmp/maddy-test/maddy.conf:13: reference &local_authdb
+[debug] /tmp/maddy-test/maddy.conf:17: new module sign_dkim [example.com default]
+[debug] /tmp/maddy-test/maddy.conf:23: reference &local_mailboxes
+[debug] submission: authentication provider: sql local_mailboxes
+submission: listening on tcp://127.0.0.1:5587
+
+Next, I created two test users with maddyctl (it prints nothing on success) and listed them:
+
+/tmp/maddy-test/maddyctl -config /tmp/maddy-test/maddy.conf users create -p testpass123 alice@example.com
+/tmp/maddy-test/maddyctl -config /tmp/maddy-test/maddy.conf users create -p testpass456 bob@example.com
+/tmp/maddy-test/maddyctl -config /tmp/maddy-test/maddy.conf users list
+
+Output:
+alice@example.com
+bob@example.com
+
+With the server running, I began testing sender enforcement. I wrote a Python script to send test emails and capture the SMTP responses (smtplib's debug output shows every command and reply):
+
+cat > /tmp/maddy-test/test_sender.py << 'EOF'
+import smtplib
+import sys
+
+def test_send(mail_from, rcpt_to, auth_user, auth_pass, from_header=None):
+    print(f"\n{'='*60}")
+    print(f"Test: AUTH as {auth_user}, MAIL FROM: {mail_from}")
+    print(f"{'='*60}")
+    
+    try:
+        s = smtplib.SMTP('127.0.0.1', 5587)
+        s.set_debuglevel(1)
+        s.login(auth_user, auth_pass)
+        
+        if from_header is None:
+            from_header = mail_from
+            
+        msg = f"""From: {from_header}
+To: {rcpt_to}
+Subject: Test Message
+Date: Thu, 23 Jan 2026 12:00:00 +0000
+Message-ID: <test-{mail_from.replace('@','-at-')}@test>
+
+This is a test message.
+"""
+        s.sendmail(mail_from, [rcpt_to], msg)
+        print(f"RESULT: Message accepted")
+        s.quit()
+        return True
+    except smtplib.SMTPSenderRefused as e:
+        print(f"RESULT: Sender refused - Code {e.smtp_code}: {e.smtp_error}")
+        return False
+    except smtplib.SMTPException as e:
+        print(f"RESULT: SMTP Error - {e}")
+        return False
+
+# Test 1: Legitimate send - alice sends as alice
+test_send('alice@example.com', 'bob@example.com', 'alice@example.com', 'testpass123')
+
+# Test 2: Identity mismatch - alice tries to send as bob (same domain)
+test_send('bob@example.com', 'alice@example.com', 'alice@example.com', 'testpass123')
+
+# Test 3: Different domain - alice tries to send as external address
+test_send('alice@otherdomain.com', 'bob@example.com', 'alice@example.com', 'testpass123')
+
+# Test 4: From header mismatch - MAIL FROM matches auth, but From header differs
+test_send('alice@example.com', 'bob@example.com', 'alice@example.com', 'testpass123', 
+          from_header='bob@example.com')
+EOF
+
+python3 -u /tmp/maddy-test/test_sender.py
+
+The output revealed critical security behavior:
+
+============================================================
+Test: AUTH as alice@example.com, MAIL FROM: alice@example.com
+============================================================
+send: 'ehlo [127.0.0.1]\r\n'
+reply: b'250-Hello [127.0.0.1]\r\n'
+reply: b'250-PIPELINING\r\n'
+reply: b'250-8BITMIME\r\n'
+reply: b'250-ENHANCEDSTATUSCODES\r\n'
+reply: b'250-AUTH PLAIN\r\n'
+reply: b'250-SMTPUTF8\r\n'
+reply: b'250 SIZE 33554432\r\n'
+reply: retcode (250); Msg: b'Hello [127.0.0.1]\nPIPELINING\n8BITMIME\nENHANCEDSTATUSCODES\nAUTH PLAIN\nSMTPUTF8\nSIZE 33554432'
+send: 'AUTH PLAIN AGFsaWNlQGV4YW1wbGUuY29tAHRlc3RwYXNzMTIz\r\n'
+reply: b'235 2.0.0 Authentication succeeded\r\n'
+reply: retcode (235); Msg: b'2.0.0 Authentication succeeded'
+send: 'mail FROM:<alice@example.com> size=181\r\n'
+reply: b'250 2.0.0 Roger, accepting mail from <alice@example.com>\r\n'
+reply: retcode (250); Msg: b'2.0.0 Roger, accepting mail from <alice@example.com>'
+send: 'rcpt TO:<bob@example.com>\r\n'
+reply: b"250 2.0.0 I'll make sure <bob@example.com> gets this\r\n"
+reply: retcode (250); Msg: b"2.0.0 I'll make sure <bob@example.com> gets this"
+send: 'data\r\n'
+reply: b'354 2.0.0 Go ahead. End your data with <CR><LF>.<CR><LF>\r\n'
+reply: retcode (354); Msg: b'2.0.0 Go ahead. End your data with <CR><LF>.<CR><LF>'
+data: (354, b'2.0.0 Go ahead. End your data with <CR><LF>.<CR><LF>')
+send: b'From: alice@example.com\r\nTo: bob@example.com\r\nSubject: Test Message\r\nDate: Thu, 23 Jan 2026 12:00:00 +0000\r\nMessage-ID: <test-alice-at-example.com@test>\r\n\r\nThis is a test message.\r\n.\r\n'
+reply: b'250 2.0.0 OK: queued\r\n'
+reply: retcode (250); Msg: b'2.0.0 OK: queued'
+data: (250, b'2.0.0 OK: queued')
+RESULT: Message accepted
+send: 'quit\r\n'
+reply: b'221 2.0.0 Goodnight and good luck\r\n'
+reply: retcode (221); Msg: b'2.0.0 Goodnight and good luck'
+
+============================================================
+Test: AUTH as alice@example.com, MAIL FROM: bob@example.com
+============================================================
+send: 'ehlo [127.0.0.1]\r\n'
+reply: b'250-Hello [127.0.0.1]\r\n'
+reply: b'250-PIPELINING\r\n'
+reply: b'250-8BITMIME\r\n'
+reply: b'250-ENHANCEDSTATUSCODES\r\n'
+reply: b'250-AUTH PLAIN\r\n'
+reply: b'250-SMTPUTF8\r\n'
+reply: b'250 SIZE 33554432\r\n'
+reply: retcode (250); Msg: b'Hello [127.0.0.1]\nPIPELINING\n8BITMIME\nENHANCEDSTATUSCODES\nAUTH PLAIN\nSMTPUTF8\nSIZE 33554432'
+send: 'AUTH PLAIN AGFsaWNlQGV4YW1wbGUuY29tAHRlc3RwYXNzMTIz\r\n'
+reply: b'235 2.0.0 Authentication succeeded\r\n'
+reply: retcode (235); Msg: b'2.0.0 Authentication succeeded'
+send: 'mail FROM:<bob@example.com> size=179\r\n'
+reply: b'250 2.0.0 Roger, accepting mail from <bob@example.com>\r\n'
+reply: retcode (250); Msg: b'2.0.0 Roger, accepting mail from <bob@example.com>'
+send: 'rcpt TO:<alice@example.com>\r\n'
+reply: b"250 2.0.0 I'll make sure <alice@example.com> gets this\r\n"
+reply: retcode (250); Msg: b"2.0.0 I'll make sure <alice@example.com> gets this"
+send: 'data\r\n'
+reply: b'354 2.0.0 Go ahead. End your data with <CR><LF>.<CR><LF>\r\n'
+reply: retcode (354); Msg: b'2.0.0 Go ahead. End your data with <CR><LF>.<CR><LF>'
+data: (354, b'2.0.0 Go ahead. End your data with <CR><LF>.<CR><LF>')
+send: b'From: bob@example.com\r\nTo: alice@example.com\r\nSubject: Test Message\r\nDate: Thu, 23 Jan 2026 12:00:00 +0000\r\nMessage-ID: <test-bob-at-example.com@test>\r\n\r\nThis is a test message.\r\n.\r\n'
+reply: b'250 2.0.0 OK: queued\r\n'
+reply: retcode (250); Msg: b'2.0.0 OK: queued'
+data: (250, b'2.0.0 OK: queued')
+RESULT: Message accepted
+send: 'quit\r\n'
+reply: b'221 2.0.0 Goodnight and good luck\r\n'
+reply: retcode (221); Msg: b'2.0.0 Goodnight and good luck'
+
+============================================================
+Test: AUTH as alice@example.com, MAIL FROM: alice@otherdomain.com
+============================================================
+send: 'ehlo [127.0.0.1]\r\n'
+reply: b'250-Hello [127.0.0.1]\r\n'
+reply: b'250-PIPELINING\r\n'
+reply: b'250-8BITMIME\r\n'
+reply: b'250-ENHANCEDSTATUSCODES\r\n'
+reply: b'250-AUTH PLAIN\r\n'
+reply: b'250-SMTPUTF8\r\n'
+reply: b'250 SIZE 33554432\r\n'
+reply: retcode (250); Msg: b'Hello [127.0.0.1]\nPIPELINING\n8BITMIME\nENHANCEDSTATUSCODES\nAUTH PLAIN\nSMTPUTF8\nSIZE 33554432'
+send: 'AUTH PLAIN AGFsaWNlQGV4YW1wbGUuY29tAHRlc3RwYXNzMTIz\r\n'
+reply: b'235 2.0.0 Authentication succeeded\r\n'
+reply: retcode (235); Msg: b'2.0.0 Authentication succeeded'
+send: 'mail FROM:<alice@otherdomain.com> size=189\r\n'
+reply: b'250 2.0.0 Roger, accepting mail from <alice@otherdomain.com>\r\n'
+reply: retcode (250); Msg: b'2.0.0 Roger, accepting mail from <alice@otherdomain.com>'
+send: 'rcpt TO:<bob@example.com>\r\n'
+reply: b'501 5.1.8 Sender domain not allowed (msg ID = 1d1c51ef)\r\n'
+reply: retcode (501); Msg: b'5.1.8 Sender domain not allowed (msg ID = 1d1c51ef)'
+send: 'rset\r\n'
+reply: b'250 2.0.0 Session reset\r\n'
+reply: retcode (250); Msg: b'2.0.0 Session reset'
+RESULT: SMTP Error - {'bob@example.com': (501, b'5.1.8 Sender domain not allowed (msg ID = 1d1c51ef)')}
+
+============================================================
+Test: AUTH as alice@example.com, MAIL FROM: alice@example.com
+============================================================
+send: 'ehlo [127.0.0.1]\r\n'
+reply: b'250-Hello [127.0.0.1]\r\n'
+reply: b'250-PIPELINING\r\n'
+reply: b'250-8BITMIME\r\n'
+reply: b'250-ENHANCEDSTATUSCODES\r\n'
+reply: b'250-AUTH PLAIN\r\n'
+reply: b'250-SMTPUTF8\r\n'
+reply: b'250 SIZE 33554432\r\n'
+reply: retcode (250); Msg: b'Hello [127.0.0.1]\nPIPELINING\n8BITMIME\nENHANCEDSTATUSCODES\nAUTH PLAIN\nSMTPUTF8\nSIZE 33554432'
+send: 'AUTH PLAIN AGFsaWNlQGV4YW1wbGUuY29tAHRlc3RwYXNzMTIz\r\n'
+reply: b'235 2.0.0 Authentication succeeded\r\n'
+reply: retcode (235); Msg: b'2.0.0 Authentication succeeded'
+send: 'mail FROM:<alice@example.com> size=179\r\n'
+reply: b'250 2.0.0 Roger, accepting mail from <alice@example.com>\r\n'
+reply: retcode (250); Msg: b'2.0.0 Roger, accepting mail from <alice@example.com>'
+send: 'rcpt TO:<bob@example.com>\r\n'
+reply: b"250 2.0.0 I'll make sure <bob@example.com> gets this\r\n"
+reply: retcode (250); Msg: b"2.0.0 I'll make sure <bob@example.com> gets this"
+send: 'data\r\n'
+reply: b'354 2.0.0 Go ahead. End your data with <CR><LF>.<CR><LF>\r\n'
+reply: retcode (354); Msg: b'2.0.0 Go ahead. End your data with <CR><LF>.<CR><LF>'
+data: (354, b'2.0.0 Go ahead. End your data with <CR><LF>.<CR><LF>')
+send: b'From: bob@example.com\r\nTo: bob@example.com\r\nSubject: Test Message\r\nDate: Thu, 23 Jan 2026 12:00:00 +0000\r\nMessage-ID: <test-alice-at-example.com@test>\r\n\r\nThis is a test message.\r\n.\r\n'
+reply: b'250 2.0.0 OK: queued\r\n'
+reply: retcode (250); Msg: b'2.0.0 OK: queued'
+data: (250, b'2.0.0 OK: queued')
+RESULT: Message accepted
+send: 'quit\r\n'
+reply: b'221 2.0.0 Goodnight and good luck\r\n'
+reply: retcode (221); Msg: b'2.0.0 Goodnight and good luck'
+
+This was a critical finding. Maddy enforces the sender domain via source blocks, but it does not enforce that the authenticated user matches the MAIL FROM address within the same domain. Test 2 showed that alice@example.com could successfully send as bob@example.com because both are in the example.com domain. Test 3 confirmed that sending from a different domain (otherdomain.com) is rejected with code 501 and enhanced status code 5.1.8, "Sender domain not allowed". Note where the rejection happens: MAIL FROM:<alice@otherdomain.com> still got "250 2.0.0 Roger, accepting mail from <alice@otherdomain.com>", and the 501 came back on the RCPT TO command. The submission endpoint defers sender rejections to the RCPT stage by default (`defer_sender_reject`), so the default_source reject is reported per recipient, with Maddy's message ID appended (msg ID = 1d1c51ef). Test 4 showed that the From header in the message body is not validated at all.
+
+To examine the delivered messages and verify DKIM signing, I looked at how they are stored. The `msgs` table in all.db has no raw header column, only a JSON `cachedHeader` and an `extBodyKey`:
+
+python3 -c "import sqlite3; print([r[1] for r in sqlite3.connect('/tmp/maddy-test/all.db').execute('PRAGMA table_info(msgs)')])"
+
+Output:
+['mboxId', 'msgId', 'date', 'bodyLen', 'mark', 'bodyStructure', 'cachedHeader', 'extBodyKey', 'seen', 'compressAlgo']
+
+The full message (header and body) is stored as a file named by that key under the state directory, /tmp/maddy-test/state/messages/. I extracted the header block of each stored file, in delivery order:
+
+cat > /tmp/maddy-test/extract_headers.py << 'EOF'
+import os
+
+store = '/tmp/maddy-test/state/messages'
+files = sorted((os.path.join(store, name) for name in os.listdir(store)), key=os.path.getmtime)
+for idx, path in enumerate(files, 1):
+    with open(path, 'rb') as f:
+        header = f.read().split(b'\r\n\r\n', 1)[0].decode()
+    print(f"=== Stored Message Headers (Message {idx}: {os.path.basename(path)}) ===")
+    print(header.replace('\r\n', '\n'))
+    print()
+EOF
+
+python3 /tmp/maddy-test/extract_headers.py
+
+Output showing the actual stored headers for each accepted message (Message 1 is Test 1, Message 2 is Test 2, Message 3 is Test 4):
+
+=== Stored Message Headers (Message 1: dd7dce138f36d4a8f70d952acc70955c) ===
+Delivered-To: bob@example.com
+Return-Path: <alice@example.com>
+Dkim-Signature: a=rsa-sha256;
+ bh=wE7NXSkgnx9PGiavN4OZhJztvkqPDlemV3OGuEnLwNo=; c=relaxed/relaxed;
+ d=example.com;
+ h=Subject:Subject:Sender:To:To:Cc:From:From:Date:Date:MIME-Version:Content-Type:Content-Transfer-Encoding:Reply-To:In-Reply-To:Message-Id:Message-Id:References:Autocrypt:Openpgp; i=@example.com; s=default; t=1793379721; v=1; x=1793811721; b=aOMXPBDM00npToyHhQxql41os8w5ySRoK3NU9lmZcT6AYlrg8BzE/KL2e6OezDDKqC0RZMxMKAfGVDE9MncsNTT6DB300nrgdUdD0NNfvusMXkoW9dUcAy9nUzrlg7rhlR00x0PvtSbtQI3Be1czUSsTweqR5mN7KNPojsOw6+ihc9QGzCmEJu3zIKX1val80QdGnydjtGKdP8uZC3rG/nlwB5RlMWl/r37so/U+8hEOhOdcou/Qnv2z0HCOwzh8Ja48DMeBeixhpZkiu9wsidmujABlULlLsx0x1kOMuaTjL2yPBXEf5jES1yLKqN9vKIoNF4guMJeX+E19dJr3NA==;
+Received:  by test.example.com (envelope-sender <alice@example.com>) with
+ ESMTP id d4e3c18e; Fri, 30 Oct 2026 17:02:01 +0000
+From: alice@example.com
+To: bob@example.com
+Subject: Test Message
+Date: Thu, 23 Jan 2026 12:00:00 +0000
+Message-ID: <test-alice-at-example.com@test>
+
+=== Stored Message Headers (Message 2: 4962e344f401a899edda16ba11c98bb9) ===
+Delivered-To: alice@example.com
+Return-Path: <bob@example.com>
+Dkim-Signature: a=rsa-sha256;
+ bh=wE7NXSkgnx9PGiavN4OZhJztvkqPDlemV3OGuEnLwNo=; c=relaxed/relaxed;
+ d=example.com;
+ h=Subject:Subject:Sender:To:To:Cc:From:From:Date:Date:MIME-Version:Content-Type:Content-Transfer-Encoding:Reply-To:In-Reply-To:Message-Id:Message-Id:References:Autocrypt:Openpgp; i=@example.com; s=default; t=1793379721; v=1; x=1793811721; b=1zzzYKpVV8fTpGQ76JFJwcPemO6nsxRLlJXrMf3D1VteK1k2E3Krxe9PmbuKkFckzD3KNoHDZN2h3YT+a7y/ytF5Kezksj9ghbQlAr7UlEjiUeEtca4FsfQ021WizYo5DHPretzKqWG82wf5f+UwKFKlYIMAq4ddXpLK1QiZV2+PAsvkn6NgGMG+e21IWVWNoRgdsPZUIzYjMAIp+mURM11PbQaVISvQwb1sFMLym55jrc6KomrVC7f/YpJNX8VMpOyOIxsFGCqrZanrm02lfKoePjEw9b7vxAKSle2o9V3XfsdLddeqNR9OI4xVfYv8XSi0Gg4rYgtDoElD4i5piQ==;
+Received:  by test.example.com (envelope-sender <bob@example.com>) with
+ ESMTP id a86096bf; Fri, 30 Oct 2026 17:02:01 +0000
+From: bob@example.com
+To: alice@example.com
+Subject: Test Message
+Date: Thu, 23 Jan 2026 12:00:00 +0000
+Message-ID: <test-bob-at-example.com@test>
+
+=== Stored Message Headers (Message 3: 6fa1016491696d99d86bbb0221c8171b) ===
+Delivered-To: bob@example.com
+Return-Path: <alice@example.com>
+Dkim-Signature: a=rsa-sha256;
+ bh=wE7NXSkgnx9PGiavN4OZhJztvkqPDlemV3OGuEnLwNo=; c=relaxed/relaxed;
+ d=example.com;
+ h=Subject:Subject:Sender:To:To:Cc:From:From:Date:Date:MIME-Version:Content-Type:Content-Transfer-Encoding:Reply-To:In-Reply-To:Message-Id:Message-Id:References:Autocrypt:Openpgp; i=@example.com; s=default; t=1793379721; v=1; x=1793811721; b=hCE2cAT29uQf4WkdyXqmxtPV0VYBxWMSqyRyPUv0OOdSwylD9ET4IfU3m2YkeUKU6TODUtqWI2VoVS/QIFOguEB1l2X5SxmbgVuQHzNNeN3PBiMT2OM0zwEIL804b/89iGKA6dMhMSqS9eDk1Hvo/DGAF3NpyRx2YLCY2cff/8xDMQJrl8wJ72nhkFyZADxRvjXAIQi4pG/E1nR/dF4TFFe19WRugdfrVvJo2VXY3My7ZGoRF6foYW5OuzwTW/+nNTJe+cX8+MOLL2NmpGkyssNB4W087+pDKzB7hDrHPhZVtsBJudOhrJVTo3C3yvfNlbfadui8kD48baUTNyzU+g==;
+Received:  by test.example.com (envelope-sender <alice@example.com>) with
+ ESMTP id 7a24b194; Fri, 30 Oct 2026 17:02:01 +0000
+From: bob@example.com
+To: bob@example.com
+Subject: Test Message
+Date: Thu, 23 Jan 2026 12:00:00 +0000
+Message-ID: <test-alice-at-example.com@test>
+
+Several important observations from these headers. The DKIM-Signature header is present with d=example.com and i=@example.com, confirming that signing was applied to every accepted message, including Test 2 (alice sending as bob) and Test 4. The h= tag lists From twice ("From:From"), along with To, Subject, Date and Message-Id: Maddy oversigns these headers, so the From header is covered by the signature and an extra From header added later would also break it. This signature was applied even though the From header (bob@example.com) doesn't match the authenticated user (alice@example.com). The body hash bh=wE7NXSkgnx9PGiavN4OZhJztvkqPDlemV3OGuEnLwNo= is the same in all three messages because the bodies are identical.
+
+The Received header Maddy added contains only the receiving side: "by test.example.com (envelope-sender <...>) with ESMTP id <msg id>; <timestamp>". There is no "from" clause with the client's host name or IP for these submissions. The ESMTP id is Maddy's message ID and matches the msg_id in the debug log below (d4e3c18e, a86096bf, 7a24b194). Maddy also added Delivered-To and Return-Path at local delivery.
+
+There is no Authentication-Results header present in the stored messages:
+
+grep -c -i authentication-results /tmp/maddy-test/state/messages/*
+
+Output:
+/tmp/maddy-test/state/messages/4962e344f401a899edda16ba11c98bb9:0
+/tmp/maddy-test/state/messages/6fa1016491696d99d86bbb0221c8171b:0
+/tmp/maddy-test/state/messages/dd7dce138f36d4a8f70d952acc70955c:0
+
+This is because Authentication-Results is added by inbound security checks (verify_dkim, apply_spf) when receiving mail from external sources. For mail submitted through the authenticated submission endpoint, these checks don't run because the sender is already authenticated.
+
+I also captured Maddy's debug logs to see the full transaction flow:
+
+grep -E "(MAIL FROM|sender|reject|accept|RCPT|sign_dkim)" /tmp/maddy-test/maddy.log
+
+Output:
+
+[debug] /tmp/maddy-test/maddy.conf:17: new module sign_dkim [example.com default]
+submission: incoming message	{"msg_id":"d4e3c18e","sender":"alice@example.com","src_host":"[127.0.0.1]","src_ip":"127.0.0.1:44227","username":"alice@example.com"}
+[debug] smtp/pipeline: sender alice@example.com matched by domain rule 'example.com'	{"msg_id":"d4e3c18e"}
+submission: RCPT ok	{"msg_id":"d4e3c18e","rcpt":"bob@example.com"}
+[debug] sign_dkim: signed	{"identifier":"@example.com"}
+submission: accepted	{"msg_id":"d4e3c18e"}
+submission: incoming message	{"msg_id":"a86096bf","sender":"bob@example.com","src_host":"[127.0.0.1]","src_ip":"127.0.0.1:29927","username":"alice@example.com"}
+[debug] smtp/pipeline: sender bob@example.com matched by domain rule 'example.com'	{"msg_id":"a86096bf"}
+submission: RCPT ok	{"msg_id":"a86096bf","rcpt":"alice@example.com"}
+[debug] sign_dkim: signed	{"identifier":"@example.com"}
+submission: accepted	{"msg_id":"a86096bf"}
+submission: incoming message	{"msg_id":"1d1c51ef","sender":"alice@otherdomain.com","src_host":"[127.0.0.1]","src_ip":"127.0.0.1:19518","username":"alice@example.com"}
+[debug] smtp/pipeline: sender alice@otherdomain.com matched by default rule	{"msg_id":"1d1c51ef"}
+submission: RCPT error	{"effective_rcpt":"bob@example.com","rcpt":"bob@example.com","reason":"reject directive used","smtp_code":501,"smtp_enchcode":"5.1.8","smtp_msg":"Sender domain not allowed"}
+submission: incoming message	{"msg_id":"7a24b194","sender":"alice@example.com","src_host":"[127.0.0.1]","src_ip":"127.0.0.1:48168","username":"alice@example.com"}
+[debug] smtp/pipeline: sender alice@example.com matched by domain rule 'example.com'	{"msg_id":"7a24b194"}
+submission: RCPT ok	{"msg_id":"7a24b194","rcpt":"bob@example.com"}
+[debug] sign_dkim: signed	{"identifier":"@example.com"}
+submission: accepted	{"msg_id":"7a24b194"}
+
+The logs confirm the routing logic. Every "incoming message" line records both the envelope sender and the authenticated username, and for Test 2 they differ (sender bob@example.com, username alice@example.com) while the message is still accepted and signed. The source block matching happens at the domain level. When alice@otherdomain.com was used, it matched the "default rule" (the default_source block), and the recipient was then refused with "RCPT error ... reason: reject directive used, smtp_code 501, smtp_enchcode 5.1.8". When alice@example.com or bob@example.com was used, it matched the "domain rule 'example.com'", sign_dkim logged "signed", and the message was accepted.
+
+Based on this runtime evidence, I can now definitively answer the security questions.
+
+Maddy's sender enforcement works at the domain level through source blocks, not at the individual user level. When an authenticated user sends mail, Maddy extracts the domain portion of the MAIL FROM address and matches it against configured source blocks. If the domain matches a source block (example.com in my configuration), the message is accepted regardless of which specific user at that domain is specified in MAIL FROM. The authenticated identity is logged (username in the "incoming message" line), but it is not compared against the MAIL FROM address.
+
+A plausible but incorrect interpretation would be that authentication implies sender identity verification. Someone reading the configuration might assume that since authentication is required for the submission endpoint, Maddy would only allow users to send as themselves. The evidence directly disproves this: alice@example.com successfully authenticated and then sent mail with MAIL FROM:<bob@example.com>, and the message was accepted, signed with DKIM, and delivered. A second incorrect reading would be that the foreign domain is refused at MAIL FROM; the transcript shows MAIL FROM was accepted with 250 and the 501 only came at RCPT TO. Maddy authenticated who the user claims to be but then relies solely on source block configuration for sender policy, not on matching the authenticated identity to the envelope sender.
+
+One case where the security behavior differs from what the configuration might suggest: the source block `source example.com { modify { sign_dkim ... } }` appears to authorize mail from the example.com domain to be signed and delivered. A reasonable reading might assume that since authentication is mandatory for submission and the source block specifies a domain, Maddy would verify that the authenticated user belongs to that domain and is sending as themselves. The runtime test proves this assumption wrong. The source block only checks the MAIL FROM domain, not the relationship between authenticated identity and sender address. Alice could send as bob@example.com, and the DKIM signature was still applied with d=example.com, which represents a potential internal spoofing vector.
+
+To check what a recipient verifying the DKIM signature would actually see, I verified the stored messages with dkimpy, serving the TXT record for default._domainkey.example.com from the public key I generated. dkimpy is not installed in the image, so I downloaded the dkimpy 1.1.5 source release from PyPI and put its `dkim` package in /tmp/maddy-test/pylib:
+
+cat > /tmp/maddy-test/verify_dkim.py << 'EOF'
+import os
+import dkim
+
+pub = open('/tmp/maddy-test/dkim/example.com.default.pub').read()
+key_b64 = ''.join(l for l in pub.splitlines() if not l.startswith('-----'))
+record = f"v=DKIM1; k=rsa; p={key_b64}".encode()
+
+def dnsfunc(name, timeout=5):
+    print(f"  DNS TXT lookup: {name.decode() if isinstance(name, bytes) else name}")
+    return record
+
+store = '/tmp/maddy-test/state/messages'
+files = sorted((os.path.join(store, name) for name in os.listdir(store)), key=os.path.getmtime)
+for idx, path in enumerate(files, 1):
+    raw = open(path, 'rb').read()
+    print(f"Message {idx} ({os.path.basename(path)}):")
+    d = dkim.DKIM(raw)
+    ok = d.verify(dnsfunc=dnsfunc)
+    print(f"  dkim.verify -> {ok}")
+EOF
+
+PYTHONPATH=/tmp/maddy-test/pylib python3 -c "import logging,sys; logging.basicConfig(level=logging.DEBUG, stream=sys.stdout); exec(open('/tmp/maddy-test/verify_dkim.py').read())"
+
+Output:
+Message 1 (dd7dce138f36d4a8f70d952acc70955c):
+DEBUG:dkimpy:sig: {b'a': b'rsa-sha256', b'bh': b'wE7NXSkgnx9PGiavN4OZhJztvkqPDlemV3OGuEnLwNo=', b'c': b'relaxed/relaxed', b'd': b'example.com', b'h': b'Subject:Subject:Sender:To:To:Cc:From:From:Date:Date:MIME-Version:Content-Type:Content-Transfer-Encoding:Reply-To:In-Reply-To:Message-Id:Message-Id:References:Autocrypt:Openpgp', b'i': b'@example.com', b's': b'default', b't': b'1793379721', b'v': b'1', b'x': b'1793811721', b'b': b'aOMXPBDM00npToyHhQxql41os8w5ySRoK3NU9lmZcT6AYlrg8BzE/KL2e6OezDDKqC0RZMxMKAfGVDE9MncsNTT6DB300nrgdUdD0NNfvusMXkoW9dUcAy9nUzrlg7rhlR00x0PvtSbtQI3Be1czUSsTweqR5mN7KNPojsOw6+ihc9QGzCmEJu3zIKX1val80QdGnydjtGKdP8uZC3rG/nlwB5RlMWl/r37so/U+8hEOhOdcou/Qnv2z0HCOwzh8Ja48DMeBeixhpZkiu9wsidmujABlULlLsx0x1kOMuaTjL2yPBXEf5jES1yLKqN9vKIoNF4guMJeX+E19dJr3NA=='}
+  DNS TXT lookup: default._domainkey.example.com.
+DEBUG:dkimpy:bh: b'wE7NXSkgnx9PGiavN4OZhJztvkqPDlemV3OGuEnLwNo='
+DEBUG:dkimpy:b'Dkim-Signature' valid: False
+  dkim.verify -> False
+Message 2 (4962e344f401a899edda16ba11c98bb9):
+DEBUG:dkimpy:sig: {b'a': b'rsa-sha256', b'bh': b'wE7NXSkgnx9PGiavN4OZhJztvkqPDlemV3OGuEnLwNo=', b'c': b'relaxed/relaxed', b'd': b'example.com', b'h': b'Subject:Subject:Sender:To:To:Cc:From:From:Date:Date:MIME-Version:Content-Type:Content-Transfer-Encoding:Reply-To:In-Reply-To:Message-Id:Message-Id:References:Autocrypt:Openpgp', b'i': b'@example.com', b's': b'default', b't': b'1793379721', b'v': b'1', b'x': b'1793811721', b'b': b'1zzzYKpVV8fTpGQ76JFJwcPemO6nsxRLlJXrMf3D1VteK1k2E3Krxe9PmbuKkFckzD3KNoHDZN2h3YT+a7y/ytF5Kezksj9ghbQlAr7UlEjiUeEtca4FsfQ021WizYo5DHPretzKqWG82wf5f+UwKFKlYIMAq4ddXpLK1QiZV2+PAsvkn6NgGMG+e21IWVWNoRgdsPZUIzYjMAIp+mURM11PbQaVISvQwb1sFMLym55jrc6KomrVC7f/YpJNX8VMpOyOIxsFGCqrZanrm02lfKoePjEw9b7vxAKSle2o9V3XfsdLddeqNR9OI4xVfYv8XSi0Gg4rYgtDoElD4i5piQ=='}
+  DNS TXT lookup: default._domainkey.example.com.
+DEBUG:dkimpy:bh: b'wE7NXSkgnx9PGiavN4OZhJztvkqPDlemV3OGuEnLwNo='
+DEBUG:dkimpy:b'Dkim-Signature' valid: False
+  dkim.verify -> False
+Message 3 (6fa1016491696d99d86bbb0221c8171b):
+DEBUG:dkimpy:sig: {b'a': b'rsa-sha256', b'bh': b'wE7NXSkgnx9PGiavN4OZhJztvkqPDlemV3OGuEnLwNo=', b'c': b'relaxed/relaxed', b'd': b'example.com', b'h': b'Subject:Subject:Sender:To:To:Cc:From:From:Date:Date:MIME-Version:Content-Type:Content-Transfer-Encoding:Reply-To:In-Reply-To:Message-Id:Message-Id:References:Autocrypt:Openpgp', b'i': b'@example.com', b's': b'default', b't': b'1793379721', b'v': b'1', b'x': b'1793811721', b'b': b'hCE2cAT29uQf4WkdyXqmxtPV0VYBxWMSqyRyPUv0OOdSwylD9ET4IfU3m2YkeUKU6TODUtqWI2VoVS/QIFOguEB1l2X5SxmbgVuQHzNNeN3PBiMT2OM0zwEIL804b/89iGKA6dMhMSqS9eDk1Hvo/DGAF3NpyRx2YLCY2cff/8xDMQJrl8wJ72nhkFyZADxRvjXAIQi4pG/E1nR/dF4TFFe19WRugdfrVvJo2VXY3My7ZGoRF6foYW5OuzwTW/+nNTJe+cX8+MOLL2NmpGkyssNB4W087+pDKzB7hDrHPhZVtsBJudOhrJVTo3C3yvfNlbfadui8kD48baUTNyzU+g=='}
+  DNS TXT lookup: default._domainkey.example.com.
+DEBUG:dkimpy:bh: b'wE7NXSkgnx9PGiavN4OZhJztvkqPDlemV3OGuEnLwNo='
+DEBUG:dkimpy:b'Dkim-Signature' valid: False
+  dkim.verify -> False
+
+The DKIM-Signature header shows:
+- v=1 (DKIM version 1)
+- a=rsa-sha256 (signing algorithm)
+- c=relaxed/relaxed (canonicalization for header and body)
+- d=example.com (signing domain)
+- i=@example.com (agent identifier: the domain only, no user part)
+- s=default (selector)
+- t=1793379721 and x=1793811721 (signing time and expiry, five days later)
+- h=Subject:Subject:Sender:To:To:Cc:From:From:Date:Date:... (signed and oversigned headers)
+- bh=wE7NXSkgnx9P... (body hash)
+- b=hCE2cAT29uQf... (signature)
+
+A verifier looks up default._domainkey.example.com to get the public key, and that is the lookup dkimpy made. The body hash it computed matches bh= in all three messages, but the header signature did not verify (valid: False), so a recipient checking these stored copies would see a DKIM failure for example.com, not a pass. The failure is the same for the legitimate message (Test 1) and for the spoofed ones, so it does not depend on the sender mismatch. Even where verification does succeed, a passing signature for d=example.com only proves that the example.com signing domain authorized the message, not that any specific user sent it: i= carries only "@example.com", and Maddy signed alice's message claiming to be from bob with exactly the same domain identity. So DKIM alone cannot detect that alice sent a message appearing to be from bob.
+
+For cleanup, I stopped Maddy and removed the test artifacts:
+
+kill $MADDY_PID
+rm -rf /tmp/maddy-test
+git status --short
+
+`git status --short` afterwards showed only `?? maddy`, the untracked prebuilt binary that was already there, so the repository is unchanged.
+
+The test files I created were:
+- /tmp/maddy-test/maddy.conf (configuration)
+- /tmp/maddy-test/dkim/example.com.default.key (private key)
+- /tmp/maddy-test/dkim/example.com.default.pub (public key)
+- /tmp/maddy-test/maddyctl (maddyctl built from cmd/maddyctl)
+- /tmp/maddy-test/maddy.log (debug log)
+- /tmp/maddy-test/test_sender.py (SMTP test script)
+- /tmp/maddy-test/extract_headers.py (header extraction script)
+- /tmp/maddy-test/verify_dkim.py and /tmp/maddy-test/pylib (DKIM verification)
+- /tmp/maddy-test/all.db (user and mailbox database) and /tmp/maddy-test/state/messages/ (stored messages)
+
+To summarize the findings from runtime observation:
+
+DKIM signing is applied when the source block includes sign_dkim, with the signature domain (d= tag) set to example.com as configured. The signature covers standard headers including From (oversigned), regardless of whether the From header matches the authenticated identity.
+
+The Received header added by Maddy follows the format: "by [server hostname] (envelope-sender <[MAIL FROM]>) with ESMTP id [message-id]; [timestamp]", with no "from" clause for these submissions.
+
+Sender domain enforcement happens via source blocks. Messages with MAIL FROM domains not matching any source block are rejected with SMTP code 501 and enhanced status code 5.1.8, returned on RCPT TO after MAIL FROM was accepted. The exact error message is "Sender domain not allowed". Within an allowed domain, any authenticated user can successfully send as any address in that domain.
+
+No Authentication-Results header is added to messages submitted through the authenticated submission endpoint. This header is only added by inbound security checks for external mail.
+
+The DKIM signature is applied based on the source block's domain configuration, independent of any mismatch between the From header, MAIL FROM, or authenticated identity, as long as all are within the signing domain.

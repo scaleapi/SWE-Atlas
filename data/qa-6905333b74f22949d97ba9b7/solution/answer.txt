@@ -1,0 +1,251 @@
+I started by checking if Grafana was already running on the system. I ran:
+
+```bash
+ps -ef | grep grafana | grep -v grep
+```
+
+It returned nothing (exit code 1), so no Grafana instance was running yet. The repository ships a prebuilt server binary at /app/bin/grafana, so I started it myself, pointing homepath at the repo root so it picks up conf/defaults.ini:
+
+```bash
+cd /app && nohup /app/bin/grafana server --homepath /app > /tmp/server.log 2>&1 &
+```
+
+After giving it a moment to boot, I confirmed the process was up:
+
+```bash
+ps -ef | grep grafana | grep -v grep
+```
+
+```text
+root        31     1 99 20:14 ?        00:00:04 /app/bin/grafana server --homepath /app
+```
+
+Then I checked the logs to find out what port it was listening on:
+
+```bash
+grep -i "http server" /app/data/log/grafana.log | tail -1
+```
+
+And got:
+
+```text
+logger=http.server t=2026-08-25T20:14:13.426903996Z level=info msg="HTTP Server Listen" address=[::]:3000 protocol=http subUrl= socket=
+```
+
+The log entry confirms the HTTP server is listening on port 3000 (the default Grafana port) using the HTTP protocol. The `address=[::]:3000` notation means it's bound to all IPv6 addresses on that port.
+
+I confirmed it was actually responding by hitting the health endpoint:
+
+```bash
+curl -I -s http://127.0.0.1:3000/api/health
+```
+
+```http
+HTTP/1.1 200 OK
+Cache-Control: no-store
+Content-Type: application/json; charset=UTF-8
+X-Content-Type-Options: nosniff
+X-Frame-Options: deny
+X-Xss-Protection: 1; mode=block
+Date: Tue, 25 Aug 2026 20:14:17 GMT
+```
+
+The 200 OK confirmed everything was good. I noticed several important security headers that Grafana adds by default. The `X-Frame-Options: deny` header prevents clickjacking attacks by disallowing the page to be embedded in iframes. The `X-Xss-Protection: 1; mode=block` header enables the browser's XSS filter. The `X-Content-Type-Options: nosniff` header prevents MIME-type sniffing. The `Cache-Control: no-store` header is particularly interesting because it tells browsers and proxies not to cache the response at all.
+
+On a fresh instance the default credentials are admin/admin, so I verified this worked:
+
+```bash
+curl -s -u admin:admin http://127.0.0.1:3000/api/user | head -c 100
+```
+
+```text
+{"id":1,"uid":"bfwa2c2ub5fcwb","email":"admin@localhost","name":"","login":"admin","theme":"","orgId
+```
+
+The response shows the admin user details, confirming authentication works. The user has `id:1` which is the first user created, and belongs to `orgId:1` which is the default organization (the `uid` is a randomly generated identifier, so it differs per instance).
+
+Now I could access the API without any issues. Next I needed a panel that uses a built-in data source. First I checked what datasources were available:
+
+```bash
+curl -s -u admin:admin http://127.0.0.1:3000/api/datasources
+```
+
+```json
+[]
+```
+
+A fresh instance has no datasources configured, so I created one using Grafana's built-in TestData datasource type, which can generate various types of fake data for testing and demonstration purposes:
+
+```bash
+curl -s -u admin:admin -H 'Content-Type: application/json' -X POST http://127.0.0.1:3000/api/datasources -d '{"name":"RefTestData","type":"grafana-testdata-datasource","access":"proxy","isDefault":true}'
+```
+
+```json
+{"datasource":{"id":1,"uid":"efwa2chr9tn9ce","orgId":1,"name":"RefTestData","type":"grafana-testdata-datasource","typeLogoUrl":"public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg","access":"proxy","url":"","user":"","database":"","basicAuth":false,"basicAuthUser":"","withCredentials":false,"isDefault":true,"jsonData":{},"secureJsonFields":{},"version":1,"readOnly":false,"apiVersion":""},"id":1,"message":"Datasource added","name":"RefTestData"}
+```
+
+Listing datasources again confirmed it:
+
+```bash
+curl -s -u admin:admin http://127.0.0.1:3000/api/datasources
+```
+
+```json
+[{"id":1,"uid":"efwa2chr9tn9ce","orgId":1,"name":"RefTestData","type":"grafana-testdata-datasource","typeName":"TestData","typeLogoUrl":"public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg","access":"proxy","url":"","user":"","database":"","basicAuth":false,"isDefault":true,"jsonData":{},"readOnly":false}]
+```
+
+The TestData datasource got UID `efwa2chr9tn9ce` (again a random per-instance identifier). The `access: proxy` setting means queries go through the Grafana backend rather than directly from the browser. I used this to create a dashboard:
+
+```bash
+cat <<'PAYLOAD' > /tmp/temp_dashboard.json
+{
+  "dashboard": {
+    "title": "Temp TestData Observation",
+    "panels": [
+      {
+        "id": 1,
+        "type": "timeseries",
+        "title": "TestData Random Walk",
+        "datasource": { "type": "grafana-testdata-datasource", "uid": "efwa2chr9tn9ce" },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": { "type": "grafana-testdata-datasource", "uid": "efwa2chr9tn9ce" },
+            "scenarioId": "random_walk"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 }
+      }
+    ],
+    "time": { "from": "now-1h", "to": "now" }
+  },
+  "folderId": 0,
+  "overwrite": true
+}
+PAYLOAD
+curl -s -u admin:admin -H 'Content-Type: application/json' -X POST http://127.0.0.1:3000/api/dashboards/db -d @/tmp/temp_dashboard.json
+```
+
+```json
+{"folderUid":"","id":1,"slug":"temp-testdata-observation","status":"success","uid":"dfwa2cnn97fnkf","url":"/d/dfwa2cnn97fnkf/temp-testdata-observation","version":1}
+```
+
+The dashboard got created successfully and I got back its UID (`dfwa2cnn97fnkf`) which I would need to access it. The response also includes the `slug` which is the URL-friendly name, `version:1` for optimistic locking on updates, and the full URL path. The `random_walk` scenario generates fake time series data that simulates a random walk pattern, which is perfect for testing panel queries.
+
+To understand what the browser does when loading this dashboard, I simulated the browser's behavior using curl. When a browser loads a dashboard at `http://127.0.0.1:3000/d/dfwa2cnn97fnkf/temp-testdata-observation`, it makes several API requests. First, I fetched the dashboard definition:
+
+```bash
+curl -s -u admin:admin "http://127.0.0.1:3000/api/dashboards/uid/dfwa2cnn97fnkf" | head -c 200
+```
+
+```text
+{"meta":{"type":"db","canSave":true,"canEdit":true,"canAdmin":true,"canStar":true,"canDelete":true,"slug":"temp-testdata-observation","url":"/d/dfwa2cnn97fnkf/temp-testdata-observation","expires":"000
+```
+
+This GET request to `/api/dashboards/uid/...` retrieves the dashboard JSON including all panel configurations. The browser also opens a WebSocket connection for live updates - we can verify the endpoint exists:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" -u admin:admin "http://127.0.0.1:3000/api/live/ws"
+```
+
+```text
+400
+```
+
+The 400 response is expected because curl doesn't send proper WebSocket upgrade headers. A real browser with proper WebSocket support would send the upgrade headers and establish a persistent WebSocket connection to `ws://127.0.0.1:3000/api/live/ws` for streaming live updates.
+
+Now for the actual panel query - this is the core of what we want to observe. The browser issues a POST to `/api/ds/query`:
+
+```bash
+cat <<'PAYLOAD' > /tmp/query_payload.json
+{
+  "queries": [
+    {
+      "refId": "A",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "efwa2chr9tn9ce" },
+      "scenarioId": "random_walk",
+      "intervalMs": 60000,
+      "maxDataPoints": 500
+    }
+  ],
+  "from": "now-1h",
+  "to": "now",
+  "requestId": "CLI"
+}
+PAYLOAD
+curl -i -s -u admin:admin -H 'Content-Type: application/json' -X POST "http://127.0.0.1:3000/api/ds/query?ds_type=grafana-testdata-datasource" -d @/tmp/query_payload.json | head -n 20
+```
+
+```http
+HTTP/1.1 200 OK
+Cache-Control: no-store
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-Frame-Options: deny
+X-Xss-Protection: 1; mode=block
+Date: Tue, 25 Aug 2026 20:14:27 GMT
+Transfer-Encoding: chunked
+
+{"results":{"A":{"status":200,"frames":[{"schema":{"refId":"A","meta":{"typeVersion":[0,0],"custom":{"customStat":10}},"fields":[{"name":"time","type":"time","typeInfo":{"frame":"time.Time","nullable":true},"config":{"interval":60000}},{"name":"A-series","type":"number","typeInfo":{"frame":"float64","nullable":true},"labels":{}}]},"data":{"values":[[1787685267560,1787685327560,1787685387560,1787685447560,1787685507560,1787685567560,1787685627560,1787685687560,1787685747560,1787685807560,1787685867560,1787685927560,1787685987560,1787686047560,1787686107560,1787686167560,1787686227560,1787686287560,1787686347560,1787686407560,1787686467560,1787686527560,1787686587560,1787686647560,1787686707560,1787686767560,1787686827560,1787686887560,1787686947560,1787687007560,1787687067560,1787687127560,1787687187560,1787687247560,1787687307560,1787687367560,1787687427560,1787687487560,1787687547560,1787687607560,1787687667560,1787687727560,1787687787560,1787687847560,1787687907560,1787687967560,1787688027560,1787688087560,1787688147560,1787688207560,1787688267560,1787688327560,1787688387560,1787688447560,1787688507560,1787688567560,1787688627560,1787688687560,1787688747560,1787688807560],[77.45521893644238,77.81929300128728,78.14362705147788,78.20437015336088,78.6391034072113,78.55920318225617,78.74553468795969,78.93475678596208,79.0850005338122,79.02407199594583,79.21987338014158,79.24957303139992,79.56388244222501,79.85872207751002,79.82236522366908,80.08755421544218,80.3681484700312,80.64822556760893,80.68632375901001,80.76557286504104,81.13856689915902,80.94634599442075,80.95729905183687,80.9479478679936,80.62970194364406,80.34307432963483,80.75637864541665,80.48708234040774,80.27755339607945,79.85811613407634,79.51663852335412,79.65125659849006,79.7548861984605,79.63834276490834,79.28671349336044,79.01152999344998,78.60152144817079,78.52652162800646,78.30033283206241,78.58732707428851,79.04514416224265,79.21372959043778,78.9349336148568,79.09632232752872,79.36439557746269,78.99319839197592,79.06591417308829,79.33288305011817,78.86279012090442,78.6191322683853,78.6816003713371,78.64100694462262,79.03988525686292,78.78081577906376,78.95784452808142,78.54073400662611,78.29146611477462,78.24244230117273,77.86760484343141,77.49366638411385]]}}]}}}
+```
+
+This gave me a lot of insight into how Grafana structures its query responses. Looking at the response headers, the `Cache-Control: no-store` header explicitly prevents any caching of query results, which is why every refresh hits the backend fresh. The `Transfer-Encoding: chunked` header indicates the response is streamed in chunks rather than sent with a fixed Content-Length.
+
+Looking at the response body structure, Grafana uses a data frames format. The results are keyed by the `refId` from the query, in this case "A" under `results.A`. There's a query-level `status: 200` code. The `frames` array contains the actual data frames which is Grafana's internal data model.
+
+Each frame contains a schema section and a data section. The schema has a `refId` that references back to the query, a `meta` section with metadata including `typeVersion` and custom properties like `customStat`, and a `fields` array with field definitions including name, type, and typeInfo. In this response there are two fields: the first is `time` with type `time.Time` containing timestamps in Unix milliseconds, and the second is `A-series` with type `float64` containing the actual values. The data section has a `values` array containing two sub-arrays: the timestamps and the corresponding values.
+
+The timestamps are spaced 60 seconds apart, matching the `intervalMs: 60000` parameter, and the values are float64 numbers from the random walk generator, fluctuating around 77-81 in this sample.
+
+Now to answer the key question from the prompt: what happens when the same query is executed twice in quick succession? I ran the exact same curl command again immediately:
+
+```bash
+curl -s -u admin:admin -H 'Content-Type: application/json' -X POST "http://127.0.0.1:3000/api/ds/query?ds_type=grafana-testdata-datasource" -d @/tmp/query_payload.json | python3 -c "import json,sys; d=json.load(sys.stdin); print('First value:', d['results']['A']['frames'][0]['data']['values'][1][0])"
+```
+
+```text
+First value: 95.9308300081967
+```
+
+Comparing this to the first query which had a first value around 77.46, the values are completely different. This confirms that there is no caching of query results. The `random_walk` scenario generates fresh data on each request, and since `Cache-Control: no-store` is set, the browser wouldn't cache it anyway. The second execution is treated identically to the first - there's no special handling, no cached results, just a fresh request to the backend that generates new data.
+
+I also checked the server logs to see if it logged anything about the query processing:
+
+```bash
+tail -n 10 /app/data/log/grafana.log
+```
+
+```text
+logger=grafana-apiserver t=2026-08-25T20:14:13.668718718Z level=info msg="Adding GroupVersion dashboard.grafana.app v1alpha1 to ResourceManager"
+logger=grafana-apiserver t=2026-08-25T20:14:13.669284928Z level=info msg="Adding GroupVersion dashboard.grafana.app v2alpha1 to ResourceManager"
+logger=grafana-apiserver t=2026-08-25T20:14:13.66978116Z level=info msg="Adding GroupVersion featuretoggle.grafana.app v0alpha1 to ResourceManager"
+logger=grafana-apiserver t=2026-08-25T20:14:13.671708627Z level=info msg="Adding GroupVersion iam.grafana.app v0alpha1 to ResourceManager"
+logger=app-registry t=2026-08-25T20:14:13.695038469Z level=info msg="app registry initialized"
+logger=plugin.installer t=2026-08-25T20:14:13.739049725Z level=info msg="Installing plugin" pluginId=grafana-lokiexplore-app version=
+logger=installer.fs t=2026-08-25T20:14:13.89198914Z level=info msg="Downloaded and extracted grafana-lokiexplore-app v1.0.10 zip successfully to /app/data/plugins/grafana-lokiexplore-app"
+logger=plugins.registration t=2026-08-25T20:14:13.936713548Z level=info msg="Plugin registered" pluginId=grafana-lokiexplore-app
+logger=plugin.backgroundinstaller t=2026-08-25T20:14:13.936901086Z level=info msg="Plugin successfully installed" pluginId=grafana-lokiexplore-app version= duration=512.425377ms
+logger=context userId=1 orgId=1 uname=admin t=2026-08-25T20:14:25.518957347Z level=info msg="Request Completed" method=GET path=/api/live/ws status=400 remote_addr=127.0.0.1 time_ms=5 duration=5.855649ms size=12 referer= handler=/api/live/ws status_source=server
+```
+
+The only request that shows up is the failed WebSocket probe: a "Request Completed" entry for `/api/live/ws` with `status=400`, carrying useful debugging metadata like `method`, `path`, `status`, `duration`, and `handler` (and `userId=1` / `uname=admin` since it was authenticated). The two successful `/api/ds/query` POSTs generated no log lines at all at the default log level - successful queries are not logged, and neither their payloads nor their response data appear anywhere in the log. The rest of the tail is startup noise from the apiserver GroupVersion registrations and a background plugin install.
+
+Finally I cleaned up everything by deleting the dashboard and removing the temp files:
+
+```bash
+curl -s -u admin:admin -X DELETE http://127.0.0.1:3000/api/dashboards/uid/dfwa2cnn97fnkf
+```
+
+```json
+{"message":"Dashboard Temp TestData Observation deleted","title":"Temp TestData Observation","uid":"dfwa2cnn97fnkf"}
+```
+
+The delete response confirms the dashboard was removed, returning the title and UID for confirmation.
+
+```bash
+rm -f /tmp/temp_dashboard.json /tmp/query_payload.json
+```
+
+This removes the temporary JSON files we created, leaving no artifacts behind as requested.
+
+To summarize what I observed: panel queries go to POST `/api/ds/query` with the datasource type in the URL parameter (`ds_type`) and query details in the JSON body. The request flow is browser to Grafana backend to datasource, meaning the browser never directly queries external datasources and everything is proxied through Grafana. The response uses a data frames format with schema sections containing field definitions and data sections containing value arrays, which is a columnar format optimized for time series data. There is no caching because the `Cache-Control: no-store` header ensures every query hits the backend fresh, and the second query execution is identical to the first with no special handling and no cached results. The WebSocket endpoint at `/api/live/ws` exists for streaming updates, but regular panel queries use HTTP POST. Server logs show request metadata like path, status, and duration only for failed requests (like the 400 from the WebSocket probe); successful panel queries are not logged at the default log level, and query payloads or results never appear in the logs.

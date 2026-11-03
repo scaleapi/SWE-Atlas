@@ -1,0 +1,1 @@
+FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_TW_trufflesecurity_trufflehog_6902ef3ab97fe23e2ad27264_1.1_v10198@sha256:0c74a8003d4d7c47004b32f66a9a41fb69dbbff8898faaa7d9620572c2efb18e

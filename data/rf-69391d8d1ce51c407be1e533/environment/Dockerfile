@@ -1,0 +1,1 @@
+FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_simple-login_app_69391d8d1ce51c407be1e533_1.1_bake@sha256:e692c6748787122a0dd64ed2c6c138ee5514fb68777891d9c654abdb631f69a2

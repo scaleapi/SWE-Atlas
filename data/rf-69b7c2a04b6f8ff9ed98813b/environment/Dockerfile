@@ -1,0 +1,1 @@
+FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_netdata_netdata_69b7c2a04b6f8ff9ed98813b_1.1_v10197_bake@sha256:811b45265ecdd23ca7ac6df85121320b0e1f58a5a8339131280eb504a6035c3f

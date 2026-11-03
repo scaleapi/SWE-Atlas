@@ -1,0 +1,1 @@
+FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_grafana_grafana_696719205599a51110d4b462_1.1_bake@sha256:b1f62e9c5987c31d030f5449563482c099a812fc03657cb7a56bca51e9801853

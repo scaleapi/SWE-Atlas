@@ -1,0 +1,1 @@
+FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_secdev_scapy_694b4b99829f00e24fd118a1_1.1_bake@sha256:0406be1e9e5f1a3f63314fa06e8f0783f5a2f175e83ad86eaba9707498f47bb3

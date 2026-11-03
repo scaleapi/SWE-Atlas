@@ -1,0 +1,1 @@
+FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_TW_grafana_k6_6902ef3ab97fe23e2ad2727c_1.1_cu@sha256:dfc746fca00c055a2e4596dad029877b12b50f4ce67eaab4cda9b363fd3bb37a

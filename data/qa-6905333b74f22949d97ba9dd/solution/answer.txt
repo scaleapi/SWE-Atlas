@@ -1,0 +1,195 @@
+I worked with the Paperless-NGX checkout in `/app` as it is (version 1.7.0 in `src/paperless/version.py`), without modifying any source files. At this commit Paperless-NGX does not use Celery: background work runs on django-q with Redis as the broker, the consumption directory is watched by the `document_consumer` management command, and the default database is SQLite at `/app/data/db.sqlite3`. I ran every service directly from `/app/src` with debug logging enabled (`PAPERLESS_DEBUG=true`).
+
+```bash
+cd /app/src
+mkdir -p ../consume ../media ../data
+redis-server --daemonize yes
+python3 manage.py migrate
+gunicorn -c ../gunicorn.conf.py paperless.asgi:application > /tmp/gunicorn.log 2>&1 &
+python3 manage.py document_consumer > /tmp/consumer.log 2>&1 &
+```
+
+`migrate` applied 92 migrations ("Apply all migrations: admin, auth, authtoken, contenttypes, django_q, documents, paperless_mail, sessions"), which creates the SQLite database. I deliberately started the django-q cluster (`qcluster`, which is both the worker pool and the scheduler) only after the first file had been queued, so that the queued task could still be inspected in the broker. Before dropping the file I confirmed that the broker, the webserver and the consumer were up:
+
+```bash
+ps -eo pid,args | grep -E "redis-server|gunicorn|document_consumer|qcluster" | grep -v grep
+redis-cli ping
+curl -s -o /dev/null -w "webserver HTTP %{http_code}\n" http://localhost:8000/
+```
+
+```text
+   34 redis-server *:6379
+   54 /usr/local/bin/python3.9 /usr/local/bin/gunicorn -c ../gunicorn.conf.py paperless.asgi:application
+   55 python3 manage.py document_consumer
+   58 /usr/local/bin/python3.9 /usr/local/bin/gunicorn -c ../gunicorn.conf.py paperless.asgi:application
+   59 /usr/local/bin/python3.9 /usr/local/bin/gunicorn -c ../gunicorn.conf.py paperless.asgi:application
+PONG
+webserver HTTP 302
+```
+
+The 302 is the webserver redirecting the anonymous request to the login page. The consumer had started watching the consumption directory:
+
+```text
+[2026-11-03 01:18:54,607] [INFO] [paperless.management.consumer] Using inotify to watch directory for changes: /app/src/../consume
+```
+
+I then placed a small text file into the consumption directory and confirmed it was on disk:
+
+```bash
+printf 'Test document for Paperless-NGX ingestion\n' > /app/consume/test_document.txt
+ls -l /app/consume
+```
+
+```text
+total 1
+-rw-r--r-- 1 root testuser 42 Nov  3 01:19 test_document.txt
+```
+
+The consumer log shows the moment the file was detected and handed to the task queue. At this commit the detection message is "Adding <path> to the task queue." (there is no separate "Found new file" message), and the django-q client confirms the enqueue in the same process:
+
+```text
+[2026-11-03 01:19:04,601] [INFO] [paperless.management.consumer] Adding /app/src/../consume/test_document.txt to the task queue.
+01:19:04 [Q] INFO Enqueued 1
+```
+
+The ingestion task that gets triggered is `documents.tasks.consume_file`. While it was queued (no worker running yet) I looked at what Redis was storing:
+
+```bash
+redis-cli KEYS '*'
+redis-cli LLEN django_q:paperless:q
+redis-cli LRANGE django_q:paperless:q 0 -1
+```
+
+```text
+django_q:paperless:q
+1
+gAWVHwEAAAAAAAB9lCiMAmlklIwgY2UyMmUyODcxZjUwNGE0NDkyOThkZDRiNGFkNjUwY2WUjARuYW1llIwRdGVzdF9kb2N1bWVudC50eHSUjARmdW5jlIwcZG9jdW1lbnRzLnRhc2tzLmNvbnN1bWVfZmlsZZSMBGFyZ3OUjCUvYXBwL3NyYy8uLi9jb25zdW1lL3Rlc3RfZG9jdW1lbnQudHh0lIWUjAZrd2FyZ3OUfZSMEG92ZXJyaWRlX3RhZ19pZHOUTnOMB3N0YXJ0ZWSUjAhkYXRldGltZZSMCGRhdGV0aW1llJOUQwoH6gsDARMECTP_lGgOjAh0aW1lem9uZZSTlGgOjAl0aW1lZGVsdGGUk5RLAEsASwCHlFKUhZRSlIaUUpR1Lg:1xO3B2:1goOOQ5ADIgHq0uZUdHYE705tuAUpV3J9KGmUn7JGAo
+```
+
+The broker holds a single Redis list, `django_q:paperless:q` (django-q's list key for the cluster name "paperless" set in `Q_CLUSTER` in `src/paperless/settings.py`), with one entry per queued task. The entry is not JSON: it is a pickled Python dict, compressed and signed with Django's signing module (`base64 payload:timestamp:signature`) by `django_q.signing.SignedPackage`. Decoding it with the same class shows the task structure:
+
+```bash
+python3 manage.py shell -c "
+import redis, pprint
+from django_q.signing import SignedPackage
+raw = redis.Redis().lrange('django_q:paperless:q', 0, -1)[0]
+pprint.pprint(SignedPackage.loads(raw))
+"
+```
+
+```text
+{'args': ('/app/src/../consume/test_document.txt',),
+ 'func': 'documents.tasks.consume_file',
+ 'id': 'ce22e2871f504a449298dd4b4ad650ce',
+ 'kwargs': {'override_tag_ids': None},
+ 'name': 'test_document.txt',
+ 'started': datetime.datetime(2026, 11, 3, 1, 19, 4, 603135, tzinfo=datetime.timezone.utc)}
+```
+
+So the queued task is a dict with the dotted function path (`func`), the positional arguments (`args`, whose only element is the path of the file in the consumption directory), the keyword arguments (`kwargs`), the task name (the file's base name), a task id and the enqueue time.
+
+Next I started the worker and scheduler process:
+
+```bash
+python3 manage.py qcluster > /tmp/qcluster.log 2>&1 &
+```
+
+The qcluster log shows the cluster coming up, a worker picking up the queued task and the consumer pipeline running inside it:
+
+```text
+01:19:08 [Q] INFO Q Cluster bluebird-fruit-pasta-four starting.
+01:19:08 [Q] INFO Process-1:1 ready for work at 105
+01:19:08 [Q] INFO Process-1:2 ready for work at 106
+01:19:08 [Q] INFO Process-1:3 ready for work at 107
+01:19:08 [Q] INFO Process-1:4 ready for work at 108
+01:19:08 [Q] INFO Process-1:5 monitoring at 109
+01:19:08 [Q] INFO Process-1 guarding cluster bluebird-fruit-pasta-four
+01:19:08 [Q] INFO Process-1:6 pushing tasks at 110
+01:19:08 [Q] INFO Q Cluster bluebird-fruit-pasta-four running.
+01:19:08 [Q] INFO Process-1:1 processing [test_document.txt]
+[2026-11-03 01:19:08,698] [INFO] [paperless.consumer] Consuming test_document.txt
+[2026-11-03 01:19:08,700] [DEBUG] [paperless.consumer] Detected mime type: text/plain
+[2026-11-03 01:19:08,703] [DEBUG] [paperless.consumer] Parser: TextDocumentParser
+[2026-11-03 01:19:08,707] [DEBUG] [paperless.consumer] Parsing test_document.txt...
+[2026-11-03 01:19:08,707] [DEBUG] [paperless.consumer] Generating thumbnail for test_document.txt...
+[2026-11-03 01:19:08,721] [DEBUG] [paperless.parsing.text] Execute: optipng -silent -o5 /tmp/paperless/paperless-s5_srpo7/thumb.png -out /tmp/paperless/paperless-s5_srpo7/thumb_optipng.png
+[2026-11-03 01:19:09,064] [DEBUG] [paperless.classifier] Document classification model does not exist (yet), not performing automatic matching.
+[2026-11-03 01:19:09,068] [DEBUG] [paperless.consumer] Saving record to database
+[2026-11-03 01:19:09,082] [DEBUG] [paperless.consumer] Deleting file /app/src/../consume/test_document.txt
+[2026-11-03 01:19:09,082] [DEBUG] [paperless.parsing.text] Deleting directory /tmp/paperless/paperless-s5_srpo7
+[2026-11-03 01:19:09,082] [INFO] [paperless.consumer] Document 2026-11-03 test_document consumption finished
+01:19:09 [Q] INFO Process-1:1 stopped doing work
+01:19:09 [Q] INFO Processed [test_document.txt]
+```
+
+No additional tasks show up for parsing, classification or indexing: the qcluster processed exactly one task, `[test_document.txt]`, and `LLEN django_q:paperless:q` returned 0 afterwards. All stages run inside that single `consume_file` task. `Consumer.try_consume_file` in `src/documents/consumer.py` detects the MIME type, selects and runs the parser (the parsing stage), generates the thumbnail, loads the classifier (the classification stage, which here reports that no model exists yet) and saves the record. It then sends the `document_consumption_finished` signal, whose handlers are connected in `src/documents/apps.py`: `add_inbox_tags`, `set_correspondent`, `set_document_type`, `set_tags`, `set_log_entry` and `add_to_index`. The last one writes the document into the Whoosh full-text index (the indexing stage), still within the same task.
+
+After processing completed I queried the database. The document record is stored in the `documents_document` table:
+
+```bash
+python3 manage.py shell -c "
+from documents.models import Document
+d = Document.objects.get()
+print(Document._meta.db_table)
+print([f.name for f in Document._meta.concrete_fields])
+for f in ['id','title','mime_type','checksum','filename','storage_type','created','added','modified','content','correspondent_id','document_type_id','archive_serial_number','archive_filename']:
+    print(f, '=', repr(getattr(d, f)))
+"
+```
+
+```text
+documents_document
+['id', 'correspondent', 'title', 'document_type', 'content', 'mime_type', 'checksum', 'archive_checksum', 'created', 'modified', 'storage_type', 'added', 'filename', 'archive_filename', 'archive_serial_number']
+id = 1
+title = 'test_document'
+mime_type = 'text/plain'
+checksum = '5d0f0ddeac840544d41662496987ce30'
+filename = '0000001.txt'
+storage_type = 'unencrypted'
+created = datetime.datetime(2026, 11, 3, 1, 19, 3, 596934, tzinfo=datetime.timezone.utc)
+added = datetime.datetime(2026, 11, 3, 1, 19, 9, 69060, tzinfo=datetime.timezone.utc)
+modified = datetime.datetime(2026, 11, 3, 1, 19, 9, 81765, tzinfo=datetime.timezone.utc)
+content = 'Test document for Paperless-NGX ingestion\n'
+correspondent_id = None
+document_type_id = None
+archive_serial_number = None
+archive_filename = None
+```
+
+The parsed metadata matches the input file: `content` holds exactly the text I wrote, `mime_type` is `text/plain` as detected in the log, `title` is derived from the file name, `checksum` is the MD5 of the original file and `filename` is the stored original (`0000001.txt`). `created` comes from date parsing (no date in the text, so the file time is used), `added`/`modified` are the ingestion times, and `correspondent_id`, `document_type_id` and the `documents_document_tags` many-to-many table hold classification results (empty here because no correspondents, types or tags exist). There is no `archive_filename` because the text parser produces no archive PDF. There is no language column at this commit.
+
+The record of task execution is kept by django-q in the `django_q_task` table (the database also has `django_q_ormq` and `django_q_schedule`):
+
+```bash
+python3 manage.py shell -c "
+from django_q.models import Task
+print(Task._meta.db_table)
+for t in Task.objects.all().order_by('started'):
+    print(t.id, '|', t.name, '|', t.func, '|', t.args, '|', t.kwargs, '|', t.success, '|', t.started, '|', t.stopped, '|', t.result)
+"
+```
+
+```text
+django_q_task
+ce22e2871f504a449298dd4b4ad650ce | test_document.txt | documents.tasks.consume_file | ('/app/src/../consume/test_document.txt',) | {'override_tag_ids': None} | True | 2026-11-03 01:19:04.603135+00:00 | 2026-11-03 01:19:09.085529+00:00 | Success. New document id 1 created
+```
+
+The row has the same id as the queued broker payload, the function, its arguments, the success flag, the enqueue and finish times, and the return value of `consume_file`. The `documents_log` table, which normally receives the consumer's log lines through the database log handler, stayed empty because this environment sets `PAPERLESS_DISABLE_DBHANDLER=true`.
+
+With that behavior in mind, I traced the code path. The part of the system that detects new files is the `document_consumer` management command in `src/documents/management/commands/document_consumer.py`. `Command.handle` first calls `_consume()` for every file already in the directory, then watches it. With inotify available and `PAPERLESS_CONSUMER_POLLING` at 0 it runs `handle_inotify`, which logs "Using inotify to watch directory for changes", waits for `CLOSE_WRITE`/`MOVED_TO` events and calls `_consume(filepath)` once a file has been quiet for 0.5 s. Otherwise `handle_polling` uses a watchdog `PollingObserver` whose `Handler.on_created`/`on_moved` call `_consume_wait_unmodified`, which calls `_consume`.
+
+`_consume()` in the same file is the component that creates the ingestion task object. It skips directories, ignored and unsupported files, checks that the file can be opened, optionally derives tag ids from sub-directories, and then calls:
+
+```python
+logger.info(f"Adding {filepath} to the task queue.")
+async_task(
+    "documents.tasks.consume_file",
+    filepath,
+    override_tag_ids=tag_ids if tag_ids else None,
+    task_name=os.path.basename(filepath)[:100],
+)
+```
+
+`async_task` comes from `django_q.tasks` (django-q 1.3.9 is installed). It builds the task dict seen in the broker (id, name, func, args, kwargs, started), packs it with `SignedPackage.dumps` and pushes it with the Redis broker's `enqueue` (`RPUSH` onto `django_q:paperless:q`). The broker connection comes from `Q_CLUSTER` in `src/paperless/settings.py` (`"name": "paperless"`, `"redis": os.getenv("PAPERLESS_REDIS", "redis://localhost:6379")`). The queuing framework that dispatches the task is therefore django-q on Redis. The `qcluster` process pulls the entry, runs `documents.tasks.consume_file(path, override_tag_ids=None)`, which calls `Consumer().try_consume_file(...)`, and stores the outcome in `django_q_task`. The same cluster also runs the periodic schedules registered by migration `1001_auto_20201109_1636` (classifier training and index optimization).
+
+When I was done I stopped the gunicorn, consumer and qcluster processes and the Redis server, and removed the temporary `/app/consume`, `/app/media` and `/app/data` directories, so the test file, the stored document, the SQLite database and the index were all deleted and the repository was left unchanged.

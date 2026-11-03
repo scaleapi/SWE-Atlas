@@ -1,0 +1,1 @@
+FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_OISF_suricata_69b7c2a04b6f8ff9ed988131_1.1_v10197_bake@sha256:8ef141fbdc1212cee3627037619c6ae5d0dfdcb3a94b73f2fd2e828ce222cad8

@@ -1,0 +1,1 @@
+FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_renovatebot_renovate_69d196f015a150488265afc2_1.1_v10197_bake@sha256:35b6c8a22b81a58775216006cce8f1be65a1f457d5e7a072d4e34059e13357d3

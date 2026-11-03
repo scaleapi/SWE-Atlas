@@ -1,0 +1,100 @@
+I started by building and running Grafana to observe its actual startup behavior. The repository's Makefile build-go target ultimately drives build.go, so I invoked it directly.
+
+```
+$ go run build.go build
+```
+
+```
+Output:
+Version: 11.5.0, Linux Version: 11.5.0, Package Iteration: 1787688811pre
+building binaries build
+building grafana ./pkg/cmd/grafana
+rm -r ./bin/linux-amd64/grafana
+rm -r ./bin/linux-amd64/grafana.md5
+go build -ldflags -w -X main.version=11.5.0-pre -X main.commit=4550cfb5b72 -X main.buildstamp=1641013200 -X main.buildBranch=HEAD -o ./bin/linux-amd64/grafana ./pkg/cmd/grafana
+go version
+go version go1.23.1 linux/amd64
+Targeting linux/amd64
+```
+
+The same pattern then repeats for the grafana-server and grafana-cli binaries. The version resolved from package.json is 11.5.0 (package version 11.5.0-pre baked into the binary), and the Package Iteration component is derived from the current epoch timestamp, so that number changes on every build.
+
+With the server binary built, I started Grafana from the repository root and captured the startup log sequence to see exactly how the initialization unfolds.
+
+```
+$ ./bin/linux-amd64/grafana server
+```
+
+```
+Output (excerpted; the migrator also logs each of the 626 individual migrations):
+logger=settings t=2026-08-25T20:13:50.744172237Z level=info msg="Starting Grafana" version=11.5.0-pre commit=4550cfb5b72 branch=HEAD compiled=2022-01-01T05:00:00Z
+logger=sqlstore t=2026-08-25T20:13:50.745223072Z level=info msg="Connecting to DB" dbtype=sqlite3
+logger=migrator t=2026-08-25T20:13:50.746704569Z level=info msg="Starting DB migrations"
+logger=migrator t=2026-08-25T20:13:56.834756308Z level=info msg="migrations completed" performed=626 skipped=0 duration=6.0876758s
+logger=sqlstore t=2026-08-25T20:13:56.841521311Z level=info msg="Created default admin" user=admin
+logger=sqlstore t=2026-08-25T20:13:56.841743953Z level=info msg="Created default organization"
+logger=query_data t=2026-08-25T20:13:57.022717919Z level=info msg="Query Service initialization"
+logger=provisioning.alerting t=2026-08-25T20:13:57.054838893Z level=info msg="starting to provision alerting"
+logger=http.server t=2026-08-25T20:13:57.057888896Z level=info msg="HTTP Server Listen" address=[::]:3000 protocol=http subUrl= socket=
+logger=ngalert.scheduler t=2026-08-25T20:13:57.115601879Z level=info msg="Starting scheduler" tickInterval=10s maxAttempts=3
+logger=provisioning.dashboard t=2026-08-25T20:13:57.119901462Z level=info msg="starting to provision dashboards"
+logger=grafana-apiserver t=2026-08-25T20:13:57.267508048Z level=info msg="Adding GroupVersion featuretoggle.grafana.app v0alpha1 to ResourceManager"
+```
+
+The definitive log line that signals Grafana is ready to accept connections is the one containing "HTTP Server Listen" from the http.server logger. It tells me exactly where and how the server is exposed. The address field shows [::]:3000, which means the server binds to all IPv6 interfaces (and IPv4 via dual-stack) on port 3000. The protocol field confirms it is using plain HTTP, while subUrl being empty indicates no URL prefix is configured for reverse proxy setups. The socket field being empty confirms it is not running in Unix socket mode.
+
+The startup logs reveal the initialization sequence around that ready signal. The sqlstore establishes the database connection first, then the migrator runs the database schema migrations; on this fresh boot it performed all 626 of them before anything else proceeded. Only after the migrations completed did the sqlstore create the default admin user and the default organization. The query_data logger then reports "Query Service initialization" for the data query handling layer, and the provisioning subsystem announces "starting to provision alerting". In this boot the HTTP Server Listen line appeared at that point, with the ngalert.scheduler (the alert evaluation engine, tickInterval=10s), dashboard provisioning ("starting to provision dashboards"), and the grafana-apiserver's GroupVersion registrations for resources like playlists and dashboards logging within the same startup burst just after it, so the listener does not strictly wait for every background service to finish announcing itself.
+
+I then tested the health endpoint to observe what a healthy response looks like.
+
+```
+$ curl -s http://localhost:3000/api/health
+```
+
+```
+Output:
+{
+  "database": "ok",
+  "version": "11.5.0-pre",
+  "commit": "4550cfb5b72"
+}
+```
+
+The health endpoint at /api/health returns a JSON response with three fields. The database field is the critical indicator of system readiness, showing "ok" when Grafana can successfully query its database. This check works by executing a simple SELECT 1 query against the configured database backend. When this query succeeds, the field shows "ok" and the endpoint returns HTTP 200. When the database is unreachable or the query fails, the field shows "failing" and the endpoint returns HTTP 503 Service Unavailable. The version and commit fields provide build information (the short git commit baked in at build time) and may be hidden if anonymous version hiding is enabled.
+
+The health handler in pkg/api/http_server.go delegates the actual database connectivity test to a databaseHealthy function implemented in pkg/api/health.go:
+
+```go
+func (hs *HTTPServer) databaseHealthy(ctx context.Context) bool {
+	const cacheKey = "db-healthy"
+
+	if cached, found := hs.CacheService.Get(cacheKey); found {
+		return cached.(bool)
+	}
+
+	err := hs.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
+		_, err := session.Exec("SELECT 1")
+		return err
+	})
+	healthy := err == nil
+
+	hs.CacheService.Set(cacheKey, healthy, time.Second*5)
+	return healthy
+}
+```
+
+Note that the result is cached for five seconds via hs.CacheService.Set, so rapid repeated health probes do not hammer the database with SELECT 1 queries.
+
+I then opened a browser to http://localhost:3000 and observed the login flow. The login page appeared with fields for username and password. I entered the default credentials admin for both username and password.
+
+```
+Login attempt:
+Username: admin
+Password: admin
+```
+
+After clicking Log in, Grafana immediately displayed a password change prompt before allowing me to proceed. The form showed a message asking me to update my password with fields for new password and confirm new password. There was also an option to skip this step. This prompt appears because Grafana detects that the password used for login is still the default value "admin" and enforces a security check to encourage users to set a custom password. The frontend code in LoginCtrl.tsx checks if the submitted password equals the literal string "admin", and if so, redirects to the password change view rather than proceeding directly to the main dashboard. This internal state change represents the finalization of the admin account's security posture, transitioning from using insecure default credentials to requiring user acknowledgment or password update before full access is granted.
+
+The background services visible in the startup logs correspond to components registered in the background service registry. These include the sqlstore for database connectivity, the migrator for schema management, the provisioning services for alerting and dashboard configuration, the ngalert scheduler for alert evaluation, the query_data service for handling data queries, and the grafana-apiserver, which registers Kubernetes-style GroupVersions (playlist.grafana.app, dashboard.grafana.app, featuretoggle.grafana.app, iam.grafana.app) with its ResourceManager. The database-critical work (migrations, default admin and org creation) completes before the HTTP server begins listening, while the remaining services finish announcing themselves in the same instant around the Listen line, which means by the time a user can actually load the login page in their browser, the entire Grafana backend including alerting, provisioning, and API services is active and ready to handle requests.
+
+No source files were modified during this investigation and any temporary observation was done through standard command execution and browser interaction.

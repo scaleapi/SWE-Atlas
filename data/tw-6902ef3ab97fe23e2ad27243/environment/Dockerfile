@@ -1,0 +1,1 @@
+FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_TW_kovidgoyal_kitty_6902ef3ab97fe23e2ad27243_1.1_v10198@sha256:0764722f096cb5aebeb2a4f9c124e0746c64d2420274b3bb005b332f61e37255

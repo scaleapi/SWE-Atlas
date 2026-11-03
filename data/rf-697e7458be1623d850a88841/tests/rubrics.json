@@ -1,0 +1,162 @@
+[
+  {
+    "id": "c1bcd77a26484880a4c87b7cf261f613",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "bdbe5f19a6c82b7466db367ed92143cf",
+    "title": "1.1: Adds Input struct to textinputs.go with 2 fields: Value (string), IsDefault (bool)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2043ef0d051adefea39bcd765e2a0d06",
+    "title": "1.2: Modifies GetInputs() to return map[string]Input instead of map[string]string",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "70d64c1cdea8093a39f3eb36115e15bd",
+    "title": "1.3: Assigns the field's Placeholder string as Value with IsDefault=true when a required field is empty in GetInputs() in textinputs.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a4bd64fb1b732280bfa58430fcceb0b2",
+    "title": "1.4: Updates SummarizeSource() to accept map[string]textinputs.Input parameter",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2df5d213afe9d501a134c4ebfa46ef4b",
+    "title": "1.5: Updates all 10 TUI source files (trufflehog_configure.go, circleci.go, docker.go, filesystem.go, gcs.go, git.go, github.go, gitlab.go, s3.go, syslog.go) to access input values via .Value field",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1548427f630ba99a494e31d6a9197d18",
+    "title": "1.6: Sets Required: true for GitHub org and repo InputConfig fields",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f403c897967c7e71a18eee9f839cbfe2",
+    "title": "1.7: Adds GetSpecialInputs() method to GitHub source with OR operation handling",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a324b63e2f326b4ab74326e91b61a8ba",
+    "title": "1.8: Updates GCS source key and flag from project_id to project-id in gcs.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6d2dac34eb9e21a14f7a5cc510510785",
+    "title": "1.9: Sets concurrency placeholder to runtime.NumCPU() in trufflehog_configure.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "89877f388915be3b0bf4caa89a9ae627",
+    "title": "1.10: Adds Azure Repos to enterprise sources in source_select.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2ca3eea875820381410dbc0b315c04f7",
+    "title": "1.11: Updates GCS project-id placeholder from 'my-project' to 'trufflehog-testing' in gcs.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "df6c111fc27fd4d985ccbf1138632a34",
+    "title": "1.12: Updates S3 bucket placeholder from 'my-bucket-name' to 'truffletestbucket' in s3.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "66a9a51618670e0dc47dea96e10b03eb",
+    "title": "1.13: Adds help hint for Git URI field about file:// protocol",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6fb8270f202c4b00cc3386bdac7b0c60",
+    "title": "1.14: Removes trailing period typo from Git placeholder URL",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b5755659e7af20dc73aab536f0ca0407",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b5488256581fac83885c219cb433d8e6",
+    "title": "3.1: Removes redundant empty-value checks in all 6 source files (circleci.go, filesystem.go, gcs.go, git.go, gitlab.go, syslog.go) for required fields that now have guaranteed values",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "26ccafb5c34838930a5234706204170f",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c1a72e56dcb0dbf19c05c891f38be647",
+    "title": "4.1: Uses GetInputs() instead of GetSpecialInputs() in GitHub Cmd() method",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "854048ff56343a9d1166dd5b92acf366",
+    "title": "4.2: Applies placeholder fallback to non-required fields in GetInputs() (textinputs.go)",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

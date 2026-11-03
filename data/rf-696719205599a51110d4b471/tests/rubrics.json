@@ -1,0 +1,114 @@
+[
+  {
+    "id": "8f3a2c7e91d4b6f0a5e8c1d3b7f2a9e4",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2d9f4a1c8b7e3d5f0a6c2e9b4d7f1a8c",
+    "title": "1.1: Removes individual TCP port default declarations from all 39 OpenFlow packet classes in scapy/contrib/openflow.py, including OFPTHello, OFPETHelloFailed, OFPETBadRequest, OFPETBadAction, OFPETFlowModFailed, OFPETPortModFailed, OFPETQueueOpFailed, OFPTEchoRequest, OFPTEchoReply, OFPTVendor, OFPTFeaturesRequest, OFPTFeaturesReply, ...",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3f8a6d2c9b1e4f7a0c5d8b2e6a9f3c1d",
+    "title": "1.2: Removes individual TCP port default declarations from all 72 OpenFlow packet classes in scapy/contrib/openflow3.py, including OFPTHello, OFPETHelloFailed, OFPETBadRequest, OFPETBadAction, OFPETBadInstruction, OFPETBadMatch, OFPETFlowModFailed, OFPETGroupModFailed, OFPETPortModFailed, OFPETTableModFailed, OFPETQueueOpFailed, OFPTEchoRequest, ...",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6c4b9e1f7a2d8c5b0e3f6a9d2c7b4e1f",
+    "title": "1.3: Adds bind_top_down(TCP, _ofp_header, sport=6653, dport=6653) in scapy/contrib/openflow.py to centralize port defaults for the OpenFlow 1.0 header hierarchy",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5f0ab21ebbadf4d6a18cd373b87cf3ad",
+    "title": "1.4: Sets a source port on the TCP underlayer when SOCKS request payload is attached in scapy/contrib/socks.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "67e53385b5578a68ba472d38b4162ac2",
+    "title": "1.5: Sets a destination port on the TCP underlayer when SOCKS reply payload is attached in scapy/contrib/socks.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b023fe58783ac3250f3b2e83e4254064",
+    "title": "1.6: Adds a description to the [testenv:spell] section in tox.ini",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "991d876c05e41a025a4e8973631eef0f",
+    "title": "1.7: Configures the [testenv:spell] section in tox.ini to skip package installation",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "71b7032df2b10cddb7517cb7fc73868a",
+    "title": "3: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2f7c4a1e9b6d3f8a5c2e0b7d4f9a6c1e",
+    "title": "3.1: Removes the unused TCP import from scapy/contrib/openflow3.py",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "6fadfc0fa882c001c3152f48056fe752",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "747c3d2bf3cb7d4ba49507860cddc894",
+    "title": "4.1: Removes or modifies the existing bind_bottom_up calls in scapy/contrib/openflow.py",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "11feafc9a25d3557b08010fda02f412a",
+    "title": "4.2: Removes TCP import from scapy/contrib/openflow.py",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "204822f1d5681db5fdb67176aab2b9cf",
+    "title": "4.3: Modifies files that the prompt designates as test files (such as scapy/contrib/openflow.uts, scapy/contrib/openflow3.uts, or scapy/contrib/socks.uts)",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

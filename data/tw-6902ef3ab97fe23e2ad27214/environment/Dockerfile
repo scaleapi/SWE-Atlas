@@ -1,0 +1,1 @@
+FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_TW_minio_minio_6902ef3ab97fe23e2ad27214_1.1_v10198_cu@sha256:482db7735734c5269f6b6e75592a6e29b3160dc2a9d1950554585524dd5fe48e

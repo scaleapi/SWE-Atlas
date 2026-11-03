@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "test_align_entries_to_pagesize"
+    },
+    {
+      "name": "test_dbengine"
+    },
+    {
+      "name": "test_rrd_algorithm_conversions"
+    },
+    {
+      "name": "test_rrd_db_mode_conversions"
+    },
+    {
+      "name": "test_rrd_db_mode_enum_values"
+    },
+    {
+      "name": "test_rrdset_type_conversions"
+    },
+    {
+      "name": "test_storage_engine_modes"
+    }
+  ]
+}

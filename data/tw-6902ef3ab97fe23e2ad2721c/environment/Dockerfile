@@ -1,0 +1,1 @@
+FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_TW_paperless-ngx_paperless-ngx_6902ef3ab97fe23e2ad2721c_1.1_v10197@sha256:a0aa2b9680ac49779de69183294dd291b40db316f3433062ad2da409a5a35cb0

@@ -1,0 +1,254 @@
+I treated the Paperless-NGX repository present in `/app` as the reference source tree and pinned all observations to the current `HEAD` commit; the working tree was clean and I did not edit any tracked source files as part of this runtime test.
+
+```bash
+cd /app
+git rev-parse HEAD
+git status --porcelain
+python3 --version
+```
+
+```text
+542221a38dff06361e07976452f9aea24d210542
+Python 3.9.23
+```
+
+(`git status --porcelain` printed nothing.) The environment already has Python 3.9 with the repository's Python dependencies and Redis installed, so I ran the three long-lived Paperless services (webserver, scheduler/worker and consumer) directly on the host using the repo's default settings model (SQLite + Redis), with all Paperless directories pointed at an isolated `/tmp/paperless-ngx-idle-test` workspace.
+
+I first started the broker (Redis) and verified it was reachable, because Paperless uses Redis for `django-q` background tasks and for Django Channels (websocket status updates) at runtime.
+
+```bash
+W=/tmp/paperless-ngx-idle-test
+mkdir -p $W/{data,consume,export,logs,run}
+redis-server --port 6379 --save '' --appendonly no > $W/logs/redis.log 2>&1 &
+echo $! > $W/run/redis.pid
+sleep 1
+redis-cli ping
+```
+
+```text
+PONG
+```
+
+With Redis up, I initialized Paperless using its default non-Postgres configuration (SQLite) by running migrations under environment variables that point the Paperless directories into the workspace. This also applied the migrations that create the periodic `django-q` schedules.
+
+```bash
+cd /app
+export PYTHONPATH=/app/src DJANGO_SETTINGS_MODULE=paperless.settings \
+  PAPERLESS_DATA_DIR=$W/data PAPERLESS_MEDIA_ROOT=$W/data/media \
+  PAPERLESS_CONSUMPTION_DIR=$W/consume PAPERLESS_EXPORT_DIR=$W/export \
+  PAPERLESS_REDIS=redis://127.0.0.1:6379 PAPERLESS_DBHOST='' \
+  PAPERLESS_URL=http://localhost:8000 PAPERLESS_SECRET_KEY=dev-secret
+mkdir -p $W/data/media
+python3 src/manage.py migrate --noinput > $W/logs/migrate.log 2>&1
+grep -E "Running migrations|1001_auto_20201109_1636|1004_sanity_check_schedule|paperless_mail.0002_auto_20201117_1334" $W/logs/migrate.log
+```
+
+```text
+Running migrations:
+  Applying documents.1001_auto_20201109_1636... OK
+  Applying documents.1004_sanity_check_schedule... OK
+  Applying paperless_mail.0002_auto_20201117_1334... OK
+```
+
+After migrations, I started the three long-running Paperless runtime services (matching the default process model: webserver, scheduler/worker, and consumer) and verified they reached an idle/ready state. The ready indicators were: `qcluster` reporting "ready for work" and "running", the consumer reporting it is watching the consumption directory via inotify, and Gunicorn reporting "Server is ready. Spawning workers"; the HTTP endpoint responded (302 redirect to the login page), so the webserver was up and waiting.
+
+```bash
+python3 src/manage.py qcluster > $W/logs/qcluster.log 2>&1 & echo $! > $W/run/qcluster.pid
+python3 src/manage.py document_consumer > $W/logs/consumer.log 2>&1 & echo $! > $W/run/consumer.pid
+gunicorn -c /app/gunicorn.conf.py paperless.asgi:application --chdir /app/src --bind 127.0.0.1:8000 > $W/logs/gunicorn.log 2>&1 & echo $! > $W/run/gunicorn.pid
+sleep 6
+for f in $W/run/*.pid; do echo "PIDFILE $f => $(cat $f)"; done
+curl -sS -o /dev/null -w 'HTTP %{http_code}\n' http://localhost:8000/
+sed -n '1,20p' $W/logs/qcluster.log
+sed -n '1,20p' $W/logs/consumer.log
+sed -n '1,20p' $W/logs/gunicorn.log
+```
+
+```text
+PIDFILE /tmp/paperless-ngx-idle-test/run/consumer.pid => 236
+PIDFILE /tmp/paperless-ngx-idle-test/run/gunicorn.pid => 237
+PIDFILE /tmp/paperless-ngx-idle-test/run/qcluster.pid => 235
+PIDFILE /tmp/paperless-ngx-idle-test/run/redis.pid => 213
+HTTP 302
+01:21:58 [Q] INFO Q Cluster sink-earth-mirror-friend starting.
+01:21:58 [Q] INFO Process-1:1 ready for work at 266
+01:21:58 [Q] INFO Process-1:2 ready for work at 267
+01:21:58 [Q] INFO Process-1:3 ready for work at 268
+01:21:58 [Q] INFO Process-1:4 ready for work at 269
+01:21:58 [Q] INFO Process-1:5 monitoring at 270
+01:21:58 [Q] INFO Process-1:6 pushing tasks at 271
+01:21:58 [Q] INFO Process-1 guarding cluster sink-earth-mirror-friend
+01:21:58 [Q] INFO Q Cluster sink-earth-mirror-friend running.
+[2026-11-03 01:21:58,646] [INFO] [paperless.management.consumer] Using inotify to watch directory for changes: /tmp/paperless-ngx-idle-test/consume
+[2026-11-03 01:21:58 +0000] [237] [INFO] Starting gunicorn 20.1.0
+[2026-11-03 01:21:58 +0000] [237] [INFO] Listening at: http://127.0.0.1:8000 (237)
+[2026-11-03 01:21:58 +0000] [237] [INFO] Using worker: paperless.workers.ConfigurableWorker
+[2026-11-03 01:21:58 +0000] [237] [INFO] Server is ready. Spawning workers
+```
+
+I then left the system idle for almost eleven minutes (01:22:03 to 01:32:53) without dropping any document into the consumption directory. Paperless keeps doing background work through its `django-q` schedules even when no documents are being consumed. After the idle period I listed the schedules with their next run times and read the full qcluster log:
+
+```bash
+python3 src/manage.py shell -c "from django_q.models import Schedule; import json; print(json.dumps(list(Schedule.objects.order_by('name').values('name','func','schedule_type','minutes','next_run')), default=str, indent=2))"
+cat $W/logs/qcluster.log
+```
+
+```text
+[
+  {
+    "name": "Check all e-mail accounts",
+    "func": "paperless_mail.tasks.process_mail_accounts",
+    "schedule_type": "I",
+    "minutes": 10,
+    "next_run": "2026-11-03 01:41:57.051212+00:00"
+  },
+  {
+    "name": "Optimize the index",
+    "func": "documents.tasks.index_optimize",
+    "schedule_type": "D",
+    "minutes": null,
+    "next_run": "2026-11-04 01:21:56.763063+00:00"
+  },
+  {
+    "name": "Perform sanity check",
+    "func": "documents.tasks.sanity_check",
+    "schedule_type": "W",
+    "minutes": null,
+    "next_run": "2026-11-10 01:21:56.797061+00:00"
+  },
+  {
+    "name": "Train the classifier",
+    "func": "documents.tasks.train_classifier",
+    "schedule_type": "H",
+    "minutes": null,
+    "next_run": "2026-11-03 02:21:56.762321+00:00"
+  }
+]
+01:21:58 [Q] INFO Q Cluster sink-earth-mirror-friend starting.
+...
+01:21:58 [Q] INFO Q Cluster sink-earth-mirror-friend running.
+01:22:28 [Q] INFO Enqueued 1
+01:22:28 [Q] INFO Process-1 created a task from schedule [Train the classifier]
+01:22:28 [Q] INFO Enqueued 1
+01:22:28 [Q] INFO Process-1 created a task from schedule [Optimize the index]
+01:22:28 [Q] INFO Enqueued 2
+01:22:28 [Q] INFO Process-1 created a task from schedule [Perform sanity check]
+01:22:28 [Q] INFO Enqueued 3
+01:22:28 [Q] INFO Process-1 created a task from schedule [Check all e-mail accounts]
+01:22:28 [Q] INFO Process-1:1 processing [december-kentucky-nitrogen-rugby]
+01:22:28 [Q] INFO Process-1:2 processing [seventeen-double-yankee-early]
+01:22:28 [Q] INFO Process-1:3 processing [hamper-twenty-berlin-alabama]
+01:22:28 [Q] INFO Process-1:4 processing [virginia-kentucky-beer-oscar]
+01:22:28 [Q] INFO Process-1:4 stopped doing work
+01:22:28 [Q] INFO Processed [virginia-kentucky-beer-oscar]
+[2026-11-03 01:22:28,589] [INFO] [paperless.sanity_checker] Sanity checker detected no issues.
+01:22:28 [Q] INFO Process-1:1 stopped doing work
+01:22:28 [Q] INFO Process-1:3 stopped doing work
+01:22:28 [Q] INFO Processed [december-kentucky-nitrogen-rugby]
+01:22:28 [Q] INFO Process-1:2 stopped doing work
+01:22:28 [Q] INFO Processed [hamper-twenty-berlin-alabama]
+01:22:28 [Q] INFO Processed [seventeen-double-yankee-early]
+01:22:28 [Q] INFO recycled worker Process-1:1
+01:22:28 [Q] INFO Process-1:7 ready for work at 294
+01:22:28 [Q] INFO recycled worker Process-1:3
+01:22:28 [Q] INFO Process-1:8 ready for work at 295
+01:22:29 [Q] INFO recycled worker Process-1:2
+01:22:29 [Q] INFO Process-1:9 ready for work at 296
+01:22:29 [Q] INFO recycled worker Process-1:4
+01:22:29 [Q] INFO Process-1:10 ready for work at 297
+01:31:59 [Q] INFO Enqueued 1
+01:31:59 [Q] INFO Process-1:7 processing [pennsylvania-violet-edward-beer]
+01:31:59 [Q] INFO Process-1 created a task from schedule [Check all e-mail accounts]
+01:31:59 [Q] INFO Process-1:7 stopped doing work
+01:31:59 [Q] INFO Processed [pennsylvania-violet-edward-beer]
+01:32:00 [Q] INFO recycled worker Process-1:7
+01:32:00 [Q] INFO Process-1:11 ready for work at 382
+```
+
+This shows what keeps running while the system is idle and how often:
+
+- The four schedules created by the migrations: "Check all e-mail accounts" (`paperless_mail.tasks.process_mail_accounts`, schedule type I = every 10 minutes), "Train the classifier" (`documents.tasks.train_classifier`, H = hourly), "Optimize the index" (`documents.tasks.index_optimize`, D = daily) and "Perform sanity check" (`documents.tasks.sanity_check`, W = weekly). Each `next_run` is exactly one interval after the previous run time.
+- The qcluster scheduler checks for due schedules every 30 seconds; its first check, 30 s after start (01:22:28), found all four schedules due and created and processed one task for each. The sanity check logged "Sanity checker detected no issues.", a concrete runtime health signal. The mail check ran again at 01:31:59, ten minutes later, and is the entry that repeats most often while idle.
+- After each task django-q logs "recycled worker" and a fresh "Process-1:N ready for work at <pid>" line, so the worker pool returns to the ready state after every scheduled run.
+- The consumer logged nothing after "Using inotify to watch directory for changes" for the whole idle period: zero documents were ingested while the scheduled tasks ran.
+
+To observe runtime behavior during a short broker outage, I stopped Redis while the system was otherwise idle. During the outage the consumer detected a new file and tried to enqueue it, then logged a Redis connection failure; after Redis came back, the consumer enqueued a new file successfully. `qcluster` logged broker connection errors during the outage, including a django-q logging-formatting error ("--- Logging error ---") when its pusher process lost the connection.
+
+```bash
+kill $(cat $W/run/redis.pid); sleep 1
+redis-cli ping || true
+
+printf 'hello during redis outage\n' > $W/consume/outage_test.txt
+sleep 2
+tail -n 60 $W/logs/consumer.log
+
+redis-server --port 6379 --save '' --appendonly no > $W/logs/redis.log 2>&1 &
+echo $! > $W/run/redis.pid
+sleep 1
+redis-cli ping
+
+printf 'hello after redis restart\n' > $W/consume/post_restart_test.txt
+sleep 3
+tail -n 20 $W/logs/consumer.log
+tail -n 40 $W/logs/qcluster.log
+```
+
+```text
+Could not connect to Redis at 127.0.0.1:6379: Connection refused
+[2026-11-03 01:32:56,339] [INFO] [paperless.management.consumer] Adding /tmp/paperless-ngx-idle-test/consume/outage_test.txt to the task queue.
+[2026-11-03 01:32:56,341] [ERROR] [paperless.management.consumer] Error while consuming document
+...
+redis.exceptions.ConnectionError: Error 111 connecting to 127.0.0.1:6379. Connection refused.
+PONG
+[2026-11-03 01:32:59,350] [INFO] [paperless.management.consumer] Adding /tmp/paperless-ngx-idle-test/consume/post_restart_test.txt to the task queue.
+01:32:59 [Q] INFO Enqueued 1
+...
+01:32:54 [Q] ERROR Error 111 connecting to 127.0.0.1:6379. Connection refused.
+01:32:55 [Q] ERROR Error 111 connecting to 127.0.0.1:6379. Connection refused.
+01:32:55 [Q] ERROR Error 111 connecting to 127.0.0.1:6379. Connection refused.
+01:32:56 [Q] ERROR Error 111 connecting to 127.0.0.1:6379. Connection refused.
+01:32:56 [Q] ERROR Error 111 connecting to 127.0.0.1:6379. Connection refused.
+01:32:57 [Q] ERROR Error 111 connecting to 127.0.0.1:6379. Connection refused.
+```
+
+The `PONG` after the restart and the consumer's "Adding ... to the task queue." followed by `01:32:59 [Q] INFO Enqueued 1` confirm the broker connection is working again: the consumer's django-q client reconnected on its next enqueue. The file dropped during the outage was not queued (its enqueue failed with the connection error), so it stayed in the consumption directory. The old qcluster stopped logging errors once Redis was back, but it had not yet picked up the new task when I read its log three seconds later.
+
+To observe a routine worker/scheduler restart, I restarted the `qcluster` process itself and confirmed it logged a fresh startup and returned to the "ready for work" state, which is the runtime signal that background workers are operational again. The restarted cluster immediately took the task that had been queued after the Redis restart.
+
+```bash
+kill $(cat $W/run/qcluster.pid); sleep 3
+python3 /app/src/manage.py qcluster > $W/logs/qcluster_restart.log 2>&1 &
+echo $! > $W/run/qcluster.pid; sleep 4
+sed -n '1,20p' $W/logs/qcluster_restart.log
+```
+
+```text
+01:33:05 [Q] INFO Q Cluster ceiling-spring-high-alabama starting.
+01:33:05 [Q] INFO Process-1:1 ready for work at 443
+01:33:05 [Q] INFO Process-1:2 ready for work at 444
+01:33:05 [Q] INFO Process-1:3 ready for work at 445
+01:33:05 [Q] INFO Process-1:4 ready for work at 446
+01:33:05 [Q] INFO Process-1 guarding cluster ceiling-spring-high-alabama
+01:33:05 [Q] INFO Process-1:5 monitoring at 447
+01:33:05 [Q] INFO Process-1:6 pushing tasks at 448
+01:33:05 [Q] INFO Q Cluster ceiling-spring-high-alabama running.
+01:33:05 [Q] INFO Process-1:1 processing [post_restart_test.txt]
+[2026-11-03 01:33:05,619] [INFO] [paperless.consumer] Consuming post_restart_test.txt
+[2026-11-03 01:33:05,998] [INFO] [paperless.consumer] Document 2026-11-03 post_restart_test consumption finished
+01:33:06 [Q] INFO Process-1:1 stopped doing work
+01:33:06 [Q] INFO Processed [post_restart_test.txt]
+01:33:06 [Q] INFO recycled worker Process-1:1
+01:33:06 [Q] INFO Process-1:7 ready for work at 459
+```
+
+So the components that keep running continuously to maintain Paperless-NGX in a ready state, even when no documents are being processed, are: Redis (the django-q broker and channels layer); the `qcluster` process, which runs the guard, monitor, pusher and worker processes and the scheduler loop that creates tasks from the four schedules; the `document_consumer` process blocked on inotify events for the consumption directory; and the Gunicorn webserver with its workers serving the UI and API.
+
+After completing the runtime observation (idle activity, periodic schedules, ready indicators, and restart/reconnect behavior), I stopped all started processes and removed the isolated `/tmp` workspace, which held the SQLite database, the media files and all logs.
+
+```bash
+kill $(cat $W/run/gunicorn.pid) 2>/dev/null || true
+kill $(cat $W/run/consumer.pid) 2>/dev/null || true
+kill $(cat $W/run/qcluster.pid) 2>/dev/null || true
+kill $(cat $W/run/redis.pid) 2>/dev/null || true
+rm -rf /tmp/paperless-ngx-idle-test
+```

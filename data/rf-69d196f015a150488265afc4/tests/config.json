@@ -1,0 +1,9 @@
+{
+  "task_id": "69d196f015a150488265afc4",
+  "repo": "renovatebot_renovate",
+  "base_commit": "d4da4a10554ad5d2a4dc91980eb71176276de3b1",
+  "language": "TypeScript",
+  "mount_path": "/app",
+  "initial_complexity": "Mid",
+  "uid": "603266c6-c3de-5c7c-ac68-c6884dca9a0e"
+}

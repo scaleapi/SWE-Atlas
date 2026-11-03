@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "name": "js/compiler/compiler_test.go"
+    },
+    {
+      "name": "js/initcontext_test.go"
+    }
+  ]
+}

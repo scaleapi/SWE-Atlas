@@ -1,0 +1,82 @@
+[
+  {
+    "id": "59f219e3ec45bbb9eb04b24590f1da75",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c3571b6db0e8fb21d6d06a63e3b4b289",
+    "title": "1.1: Extracts NDJSON request serialization logic out of pkg/tsdb/elasticsearch/client/client.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "223514d2ae8cdbd9b758fd2f85ab4529",
+    "title": "1.2: Extracts HTTP network communication logic out of pkg/tsdb/elasticsearch/client/client.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "cc846216ee2834e82b717eaae2f8be71",
+    "title": "1.3: Extracts streaming response parsing logic out of pkg/tsdb/elasticsearch/client/client.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "b59f57e9f1a48977ce06bd8810a9374b",
+    "title": "1.4: Extracts all 3 query construction types (QueryBuilder, BoolQueryBuilder, FilterQueryBuilder) out of pkg/tsdb/elasticsearch/client/search_request.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a46d933ee529b1079a3501946543980a",
+    "title": "1.5: Extracts both aggregation builder types (AggBuilder interface and aggBuilderImpl struct) out of pkg/tsdb/elasticsearch/client/search_request.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "da1ca36e0a19ab2f761bb59a7e7323dd",
+    "title": "1.6: Retains both search request types (SearchRequestBuilder and MultiSearchRequestBuilder) in pkg/tsdb/elasticsearch/client/search_request.go",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "fd13e15013469dbc108330ccc437157f",
+    "title": "4: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c0d2440c73d248b0d45d05b15e4da0dd",
+    "title": "4.1: Removes the public StreamMultiSearchResponse function from the es package",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "3ec839d55ebbff1f343c64322ea3794a",
+    "title": "4.2: Modifies test files in pkg/tsdb/elasticsearch/client/",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]
