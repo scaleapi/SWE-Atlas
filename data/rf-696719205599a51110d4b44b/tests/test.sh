@@ -286,6 +286,14 @@ cp /tests/test_patch.diff /tmp_artifact_storage/test.patch
 cp /tests/relevant_test_names.json /tmp_artifact_storage/relevant_test_names.json
 cp /tests/relevant_file_names.json /tmp_artifact_storage/relevant_file_names.json
 
+# Whatever the agent left at these paths (a file, symlink or directory, ignored or tracked in HEAD) fails
+# the tests gate and is replaced by the grader's copy.
+for f in run_script.sh compare_test_runs.py master_validator_script.sh; do
+    if [ -e "$f" ] || [ -L "$f" ] || git cat-file -e "HEAD:$f" 2>/dev/null; then
+        GRADER_FILES_CHANGED+="$f "
+    fi
+    rm -rf -- "$f"
+done
 cp /tests/run_script.sh ./run_script.sh
 cp /tests/compare_test_runs.py ./compare_test_runs.py
 cp /tests/master_validator_script.sh ./master_validator_script.sh
@@ -340,6 +348,14 @@ if [ -z "$TESTS_SHA" ] || [ "$(tests_sha)" != "$TESTS_SHA" ]; then
     score_zero "a file in /tests changed during grading"
     exit 0
 fi
+
+# The master validator ran agent code; a workspace grader file that no longer matches /tests fails the tests gate.
+for f in run_script.sh compare_test_runs.py master_validator_script.sh; do
+    if [ -L "$f" ] || ! "${PY[@]}" -c 'import sys; a, b = (open(p, "rb").read() for p in sys.argv[1:]); sys.exit(a != b)' \
+            "/tests/$f" "$f" 2>/dev/null; then
+        GRADER_FILES_CHANGED+="$f "
+    fi
+done
 
 # ── Compare relevant tests → shared tests block ──
 echo "  [comparison] Every relevant test must be kept green (p2p) or added green (m2p)..."
@@ -486,7 +502,7 @@ else:
         protected_modified = ["<test_files_modified.json unreadable>"]
     for tf in protected_modified:
         violations.append("<protected test file modified: %s>" % tf)
-    for gf in os.environ.get("GRADER_FILES_CHANGED", "").split():
+    for gf in sorted(set(os.environ.get("GRADER_FILES_CHANGED", "").split())):
         violations.append("<grader file modified: %s>" % gf)
     details["protected_test_files_modified"] = protected_modified
     details["planted_relevant_tests"] = planted_names
