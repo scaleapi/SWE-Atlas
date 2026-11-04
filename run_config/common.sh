@@ -95,8 +95,9 @@ export_judge_env() {
 # an infrastructure reason out of pass@1.
 # On rf and tw the verifier shares the container with the agent's grading-time code as root, so a
 # determined agent could force a verifier failure to be re-sampled; the provisional reward 0 and the
-# seal check in the verifier close that, and MAX_RETRIES bounds how many extra attempts it could ever buy. summary.py only drops a no-reward
-# trial that its verifier sealed as infrastructure, never a bare missing reward.
+# seal check in the verifier close that, and MAX_RETRIES bounds how many extra attempts it could
+# ever buy. summary.py only drops a no-reward trial that its verifier sealed as infrastructure,
+# never a bare missing reward.
 NO_RETRY_EXCEPTIONS=(AgentSafetyRefusalError AgentAuthenticationError ModelNotFoundError
                      ApiUsageLimitError OutputTokenExceededError ContextWindowExceededError
                      OutputLengthExceededError ContextLengthExceededError
