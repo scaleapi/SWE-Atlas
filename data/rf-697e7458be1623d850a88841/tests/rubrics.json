@@ -120,14 +120,6 @@
     }
   },
   {
-    "id": "b5755659e7af20dc73aab536f0ca0407",
-    "title": "3: Artifact Cleanup",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "26ccafb5c34838930a5234706204170f",
     "title": "4: Negative Rubrics",
     "annotations": {
