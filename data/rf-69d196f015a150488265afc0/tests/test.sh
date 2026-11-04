@@ -189,6 +189,9 @@ fi
 git add -A
 git diff --cached "$BASE_COMMIT" -- . ':(exclude)builddir' > /tmp_artifact_storage/agent.patch
 git diff --cached --raw --no-abbrev -z --no-renames --diff-filter=A "$BASE_COMMIT" -- . ':(exclude)builddir' > /tmp_artifact_storage/agent_added.z
+# The grader runs these from the workspace root; an agent change to one fails the tests gate.
+GRADER_FILES_CHANGED=$(git diff --cached --name-only --no-renames "$BASE_COMMIT" -- \
+    run_script.sh compare_test_runs.py master_validator_script.sh | tr '\n' ' ')
 git reset HEAD --quiet 2>/dev/null || true
 
 PATCH_SIZE=$(wc -c < /tmp_artifact_storage/agent.patch)
@@ -340,7 +343,7 @@ fi
 
 # ── Compare relevant tests → shared tests block ──
 echo "  [comparison] Every relevant test must be kept green (p2p) or added green (m2p)..."
-MV_EXIT="$MV_EXIT" "${PY[@]}" << 'PYEOF'
+MV_EXIT="$MV_EXIT" GRADER_FILES_CHANGED="$GRADER_FILES_CHANGED" "${PY[@]}" << 'PYEOF'
 import json, os, re, subprocess, sys
 sys.path.append("/tests")
 import verifier_report as vr
@@ -483,6 +486,8 @@ else:
         protected_modified = ["<test_files_modified.json unreadable>"]
     for tf in protected_modified:
         violations.append("<protected test file modified: %s>" % tf)
+    for gf in os.environ.get("GRADER_FILES_CHANGED", "").split():
+        violations.append("<grader file modified: %s>" % gf)
     details["protected_test_files_modified"] = protected_modified
     details["planted_relevant_tests"] = planted_names
     # A baseline run killed by TEST_TIMEOUT_SEC (rc 124/137) never reached some tests; a relevant
