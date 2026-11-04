@@ -1,0 +1,35 @@
+{
+ "baked_base": {
+  "count": 21,
+  "flaky_at_base": [],
+  "n_runs": 3,
+  "stamp": {
+   "base_tree": "30c495973a64f04f9974c94eee951d641b5fc722",
+   "image_id": "ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_netdata_netdata_69b7c2a04b6f8ff9ed98813d_1.1_v10197_bake@sha256:90b8a452bca64e35c61e9bc8e9d45d2d8f9a62aed8172b0445112025938d6bcd",
+   "runner": "86a6329180b104b170f5710f933c2ea63b32dfe92f15d05b1b920b859651abe8"
+  }
+ },
+ "tests": {
+  "aral_unittest": "PASSED",
+  "buffer_unittest": "PASSED",
+  "ctx_unittest": "PASSED",
+  "dictionary_unittest": "PASSED",
+  "dyncfg_unittest": "PASSED",
+  "pluginsd_parser_unittest": "PASSED",
+  "rrdlabels_unittest": "PASSED",
+  "run_all_mockup_tests": "PASSED",
+  "string_unittest": "PASSED",
+  "test_dbengine": "PASSED",
+  "test_number_printing": "PASSED",
+  "test_sqlite": "PASSED",
+  "test_str2ld": "PASSED",
+  "unit_test_buffer": "PASSED",
+  "unit_test_static_threads": "PASSED",
+  "unit_test_storage": "PASSED",
+  "unit_test_str2ld": "PASSED",
+  "unittest_prepare_rrd": "PASSED",
+  "unittest_waiting_queue": "PASSED",
+  "uuid_unittest": "PASSED",
+  "uuidmap_unittest": "PASSED"
+ }
+}

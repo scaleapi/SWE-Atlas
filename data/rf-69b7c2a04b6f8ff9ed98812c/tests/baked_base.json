@@ -1,0 +1,20 @@
+{
+ "baked_base": {
+  "count": 6,
+  "flaky_at_base": [],
+  "n_runs": 3,
+  "stamp": {
+   "base_tree": "5154f378ac7182b388fff9a232e78844d6994bbd",
+   "image_id": "ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_MariaDB_server_69b7c2a04b6f8ff9ed98812c_1.1_bake@sha256:c73a115e2760d89fdbffeb6dc0e47ddc4c05dc35fa34e68bb30d8dc4ddb156b3",
+   "runner": "509b426e05ad340f6bb5f1a968654b976f285b7a5bb08220dc715dafe738f114"
+  }
+ },
+ "tests": {
+  "gcol.innodb_virtual_stats": "PASSED",
+  "innodb.innodb_stats_auto_recalc_on_nonexistent": "PASSED",
+  "innodb.innodb_stats_fetch": "PASSED",
+  "innodb_zip.innochecksum_2": "PASSED",
+  "innodb_zip.innochecksum_3": "PASSED",
+  "sys_vars.sysvars_innodb": "PASSED"
+ }
+}

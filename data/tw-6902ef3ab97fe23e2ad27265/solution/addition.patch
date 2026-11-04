@@ -1,4 +1,4 @@
-diff --git a/pkg/engine/engine_test.go b/pkg/engine/engine_test.go
+﻿diff --git a/pkg/engine/engine_test.go b/pkg/engine/engine_test.go
 index 229280fd3..32e20031a 100644
 --- a/pkg/engine/engine_test.go
 +++ b/pkg/engine/engine_test.go

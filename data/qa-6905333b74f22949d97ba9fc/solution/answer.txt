@@ -421,4 +421,4 @@ Cleanup:
 rm -f /tmp/test_clipboard.py /tmp/test_screen_buffer.py /tmp/test_timing.py /tmp/test_handler.py /tmp/test_mouse_queue.py /tmp/test_refcount.py
 ```
 
-All temporary test scripts were cleaned up.
+All temporary test scripts were cleaned up as requested.

@@ -14,7 +14,7 @@ category = "refactoring"
 tags = ["refactoring", "master-validator", "rubric-graded", "Go"]
 
 [verifier]
-timeout_sec = 7200
+timeout_sec = 6180
 
 [verifier.env]
 JUDGE_API_KEY = "${JUDGE_API_KEY:-}"
@@ -26,6 +26,10 @@ JUDGE_API_DIALECT = "${JUDGE_API_DIALECT:-}"
 JUDGE_VOTES = "${JUDGE_VOTES:-}"
 OPENAI_API_KEY = "${OPENAI_API_KEY:-}"
 OPENAI_API_BASE = "${OPENAI_API_BASE:-}"
+FULL_SUITE_MODE = "full"
+FULL_SUITE_BASE = "live"
+FS_IMAGE_ID = "ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_grafana_k6_696719205599a51110d4b449_1.1_cu_bake@sha256:649e13b75dce489e696c9b81f2c8526e9e2c37db63a4f5ee702fb73fae923f06"
+TEST_TIMEOUT_SEC = "${TEST_TIMEOUT_SEC:-1800}"
 
 [agent]
 timeout_sec = 10800

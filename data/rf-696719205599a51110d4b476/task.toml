@@ -14,10 +14,10 @@ category = "refactoring"
 tags = ["refactoring", "master-validator", "rubric-graded", "Python"]
 
 [verifier]
-timeout_sec = 7200
+timeout_sec = 6180
 
 [verifier.env]
-TEST_TIMEOUT_SEC = "${TEST_TIMEOUT_SEC:-2700}"
+TEST_TIMEOUT_SEC = "${TEST_TIMEOUT_SEC:-1800}"
 JUDGE_API_KEY = "${JUDGE_API_KEY:-}"
 JUDGE_FALLBACK_API_KEY = "${JUDGE_FALLBACK_API_KEY:-}"
 JUDGE_BASE_URL = "${JUDGE_BASE_URL:-}"
@@ -27,6 +27,9 @@ JUDGE_API_DIALECT = "${JUDGE_API_DIALECT:-}"
 JUDGE_VOTES = "${JUDGE_VOTES:-}"
 OPENAI_API_KEY = "${OPENAI_API_KEY:-}"
 OPENAI_API_BASE = "${OPENAI_API_BASE:-}"
+FULL_SUITE_MODE = "full"
+FULL_SUITE_BASE = "baked"
+FS_IMAGE_ID = "ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_secdev_scapy_696719205599a51110d4b476_1.1_bake@sha256:05baa0c45f43322cf65bfc2a6bce99175acaeb14baca870c62e29359fdea3b88"
 
 [agent]
 timeout_sec = 10800

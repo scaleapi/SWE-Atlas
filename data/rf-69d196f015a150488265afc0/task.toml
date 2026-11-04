@@ -14,10 +14,10 @@ category = "refactoring"
 tags = ["refactoring", "master-validator", "rubric-graded", "C++"]
 
 [verifier]
-timeout_sec = 9000
+timeout_sec = 6180
 
 [verifier.env]
-TEST_TIMEOUT_SEC = "${TEST_TIMEOUT_SEC:-3600}"
+TEST_TIMEOUT_SEC = "${TEST_TIMEOUT_SEC:-1800}"
 JUDGE_API_KEY = "${JUDGE_API_KEY:-}"
 JUDGE_FALLBACK_API_KEY = "${JUDGE_FALLBACK_API_KEY:-}"
 JUDGE_BASE_URL = "${JUDGE_BASE_URL:-}"
@@ -27,6 +27,9 @@ JUDGE_API_DIALECT = "${JUDGE_API_DIALECT:-}"
 JUDGE_VOTES = "${JUDGE_VOTES:-}"
 OPENAI_API_KEY = "${OPENAI_API_KEY:-}"
 OPENAI_API_BASE = "${OPENAI_API_BASE:-}"
+FULL_SUITE_MODE = "full"
+FULL_SUITE_BASE = "baked"
+FS_IMAGE_ID = "ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_MariaDB_server_69d196f015a150488265afc0_1.1_v10197_bake@sha256:2daf86647edda0b1f7f7fea622bf60813b4702919df650771359efa2daf41833"
 
 [agent]
 timeout_sec = 10800

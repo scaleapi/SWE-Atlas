@@ -14,7 +14,7 @@ category = "refactoring"
 tags = ["refactoring", "master-validator", "rubric-graded", "Go"]
 
 [verifier]
-timeout_sec = 7200
+timeout_sec = 6180
 
 [verifier.env]
 JUDGE_API_KEY = "${JUDGE_API_KEY:-}"
@@ -26,6 +26,10 @@ JUDGE_API_DIALECT = "${JUDGE_API_DIALECT:-}"
 JUDGE_VOTES = "${JUDGE_VOTES:-}"
 OPENAI_API_KEY = "${OPENAI_API_KEY:-}"
 OPENAI_API_BASE = "${OPENAI_API_BASE:-}"
+FULL_SUITE_MODE = "full"
+FULL_SUITE_BASE = "live"
+FS_IMAGE_ID = "ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_RF_trufflesecurity_trufflehog_696719205599a51110d4b419_1.1@sha256:4760ceb5cbe1fa43837776eab30c917aae1c23995b614867192d07452d10c336"
+TEST_TIMEOUT_SEC = "${TEST_TIMEOUT_SEC:-1800}"
 
 [agent]
 timeout_sec = 10800
@@ -33,7 +37,7 @@ network_mode = "allowlist"
 allowed_hosts = []
 
 [environment]
-docker_image = "ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_trufflesecurity_trufflehog_696719205599a51110d4b419_1.1_bake@sha256:318db667f24774dd2806f7cde508ef6689d7225d02d750e7ae271229409e5cb6"
+docker_image = "ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_RF_trufflesecurity_trufflehog_696719205599a51110d4b419_1.1@sha256:4760ceb5cbe1fa43837776eab30c917aae1c23995b614867192d07452d10c336"
 build_timeout_sec = 1800
 allow_internet = true
 cpus = 4

@@ -80,6 +80,7 @@ clean_tests() {
         -o -name rubrics_system_prompt.txt -o -name rubrics_user_prompt_template.txt \
         -o -name run_script.sh -o -name test.sh -o -name test_files.json \
         -o -name test_patch.diff -o -name verifier_report.py \
+        -o -name baked_base.py -o -name baked_base.json -o -name fs_hooks.sh \
         \) \) -print -exec rm -rf {} + 2>/dev/null)"
 }
 tests_sha() {
@@ -306,6 +307,23 @@ if [ "$MV_EXIT" -ne 0 ]; then
     echo "  --- end of artifacts/master_validator.log ---"
 fi
 "${PY[@]}" /tests/verifier_report.py stop-agent-code || true
+
+# Surface the validator's parsed per-phase result maps so the offline full-suite tooling
+# (regen_base.py / live_vs_baked.py) can read the live baseline it needs; these are copies of
+# scratch artifacts and have no effect on the reward.
+for f in agent_baseline_results.json agent_mutation_results.json agent_comparison_results.json \
+         ref_baseline_results.json ref_mutation_results.json ref_comparison_results.json \
+         iv_baseline_results.json iv_mutation_results.json iv_comparison_results.json; do
+    cp "/tmp_artifact_storage/$f" "/logs/verifier/$f" 2>/dev/null || true
+done
+
+# A grading-mechanism infra marker (stale baked stamp, runner-internal timeout, oracle cap overrun) means this
+# trial cannot be scored correctly; exit non-zero with no reward so harbor errors and re-runs it, never a wrong score.
+if [ -s /logs/verifier/infra_error.json ]; then
+    echo "  [infra] grading hit an infrastructure error; not scoring (harbor re-runs the trial):"
+    sed 's/^/    /' /logs/verifier/infra_error.json
+    exit 3
+fi
 
 # ── Keep the runner logs: the only record of why a suite ran empty or failed ──
 for phase in baseline mutation; do

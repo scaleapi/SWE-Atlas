@@ -1,4 +1,4 @@
-I started by building something I could empirically test at runtime: a MinIO server running locally, an IAM user that is intended to be read only for a specific bucket and prefix, and a harness that generates concurrent legitimate writes while the read only identity probes a few "write adjacent" S3 surfaces. I kept the reproduction self contained by using `go run . server ...` for the server and a one off Go probe using `madmin-go` (to create the user and attach policy) and `minio-go` (to issue S3 API calls).
+I started by turning the prompt into something I could empirically test at runtime: a MinIO server running locally, an IAM user that is intended to be read only for a specific bucket and prefix, and a harness that generates concurrent legitimate writes while the read only identity probes a few "write adjacent" S3 surfaces. I kept the reproduction self contained by using `go run . server ...` for the server and a one off Go probe using `madmin-go` (to create the user and attach policy) and `minio-go` (to issue S3 API calls).
 
 The complete probe script is shown below. It creates a bucket, installs a canned policy that only allows ListBucket within a prefix and GetObject within that same prefix, creates a `readonly` user with that policy, then starts background writer goroutines as the root user while the read only client lists, HEADs, and attempts several mutations (Put, Delete, Copy, multipart initiation, and metadata changes via tagging). The script also adds jitter to the read only client transport so requests see intermittent latency under load.
 
@@ -353,7 +353,7 @@ TRACE_RESP status=403 403 Forbidden
 MPU init as readonly uploadID="" err=Access Denied.
 ```
 
-I also tested metadata modification specifically, a "write adjacent" surface. I attempted to add object tags via PutObjectTagging and to replace user metadata via CopyObject with ReplaceMetadata. Both were denied:
+I also tested metadata modification specifically, which the prompt calls out as a "write adjacent" surface. I attempted to add object tags via PutObjectTagging and to replace user metadata via CopyObject with ReplaceMetadata. Both were denied:
 
 ```
 TRACE_REQ method=PUT path=/taskgen-sec/ro/seed.txt?tagging=

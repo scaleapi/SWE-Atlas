@@ -1,4 +1,4 @@
-To investigate Kitty's startup behavior before the terminal is ready for a shell, I first need to set up a virtual framebuffer for headless execution. I'll start Xvfb on display :99 with a 1024x768x24 screen configuration.
+To investigate Kitty's startup behavior before the terminal is ready for a shell, I first need to set up a virtual framebuffer for headless execution as requested in the prompt. I'll start Xvfb on display :99 with a 1024x768x24 screen configuration.
 
 Command to start Xvfb (skip if already running):
 ```

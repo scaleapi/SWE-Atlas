@@ -1404,11 +1404,15 @@ run_reference_mode() {
     # Baseline: checkout at base commit
     # ---------------------------------------------------------
     log "=== Running BASELINE tests (base commit) ==="
+    if fs_baseline "${ARTIFACT_DIR}/ref_baseline"; then
+        BASELINE_JSON="${ARTIFACT_DIR}/ref_baseline_results.json"
+    else
     clean_workspace
     checkout_commit "$BASE_COMMIT" "base commit"
     build_project
     
     BASELINE_JSON=$(run_tests_and_parse "${ARTIFACT_DIR}/ref_baseline")
+    fi
     log "SUCCESS: Baseline complete."
     echo ""
 
@@ -1435,7 +1439,8 @@ run_reference_mode() {
 
     build_project
     
-    MUTATION_JSON=$(run_tests_and_parse "${ARTIFACT_DIR}/ref_mutation")
+    fs_mutation "${ARTIFACT_DIR}/ref_mutation" oracle
+    MUTATION_JSON="$FS_MUTATION_JSON"
     log "SUCCESS: Mutation complete."
     echo ""
 
@@ -1508,11 +1513,15 @@ run_agent_mode() {
     # Baseline: checkout at base commit (no patches)
     # ---------------------------------------------------------
     log "=== Running BASELINE tests (base commit, no patches) ==="
+    if fs_baseline "${ARTIFACT_DIR}/agent_baseline"; then
+        BASELINE_JSON="${ARTIFACT_DIR}/agent_baseline_results.json"
+    else
     clean_workspace
     checkout_commit "$BASE_COMMIT" "base commit"
     build_project
     
     BASELINE_JSON=$(run_tests_and_parse "${ARTIFACT_DIR}/agent_baseline")
+    fi
     log "SUCCESS: Baseline complete."
     echo ""
 
@@ -1539,7 +1548,8 @@ run_agent_mode() {
 
     build_project
     
-    MUTATION_JSON=$(run_tests_and_parse "${ARTIFACT_DIR}/agent_mutation")
+    fs_mutation "${ARTIFACT_DIR}/agent_mutation" agent
+    MUTATION_JSON="$FS_MUTATION_JSON"
     log "SUCCESS: Mutation complete."
     echo ""
 
@@ -1621,11 +1631,15 @@ run_instance_validation_mode() {
     # Baseline: checkout at base commit
     # ---------------------------------------------------------
     log "=== Running BASELINE tests (base commit) ==="
+    if fs_baseline "${ARTIFACT_DIR}/iv_baseline"; then
+        BASELINE_JSON="${ARTIFACT_DIR}/iv_baseline_results.json"
+    else
     clean_workspace
     checkout_commit "$BASE_COMMIT" "base commit"
     build_project
 
     BASELINE_JSON=$(run_tests_and_parse "${ARTIFACT_DIR}/iv_baseline")
+    fi
     log "SUCCESS: Baseline complete."
     echo ""
 
@@ -1645,7 +1659,8 @@ run_instance_validation_mode() {
 
     build_project
 
-    MUTATION_JSON=$(run_tests_and_parse "${ARTIFACT_DIR}/iv_mutation")
+    fs_mutation "${ARTIFACT_DIR}/iv_mutation" oracle
+    MUTATION_JSON="$FS_MUTATION_JSON"
     log "SUCCESS: Mutation complete."
     echo ""
 
@@ -1786,6 +1801,11 @@ fi
 # ==============================================================================
 # Execute Selected Mode
 # ==============================================================================
+
+
+# Full-suite grading hooks (baked baseline + patched-phase cap); no-op when FULL_SUITE_BASE=live.
+. "${FS_UTIL:-/tests}/fs_hooks.sh"
+fs_init
 
 case "$MODE" in
     reference)

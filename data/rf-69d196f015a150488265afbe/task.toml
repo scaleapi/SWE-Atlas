@@ -14,10 +14,10 @@ category = "refactoring"
 tags = ["refactoring", "master-validator", "rubric-graded", "TypeScript"]
 
 [verifier]
-timeout_sec = 7200
+timeout_sec = 6180
 
 [verifier.env]
-TEST_TIMEOUT_SEC = "${TEST_TIMEOUT_SEC:-2700}"
+TEST_TIMEOUT_SEC = "${TEST_TIMEOUT_SEC:-1800}"
 JUDGE_API_KEY = "${JUDGE_API_KEY:-}"
 JUDGE_FALLBACK_API_KEY = "${JUDGE_FALLBACK_API_KEY:-}"
 JUDGE_BASE_URL = "${JUDGE_BASE_URL:-}"
@@ -27,6 +27,9 @@ JUDGE_API_DIALECT = "${JUDGE_API_DIALECT:-}"
 JUDGE_VOTES = "${JUDGE_VOTES:-}"
 OPENAI_API_KEY = "${OPENAI_API_KEY:-}"
 OPENAI_API_BASE = "${OPENAI_API_BASE:-}"
+FULL_SUITE_MODE = "full"
+FULL_SUITE_BASE = "live"
+FS_IMAGE_ID = "ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_Automattic_wp-calypso_69d196f015a150488265afbe_1.1_bake@sha256:6bd68b0f655cfaf44d48b3b1aedfd695b23bfb93dcbb22e73385d5b6d09851eb"
 
 [agent]
 timeout_sec = 10800
