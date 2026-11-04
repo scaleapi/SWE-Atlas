@@ -33,7 +33,7 @@
   },
   {
     "id": "89bf635feec448e6e35358dfe8d0dba9",
-    "title": "1.6: Reports the hash or checksum the classifier uses to detect changes between training runs (e.g., SHA1 hash value)",
+    "title": "1.5: Reports the hash or checksum the classifier uses to detect changes between training runs (e.g., SHA1 hash value)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "47b4e211fd71ef485ee026e2eef62bb2",
-    "title": "1.7: Reports actual checksum values compared during duplicate detection (e.g., MD5 checksums being matched)",
+    "title": "1.6: Reports actual checksum values compared during duplicate detection (e.g., MD5 checksums being matched)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "674833f8a67cfa4fb6470f295ff60016",
-    "title": "1.8: Reports the sanity checker output when an archive is healthy (e.g., \"Sanity checker detected no issues.\")",
+    "title": "1.7: Reports the sanity checker output when an archive is healthy (e.g., \"Sanity checker detected no issues.\")",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "1893fb8b1d94f21bc05f0c9812c89292",
-    "title": "1.9: Reports the sanity checker output when something has gone wrong (e.g., checksum mismatch error message)",
+    "title": "1.8: Reports the sanity checker output when something has gone wrong (e.g., checksum mismatch error message)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "25b34b2ba97175bd012e5afe0670439d",
-    "title": "1.10: Reports specific hash values the sanity checker compares when it discovers a mismatch (e.g., stored: a1b2c3d4..., actual: 3d3d8304...)",
+    "title": "1.9: Reports specific hash values the sanity checker compares when it discovers a mismatch (e.g., stored: a1b2c3d4..., actual: 3d3d8304...)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "9b4eb4323f3db66cc4106c9df421d273",
-    "title": "1.11: Reports what the system outputs when it finds orphaned files (e.g., \"Orphaned file in media dir: {path}\")",
+    "title": "1.10: Reports what the system outputs when it finds orphaned files (e.g., \"Orphaned file in media dir: {path}\")",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

@@ -37,7 +37,7 @@
       "importance": "must have"
     },
     "id": "dbe3b23ac6c296b9b930dd26310f4acf",
-    "title": "1.7: Narrower-destination rewrap tests explicitly assert that the first destination row is not a continuation line (i.e., lb2.is_continued(0) is asserted False after rewrap)"
+    "title": "1.5: Narrower-destination rewrap tests explicitly assert that the first destination row is not a continuation line (i.e., lb2.is_continued(0) is asserted False after rewrap)"
   },
   {
     "annotations": {
@@ -45,7 +45,7 @@
       "importance": "must have"
     },
     "id": "88fb047f39dd236e4d101e6867f026bf",
-    "title": "1.8: Narrower-destination rewrap tests assert that wrapped output sets continuation flags on at least one destination row with index > 0 (i.e., lb2.is_continued(i) asserted True for some i > 0)"
+    "title": "1.6: Narrower-destination rewrap tests assert that wrapped output sets continuation flags on at least one destination row with index > 0 (i.e., lb2.is_continued(i) asserted True for some i > 0)"
   },
   {
     "annotations": {
@@ -53,7 +53,7 @@
       "importance": "must have"
     },
     "id": "9ad127a8b0939eeaa8088f1908242956",
-    "title": "1.9: Wider-destination rewrap tests include at least one explicit assertion that two adjacent destination rows have different line text values after rewrap (i.e., they are not merged into a single identical line string)"
+    "title": "1.7: Wider-destination rewrap tests include at least one explicit assertion that two adjacent destination rows have different line text values after rewrap (i.e., they are not merged into a single identical line string)"
   },
   {
     "annotations": {

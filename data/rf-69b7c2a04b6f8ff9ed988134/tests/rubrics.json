@@ -65,7 +65,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "1cb98f3436813ab2353628d1c76dbdbd",
-    "title": "4.1: Removes wildcard logger (`ALPROTO_UNKNOWN`) invocation from the transaction logging path",
+    "title": "2.1: Removes wildcard logger (`ALPROTO_UNKNOWN`) invocation from the transaction logging path",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "9ef6a26fd19275bb4ce2704d53792d92",
-    "title": "4.2: Modifies any of the 3 public function signatures declared in `src/output-tx.h` (`OutputRegisterTxLogger`, `OutputTxLoggerRegister`, `OutputTxShutdown`)",
+    "title": "2.2: Modifies any of the 3 public function signatures declared in `src/output-tx.h` (`OutputRegisterTxLogger`, `OutputTxLoggerRegister`, `OutputTxShutdown`)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "8bfe54f9b695b64c21e0fc039f9ce3d0",
-    "title": "4.3: Removes or breaks the `tx_logged` tracking that prevents duplicate logger invocations within a single transaction",
+    "title": "2.3: Removes or breaks the `tx_logged` tracking that prevents duplicate logger invocations within a single transaction",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

@@ -129,7 +129,7 @@
   },
   {
     "id": "0248934eb1b30de7faea157dd07d4b5d",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -137,7 +137,7 @@
   },
   {
     "id": "05e956f0b190cf3bd71c05320a06927b",
-    "title": "4.1: Removes existing innochecksum command line options (such as --skip-freed-pages) or their functionality",
+    "title": "2.1: Removes existing innochecksum command line options (such as --skip-freed-pages) or their functionality",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -145,7 +145,7 @@
   },
   {
     "id": "9150602d8cd145a11a4530c37fc7df18",
-    "title": "4.2: Breaks existing checksum verification or page processing for non-doublewrite pages by incorrectly passing flags or skipping normal pages when a single file is checked without --tablespace-flags",
+    "title": "2.2: Breaks existing checksum verification or page processing for non-doublewrite pages by incorrectly passing flags or skipping normal pages when a single file is checked without --tablespace-flags",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

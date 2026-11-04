@@ -9,7 +9,7 @@
   },
   {
     "id": "c9e76116e256f3ba23c17ae7def98d12",
-    "title": "1.5: Includes a stack-level or symbol-level snapshot showing the Python call stack (e.g., _run_app in kitty/main.py) or thread activity captured using inspection tools.",
+    "title": "1.2: Includes a stack-level or symbol-level snapshot showing the Python call stack (e.g., _run_app in kitty/main.py) or thread activity captured using inspection tools.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -17,7 +17,7 @@
   },
   {
     "id": "8fb08f9541cd8a766ef717605453307d",
-    "title": "1.6: Includes the actual commands used for tracing or inspection (e.g., py-spy dump, strace) and shows representative raw output from those commands.",
+    "title": "1.3: Includes the actual commands used for tracing or inspection (e.g., py-spy dump, strace) and shows representative raw output from those commands.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -25,7 +25,7 @@
   },
   {
     "id": "54f1fe9f33647b5c76dcc33feda47d3a",
-    "title": "1.7: Correlates a keypress event through the input pipeline to the pty write, showing the thread that performs the actual write to the pty file descriptor (e.g., write to /dev/pts/ptmx).",
+    "title": "1.4: Correlates a keypress event through the input pipeline to the pty write, showing the thread that performs the actual write to the pty file descriptor (e.g., write to /dev/pts/ptmx).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "5fcb51e883dc1fd976027f3b351d85ac",
-    "title": "1.8: Reports observing log or debug output from the running kitty explicitly indicating input was discarded when sent to an unfocused or closed window (e.g., 'Failed to write to child N as it does not exist' in kitty's log).",
+    "title": "1.5: Reports observing log or debug output from the running kitty explicitly indicating input was discarded when sent to an unfocused or closed window (e.g., 'Failed to write to child N as it does not exist' in kitty's log).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "8378ff843cf182194e7585c2b7205748",
-    "title": "1.9: Rules out at least two plausible but incorrect interpretations about which layer performs primary input dispatch, using timing or ordering evidence from runtime observations.",
+    "title": "1.6: Rules out at least two plausible but incorrect interpretations about which layer performs primary input dispatch, using timing or ordering evidence from runtime observations.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "3d009deb0f78cdb9db0e74699b84a3ff",
-    "title": "1.10: Identifies a correctness-versus-responsiveness tradeoff in input handling (e.g., mutex locking on write buffers) supported by measurable timing or ordering evidence from runtime observations.",
+    "title": "1.7: Identifies a correctness-versus-responsiveness tradeoff in input handling (e.g., mutex locking on write buffers) supported by measurable timing or ordering evidence from runtime observations.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

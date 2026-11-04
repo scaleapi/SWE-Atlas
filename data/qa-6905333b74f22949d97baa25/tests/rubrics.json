@@ -57,7 +57,7 @@
   },
   {
     "id": "e72a15676831b0d7b3411de4c087c6b6",
-    "title": "1.9: Reports runtime output from a multi-VU run showing multiple VU identifiers executing within the same run (e.g., console lines with __VU=1 and __VU=3)",
+    "title": "1.8: Reports runtime output from a multi-VU run showing multiple VU identifiers executing within the same run (e.g., console lines with __VU=1 and __VU=3)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

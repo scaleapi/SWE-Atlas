@@ -49,7 +49,7 @@
   },
   {
     "id": "524626370f4daa081f8b21f990f2d359",
-    "title": "1.7: Replaces all 3 `is.nullOrUndefined(...)` checks in `uv.ts` with idiomatic `!value` or `value == null` checks (uv, existingLockFileContent, uv_indexes)",
+    "title": "1.6: Replaces all 3 `is.nullOrUndefined(...)` checks in `uv.ts` with idiomatic `!value` or `value == null` checks (uv, existingLockFileContent, uv_indexes)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "102c0d23c061fecad513de8683d8e991",
-    "title": "1.8: Adds `.catch()` to all 16 schema fields in `schema.ts` for graceful error recovery (project, build-system, dependency-groups, tool, requires-python, dependencies, optional-dependencies, pixi, pdm, hatch, uv, version, build-backend, build-system.requires, PdmSchema.dev-dependencies, UvSchema.dev-dependencies)",
+    "title": "1.7: Adds `.catch()` to all 16 schema fields in `schema.ts` for graceful error recovery (project, build-system, dependency-groups, tool, requires-python, dependencies, optional-dependencies, pixi, pdm, hatch, uv, version, build-backend, build-system.requires, PdmSchema.dev-dependencies, UvSchema.dev-dependencies)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "88817f9dc91aa0853e6c9d4ef3078f10",
-    "title": "1.9: Removes both calls to `parseDependencyList` from `extractPackageFile()` in `extract.ts` (for project.dependencies and build-system.requires)",
+    "title": "1.8: Removes both calls to `parseDependencyList` from `extractPackageFile()` in `extract.ts` (for project.dependencies and build-system.requires)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "d384e093f2f709c6e45cb3d98799977e",
-    "title": "1.10: Removes both calls to `parseDependencyGroupRecord` from `extractPackageFile()` in `extract.ts` (for dependency-groups and optional-dependencies)",
+    "title": "1.9: Removes both calls to `parseDependencyGroupRecord` from `extractPackageFile()` in `extract.ts` (for dependency-groups and optional-dependencies)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "f3165d6f1171735b8a282478d0f9d7ba",
-    "title": "3.1: Removes all 3 obsolete functions (parseDependencyList, parseDependencyGroupRecord, and parsePyProject) from `utils.ts`",
+    "title": "2.1: Removes all 3 obsolete functions (parseDependencyList, parseDependencyGroupRecord, and parsePyProject) from `utils.ts`",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

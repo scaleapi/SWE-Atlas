@@ -33,7 +33,7 @@
   },
   {
     "id": "ed30fc241d7895d9695194e6fef5b5f3",
-    "title": "1.8: Extracts the specific task arguments from the decoded broker payload, confirming the file path (e.g., \"/tmp/.../test.txt\") is present in the queued message structure",
+    "title": "1.5: Extracts the specific task arguments from the decoded broker payload, confirming the file path (e.g., \"/tmp/.../test.txt\") is present in the queued message structure",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "8670f87a5a02e65bb9137b569331cec1",
-    "title": "1.9: Confirms the persistence of the processed document by identifying the database table documents_document",
+    "title": "1.6: Confirms the persistence of the processed document by identifying the database table documents_document",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "f16f5a1018f315e2528a5b564b14cf0f",
-    "title": "1.10: Verifies the metadata extraction by confirming specific parsed fields like mime_type, content, or language match the input file.",
+    "title": "1.7: Verifies the metadata extraction by confirming specific parsed fields like mime_type, content, or language match the input file.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "427a3a49eb7e5308070cbf404ef36cd6",
-    "title": "1.11: States where the system keeps task execution or processing history, such as rows in django_celery_results_taskresult, to confirm durable task-level auditability",
+    "title": "1.8: States where the system keeps task execution or processing history, such as rows in django_celery_results_taskresult, to confirm durable task-level auditability",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "7f1b64e4db27e2233065bdfb6ae4f307",
-    "title": "1.12: States the high-level codepath that detects new files, such as consume_from_consume_dir scanning the directory, to confirm top-level ingestion entry point",
+    "title": "1.9: States the high-level codepath that detects new files, such as consume_from_consume_dir scanning the directory, to confirm top-level ingestion entry point",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "1f3a7a79e64b61d0ea450e0ec7acbda4",
-    "title": "1.13: States the component responsible for creating the ingestion task object, such as consume_from_consume_dir calling consume_file.delay(path), to confirm the responsible task-creation layer",
+    "title": "1.10: States the component responsible for creating the ingestion task object, such as consume_from_consume_dir calling consume_file.delay(path), to confirm the responsible task-creation layer",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

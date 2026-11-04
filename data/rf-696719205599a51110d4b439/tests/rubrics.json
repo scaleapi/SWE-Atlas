@@ -89,7 +89,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "fb85c1ccdf7213c85044c97150ac36b8",
-    "title": "3.1: Removes `sobekValueExists` function definition from `internal/js/modules/k6/browser/browser/helpers.go`",
+    "title": "2.1: Removes `sobekValueExists` function definition from `internal/js/modules/k6/browser/browser/helpers.go`",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "3030481a2ed7a327af89863289b63488",
-    "title": "3.2: Removes `sobekValueExists` function definition from `internal/js/modules/k6/browser/common/helpers.go`",
+    "title": "2.2: Removes `sobekValueExists` function definition from `internal/js/modules/k6/browser/common/helpers.go`",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "1163319d2daacc4d827a34ac04b0ec36",
-    "title": "4.1: Removes null/undefined verification checks without replacing them with equivalent functionality",
+    "title": "3.1: Removes null/undefined verification checks without replacing them with equivalent functionality",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -129,7 +129,7 @@
   },
   {
     "id": "4bf98f552400131654a005a0da25798d",
-    "title": "4.2: Modifies files outside the browser module scope, such as the `js/common` package implementation",
+    "title": "3.2: Modifies files outside the browser module scope, such as the `js/common` package implementation",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

@@ -97,7 +97,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "618ce3f060a0dbfab36e1794050f3f71",
-    "title": "3.1: Removes the obsolete public/app/features/alerting/unified/Silences.tsx module after the route split",
+    "title": "2.1: Removes the obsolete public/app/features/alerting/unified/Silences.tsx module after the route split",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "3248aeb3fddedd599459bd038132fad1",
-    "title": "4.1: Changes any public silence route paths at /alerting/silences, /alerting/silence/new, or /alerting/silence/:id/edit",
+    "title": "3.1: Changes any public silence route paths at /alerting/silences, /alerting/silence/new, or /alerting/silence/:id/edit",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -129,7 +129,7 @@
   },
   {
     "id": "e9cd4cda9d36a1ea94c7abcb41320606",
-    "title": "4.2: Modifies files ending in .test.tsx, .test.ts, .spec.tsx, .spec.ts, or any other test infrastructure file",
+    "title": "3.2: Modifies files ending in .test.tsx, .test.ts, .spec.tsx, .spec.ts, or any other test infrastructure file",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

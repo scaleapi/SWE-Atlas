@@ -57,7 +57,7 @@
   },
   {
     "id": "93a36baf30afdf1b75d92c4cce60ee6b",
-    "title": "1.9: Reports that a direct SQL title update leaves the search index stale, e.g., searching for the SQL-updated title returns 0 results.",
+    "title": "1.8: Reports that a direct SQL title update leaves the search index stale, e.g., searching for the SQL-updated title returns 0 results.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

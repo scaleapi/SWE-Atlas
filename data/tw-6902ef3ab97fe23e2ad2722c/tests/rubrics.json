@@ -29,7 +29,7 @@
       "importance": "must have"
     },
     "id": "2cda0fc47e0a2b567bf93ed03a2770e4",
-    "title": "1.5: In a baseline consumption test where no override_correspondent_id is provided, the test asserts document.correspondent is None after successful processing"
+    "title": "1.4: In a baseline consumption test where no override_correspondent_id is provided, the test asserts document.correspondent is None after successful processing"
   },
   {
     "annotations": {
@@ -37,7 +37,7 @@
       "importance": "must have"
     },
     "id": "2025f23a83176a679bba51e1f929a833",
-    "title": "1.6: In a baseline consumption test where no override_document_type_id is provided, the test asserts document.document_type is None after successful processing"
+    "title": "1.5: In a baseline consumption test where no override_document_type_id is provided, the test asserts document.document_type is None after successful processing"
   },
   {
     "annotations": {
@@ -45,7 +45,7 @@
       "importance": "must have"
     },
     "id": "de0dae3eb6f8b4968248f6282eab7502",
-    "title": "1.7: Tests that the source file exists at document.source_path after document processing"
+    "title": "1.6: Tests that the source file exists at document.source_path after document processing"
   },
   {
     "annotations": {
@@ -53,7 +53,7 @@
       "importance": "must have"
     },
     "id": "74b9cbffe1554cfc12a31be96c24b107",
-    "title": "1.8: Tests that a thumbnail file is created at document.thumbnail_path after document processing"
+    "title": "1.7: Tests that a thumbnail file is created at document.thumbnail_path after document processing"
   },
   {
     "annotations": {
@@ -61,7 +61,7 @@
       "importance": "must have"
     },
     "id": "d29ae5bbd5a24d8a94ae92a833451207",
-    "title": "1.9: Tests that an archive version file is created at document.archive_path after document processing"
+    "title": "1.8: Tests that an archive version file is created at document.archive_path after document processing"
   },
   {
     "annotations": {
@@ -69,7 +69,7 @@
       "importance": "must have"
     },
     "id": "12f74e8cbdda385662273ee4f033c363",
-    "title": "1.10: Tests that the original input file is deleted after successful document consumption"
+    "title": "1.9: Tests that the original input file is deleted after successful document consumption"
   },
   {
     "annotations": {

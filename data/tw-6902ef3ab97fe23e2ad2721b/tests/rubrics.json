@@ -45,7 +45,7 @@
       "importance": "must have"
     },
     "id": "cde7cd99313c8ad978c17f8129123851",
-    "title": "1.7: Tests that LSBExtendedField correctly decodes encoded bytes back to the original value using m2i() with continuation marker at bit position 0"
+    "title": "1.6: Tests that LSBExtendedField correctly decodes encoded bytes back to the original value using m2i() with continuation marker at bit position 0"
   },
   {
     "annotations": {
@@ -53,7 +53,7 @@
       "importance": "must have"
     },
     "id": "82a4b12fe275554f6b9cbe9f7c7cf9fc",
-    "title": "1.8: Tests that MSBExtendedField correctly encodes a value using i2m() with continuation marker at bit position 7"
+    "title": "1.7: Tests that MSBExtendedField correctly encodes a value using i2m() with continuation marker at bit position 7"
   },
   {
     "annotations": {
@@ -61,7 +61,7 @@
       "importance": "must have"
     },
     "id": "d14e86ea2928aebcc1a9ee31583b5beb",
-    "title": "1.9: Tests that MSBExtendedField correctly decodes encoded bytes back to the original value using m2i() with continuation marker at bit position 7"
+    "title": "1.8: Tests that MSBExtendedField correctly decodes encoded bytes back to the original value using m2i() with continuation marker at bit position 7"
   },
   {
     "annotations": {

@@ -81,7 +81,7 @@
   },
   {
     "id": "6618759fb2dccfc4900e116c6a8f43b4",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "a7f68c6b3681db76b5a5ffa853e60d94",
-    "title": "3.1: Removes the duplicate userRes struct definition from v2 detector after consolidation",
+    "title": "2.1: Removes the duplicate userRes struct definition from v2 detector after consolidation",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "6733bebceacf34fa28112bcc4e46257c",
-    "title": "3.2: Removes the duplicate inline verification loop from the FromData function in v2 detector after consolidation",
+    "title": "2.2: Removes the duplicate inline verification loop from the FromData function in v2 detector after consolidation",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "e27daae394acf8c1a64e8667eab98157",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "948bc5bb16293265b6f558ff4a356376",
-    "title": "4.1: Alters the token verification logic so that HTTP 2xx status codes with a decodable JSON response no longer set Verified to true",
+    "title": "3.1: Alters the token verification logic so that HTTP 2xx status codes with a decodable JSON response no longer set Verified to true",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "07c22b7fb819601b07c22f76dfb294b4",
-    "title": "4.2: Removes the version-specific token pattern matching (keyPat regex) from either v1 or v2 detector",
+    "title": "3.2: Removes the version-specific token pattern matching (keyPat regex) from either v1 or v2 detector",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

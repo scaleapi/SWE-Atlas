@@ -49,7 +49,7 @@
   },
   {
     "id": "1d5c79498c7a24fe32195a6d9d4aef34",
-    "title": "1.8: States that, for cloud recording rules, the backend's rule definition does not populate the queries array in the initial rule-to-form conversion.",
+    "title": "1.7: States that, for cloud recording rules, the backend's rule definition does not populate the queries array in the initial rule-to-form conversion.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "ad586a353d0985aa29c41c772123f42b",
-    "title": "1.9: Shows test script output demonstrating the alerting rule bug with values (e.g., Expression field: sum(rate(http_requests_total[5m])), Queries array length: 0).",
+    "title": "1.8: Shows test script output demonstrating the alerting rule bug with values (e.g., Expression field: sum(rate(http_requests_total[5m])), Queries array length: 0).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "5db9a44f635738832e3117e1392bc57d",
-    "title": "1.10: Identifies rule-form.ts as the codebase location for the alerting form hydration behavior.",
+    "title": "1.9: Identifies rule-form.ts as the codebase location for the alerting form hydration behavior.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

@@ -113,7 +113,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "7c8601d2d93905e347107768913f7efc",
-    "title": "3.1: Removes exported ruleFilter entry points that branch on backendFiltered from public/app/features/alerting/unified/rule-list/hooks/filters.ts",
+    "title": "2.1: Removes exported ruleFilter entry points that branch on backendFiltered from public/app/features/alerting/unified/rule-list/hooks/filters.ts",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -129,7 +129,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -137,7 +137,7 @@
   },
   {
     "id": "a8945727788a1d5b11e4a163d80c4b2c",
-    "title": "4.1: Removes label-based filtering paths that ruleFilter previously covered in public/app/features/alerting/unified/rule-list/hooks/filters.ts",
+    "title": "3.1: Removes label-based filtering paths that ruleFilter previously covered in public/app/features/alerting/unified/rule-list/hooks/filters.ts",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -145,7 +145,7 @@
   },
   {
     "id": "a31dfb0a5da35ec147fae95bc3022d5e",
-    "title": "4.2: Modifies test files or testing logic",
+    "title": "3.2: Modifies test files or testing logic",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

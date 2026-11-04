@@ -45,7 +45,7 @@
       "importance": "must have"
     },
     "id": "91b1a83f903601d6e0758aa2d8b37772",
-    "title": "1.7: Tests a quoted destination path that combines backslash-octal escapes with literal spaces, asserting the returned path preserves both the decoded characters and the spaces"
+    "title": "1.6: Tests a quoted destination path that combines backslash-octal escapes with literal spaces, asserting the returned path preserves both the decoded characters and the spaces"
   },
   {
     "annotations": {

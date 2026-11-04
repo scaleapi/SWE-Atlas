@@ -41,7 +41,7 @@
   },
   {
     "id": "4cee97c6b6fa62810b7e92eed92460fe",
-    "title": "1.7: Identifies auth dialog onClose clears pending action (e.g., clearLastActionRequiresLogin())",
+    "title": "1.6: Identifies auth dialog onClose clears pending action (e.g., clearLastActionRequiresLogin())",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "733e543cd3696250fa32bd483e58cbde",
-    "title": "1.8: Explains that the skip is caused by the reload discarding non-persisted state, not by timing or initialization order (e.g., state exists until reload)",
+    "title": "1.7: Explains that the skip is caused by the reload discarding non-persisted state, not by timing or initialization order (e.g., state exists until reload)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

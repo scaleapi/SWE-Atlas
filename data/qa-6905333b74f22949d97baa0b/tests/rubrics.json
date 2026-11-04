@@ -137,7 +137,7 @@
   },
   {
     "id": "65b47882d2800ce65e38d2db29e70247",
-    "title": "1.19: Identifies specific configuration fields in the minimal Go API program that differ from CLI defaults, since missing or misconfigured fields cause runtime behavior differences.",
+    "title": "1.18: Identifies specific configuration fields in the minimal Go API program that differ from CLI defaults, since missing or misconfigured fields cause runtime behavior differences.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

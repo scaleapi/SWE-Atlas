@@ -29,7 +29,7 @@
       "importance": "must have"
     },
     "id": "02ddb1cd0d874086ed71aa1ec58a9d5b",
-    "title": "1.5: Tests that FromReader recovers from malformed commit sections then returns multiple valid diffs (minimum 3) including commit before corruption, malformed commit representation, and commit after recovery when processing data with BufferWriter"
+    "title": "1.4: Tests that FromReader recovers from malformed commit sections then returns multiple valid diffs (minimum 3) including commit before corruption, malformed commit representation, and commit after recovery when processing data with BufferWriter"
   },
   {
     "annotations": {
@@ -37,7 +37,7 @@
       "importance": "must have"
     },
     "id": "798a7f49268a5f691216142d3d69c9fd",
-    "title": "1.6: Tests that FromReader recovers from corrupted staged diff sections then returns multiple valid diffs (minimum 3) including diffs before corruption and diffs after recovery when staged=true"
+    "title": "1.5: Tests that FromReader recovers from corrupted staged diff sections then returns multiple valid diffs (minimum 3) including diffs before corruption and diffs after recovery when staged=true"
   },
   {
     "annotations": {

@@ -73,7 +73,7 @@
   },
   {
     "id": "73097f91958b58dcb4b09096138c070b",
-    "title": "1.11: Shows actual raw message headers (not summaries or descriptions) for every accepted test message, including DKIM-Signature and Received headers where present.",
+    "title": "1.10: Shows actual raw message headers (not summaries or descriptions) for every accepted test message, including DKIM-Signature and Received headers where present.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "3cf1b33f980edace5bec7afb01bf52e8",
-    "title": "1.12: States a plausible but incorrect interpretation and rules it out using specific test evidence.",
+    "title": "1.11: States a plausible but incorrect interpretation and rules it out using specific test evidence.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "dd22cb50e9e066c5f458cb0101645452",
-    "title": "1.13: Shows SMTP transaction evidence for an accepted message including the successful server responses (e.g., 250 OK after MAIL FROM, 250 OK: queued after DATA).",
+    "title": "1.12: Shows SMTP transaction evidence for an accepted message including the successful server responses (e.g., 250 OK after MAIL FROM, 250 OK: queued after DATA).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

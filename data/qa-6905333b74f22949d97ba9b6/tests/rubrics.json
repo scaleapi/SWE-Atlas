@@ -17,7 +17,7 @@
   },
   {
     "id": "2f53b4c1157548f9d1f5155dc5b4f2f1",
-    "title": "1.4: States that null values in chart data mean no data point or absent bar rather than zero-height bar",
+    "title": "1.3: States that null values in chart data mean no data point or absent bar rather than zero-height bar",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -25,7 +25,7 @@
   },
   {
     "id": "479feeca09527f165a69726e918ef88e",
-    "title": "1.6: States that there is no SpecialValue option that produces numeric zero",
+    "title": "1.4: States that there is no SpecialValue option that produces numeric zero",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "d2856b202729ab0b43aa94527d63ad7f",
-    "title": "1.7: Shows concrete example of semantic difference for calculations like averages where count of values differs (e.g., average of two values vs average of three values including zero)",
+    "title": "1.5: Shows concrete example of semantic difference for calculations like averages where count of values differs (e.g., average of two values vs average of three values including zero)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "0a505b86e776dba31452d4ed8e2e4258",
-    "title": "1.8: Provides a concrete sparse dataset example showing row/column/value input and resulting matrix output with missing value filled (e.g., input with three data points resulting in fourth cell being empty string)",
+    "title": "1.6: Provides a concrete sparse dataset example showing row/column/value input and resulting matrix output with missing value filled (e.g., input with three data points resulting in fourth cell being empty string)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

@@ -65,7 +65,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "22794dcb27cd846f61aef7ac5114abd6",
-    "title": "4.1: Removes the Transform method from js/compiler/compiler.go",
+    "title": "3.1: Removes the Transform method from js/compiler/compiler.go",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "284432adf8631f731014d211699b6f0b",
-    "title": "4.2: Removes the CommonJS module wrapping functionality from js/compiler/compiler.go",
+    "title": "3.2: Removes the CommonJS module wrapping functionality from js/compiler/compiler.go",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

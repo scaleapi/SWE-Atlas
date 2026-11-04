@@ -105,7 +105,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "dbcd9529c268e36e473359ebc2473c80",
-    "title": "4.1: Breaks existing packet parsing behavior for any of the 3 refactored Dot11 element classes (Dot11EltMicrosoftWPA, Dot11EltRSN, Dot11EltVendorSpecific) in scapy/layers/dot11.py",
+    "title": "2.1: Breaks existing packet parsing behavior for any of the 3 refactored Dot11 element classes (Dot11EltMicrosoftWPA, Dot11EltRSN, Dot11EltVendorSpecific) in scapy/layers/dot11.py",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

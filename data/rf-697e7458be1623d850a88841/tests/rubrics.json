@@ -121,7 +121,7 @@
   },
   {
     "id": "26ccafb5c34838930a5234706204170f",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -129,7 +129,7 @@
   },
   {
     "id": "c1a72e56dcb0dbf19c05c891f38be647",
-    "title": "4.1: Uses GetInputs() instead of GetSpecialInputs() in GitHub Cmd() method",
+    "title": "2.1: Uses GetInputs() instead of GetSpecialInputs() in GitHub Cmd() method",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -137,7 +137,7 @@
   },
   {
     "id": "854048ff56343a9d1166dd5b92acf366",
-    "title": "4.2: Applies placeholder fallback to non-required fields in GetInputs() (textinputs.go)",
+    "title": "2.2: Applies placeholder fallback to non-required fields in GetInputs() (textinputs.go)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

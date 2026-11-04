@@ -37,7 +37,7 @@
       "importance": "must have"
     },
     "id": "6a46f8bb67c88fef74e15ce868592f02",
-    "title": "1.6: Tests that HandleFile correctly handles plain uncompressed TAR archives"
+    "title": "1.5: Tests that HandleFile correctly handles plain uncompressed TAR archives"
   },
   {
     "annotations": {

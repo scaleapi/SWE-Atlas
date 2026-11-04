@@ -137,7 +137,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -145,7 +145,7 @@
   },
   {
     "id": "c72f32261d8e8a7d0f788109a3e5f939",
-    "title": "3.1: Removes the `dict0stats.inl` inline file from `storage/innobase/include/`",
+    "title": "2.1: Removes the `dict0stats.inl` inline file from `storage/innobase/include/`",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -153,7 +153,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -161,7 +161,7 @@
   },
   {
     "id": "4b37e1fc1201314ddc02d0f7183292d7",
-    "title": "4.1: Breaks the `RENAME TABLE` stats reload mechanism so that `RENAME TABLE t TO tmp, tmp TO t` no longer forces persistent statistics to be recalculated on the next table open",
+    "title": "3.1: Breaks the `RENAME TABLE` stats reload mechanism so that `RENAME TABLE t TO tmp, tmp TO t` no longer forces persistent statistics to be recalculated on the next table open",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

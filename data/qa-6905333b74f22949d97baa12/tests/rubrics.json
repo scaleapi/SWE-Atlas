@@ -33,7 +33,7 @@
   },
   {
     "id": "9f227c40bb924bf6718cdd3c54a60710",
-    "title": "1.6: Explains that the tracking is used for DSN/bounce generation to hide internal aliases",
+    "title": "1.5: Explains that the tracking is used for DSN/bounce generation to hide internal aliases",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

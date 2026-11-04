@@ -121,7 +121,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -129,7 +129,7 @@
   },
   {
     "id": "625f88a36fbf9ba5915e5c358e646e42",
-    "title": "3.1: Removes the unused WatchEvent type import from endpoints.ts",
+    "title": "2.1: Removes the unused WatchEvent type import from endpoints.ts",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -137,7 +137,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -145,7 +145,7 @@
   },
   {
     "id": "b7dd510e856d547b582f8f25d16fb0e2",
-    "title": "4.1: Retains the raw getBackendSrv().put() call or console.log/alert() feedback in SaveProvisionedDashboard",
+    "title": "3.1: Retains the raw getBackendSrv().put() call or console.log/alert() feedback in SaveProvisionedDashboard",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

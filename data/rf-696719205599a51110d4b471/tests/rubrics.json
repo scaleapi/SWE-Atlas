@@ -65,7 +65,7 @@
   },
   {
     "id": "71b7032df2b10cddb7517cb7fc73868a",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "2f7c4a1e9b6d3f8a5c2e0b7d4f9a6c1e",
-    "title": "3.1: Removes the unused TCP import from scapy/contrib/openflow3.py",
+    "title": "2.1: Removes the unused TCP import from scapy/contrib/openflow3.py",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "6fadfc0fa882c001c3152f48056fe752",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "747c3d2bf3cb7d4ba49507860cddc894",
-    "title": "4.1: Removes or modifies the existing bind_bottom_up calls in scapy/contrib/openflow.py",
+    "title": "3.1: Removes or modifies the existing bind_bottom_up calls in scapy/contrib/openflow.py",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "11feafc9a25d3557b08010fda02f412a",
-    "title": "4.2: Removes TCP import from scapy/contrib/openflow.py",
+    "title": "3.2: Removes TCP import from scapy/contrib/openflow.py",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "204822f1d5681db5fdb67176aab2b9cf",
-    "title": "4.3: Modifies files that the prompt designates as test files (such as scapy/contrib/openflow.uts, scapy/contrib/openflow3.uts, or scapy/contrib/socks.uts)",
+    "title": "3.3: Modifies files that the prompt designates as test files (such as scapy/contrib/openflow.uts, scapy/contrib/openflow3.uts, or scapy/contrib/socks.uts)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

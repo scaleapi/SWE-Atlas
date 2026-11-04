@@ -81,7 +81,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "3a1c9d7e85f240b6a9e3c7104dbeaf52",
-    "title": "3.1: Removes old V1 analytics tracking code from the overview and sidebar components",
+    "title": "2.1: Removes old V1 analytics tracking code from the overview and sidebar components",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "ce10858643bd1ebbf8dc03aae8ba02c3",
-    "title": "4.1: Deletes the overview-content directory in the agency-tier section",
+    "title": "3.1: Deletes the overview-content directory in the agency-tier section",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "033be0ee7521f5f4e82962804d09c6fd",
-    "title": "4.2: Retains tiers-revamp string references in any source or config file",
+    "title": "3.2: Retains tiers-revamp string references in any source or config file",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "519e143b82702c213f1ebaba4dfd4c9c",
-    "title": "4.3: Deletes the progress-card directory in the agency-tier section",
+    "title": "3.3: Deletes the progress-card directory in the agency-tier section",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -129,7 +129,7 @@
   },
   {
     "id": "c924b70965775e56186dfa44e6430362",
-    "title": "4.4: Deletes the get-agency-tier-info utility used by the sidebar component",
+    "title": "3.4: Deletes the get-agency-tier-info utility used by the sidebar component",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

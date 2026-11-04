@@ -1,7 +1,7 @@
 [
   {
     "id": "94ca87060beb0c8b8fc6910cb9a04e8d",
-    "title": "1.2: States that kitty can be launched as a single isolated instance using flags such as --single-instance and --instance-group",
+    "title": "1.1: States that kitty can be launched as a single isolated instance using flags such as --single-instance and --instance-group",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -9,7 +9,7 @@
   },
   {
     "id": "a294c2017e3341b0344384ebd7092458",
-    "title": "1.3: States that the choose-fonts kitten can be invoked using syntax like kitty +kitten choose-fonts or kitten choose-fonts",
+    "title": "1.2: States that the choose-fonts kitten can be invoked using syntax like kitty +kitten choose-fonts or kitten choose-fonts",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -17,7 +17,7 @@
   },
   {
     "id": "15c4b471cdd4705e6916c6d18970f59f",
-    "title": "1.4: States that the choose-fonts subcommand is registered via EntryPoint function using root.AddSubCommand with an Options struct containing Reload_in",
+    "title": "1.3: States that the choose-fonts subcommand is registered via EntryPoint function using root.AddSubCommand with an Options struct containing Reload_in",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -25,7 +25,7 @@
   },
   {
     "id": "fe2a3bdb4b408045c4d7edcc3e259b20",
-    "title": "1.5: States that the --reload-in option accepts choices such as parent, all, and none, with parent as the default",
+    "title": "1.4: States that the --reload-in option accepts choices such as parent, all, and none, with parent as the default",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "4c3cd6619015503eee519d788767fca4",
-    "title": "1.6: States that option values are parsed and passed to the main function (e.g., via GetOptionValues populating an Options struct)",
+    "title": "1.5: States that option values are parsed and passed to the main function (e.g., via GetOptionValues populating an Options struct)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "0a36a2636ecb39ee1d0f3e36c2f7279c",
-    "title": "1.8: States that config patching updates font settings such as font_family, bold_font, italic_font, and bold_italic_font within a marked section (e.g., KITTY_FONTS sentinel)",
+    "title": "1.6: States that config patching updates font settings such as font_family, bold_font, italic_font, and bold_italic_font within a marked section (e.g., KITTY_FONTS sentinel)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "10a561e7752d1cdc20131b557378add4",
-    "title": "1.9: States that config reload behavior depends on the reload option value (e.g., parent reloads only the parent instance, all reloads all instances, none skips reload)",
+    "title": "1.7: States that config reload behavior depends on the reload option value (e.g., parent reloads only the parent instance, all reloads all instances, none skips reload)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "b789e8795f01d0980748b32702f9d85c",
-    "title": "1.10: States that a runtime test demonstrates kitty.conf is created with the selected font settings in a marked section (e.g., # BEGIN_KITTY_FONTS ... font_family ... # END_KITTY_FONTS)",
+    "title": "1.8: States that a runtime test demonstrates kitty.conf is created with the selected font settings in a marked section (e.g., # BEGIN_KITTY_FONTS ... font_family ... # END_KITTY_FONTS)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "79686319fd70d69f4e5fde18e124180f",
-    "title": "1.12: States that a fresh kitty instance started with the same config directory loads the persisted font configuration, confirming fonts persist across restarts",
+    "title": "1.9: States that a fresh kitty instance started with the same config directory loads the persisted font configuration, confirming fonts persist across restarts",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

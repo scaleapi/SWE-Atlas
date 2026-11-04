@@ -161,7 +161,7 @@
   },
   {
     "id": "cf9cc5427cb23e0c6e1f45785d88c7a5",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -169,7 +169,7 @@
   },
   {
     "id": "0cfbf5422cc12f99949a95af6ca22d47",
-    "title": "3.1: Removes the full struct rrdhost_system_info definition from rrd.h",
+    "title": "2.1: Removes the full struct rrdhost_system_info definition from rrd.h",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -177,7 +177,7 @@
   },
   {
     "id": "ad6eaad79e725b13273764a95809a2d9",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -185,7 +185,7 @@
   },
   {
     "id": "fb66131f5bcf137b336d2d84f8e77f39",
-    "title": "4.1: Introduces circular header dependency between rrdhost-system-info.h and rrd.h",
+    "title": "3.1: Introduces circular header dependency between rrdhost-system-info.h and rrd.h",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -193,7 +193,7 @@
   },
   {
     "id": "8123dd53a817620094796df270087856",
-    "title": "4.2: Removes rrdhost_system_info_free() from the public API without replacement",
+    "title": "3.2: Removes rrdhost_system_info_free() from the public API without replacement",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -201,7 +201,7 @@
   },
   {
     "id": "05a754e12982e4429b95492980497748",
-    "title": "4.3: Changes the key names in the URL encoded streaming handshake parameters",
+    "title": "3.3: Changes the key names in the URL encoded streaming handshake parameters",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

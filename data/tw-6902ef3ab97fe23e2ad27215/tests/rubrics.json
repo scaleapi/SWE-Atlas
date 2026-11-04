@@ -13,7 +13,7 @@
       "importance": "must have"
     },
     "id": "c72b04bc1ea39ee4e9555a0c32952af8",
-    "title": "1.3: Tests that hexdiff() returns field-level hex differences when comparing structured Scapy packet objects."
+    "title": "1.2: Tests that hexdiff() returns field-level hex differences when comparing structured Scapy packet objects."
   },
   {
     "annotations": {
@@ -21,7 +21,7 @@
       "importance": "must have"
     },
     "id": "b2fae28d60cf9865fb8d16ceeea33a75",
-    "title": "1.4: Tests that hexdiff produces different algorithmic outputs when performance optimization flag ('autojunk') is enabled versus disabled for large sequences."
+    "title": "1.3: Tests that hexdiff produces different algorithmic outputs when performance optimization flag ('autojunk') is enabled versus disabled for large sequences."
   },
   {
     "annotations": {
@@ -29,7 +29,7 @@
       "importance": "must have"
     },
     "id": "2552e6698613f2c33178f4a6a1e89eb9",
-    "title": "1.5: Tests that hexdiff() executes without crashing when comparing mismatched input types such as bytes versus packet objects."
+    "title": "1.4: Tests that hexdiff() executes without crashing when comparing mismatched input types such as bytes versus packet objects."
   },
   {
     "annotations": {

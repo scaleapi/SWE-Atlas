@@ -89,7 +89,7 @@
   },
   {
     "id": "229ac7e9554f467dc3bc6c639c4020c1",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "3e1219b90b9b3955b48de969303db83b",
-    "title": "4.1: Modifies test files (such as .test, .result, .opt, or .inc files under mysql-test/)",
+    "title": "2.1: Modifies test files (such as .test, .result, .opt, or .inc files under mysql-test/)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "bd0f1525c776a3aa725a6c9ad0cbecd1",
-    "title": "4.2: Exposes server-dependent code (such as struct/class definitions, function declarations, or server-only includes) to the innochecksum build",
+    "title": "2.2: Exposes server-dependent code (such as struct/class definitions, function declarations, or server-only includes) to the innochecksum build",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "582136b308a268710b2c4840af8ae021",
-    "title": "4.3: Removes existing page type identification branches (such as FIL_PAGE_INDEX, FIL_PAGE_TYPE_FSP_HDR, FIL_PAGE_TYPE_XDES, or FIL_PAGE_TRX_SYS cases) from parse_page",
+    "title": "2.3: Removes existing page type identification branches (such as FIL_PAGE_INDEX, FIL_PAGE_TYPE_FSP_HDR, FIL_PAGE_TYPE_XDES, or FIL_PAGE_TRX_SYS cases) from parse_page",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "539f5e02644ad8ed20b17f96ab08fa08",
-    "title": "4.4: Alters checksum verification (such as removing or modifying verify_checksum calls) for non-doublewrite pages when a single file is checked without --tablespace-flags, other than through the TRX_SYS-based doublewrite detection",
+    "title": "2.4: Alters checksum verification (such as removing or modifying verify_checksum calls) for non-doublewrite pages when a single file is checked without --tablespace-flags, other than through the TRX_SYS-based doublewrite detection",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

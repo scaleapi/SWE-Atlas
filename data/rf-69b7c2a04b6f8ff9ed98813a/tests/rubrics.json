@@ -129,7 +129,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -137,7 +137,7 @@
   },
   {
     "id": "b772649855493fff7a57f22a0858b84f",
-    "title": "3.1: Removes redundant receiver_set_exit_reason calls before stream_receiver_remove",
+    "title": "2.1: Removes redundant receiver_set_exit_reason calls before stream_receiver_remove",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -145,7 +145,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -153,7 +153,7 @@
   },
   {
     "id": "d1c081d669d6990e7abd44f95f5717c8",
-    "title": "4.1: Introduces compilation errors in modified source files",
+    "title": "3.1: Introduces compilation errors in modified source files",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -161,7 +161,7 @@
   },
   {
     "id": "a4871d61f9bae9080d00a5a8cf44bcec",
-    "title": "4.2: Modifies test files despite the explicit constraint",
+    "title": "3.2: Modifies test files despite the explicit constraint",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -169,7 +169,7 @@
   },
   {
     "id": "5da230994e4f202f93a6fa1010d53c5a",
-    "title": "4.3: Removes existing public API functions that are used by other modules",
+    "title": "3.3: Removes existing public API functions that are used by other modules",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

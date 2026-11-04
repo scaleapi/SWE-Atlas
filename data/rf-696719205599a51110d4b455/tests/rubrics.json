@@ -65,7 +65,7 @@
   },
   {
     "id": "a258b940d177fe62794a6bb8765b6b6b",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "9a343e6462977fa73023f69f1e547eaa",
-    "title": "4.1: Keeps ResourceVersionManager or its methods unexported in the rvmanager package",
+    "title": "2.1: Keeps ResourceVersionManager or its methods unexported in the rvmanager package",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "1535a1c946d0ddae25a6f32a4a50f00c",
-    "title": "4.2: Leaves SQL template files in the parent package instead of moving them to rvmanager/data/",
+    "title": "2.2: Leaves SQL template files in the parent package instead of moving them to rvmanager/data/",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

@@ -37,7 +37,7 @@
       "importance": "must have"
     },
     "id": "9edc1699a9e68585b93d5e2c6a1595a4",
-    "title": "1.6: Tests that the slow VU exact iteration count is asserted using assert.Equal"
+    "title": "1.5: Tests that the slow VU exact iteration count is asserted using assert.Equal"
   },
   {
     "annotations": {

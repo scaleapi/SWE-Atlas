@@ -21,7 +21,7 @@
       "importance": "must have"
     },
     "id": "57c76443123b3fef1adf4a96b66a14a6",
-    "title": "1.5: Tests that defragment() and defrag() both correctly handle real-world fragmented DNS response packets by reconstructing the complete DNS packet with valid DNSRR."
+    "title": "1.3: Tests that defragment() and defrag() both correctly handle real-world fragmented DNS response packets by reconstructing the complete DNS packet with valid DNSRR."
   },
   {
     "annotations": {

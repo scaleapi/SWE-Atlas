@@ -65,7 +65,7 @@
   },
   {
     "id": "b047bfd93364767defed74d185434ca3",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "89eb37fa75f760996777b9feaac8f86c",
-    "title": "3.1: Removes the old chunking code from pkg/common (such as pkg/common/chunker.go)",
+    "title": "2.1: Removes the old chunking code from pkg/common (such as pkg/common/chunker.go)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "21b6daf1836ac0808a5f985ef21eecf4",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "a45c40f317da520cdefae705d1bf9b18",
-    "title": "4.1: Changes ChunkSize or PeekSize constant values from their original values (10*1024 and 3*1024 respectively)",
+    "title": "3.1: Changes ChunkSize or PeekSize constant values from their original values (10*1024 and 3*1024 respectively)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "71809ef3a0ce99a63ad0837db8a23df9",
-    "title": "4.2: Removes or breaks the existing detector processing logic in the engine (such as decoder iteration, keyword matching, or result handling in detectorWorker)",
+    "title": "3.2: Removes or breaks the existing detector processing logic in the engine (such as decoder iteration, keyword matching, or result handling in detectorWorker)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

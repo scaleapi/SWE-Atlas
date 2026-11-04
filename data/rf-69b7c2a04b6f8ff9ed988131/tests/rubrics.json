@@ -57,7 +57,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "3fc0d19dbc43c463627334497a9d9bfc",
-    "title": "3.1: Removes the src/detect-fileext.c source file",
+    "title": "2.1: Removes the src/detect-fileext.c source file",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "f6728af1d32780c67a77cd6a9dc6e3c1",
-    "title": "3.2: Removes the src/detect-fileext.h header file",
+    "title": "2.2: Removes the src/detect-fileext.h header file",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "b46c4358a91a0e9c5c87119ff6d338f2",
-    "title": "3.3: Removes both fileext entries (detect-fileext.c, detect-fileext.h) from src/Makefile.am",
+    "title": "2.3: Removes both fileext entries (detect-fileext.c, detect-fileext.h) from src/Makefile.am",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "cb99350c8bc0f649fa7e622b9c604ec1",
-    "title": "3.4: Removes both fileext references (#include \"detect-fileext.h\", DetectFileextRegister() call) from src/detect-engine-register.c",
+    "title": "2.4: Removes both fileext references (#include \"detect-fileext.h\", DetectFileextRegister() call) from src/detect-engine-register.c",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

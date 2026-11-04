@@ -169,7 +169,7 @@
   },
   {
     "id": "6e069c6ab2cccfd18f50b12ac64b9612",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -177,7 +177,7 @@
   },
   {
     "id": "c6ffd2918bf69f14edc7fb98fb1e2915",
-    "title": "3.1: Reformats the `rrdset_debug` macro in `src/database/rrdset.h` into a multi-line form",
+    "title": "2.1: Reformats the `rrdset_debug` macro in `src/database/rrdset.h` into a multi-line form",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -185,7 +185,7 @@
   },
   {
     "id": "dc4bc811402f1ee87946b7f62bf4a439",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -193,7 +193,7 @@
   },
   {
     "id": "d658f1d9982284c84f2fb1aad87dd1d0",
-    "title": "4.1: Modifies test files (such as src/daemon/unit_test.c, src/database/engine/dbengine-unittest.c, src/collectors/cgroups.plugin/tests/test_doubles.c, or src/database/engine/dbengine-stresstest.c)",
+    "title": "3.1: Modifies test files (such as src/daemon/unit_test.c, src/database/engine/dbengine-unittest.c, src/collectors/cgroups.plugin/tests/test_doubles.c, or src/database/engine/dbengine-stresstest.c)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -201,7 +201,7 @@
   },
   {
     "id": "da18ca36a118f90e329c3ffba5af5462",
-    "title": "4.2: Alters the logic inside moved functions (such as adding, removing, or reordering conditionals in `reload_host_labels`, `rrdhost_finalize_collection`, `rrddim_store_metric`, or `align_entries_to_pagesize`) beyond what is required for the type rename",
+    "title": "3.2: Alters the logic inside moved functions (such as adding, removing, or reordering conditionals in `reload_host_labels`, `rrdhost_finalize_collection`, `rrddim_store_metric`, or `align_entries_to_pagesize`) beyond what is required for the type rename",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

@@ -121,7 +121,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -129,7 +129,7 @@
   },
   {
     "id": "c146e40e19e792cac66a935aaf7dc101",
-    "title": "3.1: Removes unused imports (Button from @grafana/ui, getBackendSrv from @grafana/runtime) from dashboard-scene/saving/SaveDashboardDrawer.tsx after refactoring",
+    "title": "2.1: Removes unused imports (Button from @grafana/ui, getBackendSrv from @grafana/runtime) from dashboard-scene/saving/SaveDashboardDrawer.tsx after refactoring",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -137,7 +137,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -145,7 +145,7 @@
   },
   {
     "id": "1f8d14faed178f26353ec38b1bdb52ff",
-    "title": "4.1: Removes existing SaveProvisionedDashboardForm component or its usage",
+    "title": "3.1: Removes existing SaveProvisionedDashboardForm component or its usage",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -153,7 +153,7 @@
   },
   {
     "id": "ba5259b0a2e3f382f5dee6def2073ff2",
-    "title": "4.2: Places SaveProvisionedDashboard outside public/app/features/dashboard-scene/saving/",
+    "title": "3.2: Places SaveProvisionedDashboard outside public/app/features/dashboard-scene/saving/",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

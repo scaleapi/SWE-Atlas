@@ -25,7 +25,7 @@
   },
   {
     "id": "8cb5f84a2c16a607528954d5f4718f60",
-    "title": "1.6: States that when multiple concurrent requests are made for the same experiment, only 1 network call is made.",
+    "title": "1.4: States that when multiple concurrent requests are made for the same experiment, only 1 network call is made.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "19ee08ea4fce9326128d8919f6aa75e6",
-    "title": "1.7: States that multiple sequential requests for the same experiment in quick succession do not make additional network calls.",
+    "title": "1.5: States that multiple sequential requests for the same experiment in quick succession do not make additional network calls.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "c0f1741ed51a762c0c2ebc7c117f8912",
-    "title": "1.8: States that calling the synchronous getter before the async load has finished does not throw an exception.",
+    "title": "1.6: States that calling the synchronous getter before the async load has finished does not throw an exception.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "d487ecada61cb149438fcef42a6cf2aa",
-    "title": "1.9: States that the synchronous getter returns a fallback assignment when called before the async load completes.",
+    "title": "1.7: States that the synchronous getter returns a fallback assignment when called before the async load completes.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "26b038b4813ce18b44bc1afa669d845a",
-    "title": "1.10: States what happens after cache expires (e.g., new network request is made, fresh assignment returned, or stale cache used as fallback if fetch fails).",
+    "title": "1.8: States what happens after cache expires (e.g., new network request is made, fresh assignment returned, or stale cache used as fallback if fetch fails).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

@@ -117,7 +117,7 @@
       "importance": "must have"
     },
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics"
+    "title": "3: Negative Rubrics"
   },
   {
     "annotations": {
@@ -125,7 +125,7 @@
       "importance": "must have"
     },
     "id": "528ba326f0201227cce2be26f614460e",
-    "title": "4.1: Omits at least one existing public API method from EcuState (reset, __eq__, __ne__, __lt__, __hash__, or __repr__)"
+    "title": "3.1: Omits at least one existing public API method from EcuState (reset, __eq__, __ne__, __lt__, __hash__, or __repr__)"
   },
   {
     "annotations": {
@@ -133,6 +133,6 @@
       "importance": "must have"
     },
     "id": "4ec8bf60664429946ad854b4c76aa5d6",
-    "title": "4.2: Keeps hardcoded UDS-specific default values in EcuState.__init__ (such as session=1, security_level=0)"
+    "title": "3.2: Keeps hardcoded UDS-specific default values in EcuState.__init__ (such as session=1, security_level=0)"
   }
 ]

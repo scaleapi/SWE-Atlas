@@ -13,7 +13,7 @@
       "importance": "must have"
     },
     "id": "dc3ce57068ce3286b286b4bde7b50d73",
-    "title": "1.3: Parses DMARC quarantine from a sample .eml"
+    "title": "1.2: Parses DMARC quarantine from a sample .eml"
   },
   {
     "annotations": {
@@ -21,7 +21,7 @@
       "importance": "must have"
     },
     "id": "82dd0af1c82b5acd201a9c8e8b876ba0",
-    "title": "1.4: Parses DMARC reject from a sample .eml"
+    "title": "1.3: Parses DMARC reject from a sample .eml"
   },
   {
     "annotations": {
@@ -29,7 +29,7 @@
       "importance": "must have"
     },
     "id": "01711d94f208bfd820c29aa458a20e30",
-    "title": "1.5: Parses DMARC allow from a sample .eml"
+    "title": "1.4: Parses DMARC allow from a sample .eml"
   },
   {
     "annotations": {
@@ -37,7 +37,7 @@
       "importance": "must have"
     },
     "id": "355cdf459d2630721ee19e19aac4811e",
-    "title": "1.6: Parses DMARC not_available from a sample .eml"
+    "title": "1.5: Parses DMARC not_available from a sample .eml"
   },
   {
     "annotations": {
@@ -45,7 +45,7 @@
       "importance": "must have"
     },
     "id": "a336946cf98cf043acdbf1efe96f0e61",
-    "title": "1.7: Parses DMARC bad_policy from a sample .eml"
+    "title": "1.6: Parses DMARC bad_policy from a sample .eml"
   },
   {
     "annotations": {
@@ -53,7 +53,7 @@
       "importance": "must have"
     },
     "id": "26da26a0594cbe0b7c88a33b650d504c",
-    "title": "1.10: Falls back to default rspamd_score (-1) when score cannot be parsed"
+    "title": "1.7: Falls back to default rspamd_score (-1) when score cannot be parsed"
   },
   {
     "annotations": {
@@ -61,7 +61,7 @@
       "importance": "must have"
     },
     "id": "7934226cc6d1966e952d356f127986d8",
-    "title": "1.11: Soft-fail scenario is validated end-to-end in one test (dmarc + score)"
+    "title": "1.8: Soft-fail scenario is validated end-to-end in one test (dmarc + score)"
   },
   {
     "annotations": {
@@ -69,7 +69,7 @@
       "importance": "must have"
     },
     "id": "f89cfd47440f5c50cc234a32252ae1a3",
-    "title": "1.12: Dedicated rspamd score parsing test exists for the parseable fixture"
+    "title": "1.9: Dedicated rspamd score parsing test exists for the parseable fixture"
   },
   {
     "annotations": {

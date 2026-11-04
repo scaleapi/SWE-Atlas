@@ -5,7 +5,7 @@
       "importance": "must have"
     },
     "id": "a30c20dd9eac661c57bb193b7c2c114f",
-    "title": "1.2: Tests that executeQuery() returns exactly 3 data frames with 2 labels preserved on value fields when processing multiple tables from query response"
+    "title": "1.1: Tests that executeQuery() returns exactly 3 data frames with 2 labels preserved on value fields when processing multiple tables from query response"
   },
   {
     "annotations": {
@@ -13,7 +13,7 @@
       "importance": "must have"
     },
     "id": "0936312a1a0faedb571b5ca37bba9148",
-    "title": "1.4: Tests that executeQuery() raises error containing 'aggregateWindow()' recommendation when data point limit is exceeded without aggregation in query"
+    "title": "1.2: Tests that executeQuery() raises error containing 'aggregateWindow()' recommendation when data point limit is exceeded without aggregation in query"
   },
   {
     "annotations": {
@@ -21,7 +21,7 @@
       "importance": "must have"
     },
     "id": "394e758be18b3def25140248c6b3b89c",
-    "title": "1.5: Tests that executeQuery() raises error without 'aggregateWindow()' recommendation when data point limit is exceeded with aggregation already present in query"
+    "title": "1.3: Tests that executeQuery() raises error without 'aggregateWindow()' recommendation when data point limit is exceeded with aggregation already present in query"
   },
   {
     "annotations": {

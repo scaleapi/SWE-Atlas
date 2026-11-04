@@ -25,7 +25,7 @@
   },
   {
     "id": "f5824317ec1dd95732af40d682282ae4",
-    "title": "1.5: Reports that when sending a crafted ICMP echo request packet to localhost, Scapy's emission summary shows that no ICMP echo replies (no answers) are received in this environment, or reports the observed environmental error preventing an otherwise valid Scapy send operation before any summary, to verify network execution.",
+    "title": "1.4: Reports that when sending a crafted ICMP echo request packet to localhost, Scapy's emission summary shows that no ICMP echo replies (no answers) are received in this environment, or reports the observed environmental error preventing an otherwise valid Scapy send operation before any summary, to verify network execution.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "285b35d6b1da2f3d39510f3b62abd58f",
-    "title": "1.6: Explains that Scapy defines the IP header layout with default values in the IP class's fields_desc list in scapy/layers/inet.py, where the fields (version, identification, and TTL) are declared with specific default values.",
+    "title": "1.5: Explains that Scapy defines the IP header layout with default values in the IP class's fields_desc list in scapy/layers/inet.py, where the fields (version, identification, and TTL) are declared with specific default values.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "0279a2b1314b0d67beca35179394e976",
-    "title": "1.7: Describes that the SourceIPField implementation in scapy/fields.py chooses a default source IP address based on Scapy's routing table (conf.route) with the packet's destination when the src field is not explicitly set.",
+    "title": "1.6: Describes that the SourceIPField implementation in scapy/fields.py chooses a default source IP address based on Scapy's routing table (conf.route) with the packet's destination when the src field is not explicitly set.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "347f37cd04013ab0010227d05094ef35",
-    "title": "2.2: States that no ICMP response is due to an unverified environmental speculation like container networking restrictions (Scapy's documented loopback limitation, where the kernel handles 127.0.0.1 traffic internally, is not speculation).",
+    "title": "2.1: States that no ICMP response is due to an unverified environmental speculation like container networking restrictions (Scapy's documented loopback limitation, where the kernel handles 127.0.0.1 traffic internally, is not speculation).",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

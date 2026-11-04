@@ -89,7 +89,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "219955418cd312e421c77897d56c9e48",
-    "title": "3.1: Removes the inline AuthorizationBenefits component and its 2 associated interfaces (AuthorizationBenefitsItem, AuthorizationBenefitsProps) from authorization.tsx",
+    "title": "2.1: Removes the inline AuthorizationBenefits component and its 2 associated interfaces (AuthorizationBenefitsItem, AuthorizationBenefitsProps) from authorization.tsx",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "a237622e39300c90c8752f47c7c14185",
-    "title": "3.2: Removes all 4 of the benefits-specific CSS rules (.benefits-container, .benefits, .benefits-item, .benefits-item-icon) from the authorization step's stylesheet",
+    "title": "2.2: Removes all 4 of the benefits-specific CSS rules (.benefits-container, .benefits, .benefits-item, .benefits-item-icon) from the authorization step's stylesheet",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "548b945243387be85a8c5c7be6ffb2d2",
-    "title": "4.1: Removes or alters any of the three existing benefit items (the loop, backup, and shield icon entries with their translated text) from the Authorization component",
+    "title": "3.1: Removes or alters any of the three existing benefit items (the loop, backup, and shield icon entries with their translated text) from the Authorization component",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -129,7 +129,7 @@
   },
   {
     "id": "fa0874dfbd3631f3cbb3e53555e32ae8",
-    "title": "4.2: Modifies components or logic unrelated to the benefits list extraction and the authorization step layout (such as altering NextButton behavior, callback handlers, or other stepper steps)",
+    "title": "3.2: Modifies components or logic unrelated to the benefits list extraction and the authorization step layout (such as altering NextButton behavior, callback handlers, or other stepper steps)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

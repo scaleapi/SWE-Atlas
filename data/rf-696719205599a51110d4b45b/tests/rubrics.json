@@ -57,7 +57,7 @@
   },
   {
     "id": "fd13e15013469dbc108330ccc437157f",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "c0d2440c73d248b0d45d05b15e4da0dd",
-    "title": "4.1: Removes the public StreamMultiSearchResponse function from the es package",
+    "title": "2.1: Removes the public StreamMultiSearchResponse function from the es package",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "3ec839d55ebbff1f343c64322ea3794a",
-    "title": "4.2: Modifies test files in pkg/tsdb/elasticsearch/client/",
+    "title": "2.2: Modifies test files in pkg/tsdb/elasticsearch/client/",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

@@ -89,7 +89,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "6f0ccf8539336116c5f288d2e83d126d",
-    "title": "3.1: Removes the redundant logger field from parsingState struct in js/compiler/compiler.go",
+    "title": "2.1: Removes the redundant logger field from parsingState struct in js/compiler/compiler.go",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "e5332e0324c95d2f19a9db58c80bc576",
-    "title": "4.1: Deletes the Parse function from js/compiler/compiler.go entirely",
+    "title": "3.1: Deletes the Parse function from js/compiler/compiler.go entirely",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "25388e1a2d468f0189a05d02b0acef6b",
-    "title": "4.2: Deletes the sourceMapLoader method from js/compiler/compiler.go entirely",
+    "title": "3.2: Deletes the sourceMapLoader method from js/compiler/compiler.go entirely",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -129,7 +129,7 @@
   },
   {
     "id": "0d3ba8153dac24442bb25550ad8610b1",
-    "title": "4.3: Deletes the wrap method from js/compiler/compiler.go entirely",
+    "title": "3.3: Deletes the wrap method from js/compiler/compiler.go entirely",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

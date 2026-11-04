@@ -85,7 +85,7 @@
       "importance": "must have"
     },
     "id": "6372318d17e6bd310a29ea2864ee0659",
-    "title": "1.12: Tests that HealObject restores an object when its xl.meta file is deleted"
+    "title": "1.11: Tests that HealObject restores an object when its xl.meta file is deleted"
   },
   {
     "annotations": {
@@ -93,7 +93,7 @@
       "importance": "must have"
     },
     "id": "356010226d74a4775d0cdf861e4f7a49",
-    "title": "1.13: Tests that HealObject repairs an object when its xl.meta file contains corrupted data"
+    "title": "1.12: Tests that HealObject repairs an object when its xl.meta file contains corrupted data"
   },
   {
     "annotations": {
@@ -101,7 +101,7 @@
       "importance": "must have"
     },
     "id": "958dd36dfaab64baf7406b9b585fedf9",
-    "title": "1.14: Tests that HealObject purges an object whose metadata is missing beyond read quorum, asserting ObjectNotFound from HealObject or from a later lookup of the object"
+    "title": "1.13: Tests that HealObject purges an object whose metadata is missing beyond read quorum, asserting ObjectNotFound from HealObject or from a later lookup of the object"
   },
   {
     "annotations": {

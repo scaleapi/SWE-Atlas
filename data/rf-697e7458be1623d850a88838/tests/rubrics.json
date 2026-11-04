@@ -105,7 +105,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "0e359368582e694eee9ae8b7ea9b0f92",
-    "title": "4.1: Introduces syntax errors, import errors, or undefined references in modified source files",
+    "title": "3.1: Introduces syntax errors, import errors, or undefined references in modified source files",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "29289bf2c090dd17a669374cc5c9bfce",
-    "title": "4.2: Modifies test files or testing logic despite the explicit prompt constraint",
+    "title": "3.2: Modifies test files or testing logic despite the explicit prompt constraint",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

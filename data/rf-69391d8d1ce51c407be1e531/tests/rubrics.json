@@ -161,7 +161,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -169,7 +169,7 @@
   },
   {
     "id": "26ea170f3553ad9942505382375b1f2f",
-    "title": "4.1: Changes the contentWriter interface method signatures (Write, ReadCloser, CloseForWriting, Len, String) in pkg/gitparse/gitparse.go",
+    "title": "2.1: Changes the contentWriter interface method signatures (Write, ReadCloser, CloseForWriting, Len, String) in pkg/gitparse/gitparse.go",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -177,7 +177,7 @@
   },
   {
     "id": "79939e542f872014ac3e4b7c7d6d6d2e",
-    "title": "4.2: Changes the BufferedFileWriter.New signature in pkg/writers/buffered_file_writer/bufferedfilewriter.go without updating the bufferedfilewriter.New() call in pkg/gitparse/gitparse.go",
+    "title": "2.2: Changes the BufferedFileWriter.New signature in pkg/writers/buffered_file_writer/bufferedfilewriter.go without updating the bufferedfilewriter.New() call in pkg/gitparse/gitparse.go",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

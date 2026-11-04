@@ -93,7 +93,7 @@
       "importance": "must have"
     },
     "id": "5989efb63a1757a5af40fbd5c874e969",
-    "title": "1.13: Tests that draw() renders regional indicator pairs that merge into flag glyphs occupying two-cell width"
+    "title": "1.12: Tests that draw() renders regional indicator pairs that merge into flag glyphs occupying two-cell width"
   },
   {
     "annotations": {
@@ -101,7 +101,7 @@
       "importance": "must have"
     },
     "id": "5af4e212dd3486f58efca6c51231e58b",
-    "title": "1.14: Tests that draw() renders partial regional indicator sequences as individual characters when separated by other text without forming complete flag pairs"
+    "title": "1.13: Tests that draw() renders partial regional indicator sequences as individual characters when separated by other text without forming complete flag pairs"
   },
   {
     "annotations": {
@@ -109,7 +109,7 @@
       "importance": "must have"
     },
     "id": "fb02f60d819d77b4944b6c1288b914e9",
-    "title": "1.15: Tests that draw() advances cursor by 2 positions after rendering merged regional indicator flag pairs"
+    "title": "1.14: Tests that draw() advances cursor by 2 positions after rendering merged regional indicator flag pairs"
   },
   {
     "annotations": {
@@ -173,6 +173,6 @@
       "importance": "nice to have"
     },
     "id": "e08202fe2c50221ad01ab78cadee8477",
-    "title": "4.2: Follows pattern of using parse_bytes(s, b'x1b[Nb') escape sequence format where N is optional numeric parameter to trigger character repetition for test verifying repeat sequences"
+    "title": "4.1: Follows pattern of using parse_bytes(s, b'x1b[Nb') escape sequence format where N is optional numeric parameter to trigger character repetition for test verifying repeat sequences"
   }
 ]

@@ -61,7 +61,7 @@
       "importance": "nice to have"
     },
     "id": "fc29f018355257645e6220d46438cd77",
-    "title": "3.3: All tests use self.ae() assertion method for comparisons"
+    "title": "3.2: All tests use self.ae() assertion method for comparisons"
   },
   {
     "annotations": {

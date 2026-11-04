@@ -49,7 +49,7 @@
   },
   {
     "id": "343c8e8654c0fec3966b912496e3e3ec",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "3e116a6d0fdb637a96b4d02d1e06b225",
-    "title": "3.1: Removes the unused `coerceArray` import and the unused `CircleCiJob` type import from extract.ts after refactoring",
+    "title": "2.1: Removes the unused `coerceArray` import and the unused `CircleCiJob` type import from extract.ts after refactoring",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "bca6d5e96aef29c2ab60beb0ce5b3fdd",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "68682da1ffb146dc58de9c1607565d0a",
-    "title": "4.1: Modifies test files",
+    "title": "3.1: Modifies test files",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

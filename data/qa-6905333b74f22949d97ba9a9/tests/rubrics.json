@@ -73,7 +73,7 @@
   },
   {
     "id": "410c1ffcf29d4526f955fb837d8f6ca9",
-    "title": "2.2: States that `EmailLog.is_reply` is `false` for the traced reply message.",
+    "title": "2.1: States that `EmailLog.is_reply` is `false` for the traced reply message.",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

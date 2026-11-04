@@ -5,7 +5,7 @@
       "importance": "must have"
     },
     "id": "85f22fd577b3c132079e894cc217346e",
-    "title": "1.3: Tests that CreateTestRun returns nil response and formatted error when server responds with 403 status"
+    "title": "1.1: Tests that CreateTestRun returns nil response and formatted error when server responds with 403 status"
   },
   {
     "annotations": {
@@ -13,7 +13,7 @@
       "importance": "must have"
     },
     "id": "0936312a1a0faedb571b5ca37bba9148",
-    "title": "1.4: Tests that CreateTestRun retry mechanism makes exactly 3 attempts with consistent idempotency key when server returns 500 errors"
+    "title": "1.2: Tests that CreateTestRun retry mechanism makes exactly 3 attempts with consistent idempotency key when server returns 500 errors"
   },
   {
     "annotations": {

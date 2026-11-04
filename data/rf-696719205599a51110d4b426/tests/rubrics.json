@@ -81,7 +81,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "c022b5cac73cca967739ea0df07a0b95",
-    "title": "4.1: Alters the string 'You are about to activate the %1$s plugin on %2$d site' in getConfirmText",
+    "title": "2.1: Alters the string 'You are about to activate the %1$s plugin on %2$d site' in getConfirmText",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "041f879d9ef647eb2870e3eb772c11ff",
-    "title": "4.2: Alters the string 'You are about to deactivate the %1$s plugin installed on %2$d site' in getConfirmText",
+    "title": "2.2: Alters the string 'You are about to deactivate the %1$s plugin installed on %2$d site' in getConfirmText",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

@@ -65,7 +65,7 @@
   },
   {
     "id": "76976862760b3270a9425be6ffbe526c",
-    "title": "1.10: States that job_runner.py has no explicit startup ready log message.",
+    "title": "1.9: States that job_runner.py has no explicit startup ready log message.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "e2fcfc7f8131d4d3eb3807563bea119c",
-    "title": "1.11: Shows a log message indicating the alias cannot be created on-the-fly with a 550 rejection (e.g., alias test@sl.local cannot be created on-the-fly, return 550).",
+    "title": "1.10: Shows a log message indicating the alias cannot be created on-the-fly with a 550 rejection (e.g., alias test@sl.local cannot be created on-the-fly, return 550).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

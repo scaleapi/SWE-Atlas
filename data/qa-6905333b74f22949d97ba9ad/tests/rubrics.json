@@ -73,7 +73,7 @@
   },
   {
     "id": "05ead14757bf28d2151a60def2f367e9",
-    "title": "1.11: Identifies background job runner activity through runtime logs such as seeing 'Take job ...' confirming scheduled work is processed.",
+    "title": "1.10: Identifies background job runner activity through runtime logs such as seeing 'Take job ...' confirming scheduled work is processed.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "3dfa3b85f794293659085827f2d649e9",
-    "title": "1.12: Identifies email handler startup through runtime logs such as 'Start mail controller 0.0.0.0 20381' confirming SMTP handling is active.",
+    "title": "1.11: Identifies email handler startup through runtime logs such as 'Start mail controller 0.0.0.0 20381' confirming SMTP handling is active.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

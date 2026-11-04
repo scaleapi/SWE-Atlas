@@ -25,7 +25,7 @@
   },
   {
     "id": "02b8cd6fa4ce62d6e7b9fb71d6503d2f",
-    "title": "1.5: States that detector worker startup begins when the output prints a line starting with `starting detector workers`, as it describes how detector workers prepare for use.",
+    "title": "1.4: States that detector worker startup begins when the output prints a line starting with `starting detector workers`, as it describes how detector workers prepare for use.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "49f410b559dd50795cf64adc03a22e7b",
-    "title": "1.7: States that operational execution begins when the output prints `running source`, as it shows movement from component bring-up into actual work.",
+    "title": "1.5: States that operational execution begins when the output prints `running source`, as it shows movement from component bring-up into actual work.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

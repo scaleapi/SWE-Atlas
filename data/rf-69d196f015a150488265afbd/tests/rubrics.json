@@ -105,7 +105,7 @@
   },
   {
     "id": "188152d2d98de81a721148aa551cf182",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "9c25d757bf1023151a272eaef238136f",
-    "title": "4.1: Modifies test files in the repository",
+    "title": "2.1: Modifies test files in the repository",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "62be70ad846935a5604c34be878fadb9",
-    "title": "4.2: Hardcodes the promotional condition instead of consuming useSummerSpecialStatus from @automattic/plans-grid-next",
+    "title": "2.2: Hardcodes the promotional condition instead of consuming useSummerSpecialStatus from @automattic/plans-grid-next",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

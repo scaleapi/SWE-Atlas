@@ -133,6 +133,6 @@
       "importance": "nice to have"
     },
     "id": "f960accfab39f50d0aac95ba73c1f59a",
-    "title": "4.7: Original-unsubscribe forwarding test clears stored outbound emails before sending (e.g., mail_sender.purge_stored_emails())"
+    "title": "4.3: Original-unsubscribe forwarding test clears stored outbound emails before sending (e.g., mail_sender.purge_stored_emails())"
   }
 ]

@@ -97,7 +97,7 @@
   },
   {
     "id": "d4232efcf42c3621288917d3ba6c91a3",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "31000ad3a41b722205e7742d96ae5cdd",
-    "title": "3.1: Deletes the investigation_status_gen.go file",
+    "title": "2.1: Deletes the investigation_status_gen.go file",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "bb9a7f1c12d63356ae550563d76317c0",
-    "title": "3.2: Removes status subresource handling from GetSubresources in investigation_object_gen.go",
+    "title": "2.2: Removes status subresource handling from GetSubresources in investigation_object_gen.go",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "3945e2cc0f56842237ff9ec7a1cb6c95",
-    "title": "3.3: Removes status subresource handling from GetSubresources in investigationindex_object_gen.go",
+    "title": "2.3: Removes status subresource handling from GetSubresources in investigationindex_object_gen.go",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

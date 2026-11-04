@@ -77,7 +77,7 @@
       "importance": "must have"
     },
     "id": "348c532cddfc069d9996976282cf374d",
-    "title": "1.11: Patch includes a MATCH_FUZZY negative case expected not to match a clearly different address-like string"
+    "title": "1.10: Patch includes a MATCH_FUZZY negative case expected not to match a clearly different address-like string"
   },
   {
     "annotations": {

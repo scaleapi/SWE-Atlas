@@ -41,7 +41,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "87b55bb936c253123a6724edf7af420b",
-    "title": "3.1: Removes orphaned doc comments from all 8 deleted private methods with comments (click, dblclick, check, uncheck, isChecked, isEditable, isEnabled, isDisabled) in locator.go",
+    "title": "2.1: Removes orphaned doc comments from all 8 deleted private methods with comments (click, dblclick, check, uncheck, isChecked, isEditable, isEnabled, isDisabled) in locator.go",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "e2f46a90fb72899db0f356031700b3c7",
-    "title": "4.1: Drops or alters the fmt.Errorf error-wrapping pattern (such as 'clearing %q: %w' or 'clicking on %q: %w' or 'filling %q with %q: %w') in any of the 23 refactored public Locator methods",
+    "title": "3.1: Drops or alters the fmt.Errorf error-wrapping pattern (such as 'clearing %q: %w' or 'clicking on %q: %w' or 'filling %q with %q: %w') in any of the 23 refactored public Locator methods",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "5872899cad3de3618cde13a7448e40dd",
-    "title": "4.2: Changes the function signature of any of the 23 exported Locator methods (including Click, Dblclick, Fill, Clear, Check, Uncheck, IsChecked, IsEditable, IsEnabled, IsDisabled, ...)",
+    "title": "3.2: Changes the function signature of any of the 23 exported Locator methods (including Click, Dblclick, Fill, Clear, Check, Uncheck, IsChecked, IsEditable, IsEnabled, IsDisabled, ...)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

@@ -89,7 +89,7 @@
   },
   {
     "id": "097fc7c1a443d43f1fc195e2ee3634f2",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "ea10e76eb27d210d531bd55302fd8456",
-    "title": "4.1: Removes error handling for base or head commit resolution in normalizeConfig in pkg/sources/git/git.go",
+    "title": "3.1: Removes error handling for base or head commit resolution in normalizeConfig in pkg/sources/git/git.go",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "5d72ca5edc982e4a9845a23f8128a992",
-    "title": "4.2: Removes the remote repository URL from the ScanRepo completion log message in pkg/sources/git/git.go",
+    "title": "3.2: Removes the remote repository URL from the ScanRepo completion log message in pkg/sources/git/git.go",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

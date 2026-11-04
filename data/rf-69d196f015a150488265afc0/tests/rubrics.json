@@ -97,7 +97,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "0937828da65a2ad96fc9c7e24905b092",
-    "title": "3.1: Removes the mtr_t::spin_wait_delay static member from storage/innobase/include/mtr0mtr.h since the spin wait infrastructure is no longer used",
+    "title": "2.1: Removes the mtr_t::spin_wait_delay static member from storage/innobase/include/mtr0mtr.h since the spin wait infrastructure is no longer used",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "655726416234319e6a712eb7f5489264",
-    "title": "3.2: Removes the obsolete spin-lock helpers lsn_delay, lsn_lock_bts and the LOCK_TSET macro from the mtr subsystem (storage/innobase/mtr/mtr0mtr.cc, plus the lsn_lock_bts declaration in storage/innobase/include/log0log.h)",
+    "title": "2.2: Removes the obsolete spin-lock helpers lsn_delay, lsn_lock_bts and the LOCK_TSET macro from the mtr subsystem (storage/innobase/mtr/mtr0mtr.cc, plus the lsn_lock_bts declaration in storage/innobase/include/log0log.h)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "ead46a36440ffac915b8f3647e13c862",
-    "title": "3.3: Removes both the buf_free_LOCK constant and buf_free_ok() method from log_t in storage/innobase/include/log0log.h",
+    "title": "2.3: Removes both the buf_free_LOCK constant and buf_free_ok() method from log_t in storage/innobase/include/log0log.h",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -129,7 +129,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -137,7 +137,7 @@
   },
   {
     "id": "917e7f1a405ad5067bb5c241175f22a0",
-    "title": "4.1: Removes the innodb_log_spin_wait_delay system variable entirely instead of deprecating it",
+    "title": "3.1: Removes the innodb_log_spin_wait_delay system variable entirely instead of deprecating it",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -145,7 +145,7 @@
   },
   {
     "id": "418b2b2a706eba7882b6264dc8a9ecf0",
-    "title": "4.2: Removes existing user-visible InnoDB functionality (such as DML operations, SET GLOBAL innodb_log_checkpoint_now, SHOW ENGINE INNODB STATUS, or status variable reporting)",
+    "title": "3.2: Removes existing user-visible InnoDB functionality (such as DML operations, SET GLOBAL innodb_log_checkpoint_now, SHOW ENGINE INNODB STATUS, or status variable reporting)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

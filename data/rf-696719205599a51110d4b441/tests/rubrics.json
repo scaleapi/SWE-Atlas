@@ -81,7 +81,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "d285f10e06803840dbfd3576790cfa8f",
-    "title": "3.1: Removes the defaultGroup field from the Runner struct in js/runner.go",
+    "title": "2.1: Removes the defaultGroup field from the Runner struct in js/runner.go",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "87da48deb11e8959b7c97fc1cca06118",
-    "title": "3.2: Removes the GetDefaultGroup() method implementation from js/runner.go",
+    "title": "2.2: Removes the GetDefaultGroup() method implementation from js/runner.go",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "5930e19f8c6a96b8cbc5b2f9b9232cf1",
-    "title": "4.1: Removes the group tag from emitted metrics",
+    "title": "3.1: Removes the group tag from emitted metrics",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "2e2c8996b730d7de197675e995263dfb",
-    "title": "4.2: Breaks the REST API /v1/groups endpoint",
+    "title": "3.2: Breaks the REST API /v1/groups endpoint",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

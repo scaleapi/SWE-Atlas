@@ -81,7 +81,7 @@
   },
   {
     "id": "7bc2b2ff9c4e7440a6f23dda66608f37",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "a422730cdcc44799d00afad00c393a5d",
-    "title": "4.1: Produces documentation containing raw Python object repr strings (such as '<scapy.fields.ByteField object at 0x...>') in Packet class pages",
+    "title": "3.1: Produces documentation containing raw Python object repr strings (such as '<scapy.fields.ByteField object at 0x...>') in Packet class pages",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "f6efe67e5a55d7787f4b71fed44c0f6a",
-    "title": "4.2: Deletes essential documentation files (such as doc/scapy/usage.rst) from the repository",
+    "title": "3.2: Deletes essential documentation files (such as doc/scapy/usage.rst) from the repository",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

@@ -89,7 +89,7 @@
   },
   {
     "id": "410307bd43cfc7e11a577e7f5e001504",
-    "title": "1.13: Reports window appears on screen with configured background colour (such as #181818), confirming visual startup.",
+    "title": "1.12: Reports window appears on screen with configured background colour (such as #181818), confirming visual startup.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "a7d991284a9c5619c64b92b49cc36989",
-    "title": "1.14: Reports cell grid layout visible with characters spaced at consistent cell width and height",
+    "title": "1.13: Reports cell grid layout visible with characters spaced at consistent cell width and height",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "56f341597cbf83a55e433bc3424a0201",
-    "title": "1.15: Reports SIGWINCH signal sent to child process to communicate terminal size changes",
+    "title": "1.14: Reports SIGWINCH signal sent to child process to communicate terminal size changes",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

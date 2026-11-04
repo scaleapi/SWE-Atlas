@@ -81,7 +81,7 @@
   },
   {
     "id": "f418b476412e48de542c0b8b4b799e47",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "365a23353b55f9617ff09658d1aeb8ff",
-    "title": "3.1: Removes both unused CSS rules (`.purchase-settings-card` and `.purchase-settings-card__link`) from `purchase-settings/style.scss`",
+    "title": "2.1: Removes both unused CSS rules (`.purchase-settings-card` and `.purchase-settings-card__link`) from `purchase-settings/style.scss`",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "cadbfcb1b8c980104ac804a2031d937a",
-    "title": "3.2: Removes all 6 imports that become unused after the refactor in `purchase-settings/index.tsx` (HStack, Heading, Icon, chevronRight, ReactNode, ReactElement)",
+    "title": "2.2: Removes all 6 imports that become unused after the refactor in `purchase-settings/index.tsx` (HStack, Heading, Icon, chevronRight, ReactNode, ReactElement)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "72da1e6c46a19e7c45fdd80cb025c23d",
-    "title": "3.3: Removes the unused `HStack` import from `monetize-subscription.tsx` after switching to grid layout",
+    "title": "2.3: Removes the unused `HStack` import from `monetize-subscription.tsx` after switching to grid layout",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "16ec4004d9ed83bc478da824da058876",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "a33cb676c3d6be9ff2ecf773a1b87076",
-    "title": "4.1: Modifies test files or testing logic",
+    "title": "3.1: Modifies test files or testing logic",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

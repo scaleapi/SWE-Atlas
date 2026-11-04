@@ -41,7 +41,7 @@
   },
   {
     "id": "8244adbdc480f7c7bb3d093df78bb579",
-    "title": "1.6: Adds the DetectEngineState typedef to rust.h",
+    "title": "1.5: Adds the DetectEngineState typedef to rust.h",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "1807b58378b5137171cd827f807ae209",
-    "title": "1.8: Updates plugin.rs init function to remove SCGetContext and init_ffi calls",
+    "title": "1.6: Updates plugin.rs init function to remove SCGetContext and init_ffi calls",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "9ef2f2529609b4280c9ed1830a705c81",
-    "title": "1.9: Updates suricata.c InitGlobal function to remove SCRustInit call",
+    "title": "1.7: Updates suricata.c InitGlobal function to remove SCRustInit call",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "9d5ed678fe57bcca610140957afab571",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "415290769594460e2e485922904f345d",
-    "title": "3.1: Removes the SuricataContext struct, the global SC static, and the initialization functions (init_ffi, SCRustInit, SCGetContext) from core.rs",
+    "title": "2.1: Removes the SuricataContext struct, the global SC static, and the initialization functions (init_ffi, SCRustInit, SCGetContext) from core.rs",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "a5120fcb64082dc8a46cf7f29b6fdf8e",
-    "title": "3.2: Deletes the obsolete rust-context.c and rust-context.h files",
+    "title": "2.2: Deletes the obsolete rust-context.c and rust-context.h files",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "b9c7b9ea325d2598cb7206d203da8ba2",
-    "title": "3.3: Removes references to the deleted rust-context files from build and lint configurations (such as Makefile.am or cppclean_check.py)",
+    "title": "2.3: Removes references to the deleted rust-context files from build and lint configurations (such as Makefile.am or cppclean_check.py)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "be62d7000e33e22b4d2590cb9cf97ea4",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "e1af5bc47cc7e407052b8f113d5d5913",
-    "title": "4.1: Modifies, adds, or refactors any files within the test suite",
+    "title": "3.1: Modifies, adds, or refactors any files within the test suite",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "e7df7cd2ca07f4f1ab415d457a6e1c13",
-    "title": "4.2: Leaves residual vtable indirection calls (e.g., using c.FileOpenFile or the SC global) within the FileContainer implementation",
+    "title": "3.2: Leaves residual vtable indirection calls (e.g., using c.FileOpenFile or the SC global) within the FileContainer implementation",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

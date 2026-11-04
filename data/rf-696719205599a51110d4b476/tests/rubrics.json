@@ -109,7 +109,7 @@
       "importance": "must have"
     },
     "id": "a2bb1f3092088abe59b1bc927ac7549c",
-    "title": "4: Negative Rubrics"
+    "title": "2: Negative Rubrics"
   },
   {
     "annotations": {
@@ -117,7 +117,7 @@
       "importance": "must have"
     },
     "id": "3d772951d0b59ca057ad7afd909d18be",
-    "title": "4.1: Modifies OpcDaHeaderN fields_desc beyond correcting field name typos (such as adding, removing, or reordering fields)"
+    "title": "2.1: Modifies OpcDaHeaderN fields_desc beyond correcting field name typos (such as adding, removing, or reordering fields)"
   },
   {
     "annotations": {
@@ -125,6 +125,6 @@
       "importance": "must have"
     },
     "id": "d04c2b1017f1458f17a35ad2ae8eeb9b",
-    "title": "4.2: Removes a packet class referenced in _opcDa_pdu_classes (such as OpcDaFack, OpcDaBind_nak, or their LE variants)"
+    "title": "2.2: Removes a packet class referenced in _opcDa_pdu_classes (such as OpcDaFack, OpcDaBind_nak, or their LE variants)"
   }
 ]
