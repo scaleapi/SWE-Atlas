@@ -12,12 +12,14 @@ A trial is "not scored" when its failure was infrastructure, not the submission:
 an environment, sandbox or agent-proxy error (it recorded an exception_info and no reward). pass@1
 and pass@k leave those out, over the tasks with at least one scored trial; pass@1 (not scored = 0)
 counts every trial, a not-scored one as 0. An agent timeout is scored: the verifier grades what the
-agent left, and a timeout without a reward counts as 0. A trial whose verifier wrote no reward
-(a grader infrastructure exit included) or timed out, whose agent exited non-zero, or whose judge
-could not be used (judge_unusable / not_graded) is left out only when the verifier sealed the run as
-infrastructure (SEALED_INFRA); no grader in data/ writes that seal, so such a trial scores 0. Any
-other trial without a reward (unfinished) counts as 0. The trials not scored are listed by reason after the table: with retries on they should
-be rare; re-run any left.
+agent left, and a timeout without a reward counts as 0. A trial the judge did not rate is left out
+only when the verifier recorded a judge failure (judge_unusable, or an error in JUDGE_FAILURES); a
+refusal, a missing or empty answer, an empty diff or a rule violation scores 0 (not_graded). A
+trial whose verifier wrote no reward (a grader infrastructure exit included) or timed out, or whose
+agent exited non-zero, is left out only when the verifier sealed the run as infrastructure
+(SEALED_INFRA), otherwise it scores 0. Any other trial without a reward (unfinished) counts as 0.
+The trials not scored are listed by reason after the table: with retries on they should be rare;
+re-run any left.
 
 An agent job with qa trials gets a second row over its qa trials without the 7 tasks in REFUSED,
 which some models decline to answer; the first row counts refused trials as failures.
@@ -57,6 +59,13 @@ SEAL_REQUIRED = ("RewardFileNotFoundError", "VerifierTimeoutError", "NonZeroAgen
 # line the same run left in test-stdout.txt. The secret is generated after the agent's code is
 # stopped, so a killed or sabotaged verifier cannot forge it.
 SEALED_INFRA = "=== SEALED: not graded (infrastructure error) run=%s grader_exit=3 seal=%s "
+# A rewarded trial is left out as infrastructure when the judge itself failed: the verifier set
+# judge_unusable (the judge was asked and rated none of the must-haves), or the error in
+# evaluation_results.json starts with one of these (the judge refused the request, its votes setting
+# was invalid, its credentials were missing (rf, tw), or the verifier could not confirm its own
+# verdict, which is also where a qa run without judge credentials ends).
+JUDGE_FAILURES = ("judge refused", "no trustworthy verdict", "JUDGE_VOTES must be",
+                  "missing JUDGE_API_KEY", "JUDGE_API_KEY, JUDGE_BASE_URL and JUDGE_MODEL must all be set")
 IGNORED = ("*.pyc", ".DS_Store", "*.swp", "*.swo", "*~")
 
 
@@ -124,12 +133,24 @@ def sealed_infra_reason(trial_dir):
     return "not graded: " + str(record.get("reason"))[:80]
 
 
-def not_scored_reason(trial_dir, error, reward, not_graded):
+def judge_failure(rewards, verdict):
+    """The judge failure the verifier recorded for this trial, else None."""
+    if rewards.get("judge_unusable"):
+        return "judge unusable"
+    why = verdict.get("error")
+    if isinstance(why, str) and why.startswith(JUDGE_FAILURES):
+        return "not graded: " + why[:80]
+    return None
+
+
+def not_scored_reason(trial_dir, error, reward, not_graded, judge_failed):
     """Why a trial is an infrastructure outcome to leave out of pass@1, else None."""
     if error in SEAL_REQUIRED:
         return sealed_infra_reason(trial_dir)
     if error and error not in SCORED_ERRORS:
         return error
+    if reward is not None and judge_failed:
+        return judge_failed
     if reward is not None and not_graded:
         return sealed_infra_reason(trial_dir)
     return None
@@ -147,6 +168,7 @@ def trials(job_dir, data):
         rewards = (r.get("verifier_result") or {}).get("rewards") or {}
         error = (r.get("exception_info") or {}).get("exception_type")
         not_graded = bool(rewards.get("not_graded") or rewards.get("judge_unusable"))
+        verdict = load(os.path.join(d, "verifier", "evaluation_results.json"))
         out.append({
             "dir": d,
             "task": task,
@@ -157,9 +179,10 @@ def trials(job_dir, data):
             "reward": rewards.get("reward"),
             "not_graded": not_graded,
             "error": error,
-            "not_scored": not_scored_reason(d, error, rewards.get("reward"), not_graded),
+            "not_scored": not_scored_reason(d, error, rewards.get("reward"), not_graded,
+                                            judge_failure(rewards, verdict)),
             "digest": (lock.get("task") or {}).get("digest"),
-            "judge": load(os.path.join(d, "verifier", "evaluation_results.json")).get("judge") or {},
+            "judge": verdict.get("judge") or {},
         })
     return out
 
