@@ -5,7 +5,7 @@
   "n_runs": 3,
   "stamp": {
    "base_tree": "85d3c7f1d36120043e35225a0886d4186bd622f6",
-   "image_id": "ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_grafana_k6_696719205599a51110d4b439_1.1_v10197_bake@sha256:98f01629fd5228cfd5947a5ae9ae99bfd60a21461fe92e2c2f20741f1840780f",
+   "image_id": "ghcr.io/scaleapi/swe-atlas-v1.1:rf-696719205599a51110d4b439-d0abb73-v1.01.99@sha256:98f01629fd5228cfd5947a5ae9ae99bfd60a21461fe92e2c2f20741f1840780f",
    "runner": "f704744eba7a60b291fa627df1a6a94561ba8fa9ad656b553c7c2e5a85fc7d11"
   }
  },

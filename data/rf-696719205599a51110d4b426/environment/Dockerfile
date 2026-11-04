@@ -1,1 +1,1 @@
-FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_Automattic_wp-calypso_696719205599a51110d4b426_1.1_bake@sha256:862cea02a56140959fb4f683120777a107927a0bed02f756f5053ec1ee271108
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:rf-696719205599a51110d4b426-9d10a3d-v1.01.99@sha256:862cea02a56140959fb4f683120777a107927a0bed02f756f5053ec1ee271108

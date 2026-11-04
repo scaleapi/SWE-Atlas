@@ -1,1 +1,1 @@
-FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_QnA_drakkan_sftpgo_1.1_cu@sha256:b78ca367c77d5ed9f061c7261cae75a685e825d2cc2199c5375fd75e5dddb082
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:qa-6905333b74f22949d97baa2b-4463421-v1.01.99@sha256:b78ca367c77d5ed9f061c7261cae75a685e825d2cc2199c5375fd75e5dddb082

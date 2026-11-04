@@ -30,7 +30,7 @@ RUN_SCRIPT_RUNNER = "go"
 TEST_TIMEOUT_SEC = "${TEST_TIMEOUT_SEC:-1800}"
 FULL_SUITE_MODE = "full"
 FULL_SUITE_BASE = "live"
-FS_IMAGE_ID = "ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_grafana_grafana_696719205599a51110d4b462_1.1_bake@sha256:b1f62e9c5987c31d030f5449563482c099a812fc03657cb7a56bca51e9801853"
+FS_IMAGE_ID = "ghcr.io/scaleapi/swe-atlas-v1.1:rf-696719205599a51110d4b462-65fd15b-v1.01.99@sha256:b1f62e9c5987c31d030f5449563482c099a812fc03657cb7a56bca51e9801853"
 
 [agent]
 timeout_sec = 10800
@@ -38,7 +38,7 @@ network_mode = "allowlist"
 allowed_hosts = []
 
 [environment]
-docker_image = "ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_grafana_grafana_696719205599a51110d4b462_1.1_bake@sha256:b1f62e9c5987c31d030f5449563482c099a812fc03657cb7a56bca51e9801853"
+docker_image = "ghcr.io/scaleapi/swe-atlas-v1.1:rf-696719205599a51110d4b462-65fd15b-v1.01.99@sha256:b1f62e9c5987c31d030f5449563482c099a812fc03657cb7a56bca51e9801853"
 build_timeout_sec = 1800
 allow_internet = true
 cpus = 8

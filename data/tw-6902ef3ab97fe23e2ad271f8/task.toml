@@ -19,7 +19,7 @@ network_mode = "allowlist"
 allowed_hosts = []
 
 [environment]
-docker_image = "ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_TW_secdev_scapy_6902ef3ab97fe23e2ad271f8_1.1_v10198@sha256:a140e507b378a44019e046949c8a7575d5347a67ae3a8e8f7937a38b712c570c"
+docker_image = "ghcr.io/scaleapi/swe-atlas-v1.1:tw-6902ef3ab97fe23e2ad271f8-0925ada-v1.01.99@sha256:a140e507b378a44019e046949c8a7575d5347a67ae3a8e8f7937a38b712c570c"
 build_timeout_sec = 1800.0
 cpus = 4
 memory_mb = 4096

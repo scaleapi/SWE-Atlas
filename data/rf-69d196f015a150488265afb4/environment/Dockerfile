@@ -1,1 +1,1 @@
-FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_simple-login_app_69d196f015a150488265afb4_1.1_bake@sha256:ec1778bb6c865872b24f94b96a4afc5721a1819de758560be0a431c6697193cb
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:rf-69d196f015a150488265afb4-6faec9b-v1.01.99@sha256:ec1778bb6c865872b24f94b96a4afc5721a1819de758560be0a431c6697193cb

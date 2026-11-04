@@ -19,7 +19,7 @@ network_mode = "allowlist"
 allowed_hosts = []
 
 [environment]
-docker_image = "ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_TW_drakkan_sftpgo_6902ef3ab97fe23e2ad27281_1.1_cu@sha256:f96c796c591b33d590c7d561e65ca77998e04eb54380afe18de4e704ad4d073b"
+docker_image = "ghcr.io/scaleapi/swe-atlas-v1.1:tw-6902ef3ab97fe23e2ad27281-4463421-v1.01.99@sha256:f96c796c591b33d590c7d561e65ca77998e04eb54380afe18de4e704ad4d073b"
 build_timeout_sec = 1800.0
 cpus = 4
 memory_mb = 4096

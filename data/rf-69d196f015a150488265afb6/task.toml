@@ -29,7 +29,7 @@ OPENAI_API_KEY = "${OPENAI_API_KEY:-}"
 OPENAI_API_BASE = "${OPENAI_API_BASE:-}"
 FULL_SUITE_MODE = "full"
 FULL_SUITE_BASE = "baked"
-FS_IMAGE_ID = "ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_secdev_scapy_69d196f015a150488265afb6_1.1_bake@sha256:555a25bc555b4a9b67223b966d711e26938edcf49f4a45f2507d31626c34391e"
+FS_IMAGE_ID = "ghcr.io/scaleapi/swe-atlas-v1.1:rf-69d196f015a150488265afb6-0d7b970-v1.01.99@sha256:555a25bc555b4a9b67223b966d711e26938edcf49f4a45f2507d31626c34391e"
 
 [agent]
 timeout_sec = 10800
@@ -37,7 +37,7 @@ network_mode = "allowlist"
 allowed_hosts = []
 
 [environment]
-docker_image = "ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_secdev_scapy_69d196f015a150488265afb6_1.1_bake@sha256:555a25bc555b4a9b67223b966d711e26938edcf49f4a45f2507d31626c34391e"
+docker_image = "ghcr.io/scaleapi/swe-atlas-v1.1:rf-69d196f015a150488265afb6-0d7b970-v1.01.99@sha256:555a25bc555b4a9b67223b966d711e26938edcf49f4a45f2507d31626c34391e"
 build_timeout_sec = 1800
 allow_internet = true
 cpus = 4

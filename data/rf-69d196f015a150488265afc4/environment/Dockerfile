@@ -1,1 +1,1 @@
-FROM ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_RF_renovatebot_renovate_69d196f015a150488265afc4_1.1_v10197_bake@sha256:8cc4defd981d8f9a0add5ffb83e16338d173181c0d541fc9601e5671f2c44d77
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:rf-69d196f015a150488265afc4-d4da4a1-v1.01.99@sha256:8cc4defd981d8f9a0add5ffb83e16338d173181c0d541fc9601e5671f2c44d77

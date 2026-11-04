@@ -19,7 +19,7 @@ network_mode = "allowlist"
 allowed_hosts = []
 
 [environment]
-docker_image = "ghcr.io/johannes-mols/swe-atlas-v1.1:swe_atlas_TW_trufflesecurity_trufflehog_6902ef3ab97fe23e2ad27265_1.1_v10198@sha256:b1ba9d4bdae581636e1c17b34e5f837ca3d1912f66d76d0a3c944016788511cd"
+docker_image = "ghcr.io/scaleapi/swe-atlas-v1.1:tw-6902ef3ab97fe23e2ad27265-e42153d-v1.01.99@sha256:b1ba9d4bdae581636e1c17b34e5f837ca3d1912f66d76d0a3c944016788511cd"
 build_timeout_sec = 1800.0
 cpus = 4
 memory_mb = 16384
