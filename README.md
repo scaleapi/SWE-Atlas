@@ -85,8 +85,8 @@ harbor run -c run_config/job.yaml -p data --env-file .env -y -i 'rf-*'
 harbor run -c run_config/job.yaml -p data --env-file .env -y -i rf-69391d8d1ce51c407be1e533
 ```
 
-- **Other agents.** `job.yaml` has commented blocks for codex, mini-swe-agent, kimi-cli and vibe. mini-swe-agent
-  runs one lane at a time with that lane's prompt config, `run_config/mswea/<lane>.yaml`. For any
+- **Other agents.** `job.yaml` has commented blocks for codex, mini-swe-agent, kimi-cli and vibe.
+  mini-swe-agent runs one lane at a time with that lane's prompt config, `run_config/mswea/<lane>.yaml`. For any
   other harbor agent (`harbor run --help` lists them), replace the whole agent block: set `name`,
   `model_name`, `extra_allowed_hosts`, and under `kwargs` only the options that agent accepts
   (`harbor agent schema <name>` lists them). claude-code's `version` and `disallowed_tools` do not
@@ -108,8 +108,8 @@ python3 run_config/summary.py jobs/<job-name>
 Trials that ended on an infrastructure or agent-timeout error, or that the grader marked as an
 infrastructure failure, are left out of pass@1 and listed under the table; rerun them. Every other
 trial counts as graded: a refusal, an empty answer or a submission the judge could not rate scores
-0 (the `not graded` column counts these). A job with qa trials gets a second row: qa without the 7
-tasks some models refuse to answer. Browse a run with `harbor view jobs`.
+0 (the `not graded` column counts these). An agent job with qa trials, other than oracle or nop,
+gets a second row: qa without the 7 tasks some models refuse to answer. Browse a run with `harbor view jobs`.
 
 ## License
 
