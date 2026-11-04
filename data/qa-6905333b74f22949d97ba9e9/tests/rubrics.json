@@ -16,6 +16,14 @@
     }
   },
   {
+    "id": "3f0bc419b010e25f0d46a4b8f132df66",
+    "title": "1.8: States what reply the terminal generates to a control-sequence query that asks it to report part of its current state (for example a cursor position report or a DECRQSS reply)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
     "id": "26956ecc7cb8dc8c9f0f2d54a1abc4a8",
     "title": "1.9: States that kitty follows a display-oriented approach preserving exact codepoint sequences rather than strict NFC or NFD normalization",
     "annotations": {

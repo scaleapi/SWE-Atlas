@@ -56,6 +56,14 @@
     }
   },
   {
+    "id": "3dbfc6bdc504f1f2de17b41e55799480",
+    "title": "1.11: States that the theme active in a default interactive Scapy session is DefaultTheme, naming it by that class name as it appears in the code.",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
     "id": "57c69fea14a44d9c377f99229ab3ed97",
     "title": "2.1: Report that the execution was clean without the CryptographyDeprecationWarning regarding TripleDES/Blowfish that appear during the Scapy import.",
     "annotations": {

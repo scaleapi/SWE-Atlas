@@ -26,6 +26,14 @@
   {
     "annotations": {
       "type": "positive hli verifier",
+      "importance": "must have"
+    },
+    "id": "7cafdb344682cacfdfc42d3a852f7c6f",
+    "title": "1.4: Tests that TimeWheel Add() fires a near-future callback first, without waiting on a far-future callback that was already scheduled before it"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
       "importance": "nice to have"
     },
     "id": "de0dae3eb6f8b4968248f6282eab7502",

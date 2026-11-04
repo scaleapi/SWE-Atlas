@@ -52,6 +52,14 @@
       "type": "positive hli verifier",
       "importance": "must have"
     },
+    "id": "618da1a754fb70638c82c71bebbc6fb3",
+    "title": "1.9: Tests that reusing an earlier hyperlink with the same URL-ID combination, after other hyperlinks were created, moves that hyperlink to the end (most recently used position) of the screen's hyperlink list"
+  },
+  {
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    },
     "id": "f92eb501aed142d79ecb215a858edeb1",
     "title": "1.10: Tests that current_url_text() returns joined text from all lines sharing the same hyperlink ID when extracting multi-line hyperlink text"
   },
