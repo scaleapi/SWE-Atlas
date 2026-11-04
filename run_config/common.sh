@@ -83,16 +83,16 @@ export_judge_env() {
 
 # Every run retries the failures that are infrastructure, not the submission. harbor records an
 # environment, sandbox, healthcheck, agent-setup, agent-proxy (rate limit, 5xx, overload, dropped
-# connection, DNS/TLS), agent-timeout or verifier failure as the trial's exception_info, so the
-# trial ends as an error with no reward rather than a scored 0. set_retry_args tells harbor to
-# re-run such a trial up to MAX_RETRIES times (default 3, set MAX_RETRIES=0 to turn retries off);
-# each retry deletes the failed attempt first, so no stale reward is left and nothing is double
-# counted, and a high-concurrency run converges without manual reruns. Real outcomes stay as they
-# ran and are never retried: a model refusal, a missing/rejected key, an unknown or unusable model,
-# an exhausted account usage limit, a reply over the token or context budget, and a reply the judge
-# could not parse. harbor retries every exception except the ones listed, so a new kind of
-# infrastructure failure is retried too. summary.py leaves the trials still erroring for
-# an infrastructure reason out of pass@1.
+# connection, DNS/TLS) or verifier failure as the trial's exception_info, so the trial ends as an
+# error with no reward rather than a scored 0. set_retry_args tells harbor to re-run such a trial up
+# to MAX_RETRIES times (default 3, set MAX_RETRIES=0 to turn retries off); each retry deletes the
+# failed attempt first, so no stale reward is left and nothing is double counted, and a
+# high-concurrency run converges without manual reruns. Real outcomes stay as they ran and are never
+# retried: a model refusal, a missing/rejected key, an unknown or unusable model, an exhausted
+# account usage limit, a reply over the token or context budget, an agent that ran out of time
+# (graded on the work it left), and a reply the judge could not parse. harbor retries every
+# exception except the ones listed, so a new kind of infrastructure failure is retried too.
+# summary.py leaves the trials still erroring for an infrastructure reason out of pass@1.
 # On rf and tw the verifier shares the container with the agent's grading-time code as root, so a
 # determined agent could force a verifier failure to be re-sampled; the provisional reward 0 and the
 # seal check in the verifier close that, and MAX_RETRIES bounds how many extra attempts it could
@@ -101,7 +101,7 @@ export_judge_env() {
 NO_RETRY_EXCEPTIONS=(AgentSafetyRefusalError AgentAuthenticationError ModelNotFoundError
                      ApiUsageLimitError OutputTokenExceededError ContextWindowExceededError
                      OutputLengthExceededError ContextLengthExceededError
-                     VerifierOutputParseError RewardFileEmptyError)
+                     VerifierOutputParseError RewardFileEmptyError AgentTimeoutError)
 # retry.yaml carries the backoff (harbor has no CLI flag for it, so the retries would otherwise fire a
 # constant 1 s apart and could storm a rate-limited proxy); -c reads it and the --max-retries and
 # --retry-exclude below still win over it.

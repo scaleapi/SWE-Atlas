@@ -9,9 +9,10 @@ A <dir> is a harbor job directory of any lane, or a directory above jobs (result
 which stands for every job below it. oracle.sh and nop.sh print this table when they end, and it
 also summarizes a run_config/job.yaml run's job directory.
 A trial is "not scored" when its failure was infrastructure, not the submission: harbor ended it on
-an environment, sandbox, agent-proxy or agent-timeout error (it recorded an exception_info and no
-reward). pass@1 and pass@k leave those out, over the tasks with at least one scored trial; pass@1
-(not scored = 0) counts every trial, a not-scored one as 0. A trial whose verifier wrote no reward
+an environment, sandbox or agent-proxy error (it recorded an exception_info and no reward). pass@1
+and pass@k leave those out, over the tasks with at least one scored trial; pass@1 (not scored = 0)
+counts every trial, a not-scored one as 0. An agent timeout is scored: the verifier grades what the
+agent left, and a timeout without a reward counts as 0. A trial whose verifier wrote no reward
 (a grader infrastructure exit included) or timed out, whose agent exited non-zero, or whose judge
 could not be used (judge_unusable / not_graded) is left out only when the verifier sealed the run as
 infrastructure (SEALED_INFRA); no grader in data/ writes that seal, so such a trial scores 0. Any
@@ -37,15 +38,16 @@ REFUSED = tuple("qa-6905333b74f22949d97" + t for t in ("ba9bb", "ba9c0", "ba9cb"
 EXPECTED = {"oracle": 1.0, "nop": 0.0}
 # A trial that harbor ended on an exception is counted as 0 (the submission's own outcome) only for
 # these types; every other exception — an environment, sandbox, image-pull (harbor and Modal both
-# raise their own names here), agent-proxy or timeout failure, including a type not seen yet — is an
-# infrastructure outcome left out of the score, the same set the launchers retry. A model refusal is
-# a real 0 (the agent produced nothing), as is a missing/rejected key, an unusable model, an
-# exhausted usage limit, a reply over the token or context budget, and a grader that could not parse
-# or wrote an empty reward. RewardFileNotFoundError is handled separately: dropped only when sealed.
+# raise their own names here), agent-proxy, setup or start-up timeout failure, including a type not
+# seen yet — is an infrastructure outcome left out of the score, the same set the launchers retry. A
+# model refusal is a real 0 (the agent produced nothing), as is a missing/rejected key, an unusable
+# model, an exhausted usage limit, a reply over the token or context budget, and a grader that could
+# not parse or wrote an empty reward; an agent timeout keeps the reward the verifier gave the work it
+# left. RewardFileNotFoundError is handled separately: dropped only when sealed.
 SCORED_ERRORS = ("AgentSafetyRefusalError", "AgentAuthenticationError", "ModelNotFoundError",
                  "ApiUsageLimitError", "OutputTokenExceededError", "ContextWindowExceededError",
                  "OutputLengthExceededError", "ContextLengthExceededError",
-                 "VerifierOutputParseError", "RewardFileEmptyError")
+                 "VerifierOutputParseError", "RewardFileEmptyError", "AgentTimeoutError")
 # Errors a root agent could stage during grading (hang the verifier, exit the agent non-zero, delete
 # the reward) to turn a would-be 0 into a dropped trial: left out of the score only when the verifier
 # sealed the run as infrastructure, otherwise scored 0 so a forged one cannot buy an exclusion.

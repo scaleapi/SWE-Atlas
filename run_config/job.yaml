@@ -15,8 +15,9 @@
 n_attempts: 3                 # pass@k: attempts per task
 n_concurrent_trials: 24       # concurrent trials
 
-# Retry only infrastructure and agent-timeout failures, not the submission; the excluded exceptions
-# below are real outcomes and are graded as they ran. Each retry deletes the failed attempt first.
+# Retry only infrastructure failures, not the submission; the excluded exceptions below, an agent
+# timeout among them, are real outcomes and are graded as they ran. Each retry deletes the failed
+# attempt first.
 retry:
   max_retries: 3
   wait_multiplier: 2.0
@@ -33,6 +34,7 @@ retry:
     - ContextLengthExceededError
     - VerifierOutputParseError
     - RewardFileEmptyError
+    - AgentTimeoutError
 
 environment:
   type: modal

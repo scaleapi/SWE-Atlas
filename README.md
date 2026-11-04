@@ -74,8 +74,8 @@ score 0).
 ## Run an agent
 
 `run_config/job.yaml` runs one agent over all 284 tasks with 3 attempts per task (pass@3), and
-retries infrastructure and agent-timeout failures. Set the model under evaluation and its API
-hostname (the two lines marked `EDIT:`), then:
+retries infrastructure failures; an agent timeout is not retried. Set the model under evaluation
+and its API hostname (the two lines marked `EDIT:`), then:
 
 ```bash
 harbor run -c run_config/job.yaml --env-file .env -y
@@ -105,11 +105,11 @@ Harbor writes each run to `jobs/<job-name>/`, one directory per trial. For pass@
 python3 run_config/summary.py jobs/<job-name>
 ```
 
-Trials that harbor ended on an infrastructure error (environment, sandbox, agent proxy) or an agent
-timeout are left out of pass@1 and listed under the table; rerun them. Every other trial counts as
-graded: a grader infrastructure exit or verifier timeout that remains after the retries, a refusal
-or an empty answer scores 0, and so does a submission the judge could not rate (the `not graded`
-column counts these). An agent job with qa trials, other than oracle or nop, gets
+Trials that harbor ended on an infrastructure error (environment, sandbox, agent proxy) are left
+out of pass@1 and listed under the table; rerun them. Every other trial counts as graded: an agent
+timeout is graded on the work the agent left, and a grader infrastructure exit or verifier timeout
+that remains after the retries, a refusal or an empty answer scores 0, and so does a submission the
+judge could not rate (the `not graded` column counts these). An agent job with qa trials, other than oracle or nop, gets
 a second row: qa without the 7 tasks some models refuse to answer. Browse a run with
 `harbor view jobs`.
 
