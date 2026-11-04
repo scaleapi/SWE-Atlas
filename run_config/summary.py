@@ -10,12 +10,12 @@ which stands for every job below it. oracle.sh and nop.sh print this table when 
 also summarizes a run_config/job.yaml run's job directory.
 A trial is "not scored" when its failure was infrastructure, not the submission: harbor ended it on
 an environment, sandbox, agent-proxy or timeout error (it recorded an exception_info and no reward),
-the judge could not be used (judge_unusable / not_graded), or the verifier left no reward and sealed
-the run as infrastructure. pass@1 and pass@k leave those out, over the tasks with at least one scored
+or the verifier sealed the run as infrastructure because it left no reward or the judge could not be
+used (judge_unusable / not_graded). pass@1 and pass@k leave those out, over the tasks with at least one scored
 trial; pass@1 (not scored = 0) counts every trial, a not-scored one as 0. A verifier that was killed,
 hung or whose host was sabotaged cannot produce that seal, and an agent that exited non-zero or timed
 out the verifier cannot either, so those score 0 rather than being dropped; any other trial without a
-reward (unfinished, no seal) counts as 0. The trials not scored are listed by reason after the table:
+reward (unfinished, no seal), and a judge-unusable one without the seal, counts as 0. The trials not scored are listed by reason after the table:
 with retries on they should be rare; re-run any left.
 
 A qa agent job gets a second row without the 7 tasks in REFUSED, which some models decline to
@@ -129,7 +129,7 @@ def not_scored_reason(trial_dir, error, reward, not_graded):
     if error and error not in SCORED_ERRORS:
         return error
     if reward is not None and not_graded:
-        return "judge unusable"
+        return sealed_infra_reason(trial_dir)
     return None
 
 
