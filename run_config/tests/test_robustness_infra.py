@@ -9,7 +9,8 @@ Part B  harbor's own TrialQueue, configured with those flags, retries every infr
         agent-proxy and timeout error (and an unknown one) and never retries a real outcome -- and
         harbor's untouched default would not retry an agent timeout, which is why we override it.
 Part C  summary.py leaves the still-erroring infrastructure trials out of pass@1, counts a real
-        reward 0 and an unsealed missing reward as 0, and drops a verifier-sealed infra trial.
+        reward 0, an unsealed missing reward and an unsealed judge-unusable trial as 0, and drops a
+        verifier-sealed infra trial.
 """
 import json
 import os
@@ -142,7 +143,10 @@ def part_c():
     make_trial(job, "rf-env", error="EnvironmentStartTimeoutError")        # infra -> drop
     make_trial(job, "rf-modalimg", error="ImageBuildError")                # Modal image pull -> drop
     make_trial(job, "rf-unknown", error="SomeFutureInfraError")            # unseen infra -> drop
-    make_trial(job, "rf-judge", reward=0, not_graded=True)                  # judge infra -> drop
+    make_trial(job, "rf-judge", reward=0, not_graded=True)                  # judge unusable, no seal -> count 0
+    make_trial(job, "rf-judge-sealed", reward=0, not_graded=True,
+               infra={"infra_error": True, "verifier_run_id": rid, "seal_secret": secret, "reason": "judge down"},
+               sealed=summary.SEALED_INFRA % (rid, secret) + "processes_stopped_after_grading=0 ===")  # sealed -> drop
     make_trial(job, "rf-refusal", error="AgentSafetyRefusalError")         # real outcome -> count 0
     make_trial(job, "rf-ctxlen", error="ContextLengthExceededError")       # in-process overflow -> count 0
     make_trial(job, "rf-outlen", error="OutputLengthExceededError")        # in-process overflow -> count 0
@@ -161,10 +165,10 @@ def part_c():
                sealed=summary.SEALED_INFRA % (rid, secret))                   # mismatched seal -> count 0
 
     ts = {t["task"]: t for t in summary.trials(job, os.path.join(summary.REPO, "data"))}
-    drop = {"rf-timeout", "rf-proxy", "rf-env", "rf-modalimg", "rf-unknown", "rf-judge",
+    drop = {"rf-timeout", "rf-proxy", "rf-env", "rf-modalimg", "rf-unknown", "rf-judge-sealed",
             "rf-sealed", "rf-vtimeout-sealed"}
     keep = {"rf-pass", "rf-fail", "rf-refusal", "rf-ctxlen", "rf-outlen",
-            "rf-vtimeout", "rf-agentexit", "rf-nornf", "rf-forged"}
+            "rf-vtimeout", "rf-agentexit", "rf-nornf", "rf-forged", "rf-judge"}
     for name in drop:
         check("C", name + " is not scored (infra)", bool(ts[name]["not_scored"]), ts[name]["not_scored"])
     for name in keep:
@@ -173,14 +177,14 @@ def part_c():
     all_ts = list(ts.values())
     n_all, _, p1_all, _ = summary.scores(all_ts)
     n_scored, _, p1, pk = summary.scores(all_ts, scored_only=True)
-    # Scored tasks: pass(1) + 8 x 0 = 1/9. The unsealed verifier-timeout and agent-exit count as 0
-    # (forgeable, not dropped); agent-timeout, env/proxy/image and the sealed trials are dropped.
-    check("C", "pass@1 over scored trials is 1/9 (8 infra trials dropped)", abs(p1 - 1 / 9) < 1e-9,
+    # Scored tasks: pass(1) + 9 x 0 = 1/10. The unsealed verifier-timeout, agent-exit and judge-unusable
+    # count as 0 (forgeable, not dropped); agent-timeout, env/proxy/image and the sealed trials are dropped.
+    check("C", "pass@1 over scored trials is 1/10 (8 infra trials dropped)", abs(p1 - 1 / 10) < 1e-9,
           "p1=%.4f n_scored=%d" % (p1, n_scored))
-    check("C", "scored-trial count is 9 of 17", n_scored == 9 and n_all == 17,
+    check("C", "scored-trial count is 10 of 18", n_scored == 10 and n_all == 18,
           "n_scored=%d n_all=%d" % (n_scored, n_all))
-    # Counting every trial as 0: 1 pass / 17.
-    check("C", "pass@1 (not scored = 0) counts all 17 trials", abs(p1_all - 1 / 17) < 1e-9, "p1_all=%.4f" % p1_all)
+    # Counting every trial as 0: 1 pass / 18.
+    check("C", "pass@1 (not scored = 0) counts all 18 trials", abs(p1_all - 1 / 18) < 1e-9, "p1_all=%.4f" % p1_all)
 
 
 def main():
