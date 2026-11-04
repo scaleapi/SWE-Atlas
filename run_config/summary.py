@@ -18,8 +18,8 @@ out the verifier cannot either, so those score 0 rather than being dropped; any 
 reward (unfinished, no seal), and a judge-unusable one without the seal, counts as 0. The trials not scored are listed by reason after the table:
 with retries on they should be rare; re-run any left.
 
-A qa agent job gets a second row without the 7 tasks in REFUSED, which some models decline to
-answer; the first row counts refused trials as failures.
+An agent job with qa trials gets a second row over its qa trials without the 7 tasks in REFUSED,
+which some models decline to answer; the first row counts refused trials as failures.
 --gate exits 1 unless every task in data/ has an oracle and a nop trial, every oracle trial scores 1,
 every nop trial scores 0, no trial errored, and every trial ran on the task bytes now in data/
 (the digest harbor records in each trial's lock.json). --data <dir> checks against another data/.
@@ -200,9 +200,9 @@ def summary(jobs):
         lanes = sorted({t["lane"] or "?" for t in ts})
         agent, model = job_agent(job, ts)
         variants = [(os.path.basename(job), ts)]
-        if lanes == ["qa"] and agent not in EXPECTED:
-            variants.append((os.path.basename(job) + f", without the {len(REFUSED)} refused tasks",
-                             [t for t in ts if t["task"] not in REFUSED]))
+        if "qa" in lanes and agent not in EXPECTED:
+            variants.append((os.path.basename(job) + f", qa without the {len(REFUSED)} refused tasks",
+                             [t for t in ts if t["lane"] == "qa" and t["task"] not in REFUSED]))
         for name, sub in variants:
             done = [t for t in sub if t["done"]]
             n, _, p1_all, _ = scores(sub)
@@ -211,7 +211,7 @@ def summary(jobs):
             unscored = [t for t in sub if t["not_scored"]]
             if name == variants[0][0]:
                 reasons.update((os.path.basename(job), t["not_scored"]) for t in unscored)
-            row(("/".join(lanes), name, agent, model,
+            row(("/".join(sorted({t["lane"] or "?" for t in sub})), name, agent, model,
                  n, len(done), len(sub) - len(done), errors or 0, retries, sum(t["not_graded"] for t in done),
                  len(unscored), f"{p1:.1%}" + (f" ({n_scored} tasks)" if n_scored != n else ""),
                  f"{p1_all:.1%}", f"{pk:.1%} (k={k})"))

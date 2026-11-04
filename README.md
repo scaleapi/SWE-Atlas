@@ -105,8 +105,11 @@ Harbor writes each run to `jobs/<job-name>/`, one directory per trial. For pass@
 python3 run_config/summary.py jobs/<job-name>
 ```
 
-Trials that ended on an infrastructure error are left out of pass@1 and listed under the table;
-rerun them. Browse a run with `harbor view jobs`.
+Trials that ended on an infrastructure or agent-timeout error, or that the grader marked as an
+infrastructure failure, are left out of pass@1 and listed under the table; rerun them. Every other
+trial counts as graded: a refusal, an empty answer or a submission the judge could not rate scores
+0 (the `not graded` column counts these). A job with qa trials gets a second row: qa without the 7
+tasks some models refuse to answer. Browse a run with `harbor view jobs`.
 
 ## License
 
