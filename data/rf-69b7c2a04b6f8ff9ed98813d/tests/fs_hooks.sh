@@ -1,6 +1,6 @@
-# Full-suite grading hooks for the PUBLIC rf benchmark (sourced by master_validator_script.sh).
-# Shipped flat as /tests/fs_hooks.sh. Provides the baked baseline (suite-once) and the patched-phase time cap with a
-# single retry. The live path (FULL_SUITE_BASE=live) is unchanged and is the reference; baked is opt-in.
+# Full-suite grading hooks for the rf benchmark (sourced by master_validator_script.sh).
+# Provides the baked baseline (suite-once) and the patched-phase time cap with a single retry. FULL_SUITE_BASE
+# selects the baseline: baked (precomputed) or live (run in the container).
 FULL_SUITE_MODE="${FULL_SUITE_MODE:-full}"
 FULL_SUITE_BASE="${FULL_SUITE_BASE:-baked}"
 FS_UTIL="${FS_UTIL:-/tests}"

@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Full-suite grading helper for the PUBLIC rf benchmark: baked baseline, staleness stamp, infra marker.
+"""Full-suite grading helper for the rf benchmark: baked baseline, staleness stamp, infra marker.
 
-Shipped flat as /tests/baked_base.py (the public tree stages grader helpers directly under /tests; there is no
-/tests/util or /tests/verifiers subtree, because test.sh's tests_sha() opens every top-level entry of /tests as a
-file and a subdirectory would break it).
+Lives directly under /tests (no subdirectory), because test.sh's tests_sha() opens every top-level entry of /tests
+as a file and a subdirectory would break it.
 
-  baked_base.py synth OUT      write the baseline results JSON (public run_script format) from the baked stanza,
+  baked_base.py synth OUT      write the baseline results JSON (run_script format) from the baked stanza,
                                but only after the 3-field staleness stamp matches; else exit 3 (-> infra).
   baked_base.py stamp          print this container's actual stamp as JSON.
   baked_base.py base_commit    the commit test.sh should diff the agent's work against (root, or one rebuilt from

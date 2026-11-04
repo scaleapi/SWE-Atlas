@@ -319,9 +319,8 @@ if [ "$MV_EXIT" -ne 0 ]; then
 fi
 "${PY[@]}" /tests/verifier_report.py stop-agent-code || true
 
-# Surface the validator's parsed per-phase result maps so the offline full-suite tooling
-# (regen_base.py / live_vs_baked.py) can read the live baseline it needs; these are copies of
-# scratch artifacts and have no effect on the reward.
+# Copy the validator's parsed per-phase result maps to /logs/verifier for offline inspection; these
+# are copies of scratch artifacts and have no effect on the reward.
 for f in agent_baseline_results.json agent_mutation_results.json agent_comparison_results.json \
          ref_baseline_results.json ref_mutation_results.json ref_comparison_results.json \
          iv_baseline_results.json iv_mutation_results.json iv_comparison_results.json; do
