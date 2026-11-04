@@ -10,22 +10,10 @@ run_selected_tests() {
   local test_files=("$@")
   echo "Running selected tests: ${test_files[@]}"
   
-  # Try to get test names from relevant_test_names.json (preferred - avoids running unrelated tests)
-  local test_names_file="/tmp_artifact_storage/relevant_test_names.json"
-  local test_names=""
-  
-  if [[ -f "$test_names_file" ]]; then
-    test_names=$(python3 -c "import json; data=json.load(open('$test_names_file')); print('|'.join([t['name'] for t in data['tests']]))" 2>/dev/null)
-  fi
-  
   for test_file in "${test_files[@]}"; do
     local pkg_dir=$(dirname "$test_file")
     local pkg_path="./$pkg_dir"
-    
-    # Fallback to grep if no test names from JSON
-    if [ -z "$test_names" ]; then
-      test_names=$(grep -oE '^func (Test|Benchmark)[A-Za-z0-9_]+' "$test_file" | sed 's/^func //' | tr '\n' '|' | sed 's/|$//')
-    fi
+    local test_names=$(grep -oE '^func (Test|Benchmark)[A-Za-z0-9_]+' "$test_file" | sed 's/^func //' | tr '\n' '|' | sed 's/|$//')
     
     if [ -z "$test_names" ]; then
       echo "Warning: No test functions found"
@@ -50,6 +38,7 @@ if [[ "$1" == *","* ]]; then
 else
   TEST_FILES=("$@")
 fi
+IFS=$'\n' read -r -d '' -a TEST_FILES < <(printf '%s\n' "${TEST_FILES[@]}" | LC_ALL=C sort) || true
 
 # Run them all together
 run_selected_tests "${TEST_FILES[@]}"
