@@ -175,8 +175,8 @@ Its comments carry the codex and mini-swe-agent variants.
 Three scripts in `run_config/` start the other runs: `oracle.sh` (reference solutions) and `nop.sh`
 (an agent that does nothing), and `qa_repro.sh` is an optional check described below. Each runs the
 lanes you name (default: `qa rf tw`, one after another; `qa` for `qa_repro.sh`), and passes anything
-after `--` to every `harbor run`. In the scripts each lane is its own harbor dataset, so `-i`/`-x`
-task filters apply within a lane, and task ids that aren't in a lane are ignored.
+after `--` to every `harbor run`. In the scripts each lane is its own harbor job, so `-i`/`-x`
+task filters apply within a lane, and a lane that the filters leave empty is skipped.
 
 Try one task first to check your setup. The oracle should score `reward 1.0`:
 

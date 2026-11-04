@@ -44,15 +44,27 @@ parse_lanes() {
 slug() { echo "$1" | sed 's/[^A-Za-z0-9.-]/-/g'; }
 
 # The `harbor run` arguments that select one lane's tasks. All tasks live flat in data/, named
-# <lane>-<id>; a lane is every directory whose name starts with "<lane>-".
+# <lane>-<id>; a lane is every directory whose name starts with "<lane>-", so the other lanes are
+# excluded with -x. harbor keeps a task that matches any -i and then drops every -x match, so the
+# -i/-x filters passed after `--` (the remaining arguments) narrow the lane. Returns 1 when they
+# leave the lane with no task, because harbor refuses a job without tasks.
 lane_select() {
-  local d found=0
+  local lane="$1" o
+  shift
+  compgen -G "$REPO_ROOT/data/$lane-*" >/dev/null || { echo "no tasks for lane $lane in data/$lane-*" >&2; exit 1; }
   LANE_SELECT=(-p "$REPO_ROOT/data")
-  for d in "$REPO_ROOT/data/$1-"*; do
-    [[ -d "$d" ]] || continue
-    LANE_SELECT+=(-i "${d##*/}"); found=1
-  done
-  [[ "$found" == 1 ]] || { echo "no tasks for lane $1 in data/$1-*" >&2; exit 1; }
+  for o in "${ALL_LANES[@]}"; do [[ "$o" == "$lane" ]] || LANE_SELECT+=(-x "$o-*"); done
+  python3 - "$REPO_ROOT/data" "$lane" "$@" <<'PY'
+import argparse, fnmatch, os, sys
+data, lane, *args = sys.argv[1:]
+p = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+p.add_argument("-i", "--include-task-name", action="append", default=[])
+p.add_argument("-x", "--exclude-task-name", action="append", default=[])
+f = p.parse_known_args(args)[0]
+names = [n for n in os.listdir(data) if n.startswith(lane + "-") and os.path.isdir(os.path.join(data, n))]
+names = [n for n in names if not f.include_task_name or any(fnmatch.fnmatch(n, q) for q in f.include_task_name)]
+sys.exit(0 if any(not any(fnmatch.fnmatch(n, q) for q in f.exclude_task_name) for n in names) else 1)
+PY
 }
 
 # The verifiers of all three lanes read the judge from JUDGE_API_KEY, JUDGE_BASE_URL, JUDGE_MODEL,

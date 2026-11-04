@@ -40,8 +40,7 @@ CLAUDE_CODE_VERSION="${CLAUDE_CODE_VERSION:-2.1.293}"
 probes="$RESULTS_DIR/qa/.probes/$JOB_NAME"
 rm -rf "$probes"
 mkdir -p "$probes"
-lane_select qa
-python3 - "$probes" "${LANE_SELECT[@]}" <<'PY'
+python3 - "$probes" "$REPO_ROOT/data" <<'PY'
 import json, os, re, shutil, sys
 
 PROMPT = """<uploaded_files>
@@ -129,11 +128,10 @@ claims so partial work survives a timeout. Save the full raw output of each chec
 ```
 """
 
-out, _, data, *select = sys.argv[1:]
-included = set(select[1::2])
+out, data = sys.argv[1:]
 for name in sorted(os.listdir(data)):
     src = os.path.join(data, name)
-    if name not in included or not os.path.isfile(os.path.join(src, "solution/answer.txt")):
+    if not name.startswith("qa-") or not os.path.isfile(os.path.join(src, "solution/answer.txt")):
         continue
     dst = os.path.join(out, name)
     shutil.copytree(src, dst)
@@ -157,7 +155,7 @@ run_harbor run -p "$probes" -a claude-code -m "$MODEL" -e modal -k "$K" -n "$N" 
 job="$RESULTS_DIR/qa/$JOB_NAME"
 [[ "${DRY_RUN:-0}" != 1 && -d "$job" ]] || exit "$rc"
 
-python3 - "$RUN_CONFIG" "${LANE_SELECT[1]}" "$job" <<'PY' || [[ $rc -ne 0 ]] || rc=1
+python3 - "$RUN_CONFIG" "$REPO_ROOT/data" "$job" <<'PY' || [[ $rc -ne 0 ]] || rc=1
 import csv, json, os, re, sys
 from collections import Counter
 
