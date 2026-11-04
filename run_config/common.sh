@@ -1,4 +1,4 @@
-# Sourced by oracle.sh, nop.sh and qa_repro.sh.
+# Sourced by oracle.sh and nop.sh.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN_CONFIG="$REPO_ROOT/run_config"
@@ -44,14 +44,13 @@ parse_lanes() {
 slug() { echo "$1" | sed 's/[^A-Za-z0-9.-]/-/g'; }
 
 # The `harbor run` arguments that select one lane's tasks. All tasks live flat in data/, named
-# <lane>-<id>; a lane is every directory whose name starts with "<lane>-".
+# <lane>-<id>; a lane is every directory whose name starts with "<lane>-". The other lanes are
+# excluded, so an -i filter passed after `--` selects tasks within the lane.
 lane_select() {
-  local d found=0
+  local d found=0 other
   LANE_SELECT=(-p "$REPO_ROOT/data")
-  for d in "$REPO_ROOT/data/$1-"*; do
-    [[ -d "$d" ]] || continue
-    LANE_SELECT+=(-i "${d##*/}"); found=1
-  done
+  for other in "${ALL_LANES[@]}"; do [[ "$other" == "$1" ]] || LANE_SELECT+=(-x "$other-*"); done
+  for d in "$REPO_ROOT/data/$1-"*; do [[ -d "$d" ]] && found=1; done
   [[ "$found" == 1 ]] || { echo "no tasks for lane $1 in data/$1-*" >&2; exit 1; }
 }
 
