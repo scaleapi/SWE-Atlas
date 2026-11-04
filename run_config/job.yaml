@@ -69,6 +69,31 @@ agents:
 #       reasoning_effort: high
 #       version: 2.4.6
 #       config_file: run_config/mswea/rf.yaml   # EDIT: qa.yaml, rf.yaml or tw.yaml, and filter -p data -i '<lane>-*'
+#
+# kimi-cli and vibe install their own Python with uv; some task images pin Python 3.11 and turn off
+# uv Python downloads, so these agents get their own uv settings (agent setup and run only, not the
+# verifier).
+#
+# For kimi-cli (key MOONSHOT_API_KEY in .env), replace it with:
+#   - name: kimi-cli
+#     model_name: moonshot/kimi-k3           # EDIT: the model under evaluation
+#     extra_allowed_hosts:
+#       - api.moonshot.cn                    # EDIT: the agent API hostname
+#     kwargs:
+#       version: 1.51.0
+#     env:
+#       UV_PYTHON_DOWNLOADS: automatic
+#
+# For vibe (key MISTRAL_API_KEY in .env), replace it with:
+#   - name: vibe
+#     model_name: mistral/mistral-large-2512 # EDIT: the model under evaluation
+#     extra_allowed_hosts:
+#       - api.mistral.ai                     # EDIT: the agent API hostname
+#     kwargs:
+#       version: 3.0.4
+#     env:
+#       UV_PYTHON: "3.12"
+#       UV_PYTHON_DOWNLOADS: automatic
 
 datasets:
   - path: data

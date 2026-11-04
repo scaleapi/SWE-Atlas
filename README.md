@@ -85,7 +85,7 @@ harbor run -c run_config/job.yaml -p data --env-file .env -y -i 'rf-*'
 harbor run -c run_config/job.yaml -p data --env-file .env -y -i rf-69391d8d1ce51c407be1e533
 ```
 
-- **Other agents.** `job.yaml` has commented blocks for codex and mini-swe-agent. mini-swe-agent
+- **Other agents.** `job.yaml` has commented blocks for codex, mini-swe-agent, kimi-cli and vibe. mini-swe-agent
   runs one lane at a time with that lane's prompt config, `run_config/mswea/<lane>.yaml`. For any
   other harbor agent (`harbor run --help` lists them), replace the whole agent block: set `name`,
   `model_name`, `extra_allowed_hosts`, and under `kwargs` only the options that agent accepts

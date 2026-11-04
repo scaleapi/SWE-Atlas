@@ -173,7 +173,7 @@ digest = "sha256:5334dc627b332fe4c0e4421b9bce75cd5c3735a02f68323a70245dd13a95a0a
 
 [[tasks]]
 name = "scale-ai/qa-6905333b74f22949d97ba9c8"
-digest = "sha256:efae2959c5aabf7ee1b35be0b745a43fb7f0ff4b08c1d44698bd16a8e1a52456"
+digest = "sha256:82a2033186cf6c8a74e98fe313397d4e0429e77dadb303982876c1b2f16bab1d"
 
 [[tasks]]
 name = "scale-ai/qa-6905333b74f22949d97ba9c9"
