@@ -9,14 +9,13 @@ A <dir> is a harbor job directory of any lane, or a directory above jobs (result
 which stands for every job below it. oracle.sh and nop.sh print this table when they end, and it
 also summarizes a run_config/job.yaml run's job directory.
 A trial is "not scored" when its failure was infrastructure, not the submission: harbor ended it on
-an environment, sandbox, agent-proxy or timeout error (it recorded an exception_info and no reward),
-or the verifier sealed the run as infrastructure because it left no reward or the judge could not be
-used (judge_unusable / not_graded). pass@1 and pass@k leave those out, over the tasks with at least
-one scored trial; pass@1 (not scored = 0) counts every trial, a not-scored one as 0. A verifier that
-was killed, hung or whose host was sabotaged cannot produce that seal, and an agent that exited
-non-zero or timed out the verifier cannot either, so those score 0 rather than being dropped; any
-other trial without a reward (unfinished, no seal), and a judge-unusable one without the seal,
-counts as 0. The trials not scored are listed by reason after the table: with retries on they should
+an environment, sandbox, agent-proxy or agent-timeout error (it recorded an exception_info and no
+reward). pass@1 and pass@k leave those out, over the tasks with at least one scored trial; pass@1
+(not scored = 0) counts every trial, a not-scored one as 0. A trial whose verifier wrote no reward
+(a grader infrastructure exit included) or timed out, whose agent exited non-zero, or whose judge
+could not be used (judge_unusable / not_graded) is left out only when the verifier sealed the run as
+infrastructure (SEALED_INFRA); no grader in data/ writes that seal, so such a trial scores 0. Any
+other trial without a reward (unfinished) counts as 0. The trials not scored are listed by reason after the table: with retries on they should
 be rare; re-run any left.
 
 An agent job with qa trials gets a second row over its qa trials without the 7 tasks in REFUSED,
