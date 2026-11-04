@@ -30,8 +30,6 @@ allowed_hosts = [
   "dl-cdn.alpinelinux.org",
   "deb.nodesource.com",
   "download.docker.com",
-  "pypi.org",
-  "files.pythonhosted.org",
   "bootstrap.pypa.io",
   "astral.sh",
   "registry.npmjs.org",
