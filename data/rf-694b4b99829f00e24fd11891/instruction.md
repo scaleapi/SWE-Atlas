@@ -4,8 +4,6 @@ Can you refactor the marketplace redesign flag handling so there is a single cen
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below interface for your solution:
 
 - Path: `client/my-sites/plugins/hooks/use-is-marketplace-redesign-enabled.ts`
@@ -28,3 +26,5 @@ Use the below interface for your solution:
     - Input: `isMarketplaceRedesignEnabled: boolean`
     - Output: `Record<string, Category>`
     - Description: Returns the full plugin categories object. Uses the isMarketplaceRedesignEnabled parameter to determine alternate titles and descriptions for categories like paid, popular, featured, monetization, and business. Defaults the parameter to false.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

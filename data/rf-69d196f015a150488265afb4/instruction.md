@@ -2,8 +2,6 @@ I need to refactor how we handle setting the default mailbox. The `set_default_m
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below Interface:
 
 - Path: `app/user_settings.py`
@@ -21,3 +19,5 @@ Use the below Interface:
 - Input: `user: User, mailbox_id: int`
 - Output: `Mailbox`
 - Description: Sets the given mailbox as the user's default mailbox. Validates ownership and verification status before updating.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

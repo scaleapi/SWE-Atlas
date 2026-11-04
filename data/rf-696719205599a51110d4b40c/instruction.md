@@ -8,8 +8,6 @@ Simplify the internal data structures by removing the DetectorInfo and detectorK
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below interface for your solution:
 
 - Path: `pkg/engine/engine.go`
@@ -39,3 +37,5 @@ Use the below interface for your solution:
 - Input: `match *ahocorasick.Match, detectors map[detectorspb.DetectorType]detectors.Detector`
 - Output: `bool`
 - Description: Populates the given detector map based on Aho-Corasick match results. Now maps directly to detectors.Detector instead of DetectorInfo.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

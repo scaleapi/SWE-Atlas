@@ -2,8 +2,6 @@ The GitHub token detectors in v1 and v2 have a lot of duplicated code like the s
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-tests files in the working directory to ensure the task is satisfied.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below Interface:
 
 - Path: `pkg/detectors/github/v1/github_old.go`
@@ -48,3 +46,5 @@ Use the below Interface:
 - Output: `NA`
 - Embedding: embeds `v1.Scanner`
 - Description: Scanner struct for GitHub v2 token detection. Embeds v1.Scanner to reuse verification logic and implements its own Version() returning 2.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

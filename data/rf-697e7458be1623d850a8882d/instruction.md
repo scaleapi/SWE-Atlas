@@ -7,4 +7,4 @@ I need to improve the debuggability and code quality in pkg/sources/git/git.go.
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way.
 Your task is to make the minimal changes to non-tests files in the working directory to ensure the task is satisfied.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

@@ -16,8 +16,6 @@ None of these changes should alter any runtime behavior. This is purely a struct
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below interface for your solution:
 
 - Path: `src/database/rrd-database-mode.h`
@@ -138,3 +136,5 @@ Use the below interface for your solution:
 - Input: `RRDSET_TYPE chart_type`
 - Output: `const char *`
 - Description: Returns the string name for a given chart type enum value. Extracted from `rrdset.c` into `rrdset-type.c`.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

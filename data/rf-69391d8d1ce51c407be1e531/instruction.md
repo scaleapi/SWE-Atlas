@@ -4,8 +4,6 @@ Update gitparse and BufferedFileWriter to use the new shared packages, propagati
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below Interface:
 
 - Path: `pkg/writers/buffer/buffer.go`
@@ -140,3 +138,5 @@ Use the below Interface:
 - Input: `ctx context.Context, opts ...Option`
 - Output: `*BufferedFileWriter`
 - Description: Creates a new BufferedFileWriter. Now accepts a context.Context as its first parameter to pass to the shared buffer pool's Get method. Previously took only options.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

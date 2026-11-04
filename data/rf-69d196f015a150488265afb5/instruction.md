@@ -2,8 +2,6 @@
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below Interface:
 
 Path: packages/api-core/src/site-plans/fetchers.ts
@@ -53,3 +51,5 @@ Input: N/A
 Output: N/A
 
 Description: Expanded site-contextual plan type consolidating pricing, product identification, discount/cost, billing interval, coupon, introductory offer, current plan/subscription, and trial availability fields. The id field type changes from string | null to number | null. Uses SiteContextualPlanCostOverride\[\] for cost_overrides.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

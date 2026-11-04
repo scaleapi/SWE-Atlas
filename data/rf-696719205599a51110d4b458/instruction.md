@@ -8,8 +8,6 @@ While you're at it, both `Meta` and `Plugin` are missing proper constructors tha
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below Interface:
 
 - Path: `apps/plugins/pkg/apis/plugins/v0alpha1/meta_object_gen.go`
@@ -25,3 +23,5 @@ Use the below Interface:
 - Input: `NA`
 - Output: `*Plugin`
 - Description: Creates a new Plugin resource object with properly initialized Spec and Status values, where each nested subtype is recursively initialized with its own schema defaults.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

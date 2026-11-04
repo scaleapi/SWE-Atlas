@@ -6,8 +6,6 @@ Can you refactor the logging infrastructure to use logrus.FieldLogger interfaces
 
 I've already taken care of all changes to the test files. Do NOT modify any test files (\*\_test.go) or testing logic in any way. Your task is to make the minimal changes to non-test source files only. 
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below Interface:
 
 \## Public Signature Changes (Category 1, 4)
@@ -157,3 +155,5 @@ Use the below Interface:
 \- Output: NA
 
 \- Description: Test case struct for HTTP module tests. Has new fields logger (logrus.FieldLogger) and hook (\*testutils.SimpleLogrusHook) for capturing log output within the test case.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

@@ -8,8 +8,6 @@ Making the doublewrite constants from `trx0sys.h` available during innochecksum 
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below Interface:
 
 - Path: `extra/innochecksum.cc`
@@ -18,3 +16,5 @@ Use the below Interface:
 - Input: `uint32_t` value (`GET_UINT`, `REQUIRED_ARG`)
 - Output: N/A
 - Description: New command-line option that allows the user to supply InnoDB tablespace flags externally. Default value is `UINT32_MAX` (`4294967295`), meaning "read flags from page 0." Help text must be: `"InnoDB tablespace flags (default: 4294967295 = read from page 0)"`. The option's min is `0` and max is `UINT32_MAX`. When the value is not valid for any tablespace format (system or per-table), the tool prints `"Error: Provided --tablespace-flags is not valid."` and exits with failure.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

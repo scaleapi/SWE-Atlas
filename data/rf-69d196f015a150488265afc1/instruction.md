@@ -16,8 +16,6 @@ This touches call sites across the InnoDB tree, including dictionary, handler, r
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below Interface:
 
 \- Path: `storage/innobase/include/dict0dict.h`
@@ -151,3 +149,5 @@ Use the below Interface:
 \- Output: `void`
 
 \- Description: Clears the statistics for a table to empty-table values and saves them to persistent storage if persistent statistics are enabled for the table.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

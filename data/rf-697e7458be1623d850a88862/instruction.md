@@ -4,8 +4,6 @@ Can you refactor this so each of the three silence routes is served by its own t
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below Interface:
 
 - Path: `public/app/features/alerting/unified/NewSilencePage.tsx`
@@ -28,3 +26,5 @@ Use the below Interface:
 - Input: NA
 - Output: `JSX.Element`
 - Description: Top-level page component for the /alerting/silences route. Default export only, wrapped in withErrorBoundary — must not have a named export. Renders AlertmanagerPageWrapper (navId="silences") containing the silences table.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

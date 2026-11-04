@@ -8,4 +8,4 @@ All code should remain in the same `es` package and no functional behavior shoul
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

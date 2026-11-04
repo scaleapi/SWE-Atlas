@@ -2,8 +2,6 @@ The ModuleResolver requires calling SetMain to store internal state before RunMa
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below Interface:
 
 - Path: `js/modules/resolution.go`
@@ -19,3 +17,5 @@ Use the below Interface:
 - Input: `basePWD *url.URL, arg string, data []byte`
 - Output: `module, error`
 - Description: Resolves and caches a module from pre-loaded data. Resolves the specifier, checks the cache, and if not cached, compiles the data and stores the result. Used internally by RunSourceData.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

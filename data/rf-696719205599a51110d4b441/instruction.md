@@ -2,8 +2,6 @@ Group and check state is duplicated across the Runner and VU state objects, with
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below interface for your solution:
 
 - Path: `lib/test_state.go`
@@ -40,3 +38,5 @@ Use the below interface for your solution:
 - Input: N/A
 - Output: N/A
 - Description: The path identifier for the root group. Defined as an empty string constant.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

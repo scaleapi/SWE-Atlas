@@ -6,8 +6,6 @@ Can you isolate `struct rrdhost_system_info` into its own self-contained module 
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 # Interface
 
 - Path: `src/database/rrdhost-system-info.h`
@@ -142,3 +140,5 @@ Solve this from this repository's code. Don't look the solution up elsewhere (la
 - Input: `BUFFER *wb, const char *key, const char *value`
 - Output: `void`
 - Description: URL encodes the value and appends key=encoded_value to the buffer.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

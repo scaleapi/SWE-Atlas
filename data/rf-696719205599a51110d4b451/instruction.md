@@ -4,8 +4,6 @@ Can you refactor the Engine to move most of its capabilities out in preparation 
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below Interface:
 
 - Path: `api/v1/control_surface.go`
@@ -70,3 +68,5 @@ Use the below Interface:
 - Input: NA
 - Output: `uint32`
 - Description: Returns the number of metrics for which thresholds were breached during the last processing phase. Safe to use concurrently.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

@@ -99,6 +99,6 @@ This document describes the public interfaces that must be implemented for the t
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Your task is to make the minimal changes to non-tests files in the working directory to ensure the task is satisfied.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

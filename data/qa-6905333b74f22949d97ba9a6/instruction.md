@@ -25,7 +25,6 @@ I'm trying to understand the actual runtime behavior here, not just what the cod
 
 Can you help me answer this question about the codebase?
 Your task is to analyze and explore the codebase in /app to find the answer. Do NOT modify any files in the repository.
-Work out the answer from this repository's code. Don't look it up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
 
 Follow these steps to answer the question:
 1. Explore the repository structure to understand how the codebase is organized
@@ -42,3 +41,5 @@ Your comprehensive answer here, including all relevant findings, code references
 <<FINAL_ANSWER>>
 ANSWER_EOF
 ```
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

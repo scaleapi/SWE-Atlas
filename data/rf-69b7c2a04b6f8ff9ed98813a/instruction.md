@@ -10,8 +10,6 @@ In the ML dimension prediction path, a statistics reporting call is made while h
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below interface for your solution:
 
 - Path: `src/streaming/stream-sender-internals.h`
@@ -30,3 +28,5 @@ Use the below interface for your solution:
     - Input: `struct sender_state *s`
     - Output: `void`
     - Description: Runs disconnect hooks for a sender, including shared cleanup (pending command cleanup, chart and replication reset, buffer flushing) and notifying the child about parent disconnection. Callable from both the sender module and the connector thread.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

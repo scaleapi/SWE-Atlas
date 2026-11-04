@@ -4,8 +4,6 @@ Can you refactor the vendor-specific dispatch into a two-level architecture? The
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Use the below Interface:
 
 - Path: `scapy/layers/dot11.py`
@@ -28,3 +26,5 @@ Use the below Interface:
 - Input: NA
 - Output: `RSNCipherSuite`
 - Description: New ConditionalField appended to Dot11EltRSN.fields_desc. Uses RSNCipherSuite with default cipher 0x6 (BIP-CMAC-128). Present only when pkt.mfp_capable == 1.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

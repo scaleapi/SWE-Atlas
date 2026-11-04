@@ -10,8 +10,6 @@ Decouple these concerns:
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 Your task is to make the minimal changes to non-tests files in the working directory to ensure the task is satisfied.
 
 Use the below Interface:
@@ -22,3 +20,5 @@ Use the below Interface:
 - Input: `sampleTime time.Time, ctm metrics.TagsAndMeta, builtinMetrics *metrics.BuiltinMetrics`
 - Output: `metrics.SampleContainer`
 - Description: Returns samples for data sent and received since the last call, then resets the counters to zero. Uses the provided time as the sample time and the given tags and builtin metrics to build the samples.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

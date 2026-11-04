@@ -14,8 +14,8 @@ Clean up any imports, components, and styles that become unused after these chan
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
 
-Solve this from this repository's code. Don't look the solution up elsewhere (later releases, upstream commits or PRs, package registries, the web, or other AI tools).
-
 ## Interface
 
 No interface changes are required for this task. The OverviewCard component retains its existing public API (props: title, heading, description, icon, link, disabled, intent, isLoading) and default export. The refactor only relocates the component and updates consumer import paths without modifying the component's interface.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.
