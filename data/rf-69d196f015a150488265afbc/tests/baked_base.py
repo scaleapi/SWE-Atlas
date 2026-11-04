@@ -13,8 +13,8 @@ file and a subdirectory would break it).
   baked_base.py infra REASON [PHASE RC CAP ELAPSED]   write /logs/verifier/infra_error.json.
 
 The baked stanza is /tests/baked_base.json: {"tests": {name: "PASSED"|"FAILED"|"SKIPPED"}, "baked_base":
-{"count": N, "stamp": {base_tree, runner, image_id}}}. synth reproduces the exact passed/failed/skipped SETS a live
-base run produces, so compare_test_runs.py yields a byte-identical comparison and the verdict is unchanged.
+{"count": N, "stamp": {base_tree, runner, image_id}}}. synth writes the per-name statuses that were stable across the
+live base runs the stanza was built from; names whose status varied between those runs are left out.
 
 Fail closed: any stamp/stanza mismatch exits 3 with /tmp_artifact_storage/fs_reason; the caller (fs_hooks.sh) turns
 that into an infra exit (no reward, non-zero exit -> harbor errors and re-runs the trial, never a wrong score). The
