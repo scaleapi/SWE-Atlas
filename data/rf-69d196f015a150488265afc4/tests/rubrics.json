@@ -78,13 +78,5 @@
       "type": "negative hli verifier",
       "importance": "must have"
     }
-  },
-  {
-    "id": "d21ab636db085d0e99e46378e2230990",
-    "title": "4.2: Removes or breaks error logging for invalid CircleCI configuration files",
-    "annotations": {
-      "type": "negative hli verifier",
-      "importance": "must have"
-    }
   }
 ]

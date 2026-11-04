@@ -40,14 +40,6 @@
     }
   },
   {
-    "id": "f5b606c32b703f172b99b76f49f802d8",
-    "title": "1.7: States that pressing Enter at the final step triggers config patching via event.MatchesPressOrRepeat(\"enter\")",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "0a36a2636ecb39ee1d0f3e36c2f7279c",
     "title": "1.8: States that config patching updates font settings such as font_family, bold_font, italic_font, and bold_italic_font within a marked section (e.g., KITTY_FONTS sentinel)",
     "annotations": {

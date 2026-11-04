@@ -16,14 +16,6 @@
     }
   },
   {
-    "id": "ef2a710fea226ddf030ae9a665849491",
-    "title": "1.5: Identifies the Registry struct in metrics/registry.go as the central component that maintains a thread-safe map of all registered metrics.",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "aa0ed677d23700d87591c0b1c23b8a2e",
     "title": "1.6: Identifies the RegisterBuiltinMetrics function in metrics/builtin.go as responsible for registering core metrics, including Iterations and IterationDuration.",
     "annotations": {

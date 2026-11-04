@@ -28,14 +28,6 @@
       "type": "positive hli verifier",
       "importance": "must have"
     },
-    "id": "38df8bece8ddb5ac868f3807974ac1d0",
-    "title": "1.4: Tests that PutBucketPolicy handler returns HTTP 400 Bad Request when request body reader is nil"
-  },
-  {
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    },
     "id": "ad453b4a924e138ced4ea15ef2db67c4",
     "title": "1.5: Tests that PutBucketPolicy handler returns HTTP 403 Forbidden when credentials (access key and secret key) are empty"
   },

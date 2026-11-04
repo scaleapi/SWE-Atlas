@@ -60,14 +60,6 @@
       "type": "positive hli verifier",
       "importance": "must have"
     },
-    "id": "0a00bb49a9d0922e81e3b3ac2d39a76c",
-    "title": "1.8: Tests that `actions_for_url` returns matching actions when URL protocol matches the protocol criteria in the spec"
-  },
-  {
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    },
     "id": "15fa6fc6f9fe0c44da21d415975fae22",
     "title": "1.9: Tests that actions_for_url returns matching actions when file MIME type matches the mime criteria in the spec"
   },

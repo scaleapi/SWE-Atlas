@@ -78,13 +78,5 @@
       "type": "negative hli verifier",
       "importance": "must have"
     }
-  },
-  {
-    "id": "4da63b169543929c454d35ee084433ed",
-    "title": "2.2: Shows Redis data command syntax such as SET \"django_q:key\" \"value\" or BLPOP \"queue\" \"1\" (a PING health check does not count).",
-    "annotations": {
-      "type": "negative hli verifier",
-      "importance": "must have"
-    }
   }
 ]

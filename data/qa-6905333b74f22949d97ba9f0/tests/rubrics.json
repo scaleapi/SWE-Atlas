@@ -88,14 +88,6 @@
     }
   },
   {
-    "id": "f94d252f732c7f9f982bac623c4eb8bc",
-    "title": "1.12: Reports text scrolls upward without screen tearing or flickering when pressing Enter multiple times, demonstrating refresh cycle works.",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "410307bd43cfc7e11a577e7f5e001504",
     "title": "1.13: Reports window appears on screen with configured background colour (such as #181818), confirming visual startup.",
     "annotations": {

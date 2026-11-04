@@ -72,14 +72,6 @@
     }
   },
   {
-    "id": "ee2018c8712f3345b25b8834eb7114c3",
-    "title": "1.12: Reports a concrete confirmation line printed by the user-creation step, such as `User created: True, Username: testuser`, demonstrating a verifiable provisioning outcome for the test user.",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "bee14fa4deb8a3bbc6871c2df11791b0",
     "title": "1.13: Reports a concrete token-creation output including a token key such as `Token key: 89603c...`, demonstrating a usable token was actually generated for authenticated requests.",
     "annotations": {

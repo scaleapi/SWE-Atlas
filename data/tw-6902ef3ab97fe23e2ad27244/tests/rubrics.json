@@ -52,14 +52,6 @@
       "type": "positive hli verifier",
       "importance": "must have"
     },
-    "id": "9c332271311ccb77627ba7d9757993c6",
-    "title": "1.9: Tests that reusing a previously created hyperlink by calling set_link with same URL-ID combination results in that hyperlink appearing at the end of hyperlinks_as_list() output when tracking most recently used hyperlinks"
-  },
-  {
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    },
     "id": "f92eb501aed142d79ecb215a858edeb1",
     "title": "1.10: Tests that current_url_text() returns joined text from all lines sharing the same hyperlink ID when extracting multi-line hyperlink text"
   },

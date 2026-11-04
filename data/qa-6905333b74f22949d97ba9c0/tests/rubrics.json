@@ -1,13 +1,5 @@
 [
   {
-    "id": "7f90dc6aedfb60af394d31d2210ee5e8",
-    "title": "1.1: States that when unencrypted upload requests are made on a bucket with encryption requirements, the request is rejected.",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "fa30261659e2c25f7f8fe70621df87cc",
     "title": "1.2: Reports the logs observed in the server trace logs to show runtime execution sequence of an unencrypted upload on a bucket with encryption requirements (e.g., \"statusCode\": 403 or \"statusMsg\": \"Forbidden\").",
     "annotations": {

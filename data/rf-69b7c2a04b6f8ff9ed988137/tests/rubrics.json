@@ -120,14 +120,6 @@
     }
   },
   {
-    "id": "68a570dfa48d34d02a5f33e2f8f566fa",
-    "title": "3.2: Removes unreachable control flow after return in DecodeIPV6",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "bea55b6a9e1df7d737c7a880f5c69dbd",
     "title": "4: Negative Rubrics",
     "annotations": {

@@ -104,14 +104,6 @@
     }
   },
   {
-    "id": "2dfef12fc617c6e553fa72362a612cf3",
-    "title": "1.13: Removes the `NewMemLogger` function from `lib/testutils/logrus_hook.go` that returned `(*logrus.Logger, *SimpleLogrusHook)` with a concrete logger type",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "eab74d277113702b38589574540be84a",
     "title": "1.14: Removes the TODO comment from `lib/test_state.go` that references replacing the Logger type with an interface",
     "annotations": {

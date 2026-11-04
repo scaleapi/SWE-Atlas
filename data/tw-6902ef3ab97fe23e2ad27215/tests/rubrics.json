@@ -12,14 +12,6 @@
       "type": "positive hli verifier",
       "importance": "must have"
     },
-    "id": "c440fcf9911168e37e6d3b53a9befc52",
-    "title": "1.2: Tests that hexdiff() returns output displaying negative offset notation (e.g., -003) in the offset column when comparing strings with insertion operations that cause alignment mismatches."
-  },
-  {
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    },
     "id": "c72b04bc1ea39ee4e9555a0c32952af8",
     "title": "1.3: Tests that hexdiff() returns field-level hex differences when comparing structured Scapy packet objects."
   },

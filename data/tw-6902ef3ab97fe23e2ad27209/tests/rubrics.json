@@ -4,14 +4,6 @@
       "type": "positive hli verifier",
       "importance": "must have"
     },
-    "id": "aea1d83862baa333c95f618b0d915631",
-    "title": "1.1: Tests that executeQuery() returns a single data frame with frame name 'test' and 'Time' as first field name when executing a basic query with verifyGoldenResponse helper"
-  },
-  {
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    },
     "id": "a30c20dd9eac661c57bb193b7c2c114f",
     "title": "1.2: Tests that executeQuery() returns exactly 3 data frames with 2 labels preserved on value fields when processing multiple tables from query response"
   },

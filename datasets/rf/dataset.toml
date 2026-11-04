@@ -37,7 +37,7 @@ digest = "sha256:30220bcc854ef6a71b0d6ccc77e0a802a5640d1a6a2b435b85d0e8d7e648814
 
 [[tasks]]
 name = "scale-ai/rf-696719205599a51110d4b40c"
-digest = "sha256:abfe5c3c1fe6a7eb8eb50d7e81c21ecb25b8405866e7b570a73c55550ebfbec0"
+digest = "sha256:052956853670a93f88038797a985858812a1cdf43087f67ff08c5b98760f4f35"
 
 [[tasks]]
 name = "scale-ai/rf-696719205599a51110d4b419"
@@ -101,7 +101,7 @@ digest = "sha256:c41c7d0124d492414ebd6c5864ee9a3f40236ae5bc1323732951dad9ac7198e
 
 [[tasks]]
 name = "scale-ai/rf-696719205599a51110d4b44b"
-digest = "sha256:2b9f9193fd4e37002c076e5ebf8ad11352ecb18c18c8f8a649abd54e7a18b46f"
+digest = "sha256:4d6f4c2a5b8f228dda216dcf45c894f38ce5f16e2c934861acd9fd92aa4fb41d"
 
 [[tasks]]
 name = "scale-ai/rf-696719205599a51110d4b451"
@@ -169,7 +169,7 @@ digest = "sha256:6dc914fceb124702d3782c5b30c7a30b906a1204cdcb18cb6e3dd96775ba24b
 
 [[tasks]]
 name = "scale-ai/rf-697e7458be1623d850a88841"
-digest = "sha256:8dca1fd61ff94e54647250176d85dc8397af9a1b960c3f0a11e60f2af7edbeff"
+digest = "sha256:90e0d26b37684f1e20f5b513632336fb92d1855ad934fe40ea69fd5b395e0a31"
 
 [[tasks]]
 name = "scale-ai/rf-697e7458be1623d850a88844"
@@ -213,7 +213,7 @@ digest = "sha256:9908e3cbde2b4c6797c8401f20be4cc45c8293625ad294b32a2ad6b1591273c
 
 [[tasks]]
 name = "scale-ai/rf-69b7c2a04b6f8ff9ed988137"
-digest = "sha256:2ed39f9e808af77d0db4eead42b134c72561d8e39ec798abc91772bbcf8a1217"
+digest = "sha256:7ad3b250bb8d53a821f1cd7a32ba4db467679d8e96282dc8ffc2d475accc860a"
 
 [[tasks]]
 name = "scale-ai/rf-69b7c2a04b6f8ff9ed98813a"
@@ -249,7 +249,7 @@ digest = "sha256:9b691687feae1013683e43789a73a74cbb4ec1eaadaa4f52b77c6f7dc4c3e88
 
 [[tasks]]
 name = "scale-ai/rf-69d196f015a150488265afb9"
-digest = "sha256:e4fda857b7ebd497e597379b3840dd4f2042cfb7009ecc862cdd19776d5b21cd"
+digest = "sha256:00135ec1e18fdf1aa1017c5d979b679c4a4526c613ba0a631b7f8eaaa91065d4"
 
 [[tasks]]
 name = "scale-ai/rf-69d196f015a150488265afba"
@@ -281,13 +281,13 @@ digest = "sha256:cdc8848f820abf5709d23f43487cfa313e56c88d592778f53f671d26b18d43c
 
 [[tasks]]
 name = "scale-ai/rf-69d196f015a150488265afc2"
-digest = "sha256:8ae8bcf70044b4d5cc497ebfdf0c28c17c66211a185059750e5e3e10a114f071"
+digest = "sha256:03c33c9af755730562de67bf1fd4eb9027b1a9874e95ab2528afeb19b38f256a"
 
 [[tasks]]
 name = "scale-ai/rf-69d196f015a150488265afc3"
-digest = "sha256:d2ab06943bedd0bd975301a5ea531ad201a9e6adc4bfb0f9f2fd4032f74a14c2"
+digest = "sha256:b7c6e54ac1429119afdc178f45198b6fc37cb99bad6e24df0738e2a6b6bb3501"
 
 [[tasks]]
 name = "scale-ai/rf-69d196f015a150488265afc4"
-digest = "sha256:c3a1820781cf07aabe2c5debb7a7501a529bbf016923e52f2a6c6b70248b7a3a"
+digest = "sha256:ac131ea2eefe125ae7ac088daf1b442de7b8992ace386e6c59c9d3757434468b"
 

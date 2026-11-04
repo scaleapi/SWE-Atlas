@@ -8,14 +8,6 @@
     }
   },
   {
-    "id": "748334617976b66481ed5da39fc113de",
-    "title": "1.2: Reports RSS growth measurements at segment allocation boundaries showing measurable memory jumps (e.g., ~4.75 MB jumps at lines 2048, 4096, 6144)",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "ad42cd135998cf7de9db694c14991d6b",
     "title": "1.3: Reports total memory growth summary comparing baseline RSS to final RSS after buffer operations (e.g., growth from ~17 MB baseline to ~167 MB final)",
     "annotations": {

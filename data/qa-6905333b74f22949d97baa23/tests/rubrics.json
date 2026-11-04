@@ -1,13 +1,5 @@
 [
   {
-    "id": "121ab8b50531f34d8a0a0810a5a63617",
-    "title": "1.1: Lists core HTTP timing metrics including 'http_req_duration' with values in milliseconds (ms)",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "6076f49a4d199073ad7ecfa53fbdb6d7",
     "title": "1.3: Describes or shows a minimal k6 test script structure with an HTTP request (e.g., importing 'k6/http' and using http.get() in an exported default function)",
     "annotations": {

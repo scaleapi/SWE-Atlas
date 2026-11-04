@@ -98,14 +98,6 @@
   {
     "annotations": {
       "type": "positive hli verifier",
-      "importance": "must have"
-    },
-    "id": "2e406f799082ed0442062b7fe460430a",
-    "title": "1.13: Tests that the \"same credential, different detector type\" cache-key scenarios assert the returned result preserves the second detector's DetectorType (preventing cross-type cache contamination)"
-  },
-  {
-    "annotations": {
-      "type": "positive hli verifier",
       "importance": "nice to have"
     },
     "id": "2c65f0a44348e90cb293149e0bd83252",

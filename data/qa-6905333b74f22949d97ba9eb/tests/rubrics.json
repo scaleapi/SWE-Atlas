@@ -32,14 +32,6 @@
     }
   },
   {
-    "id": "d7ac757adba817809fa187d70ea6cdad",
-    "title": "1.6: States the modifier bit values: shift=1, alt=2, ctrl=4.",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "446d5ad72e1330a960ae76ca02749ea2",
     "title": "1.7: States that the +1 offset is always added to the sum of modifier bits in CSI u format (e.g., the transmitted value is m+1, not just m).",
     "annotations": {

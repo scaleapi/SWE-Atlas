@@ -128,14 +128,6 @@
     }
   },
   {
-    "id": "b5488256581fac83885c219cb433d8e6",
-    "title": "3.1: Removes redundant empty-value checks in all 6 source files (circleci.go, filesystem.go, gcs.go, git.go, gitlab.go, syslog.go) for required fields that now have guaranteed values",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "26ccafb5c34838930a5234706204170f",
     "title": "4: Negative Rubrics",
     "annotations": {

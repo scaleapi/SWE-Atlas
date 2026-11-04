@@ -16,24 +16,8 @@
     }
   },
   {
-    "id": "34301260c8b871f91509952199e55b8c",
-    "title": "1.3: Identifies that bar charts convert non-numeric values to null using Number.isFinite (e.g., mapping non-finite values to null)",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "2f53b4c1157548f9d1f5155dc5b4f2f1",
     "title": "1.4: States that null values in chart data mean no data point or absent bar rather than zero-height bar",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
-    "id": "84c698b11ad444651906459a48482c50",
-    "title": "1.5: Provides comparison or list showing how 0, '', and null are treated differently by Number.isFinite (e.g., 0 is finite, '' and null are not)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

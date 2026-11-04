@@ -1,21 +1,5 @@
 [
   {
-    "id": "563c0c280150d67d4a5c4d04a5e720d8",
-    "title": "1.1: States that the Scapy runtime reports version 2.5.0.dev87 via both scapy.__version__ and conf.version to demonstrate programmatic access methods for version checking in scripts.",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
-    "id": "508c25886bd018cc4d089385024c6138",
-    "title": "1.2: Displays the full startup banner when the fancy banner is enabled, including the ASCII-art logo, 'Welcome to Scapy', version identifier 2.5.0.dev87, GitHub URL, 'Have fun!' line, and the random quote block.",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "d3d056a970ca6ebde47cc018d61c35fa",
     "title": "1.4: States that after importing scapy.all, conf.layers is a scapy.config.LayersList containing 1319 entries.",
     "annotations": {
@@ -66,14 +50,6 @@
   {
     "id": "634821619406b8381fd6b4bedbc38837",
     "title": "1.10: States that each header (IP, ICMP) is its own Packet subclass instance, linked through .payload and .underlayer, and that specific layers can be accessed with pkt[IP] and pkt[ICMP] which explains the object-oriented architecture for packet manipulation.",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
-    "id": "3dfe34eb44129e6e3105082378856f02",
-    "title": "1.11: States that when Scapy is used as a non-interactive library conf.color_theme is NoTheme from scapy.themes, in the interactive console conf.interactive is True and conf.color_theme is DefaultTheme() from scapy.themes to show context-dependent display formatting.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

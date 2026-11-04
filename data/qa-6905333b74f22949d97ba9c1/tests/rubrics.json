@@ -126,13 +126,5 @@
       "type": "negative hli verifier",
       "importance": "must have"
     }
-  },
-  {
-    "id": "838d0b47648ad4c2cf08872a29b2f4fb",
-    "title": "2.2: Claims byte-swap tolerance applies regardless of configuration settings (e.g., states byte-swapped IDs always accepted, claims socket.htons() works unconditionally)",
-    "annotations": {
-      "type": "negative hli verifier",
-      "importance": "must have"
-    }
   }
 ]

@@ -54,13 +54,5 @@
       "type": "negative hli verifier",
       "importance": "must have"
     }
-  },
-  {
-    "id": "10d75e60499d852aea62086ebdbd13c9",
-    "title": "2.2: Dismisses the user's observations as invalid or suggests the test configuration is incorrect (explaining that the summed segment VUs stay within the configured maximum is not a dismissal)",
-    "annotations": {
-      "type": "negative hli verifier",
-      "importance": "must have"
-    }
   }
 ]

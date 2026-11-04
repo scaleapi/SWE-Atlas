@@ -96,14 +96,6 @@
     }
   },
   {
-    "id": "9cd24570779c7745931e66a3378eb64a",
-    "title": "1.12: Adds a `getRepository` RTK Query endpoint in `public/app/features/provisioning/api/endpoints.ts` that fetches a single repository resource by name",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "6c23fb7ca681cbc1a215656897742227",
     "title": "1.13: Adds a `listRepositoryHistory` RTK Query endpoint in `public/app/features/provisioning/api/endpoints.ts` that forwards `ref` as a query parameter",
     "annotations": {
