@@ -87,8 +87,11 @@ harbor run -c run_config/job.yaml -p data --env-file .env -y -i rf-69391d8d1ce51
 
 - **Other agents.** `job.yaml` has commented blocks for codex and mini-swe-agent. mini-swe-agent
   runs one lane at a time with that lane's prompt config, `run_config/mswea/<lane>.yaml`. For any
-  other harbor agent (`harbor run --help` lists them), set `name` and `model_name` in the agent
-  block and turn off the agent's web tools.
+  other harbor agent (`harbor run --help` lists them), replace the whole agent block: set `name`,
+  `model_name`, `extra_allowed_hosts`, and under `kwargs` only the options that agent accepts
+  (`harbor agent schema <name>` lists them). claude-code's `version` and `disallowed_tools` do not
+  carry over, and not every agent accepts `reasoning_effort`. Turn off the agent's web tools, e.g.
+  `disable_web_search: true` for opencode.
 - **Agent versions.** `job.yaml` pins claude-code 2.1.293, codex 0.142.1 and mini-swe-agent 2.4.6
   through the agent's `version` kwarg.
 - **Run settings.** `n_attempts` (pass@k), `n_concurrent_trials` and `retry.max_retries` are set in
