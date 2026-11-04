@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Do-nothing agent over one or more lanes (default: qa rf tw, run one after another). Every trial
-# should score 0; with oracle.sh it makes the release record (see summary.py).
+# should score 0.
 #
 #   bash run_config/nop.sh
 #   bash run_config/nop.sh rf -- -i rf-69391d8d1ce51c407be1e533
@@ -28,11 +28,13 @@ RESULTS_DIR="${RESULTS_DIR:-$REPO_ROOT/results}"
 
 rc=0
 for lane in "${LANES[@]}"; do
+  lane_in_filter "$lane" || { echo "=== $lane: no task matches the -i filter, skipped" >&2; continue; }
   echo "=== $lane: nop" >&2
   lane_select "$lane"
   run_harbor run "${LANE_SELECT[@]}" -a nop -e modal -n "$N" \
     -o "$RESULTS_DIR/$lane/" --job-name "${JOB_NAME:-nop}" -y "${RETRY_ARGS[@]}" ${EXTRA[@]+"${EXTRA[@]}"} || rc=$?
   JOB_DIRS+=("$RESULTS_DIR/$lane/${JOB_NAME:-nop}")
 done
+[[ ${#JOB_DIRS[@]} -gt 0 ]] || { echo "no task in lanes ${LANES[*]} matches the -i filter" >&2; exit 1; }
 print_summary
 exit "$rc"

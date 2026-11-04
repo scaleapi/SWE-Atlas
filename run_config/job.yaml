@@ -9,8 +9,8 @@
 # The agent's API key comes from .env (ANTHROPIC_API_KEY for claude-code; OPENAI_API_KEY for codex
 # and mini-swe-agent) and the judge from OPENAI_API_KEY / OPENAI_API_BASE (or the JUDGE_* overrides);
 # see the README's Environment Variables section. To run one lane, add a task filter on the command
-# line, e.g. -p data -i 'rf-*'. To run the reference solutions or a do-nothing agent for the release record,
-# use run_config/oracle.sh and run_config/nop.sh.
+# line, e.g. -p data -i 'rf-*'. To run the reference solutions or a do-nothing agent, use
+# run_config/oracle.sh and run_config/nop.sh.
 
 n_attempts: 3                 # pass@k: attempts per task
 n_concurrent_trials: 24       # concurrent trials

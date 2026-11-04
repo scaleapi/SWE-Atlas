@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Scores of harbor jobs, and the release record from an oracle and a nop job.
+"""Scores of harbor jobs, and a check of an oracle and a nop job.
 
   summary.py <dir> [<dir> ...]           one row per job: tasks, trials, unfinished, errors, retries, not graded,
                                          not scored, pass@1, pass@1 (not scored = 0), pass@k
-  summary.py --gate <dir> [<dir> ...]    release record from oracle and nop jobs over data/
+  summary.py --gate <dir> [<dir> ...]    check oracle and nop jobs over data/
 
 A <dir> is a harbor job directory of any lane, or a directory above jobs (results/, results/qa/),
 which stands for every job below it. oracle.sh and nop.sh print this table when they end, and it
@@ -18,8 +18,8 @@ out the verifier cannot either, so those score 0 rather than being dropped; any 
 reward (unfinished, no seal) counts as 0. The trials not scored are listed by reason after the table:
 with retries on they should be rare; re-run any left.
 
-A qa agent job gets a second row without the 7 tasks OpenAI models refuse (REFUSED); the first
-row counts refused trials as failures.
+A qa agent job gets a second row without the 7 tasks in REFUSED, which some models decline to
+answer; the first row counts refused trials as failures.
 --gate exits 1 unless every task in data/ has an oracle and a nop trial, every oracle trial scores 1,
 every nop trial scores 0, no trial errored, and every trial ran on the task bytes now in data/
 (the digest harbor records in each trial's lock.json). --data <dir> checks against another data/.
@@ -256,7 +256,7 @@ def gate(jobs, data):
         dirty = subprocess.run(["git", "-C", data, "status", "--porcelain", "--", "."], capture_output=True, text=True).stdout.strip()
     except OSError:
         sha, dirty = "", ""
-    print(f"Release record for {os.path.abspath(data)} at {sha or 'unknown commit'}{' (uncommitted changes)' if dirty else ''}\n")
+    print(f"Oracle and nop check for {os.path.abspath(data)} at {sha or 'unknown commit'}{' (uncommitted changes)' if dirty else ''}\n")
     row(("lane", "tasks", "oracle: reward 1", "nop: reward 0", "errored", "retries", "on the bytes in data/", "judge", "gate"))
     row(("---",) * 9)
     for lane in LANES:

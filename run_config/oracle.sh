@@ -28,11 +28,13 @@ RESULTS_DIR="${RESULTS_DIR:-$REPO_ROOT/results}"
 
 rc=0
 for lane in "${LANES[@]}"; do
+  lane_in_filter "$lane" || { echo "=== $lane: no task matches the -i filter, skipped" >&2; continue; }
   echo "=== $lane: oracle" >&2
   lane_select "$lane"
   run_harbor run "${LANE_SELECT[@]}" -a oracle -e modal -n "$N" \
     -o "$RESULTS_DIR/$lane/" --job-name "${JOB_NAME:-oracle}" -y "${RETRY_ARGS[@]}" ${EXTRA[@]+"${EXTRA[@]}"} || rc=$?
   JOB_DIRS+=("$RESULTS_DIR/$lane/${JOB_NAME:-oracle}")
 done
+[[ ${#JOB_DIRS[@]} -gt 0 ]] || { echo "no task in lanes ${LANES[*]} matches the -i filter" >&2; exit 1; }
 print_summary
 exit "$rc"

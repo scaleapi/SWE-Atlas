@@ -5,8 +5,7 @@ RUN_CONFIG="$REPO_ROOT/run_config"
 
 # Run settings passed in the environment (N=... bash run_config/oracle.sh) take priority over
 # .env, which takes priority over the scripts' defaults. Captured before any default is assigned.
-RUN_VARS=(MODEL K EFFORT N JOB_NAME RESULTS_DIR DRY_RUN HARBOR_BIN MAX_RETRIES
-          CLAUDE_CODE_VERSION CODEX_VERSION MINI_SWE_AGENT_VERSION)
+RUN_VARS=(N JOB_NAME RESULTS_DIR DRY_RUN HARBOR_BIN MAX_RETRIES)
 CALLER_RUN_ENV=()
 for _var in "${RUN_VARS[@]}"; do
   if printenv "$_var" >/dev/null; then CALLER_RUN_ENV+=("$_var=$(printenv "$_var")"); fi
@@ -41,8 +40,6 @@ parse_lanes() {
   [[ ${#LANES[@]} -gt 0 ]] || LANES=("${ALL_LANES[@]}")
 }
 
-slug() { echo "$1" | sed 's/[^A-Za-z0-9.-]/-/g'; }
-
 # The `harbor run` arguments that select one lane's tasks. All tasks live flat in data/, named
 # <lane>-<id>; a lane is every directory whose name starts with "<lane>-". The other lanes are
 # excluded, so an -i filter passed after `--` selects tasks within the lane.
@@ -54,13 +51,28 @@ lane_select() {
   [[ "$found" == 1 ]] || { echo "no tasks for lane $1 in data/$1-*" >&2; exit 1; }
 }
 
+# True unless the -i filters passed after `--` match no task of lane $1, so a filter naming tasks
+# of one lane skips the other lanes instead of failing them.
+lane_in_filter() {
+  local i d p pats=()
+  for ((i = 0; i < ${#EXTRA[@]}; i++)); do
+    case "${EXTRA[i]}" in
+      -i|--include-task-name) pats+=("${EXTRA[i+1]:-}") ;;
+      --include-task-name=*) pats+=("${EXTRA[i]#*=}") ;;
+    esac
+  done
+  [[ ${#pats[@]} -gt 0 ]] || return 0
+  for d in "$REPO_ROOT/data/$1-"*; do
+    for p in "${pats[@]}"; do [[ "${d##*/}" == $p ]] && return 0; done
+  done
+  return 1
+}
+
 # The verifiers of all three lanes read the judge from JUDGE_API_KEY, JUDGE_BASE_URL, JUDGE_MODEL,
 # JUDGE_REASONING_EFFORT and JUDGE_VOTES. Derive them from OPENAI_API_KEY / OPENAI_API_BASE /
 # EVAL_MODEL when they aren't given, so one set of judge variables in .env serves every lane.
 # With nothing set, the judge is openai/gpt-6.1-sol at high reasoning effort, and each verdict
 # is the majority of 3 votes.
-# anthropic/claude-opus-4-7 content-filters some qa tasks' rubrics, which zeroes a trial with
-# judge_unusable=1 rather than grading it.
 export_judge_env() {
   export JUDGE_API_KEY="${JUDGE_API_KEY:-${OPENAI_API_KEY:-}}"
   export JUDGE_BASE_URL="${JUDGE_BASE_URL:-${OPENAI_API_BASE:-}}"
@@ -78,13 +90,12 @@ export_judge_env() {
 # counted, and a high-concurrency run converges without manual reruns. Real outcomes stay as they
 # ran and are never retried: a model refusal, a missing/rejected key, an unknown or unusable model,
 # an exhausted account usage limit, a reply over the token or context budget, and a reply the judge
-# could not parse. harbor retries every exception except the ones listed, so an infrastructure
-# failure type we have not met yet is retried too. summary.py leaves the trials still erroring for
+# could not parse. harbor retries every exception except the ones listed, so a new kind of
+# infrastructure failure is retried too. summary.py leaves the trials still erroring for
 # an infrastructure reason out of pass@1.
 # On rf and tw the verifier shares the container with the agent's grading-time code as root, so a
 # determined agent could force a verifier failure to be re-sampled; the provisional reward 0 and the
-# seal check in the verifier (the grader side of this robustness work) are what close that, and
-# MAX_RETRIES bounds how many extra attempts it could ever buy. summary.py only drops a no-reward
+# seal check in the verifier close that, and MAX_RETRIES bounds how many extra attempts it could ever buy. summary.py only drops a no-reward
 # trial that its verifier sealed as infrastructure, never a bare missing reward.
 NO_RETRY_EXCEPTIONS=(AgentSafetyRefusalError AgentAuthenticationError ModelNotFoundError
                      ApiUsageLimitError OutputTokenExceededError ContextWindowExceededError
