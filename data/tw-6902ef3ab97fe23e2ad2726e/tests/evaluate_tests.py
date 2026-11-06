@@ -906,12 +906,12 @@ def run_mutation_testing(test_files, model_patch, manifest):
         for t in baseline_relevant
         if t.get("name") and _normalize_test_status(t.get("status")) == "PASSED"
     }
-    # A mutation is considered "killed" when the relevant test does not pass.
+    # A mutation is killed only when the relevant test fails or errors under it. A test
+    # that passed at baseline and is absent from the mutation run is not a kill.
     killed_statuses = {"FAILED", "ERROR"}
     mutation_not_failed = sorted(
         name for name in baseline_relevant_passed
-        if name in mutation_by_name
-        and mutation_by_name[name] not in killed_statuses
+        if mutation_by_name.get(name) not in killed_statuses
     )
     # Diagnostic: a relevant test that passed at baseline and is absent from
     # the mutation run rather than failed in it.

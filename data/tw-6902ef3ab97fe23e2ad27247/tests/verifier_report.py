@@ -507,8 +507,8 @@ def fail_early(track, error, rubrics=None, tests=None, manifest=None, details=No
 # run id. Once the agent's code has run, `stop-agent-code` stops whatever it left
 # running, before the verdict is written.
 #
-#   prepare <track>   stop every process outside this verifier's ancestry (PID 1,
-#                     its keepalive and harbor's LiteLLM relay excepted), empty /logs/verifier, record
+#   prepare <track>   stop every process outside this verifier's ancestry (PID 1
+#                     and its keepalive excepted), empty /logs/verifier, record
 #                     what was found, with the files test.sh removed from /tests
 #                     ($VERIFIER_TESTS_REMOVED), in /logs/verifier/integrity.json
 #   stop-agent-code   stop every process outside this verifier's ancestry, as
@@ -561,12 +561,6 @@ KEEPALIVE_ARGV = (
     ["sleep", "infinity"], ["tail", "-f", "/dev/null"],
 )
 LATE_KEEPALIVE_ARGV = (["sleep", "infinity"], ["sh", "-c", "sleep infinity"])
-# Harbor's LiteLLM relay is spared too: for runs whose model URL is the LiteLLM proxy,
-# harbor starts `python3 /tmp/_harbor_litellm_relay_<port>.py` in the sandbox and points
-# JUDGE_BASE_URL at it, so stopping it leaves the judge unreachable. A process is the
-# relay when its interpreter is python and one of its arguments is that script path.
-RELAY_SCRIPT_PREFIX = "/tmp/_harbor_litellm_relay_"
-RELAY_SCRIPT_SUFFIX = ".py"
 INIT_CHAIN_MAX_DELAY_SEC = 3
 PF_KTHREAD = 0x00200000
 STOP_SCAN_PASSES = 50
@@ -770,19 +764,6 @@ def _init_chain(procs):
     return chain
 
 
-def _is_harbor_relay(info):
-    """True for harbor's LiteLLM relay (see RELAY_SCRIPT_PREFIX)."""
-    argv = info["argv"]
-    if len(argv) < 2 or not os.path.basename(argv[0]).startswith("python"):
-        return False
-    for arg in argv[1:]:
-        port = arg[len(RELAY_SCRIPT_PREFIX):-len(RELAY_SCRIPT_SUFFIX)]
-        if (arg.startswith(RELAY_SCRIPT_PREFIX) and arg.endswith(RELAY_SCRIPT_SUFFIX)
-                and port.isdigit()):
-            return True
-    return False
-
-
 def _describe(pid, info):
     return "%d %s" % (pid, " ".join(info["argv"])[:120] or info["comm"])
 
@@ -797,14 +778,13 @@ def _alive(pid, info):
 
 
 def stop_foreign_processes():
-    """SIGKILL every process that is not this verifier's ancestry, the container's init
-    chain or harbor's LiteLLM relay.
+    """SIGKILL every process that is not this verifier's ancestry or the container's init chain.
 
     Each one is first stopped with SIGSTOP and /proc is scanned again until a pass
     finds no new process (at most STOP_SCAN_PASSES), so none can fork its way out;
     then all of them are killed. Kernel threads (PF_KTHREAD) and zombies with no live
-    thread are left alone. Returns what was stopped, what could not be and which
-    relay processes were spared, for integrity.json.
+    thread are left alone. Returns what was stopped and what could not be, for
+    integrity.json.
     """
     procs = _procs()
     keep = _init_chain(procs) | {1}
@@ -812,14 +792,10 @@ def stop_foreign_processes():
     while pid in procs and pid not in keep:
         keep.add(pid)
         pid = procs[pid]["ppid"]
-    targets, seen, stopped, failed, spared = {}, set(), [], [], {}
+    targets, seen, stopped, failed = {}, set(), [], []
     for _ in range(STOP_SCAN_PASSES):
-        for p, info in procs.items():
-            if p not in keep and _is_harbor_relay(info):
-                spared[(p, info["starttime"])] = _describe(p, info)
         new = {p: info for p, info in procs.items()
                if p not in keep and (p, info["starttime"]) not in seen
-               and (p, info["starttime"]) not in spared
                and not info["kthread"] and _alive(p, info)}
         if not new:
             break
@@ -850,7 +826,7 @@ def stop_foreign_processes():
         time.sleep(0.05)
     survivors = [_describe(p, targets[p]) for p in targets
                  if p in now and _alive(p, now[p]) and _describe(p, targets[p]) not in failed]
-    return {"stopped": stopped, "not_stopped": failed + survivors, "spared": sorted(spared.values())}
+    return {"stopped": stopped, "not_stopped": failed + survivors}
 
 
 def _open_output_inodes():
@@ -929,9 +905,6 @@ def prepare(track):
     if procs["not_stopped"]:
         out("  WARNING: %d process(es) could not be stopped: %s"
             % (len(procs["not_stopped"]), "; ".join(procs["not_stopped"][:5])))
-    if procs["spared"]:
-        out("  Harbor relay processes left running: %d (%s)"
-            % (len(procs["spared"]), "; ".join(procs["spared"][:5])))
     if cleared:
         out("  WARNING: /logs/verifier was not empty before grading; removed: %s" % ", ".join(cleared[:10]))
     else:
