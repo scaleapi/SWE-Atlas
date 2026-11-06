@@ -1,0 +1,33 @@
+# Reference solutions: every task should score 1.
+#   ./run.sh configs/oracle.yaml
+n_attempts: 1
+n_concurrent_trials: 24
+
+# Only infrastructure failures are retried; the exceptions below (an agent timeout among
+# them) are real outcomes and are graded as they ran.
+retry:
+  max_retries: 3
+  wait_multiplier: 2.0
+  min_wait_sec: 1.0
+  max_wait_sec: 60.0
+  exclude_exceptions:
+    - AgentSafetyRefusalError
+    - AgentAuthenticationError
+    - ModelNotFoundError
+    - ApiUsageLimitError
+    - OutputTokenExceededError
+    - ContextWindowExceededError
+    - OutputLengthExceededError
+    - ContextLengthExceededError
+    - VerifierOutputParseError
+    - RewardFileEmptyError
+    - AgentTimeoutError
+
+environment:
+  type: modal
+
+agents:
+  - name: oracle
+
+datasets:
+  - path: data

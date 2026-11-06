@@ -1,1 +1,0 @@
-FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_TW_paperless-ngx_paperless-ngx_6902ef3ab97fe23e2ad27216_1.1@sha256:d141138e19e439e1100405ec0832356e980087429feac98b73eaae656d131ff2

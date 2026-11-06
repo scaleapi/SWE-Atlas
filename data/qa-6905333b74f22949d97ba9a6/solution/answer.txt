@@ -1,0 +1,226 @@
+I started by setting up a fresh PostgreSQL database and running the Alembic migrations to understand the database schema creation process.
+
+Running `alembic upgrade head` executed 255 migration files sequentially. The migration output showed each upgrade step:
+
+```
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 5e549314e1e2, empty message
+...
+INFO  [alembic.runtime.migration] Running upgrade 91ed7f46dc81 -> 7d7b84779837, user_audit_log
+INFO  [alembic.runtime.migration] Running upgrade 7d7b84779837 -> 32f25cbf12f6, alias_audit_log_index_created_at
+```
+
+After counting all the tables, I found that 77 tables were created in total. This includes 76 application tables defined in `app/models.py` plus the `alembic_version` table that Alembic creates automatically to track migration state. The last table created based on migration output order is `user_audit_log`, which was created by migration `7d7b84779837`. The final migration `32f25cbf12f6` only creates an index on `alias_audit_log`, not a new table.
+
+For the web server startup, I examined `server.py` (it calls `app.run(debug=True, port=7777)`) and ran it with `python server.py`. Flask 1.1.2 / Werkzeug 1.0.1 print this banner on startup:
+
+```
+ * Serving Flask app "server" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+```
+
+There is an important subtlety about the "ready to accept connections" message. Normally Werkzeug also prints a ` * Running on http://127.0.0.1:7777/` line, but SimpleLogin disables that logger in app/log.py (`logging.getLogger("werkzeug").disabled = True`), so the `* Running on ...` line is suppressed here and never appears in the console. The banner above is the last startup output. The actual readiness signal on port 7777 is the health endpoint returning HTTP 200:
+
+```
+$ curl -i http://localhost:7777/health
+HTTP/1.0 200 OK
+Content-Type: text/html; charset=utf-8
+Content-Length: 7
+Server: Werkzeug/1.0.1 Python/3.10.18
+```
+
+For timing I launched `python3 -u server.py` from a small Python wrapper that prefixes every output line with the milliseconds elapsed since launch and polls /health every 50 ms (config from a copy of example.env, PostgreSQL on localhost:5432):
+
+```
++     998 ms | load config file /tmp/sl.env
++    1000 ms | >>> URL: http://localhost:7777
++    1000 ms | MAX_NB_EMAIL_FREE_PLAN is not set, use 5 as default value
++    1000 ms | Paddle param not set
++    1000 ms | WARNING: Use a temp directory for GNUPGHOME /tmp/dylxqvppvaxzxvajcgnd
++    1000 ms | Upload files to local dir
++    1415 ms | >>> init logging <<<
++    1507 ms | 2026-11-03 01:42:34,535 - SL - DEBUG - 374 - "/app/app/utils.py:17" - <module>() -  - load words file: /app/local_data/test_words.txt
++    3903 ms |  * Serving Flask app "server" (lazy loading)
++    3903 ms |  * Environment: production
++    3903 ms |    WARNING: This is a development server. Do not use it in a production deployment.
++    3903 ms |    Use a production WSGI server instead.
++    3903 ms |  * Debug mode: on
++    5022 ms | load config file /tmp/sl.env
++    5022 ms | >>> URL: http://localhost:7777
++    5022 ms | MAX_NB_EMAIL_FREE_PLAN is not set, use 5 as default value
++    5022 ms | Paddle param not set
++    5022 ms | WARNING: Use a temp directory for GNUPGHOME /tmp/cdnjlxuisrhwokocxluz
++    5022 ms | Upload files to local dir
++    5022 ms | >>> init logging <<<
++    5022 ms | 2026-11-03 01:42:38,050 - SL - DEBUG - 382 - "/app/app/utils.py:17" - <module>() -  - load words file: /app/local_data/test_words.txt
+health 200 at +6155 ms
+first output line -> health 200: 5157 ms
+```
+
+The first log entry ("load config file ...") appeared 998 ms after launch and the server first answered /health with 200 at 6155 ms, so 5157 ms passed between the first log entry and the point where the server was ready to accept connections (the suppressed `* Running on` line has no timestamp of its own, so the first successful /health response stands in for it). This runs in debug mode, so the Werkzeug reloader restarts the app once: two init cycles are visible in the log, first the reloader parent (up to the banner at 3903 ms) and then the serving child (from 5022 ms), and that full reload cycle is included in the measured time; a plain non-reloading run would be faster.
+
+Next, I tested the email handler with a custom port. Running `python email_handler.py -p 25025` produces the following startup logs that confirm port 25025 (in the app's SimpleLogin log format):
+
+```
+2026-08-25 19:40:16,004 - SL - INFO - 373 - "/app/email_handler.py:2403" - <module>() -  - Listen for port 25025
+2026-08-25 19:40:16,011 - SL - DEBUG - 373 - "/app/email_handler.py:2386" - main() -  - Start mail controller 0.0.0.0 25025
+```
+
+These messages are generated by lines 2403 and 2386 in `email_handler.py`:
+
+```python
+LOG.i("Listen for port %s", args.port)
+LOG.d("Start mail controller %s %s", controller.hostname, controller.port)
+```
+
+Both messages confirm the email handler is listening on port 25025.
+
+For the registration and login flow test, I registered a user with email `testuser@example.com` and password `testpass123`. (The system's `email_validator` accepts `example.com`; registration returns HTTP 200 and creates the user row.)
+
+```
+curl -i -X POST http://localhost:7777/api/auth/register \
+     -H "Content-Type: application/json" \
+     -d '{"email":"testuser@example.com","password":"testpass123"}'
+```
+
+The registration succeeded with HTTP 200 and a pretty-printed JSON body:
+
+```
+HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 51
+Access-Control-Allow-Origin: *
+
+{
+  "msg": "User needs to confirm their account"
+}
+```
+
+Then I immediately attempted to login without activating the account:
+
+```
+curl -v -X POST http://localhost:7777/api/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"email":"testuser@example.com","password":"testpass123"}'
+```
+
+The full curl output showed:
+
+```
+*   Trying 127.0.0.1:7777...
+* Connected to localhost (127.0.0.1) port 7777 (#0)
+> POST /api/auth/login HTTP/1.1
+> Host: localhost:7777
+> User-Agent: curl/7.88.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 57
+>
+* HTTP 1.0, assume close after body
+< HTTP/1.0 422 UNPROCESSABLE ENTITY
+< Content-Type: application/json
+< Content-Length: 39
+< Access-Control-Allow-Origin: *
+< Server: Werkzeug/1.0.1 Python/3.10.18
+<
+{
+  "error": "Account not activated"
+}
+```
+
+The exact JSON error message is `{"error": "Account not activated"}` (returned as pretty-printed multi-line JSON) and the HTTP status code is 422. This is defined in `app/api/views/auth.py` at line 77:
+
+```python
+elif not user.activated:
+    LoginEvent(LoginEvent.ActionType.not_activated, LoginEvent.Source.api).send()
+    return jsonify(error="Account not activated"), 422
+```
+
+Querying the database directly for that user:
+
+```sql
+SELECT email, activated, notification FROM users WHERE email = 'testuser@example.com';
+```
+
+The results showed:
+
+```
+        email         | activated | notification
+----------------------+-----------+--------------
+ testuser@example.com | f         | t
+(1 row)
+```
+
+The `activated` column shows False (f) because new users must confirm their email before activation. The `notification` column shows True (t) because that's the default value defined in `app/models.py`:
+
+```python
+notification = sa.Column(sa.Boolean, default=True, nullable=False, server_default="1")
+activated = sa.Column(sa.Boolean, default=False, nullable=False, index=True)
+```
+
+For the alias limits experiment, I first created a fresh user and called `/api/user_info` with their API key. With the default configuration where `MAX_NB_EMAIL_FREE_PLAN` is not set (defaulting to 5), the API response was:
+
+```json
+{
+    "can_create_reverse_alias": true,
+    "connected_proton_address": null,
+    "email": "user1@gmail.com",
+    "in_trial": true,
+    "is_premium": false,
+    "max_alias_free_plan": 5,
+    "name": "user1@gmail.com",
+    "profile_picture_url": null
+}
+```
+
+The `max_alias_free_plan` value returned is 5, which matches the default in `app/config.py`:
+
+```python
+try:
+    MAX_NB_EMAIL_FREE_PLAN = int(os.environ["MAX_NB_EMAIL_FREE_PLAN"])
+except Exception:
+    print("MAX_NB_EMAIL_FREE_PLAN is not set, use 5 as default value")
+    MAX_NB_EMAIL_FREE_PLAN = 5
+```
+
+I then created a `.env` file with `MAX_NB_EMAIL_FREE_PLAN=10` and restarted the server. After creating a second user and calling `/api/user_info`, the response showed:
+
+```json
+{
+    "can_create_reverse_alias": true,
+    "connected_proton_address": null,
+    "email": "user2@gmail.com",
+    "in_trial": true,
+    "is_premium": false,
+    "max_alias_free_plan": 10,
+    "name": "user2@gmail.com",
+    "profile_picture_url": null
+}
+```
+
+I then checked the first user again and found that their `max_alias_free_plan` value also now shows 10. Both users reflect the new limit, not just the one created after the configuration change. This happens because the limit is not stored per-user in the database. Instead, it's calculated dynamically at runtime. Looking at `app/models.py`, the `max_alias_for_free_account()` method reads directly from the configuration:
+
+```python
+def max_alias_for_free_account(self) -> int:
+    if (
+        self.FLAG_FREE_OLD_ALIAS_LIMIT
+        == self.flags & self.FLAG_FREE_OLD_ALIAS_LIMIT
+    ):
+        return config.MAX_NB_EMAIL_OLD_FREE_PLAN
+    else:
+        return config.MAX_NB_EMAIL_FREE_PLAN
+```
+
+And `app/api/views/user_info.py` calls this method when building the response:
+
+```python
+"max_alias_free_plan": user.max_alias_for_free_account(),
+```
+
+This means any change to `MAX_NB_EMAIL_FREE_PLAN` affects all users immediately after server restart, because the value is read from configuration at request time, not stored per user. The only exception would be users with the `FLAG_FREE_OLD_ALIAS_LIMIT` flag set, which forces a limit of 15 (from `MAX_NB_EMAIL_OLD_FREE_PLAN`) regardless of the configuration.
+
+All investigations were performed without modifying any original repository source files. Only temporary `.env` configuration files were used for testing different settings, and these were cleaned up afterward. 

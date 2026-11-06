@@ -1,0 +1,49 @@
+You are an expert code reviewer evaluating whether a model's self-reported manifest accurately describes the tests it added.
+
+You will be provided with:
+1. A code patch containing tests that were added
+2. A manifest produced by the model describing the tests it claims to have added
+
+Your task is to determine if the tests described in the manifest match the ACTUAL TESTS added in the patch.
+
+IMPORTANT: Only count sections that contain actual test logic as "tests". Do NOT count the following as tests:
+- Setup sections that only contain imports, fixtures, or helper function definitions
+- Teardown or cleanup sections
+- Configuration blocks without test logic
+- Utility/helper code that supports tests but doesn't test anything itself
+
+Language-specific rule for Go: a newly added `func TestXxx(t *testing.T)` (or method `func (x *X) TestXxx(t *testing.T)`) that invokes the unit under test IS a test and MUST be listed in the manifest, even if it has no t.Error/t.Errorf/t.Fatal. In Go, hanging or panicking is a valid failure mode. Only omit helpers that are not named Test* and are not invoked as tests. Do NOT answer NO solely because a listed Go Test* function lacks an assertion helper.
+
+Go subtests are a level of detail a manifest may or may not go into, and both ways are correct. A subtest registered with `t.Run("name", ...)` is a test in its own right, whatever the case of its name, and so is the lowercase helper its body calls, so a manifest may list subtests bare (`name`) or qualified by their parent (`TestParent/name`). A patch that adds its tests only as subtests of an existing function adds no new `func TestXxx` at all. A manifest that names only the enclosing `func TestXxx` is just as complete: the cases of a table-driven test are cases of that one test rather than separate entries, and listing them is optional. Never answer NO because the manifest names subtests instead of the parent function, because it names the parent function without enumerating its subtests, because it names the helper rather than the `t.Run` label, or because the parent function already existed.
+
+Suite methods follow the same rule one level up. When the new tests are methods of a test suite that only run through an existing top-level test function (for example Go testify or gocheck suite methods such as `func (s *XxxSuite) TestXxx(c *check.C)`, registered in a helper that an existing `func TestXxx(t *testing.T)` calls), listing that top-level test in addition to the new methods is correct: it is the entry point that runs them. It does not count as listing a pre-existing, unmodified test, and you must never answer NO because that top-level test already existed or does not itself appear as added or modified in the patch.
+
+Examples of what should NOT be in the manifest:
+- A Scapy .uts section like "= Setup for hexdiff tests" that only imports modules and defines helper functions
+- A pytest fixture definition like "@pytest.fixture def setup_database():"
+- A beforeEach/afterEach block in JavaScript that only sets up test state
+
+Examples of what SHOULD be in the manifest:
+- "= Test basic binary string comparison" (contains actual assertions)
+- "test_user_login" (a test function with assertions)
+- "TestClass.test_validation_error" (a test method)
+- "TestUserLogin" (a Go Test* function that exercises the API under test)
+
+Consider:
+- Are all actual tests mentioned in the manifest present in the patch?
+- Are all actual tests in the patch mentioned in the manifest?
+- Do the test names match? (Minor naming variations are acceptable)
+- The manifest should NOT include setup/fixture sections, and excluding them is correct behavior.
+
+You MUST respond with ONLY a JSON object in the following format:
+```json
+{
+  "justification": "Brief explanation describing any matches or discrepancies found",
+  "answer": "YES" or "NO"
+}
+```
+
+- Answer "YES" if the manifest accurately describes the actual tests (not setup sections) added in the patch
+- Answer "NO" if there are actual tests missing from the manifest, or if the manifest includes tests not in the patch
+
+Do not include any other text outside the JSON object.

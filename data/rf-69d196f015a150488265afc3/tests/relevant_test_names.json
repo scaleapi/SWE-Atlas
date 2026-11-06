@@ -1,0 +1,100 @@
+{
+  "tests": [
+    {
+      "name": "modules/manager/pep621/processors/uv > applies git sources"
+    },
+    {
+      "name": "modules/manager/pep621/processors/uv > updateArtifacts() > continues if Google auth is not configured"
+    },
+    {
+      "name": "modules/manager/pep621/processors/pdm > updateArtifacts() > discard dependencies if the devGroup is missing"
+    },
+    {
+      "name": "modules/manager/pep621/processors/uv > updateArtifacts() > dont propagate uv.tool.index into UV_EXTRA_INDEX_URL"
+    },
+    {
+      "name": "modules/manager/pep621/processors/uv > process() > includes uv dev dependencies if there is a tool.uv section"
+    },
+    {
+      "name": "modules/manager/pep621/processors/uv > index with optional name"
+    },
+    {
+      "name": "modules/manager/pep621/processors/uv > override explicit default index"
+    },
+    {
+      "name": "modules/manager/pep621/processors/uv > override implicit default index"
+    },
+    {
+      "name": "modules/manager/pep621/processors/uv > updateArtifacts() > performs update on private package registry"
+    },
+    {
+      "name": "modules/manager/pep621/processors/uv > pinned to non-default index"
+    },
+    {
+      "name": "modules/manager/pep621/processors/pdm > updateArtifacts() > return null if the lock file is unchanged"
+    },
+    {
+      "name": "modules/manager/pep621/processors/pdm > updateArtifacts() > return null if there is no lock file"
+    },
+    {
+      "name": "modules/manager/pep621/processors/pdm > updateArtifacts() > return update dep update"
+    },
+    {
+      "name": "modules/manager/pep621/processors/uv > updateArtifacts() > return update dep update"
+    },
+    {
+      "name": "modules/manager/pep621/processors/pdm > updateArtifacts() > return update on lockfileMaintenance"
+    },
+    {
+      "name": "modules/manager/pep621/processors/uv > updateArtifacts() > return update on lockfileMaintenance"
+    },
+    {
+      "name": "modules/manager/pep621/processors/pdm > updateArtifacts() > returns artifact error"
+    },
+    {
+      "name": "modules/manager/pep621/processors/uv > updateArtifacts() > returns artifact error"
+    },
+    {
+      "name": "modules/manager/pep621/processors/uv > process() > returns initial dependencies if there is no tool.uv section"
+    },
+    {
+      "name": "modules/manager/pep621/processors/uv > updateArtifacts() > returns null if the lock file is unchanged"
+    },
+    {
+      "name": "modules/manager/pep621/processors/uv > updateArtifacts() > returns null if there is no lock file"
+    },
+    {
+      "name": "modules/manager/pep621/processors/pdm > updateArtifacts() > sets Git environment variables"
+    },
+    {
+      "name": "modules/manager/pep621/extract > extractPackageFile() additional coverage > should extract build-system.requires dependencies"
+    },
+    {
+      "name": "modules/manager/pep621/extract > extractPackageFile() additional coverage > should extract dependency-groups with depGroup metadata"
+    },
+    {
+      "name": "modules/manager/pep621/extract > extractPackageFile() additional coverage > should extract hatch environment dependencies"
+    },
+    {
+      "name": "modules/manager/pep621/extract > extractPackageFile() additional coverage > should extract optional-dependencies with depGroup metadata"
+    },
+    {
+      "name": "modules/manager/pep621/extract > extractPackageFile() additional coverage > should extract pdm dev-dependencies with depGroup metadata"
+    },
+    {
+      "name": "modules/manager/pep621/extract > parsePyProject() > should return a non-null result for valid pyproject content"
+    },
+    {
+      "name": "modules/manager/pep621/extract > extractPackageFile() > should return null for invalid toml"
+    },
+    {
+      "name": "modules/manager/pep621/extract > parsePyProject() > should return null for invalid toml"
+    },
+    {
+      "name": "modules/manager/pep621/extract > parsePyProject() > should return null when packageFile is provided for invalid toml"
+    },
+    {
+      "name": "modules/manager/pep621/extract > extractPackageFile() additional coverage > should skip malformed dependency strings gracefully"
+    }
+  ]
+}

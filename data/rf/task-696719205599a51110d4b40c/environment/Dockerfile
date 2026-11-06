@@ -1,1 +1,0 @@
-FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_RF_trufflesecurity_trufflehog_696719205599a51110d4b40c_1.1@sha256:0be5c9c0883c1e179265a098fcdb420b2e88e8a999a477ec5f8cd8ac70b1b351

@@ -1,0 +1,1 @@
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:qa-6905333b74f22949d97ba9aa-2cd6ee7-v1.01.99@sha256:4b279c5276d58ba9c30489755ad7e2cbec6be8ad8f8984f81256bee22d7005e8

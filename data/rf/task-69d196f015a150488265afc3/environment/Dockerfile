@@ -1,1 +1,0 @@
-FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_RF_renovatebot_renovate_69d196f015a150488265afc3_1.1@sha256:19c94d08293af23cfbce4a8d1af9038a031f7d843d739ba470d1bfd4559d22cc

@@ -1,0 +1,206 @@
+Scapy’s interactive shell at this commit starts with an ASCII art banner and reports version 2.5.0.dev87. Run `scapy` to launch it. Here's exactly what you see:
+
+```
+                     aSPY//YASa       
+             apyyyyCY//////////YCa       |
+            sY//////YSpcs  scpCY//Pp     | Welcome to Scapy
+ayp ayyyyyyySCP//Pp           syY//C    | Version 2.5.0.dev87
+AYAsAYYYYYYYY///Ps              cY//S   |
+         pCCCCY//p          cSSps y//Y   | https://github.com/secdev/scapy
+         SPPPP///a          pP///AC//Y   |
+              A//A            cyP////C   | Have fun!
+              p///Ac            sC///a   |
+              P////YCpc           A//A   | Craft packets like I craft my beer.
+       scccccp///pSP///p          p//Y   |               -- Jean De Clerck
+      sY/////////y  caa           S//P   |
+       cayCyayP//Ya              pY/Ya
+        sY/PsY////YCc          aC//Yp 
+         sc  sccaCY//PCypaapyCP//YSs  
+                  spCPY//////YPSps    
+                       ccaacs         
+                                       using IPython 9.4.0
+```
+
+When you create IP()/ICMP(), run `p = IP()/ICMP(); p.show()`—output before building shows the field state:
+
+```
+###[ IP ]###
+  version   = 4
+  ihl       = None
+  tos       = 0x0
+  len       = None
+  id        = 1
+  flags     =
+  frag      = 0
+  ttl       = 64
+  proto     = icmp
+  chksum    = None
+  src       = 0.0.0.0
+  dst       = 127.0.0.1
+  \options   \
+###[ ICMP ]###
+     type      = echo-request
+     code      = 0
+     chksum    = None
+     id        = 0x0
+     seq       = 0x0
+     unused    = ''
+```
+
+Several fields are auto-populated here: ihl, len and chksum display as None because they are computed at build time; ttl defaults to 64; proto is auto-set to icmp based on the payload type; dst defaults to 127.0.0.1. The src field is auto-resolved from the routing table by SourceIPField—in this container Scapy finds no usable route (it warns "No route found (no default route?)"), so src falls back to 0.0.0.0; on a typical host with a configured loopback it would resolve to 127.0.0.1 for this destination.
+
+If we get the output of the packet with `p.show2()`, the None fields get computed:
+```
+>>> p.show2()
+###[ IP ]###
+  version   = 4
+  ihl       = 5
+  tos       = 0x0
+  len       = 28
+  id        = 1
+  flags     =
+  frag      = 0
+  ttl       = 64
+  proto     = icmp
+  chksum    = 0xfbdf
+  src       = 0.0.0.0
+  dst       = 127.0.0.1
+  \options   \
+###[ ICMP ]###
+     type      = echo-request
+     code      = 0
+     chksum    = 0xf7ff
+     id        = 0x0
+     seq       = 0x0
+     unused    = ''
+```
+
+Next I sent a crafted ICMP echo request to localhost. First, a pitfall worth knowing: the enum name "echorequest" is not valid for ICMP's type field—running `python3 -c "from scapy.all import *; p = IP(dst='127.0.0.1')/ICMP(type='echorequest')"` fails with:
+
+```
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/app/scapy/base_classes.py", line 398, in __call__
+    i.__init__(*args, **kargs)
+  File "/app/scapy/packet.py", line 189, in __init__
+    self.get_field(fname).any2i(self, value)
+  File "/app/scapy/fields.py", line 2519, in any2i
+    return self.any2i_one(pkt, x)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/scapy/fields.py", line 2495, in any2i_one
+    x = self.s2i[x]
+        ~~~~~~~~^^^
+KeyError: 'echorequest'
+```
+
+The valid enum value is "echo-request" (which is also the ICMP default). With the corrected packet, I put the send into a temporary script and ran it:
+
+```
+$ cat > /tmp/sr_test.py << 'EOF'
+from scapy.all import *
+p = IP(dst="127.0.0.1")/ICMP(type="echo-request")
+ans, unans = sr(p, timeout=2)
+print("answered:", len(ans), "unanswered:", len(unans))
+EOF
+$ python3 /tmp/sr_test.py
+WARNING: No route found (no default route?)
+Traceback (most recent call last):
+  File "/tmp/sr_test.py", line 3, in <module>
+    ans, unans = sr(p, timeout=2)
+                 ^^^^^^^^^^^^^^^^
+  File "/app/scapy/sendrecv.py", line 648, in sr
+    s = conf.L3socket(promisc=promisc, filter=filter,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/scapy/arch/linux.py", line 490, in __init__
+    self.ins = socket.socket(
+               ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 232, in __init__
+    _socket.socket.__init__(self, family, type, proto, fileno)
+PermissionError: [Errno 1] Operation not permitted
+$ rm -f /tmp/sr_test.py
+```
+
+At the network layer, nothing can actually be emitted in this environment: sr() first opens an L3 raw socket (conf.L3socket), and this container denies raw-socket creation (PermissionError, errno 1) and has no default route. The send therefore fails before emission and no ICMP echo replies are received here—zero answers. What a successful sr() session prints is defined in scapy/sendrecv.py, which I verified in the source:
+
+```
+$ grep -n "Begin emission" scapy/sendrecv.py; grep -n "Finished sending" scapy/sendrecv.py; grep -n "Received .*packets, got" scapy/sendrecv.py
+239:                print("Begin emission:")
+250:                print("Finished sending %i packets." % i)
+218:                "\nReceived %i packets, got %i answers, "
+```
+
+The sending thread prints "Begin emission:" and "Finished sending %i packets.", and the results summary is "\nReceived %i packets, got %i answers, remaining %i packets" (sendrecv.py, around lines 214-222). Note that even on a privileged host where the raw socket opens, an ICMP echo to 127.0.0.1 typically ends with got 0 answers: the kernel handles loopback internally without routing the reply through the network layer where Scapy's listener sits, so no reply is captured.
+
+To check that everything works I ran the test suite with UTscapy.py on a selection of test campaigns (the full suite also contains network-dependent files, and this container has no raw-socket access, so I picked core campaigns and one network-dependent file to show the difference):
+
+```
+python3 scapy/tools/UTscapy.py -t test/fields.uts -F -q
+python3 scapy/tools/UTscapy.py -t test/random.uts -F -q
+python3 scapy/tools/UTscapy.py -t test/scapy/automaton.uts -F -q
+python3 scapy/tools/UTscapy.py -t test/scapy/layers/dns.uts -F -q
+```
+
+UTscapy prints one "passed <ID> <name>" line per test plus a PASSED=/FAILED= trailer per campaign. Condensed real output, per campaign:
+
+test/fields.uts:
+```
+passed 99D0148A Test default values auto-update
+passed E8107B46 MultipleTypeField - syntax error
+[...]
+passed D760F7FF unaligned data
+Campaign CRC=32E6B059  SHA=CE16EAB755790C266C6377EC7A6140397E0D1402
+PASSED=138 FAILED=0
+```
+
+test/random.uts:
+```
+passed E361BE7E RandomEnumeration
+[...]
+passed 237847F1 Various volatiles
+Campaign CRC=3D33A34F  SHA=8D3FA17266E4A181743FB7CC1D15456242A79A1D
+PASSED=11 FAILED=0
+```
+
+test/scapy/automaton.uts:
+```
+passed D2344053 Automaton priorities
+[...]
+passed 7F194B20 Automaton graph
+failed 2E5829D2 TCP_client automaton
+Campaign CRC=3DC36A74  SHA=BF0DB92F4130608718F5890F78382F9F5B295914
+PASSED=13 FAILED=1
+```
+
+test/scapy/layers/dns.uts:
+```
+[...]
+━ Run at 19:11:10 from [test/scapy/layers/dns.uts] by UTscapy in 3.0424342155456543
+ └ Passed=18
+ └ Failed=2
+```
+
+Across these four campaigns: 180 tests passed, 3 failed. All three failures are environment/network-dependent, not code defects: the automaton failure is the "TCP_client automaton" test (it needs iptables and a live TCP connection to an external host—the report shows its iptables setup assertion failing), and the two dns.uts failures are the "DNS request" test (a live query to resolver1.opendns.com via sr1, which dies on the same raw-socket PermissionError seen above) plus a follow-on test that reuses that response. Every pure parsing/field-manipulation test passes, so the vast majority of the suite is green in this environment.
+
+IP class in scapy/layers/inet.py lines 521-537 defines defaults (verbatim from the source):
+
+```
+class IP(Packet, IPTools):
+    __slots__ = ["_defrag_pos"]
+    name = "IP"
+    fields_desc = [BitField("version", 4, 4),
+                   BitField("ihl", None, 4),
+                   XByteField("tos", 0),
+                   ShortField("len", None),
+                   ShortField("id", 1),
+                   FlagsField("flags", 0, 3, ["MF", "DF", "evil"]),
+                   BitField("frag", 0, 13),
+                   ByteField("ttl", 64),
+                   ByteEnumField("proto", 0, IP_PROTOS),
+                   XShortField("chksum", None),
+                   # IPField("src", "127.0.0.1"),
+                   Emph(SourceIPField("src", "dst")),
+                   Emph(DestIPField("dst", "127.0.0.1")),
+                   PacketListField("options", [], IPOption, length_from=lambda p:p.ihl * 4 - 20)]  # noqa: E501
+```
+
+The Emph() wrappers just mark src/dst for emphasized display; the fields themselves are SourceIPField and DestIPField. post_build() at lines 539-551 computes ihl/len/chksum when they are None. SourceIPField is implemented in scapy/fields.py lines 854-889: when src is not explicitly set, its __findaddr() helper looks up the packet's dst in Scapy's routing table via conf.route.route(dst) and uses the source address of the matching route—which is why src resolved to 0.0.0.0 in this route-less container.

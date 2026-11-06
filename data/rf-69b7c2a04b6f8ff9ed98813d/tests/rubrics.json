@@ -1,0 +1,210 @@
+[
+  {
+    "id": "f0ae7adbed50692dd4aba2dcd62a2a9e",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "7febad891f2df2d0064a192660b3fb4a",
+    "title": "1.1: Creates rrdhost-system-info.h header under src/database/ with an opaque struct type",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ba073804a9a9863ba9829449b08b263d",
+    "title": "1.2: Implements rrdhost_system_info_create() for allocating a new system info struct",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "708a375ea3d3525678f95b03e4b35a84",
+    "title": "1.3: Provides rrdhost_system_info_hops() getter returning int16_t",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "efc07452ced4b851d855ab0e27b7b50a",
+    "title": "1.4: Provides rrdhost_system_info_hops_set() setter accepting int16_t",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "bee2b4241876d3083a8f4e24be9c891c",
+    "title": "1.5: Implements rrdhost_system_info_set_by_name() for environment variable field parsing",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "d43aea33eb4510370ffe18ce50c4ecee",
+    "title": "1.6: Provides rrdhost_system_info_install_type() and rrdhost_system_info_prebuilt_dist() read accessors",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0c2fadb1024adfc68766bbcaef6e0d1c",
+    "title": "1.7: Provides rrdhost_system_info_ml_capable_set(), rrdhost_system_info_ml_enabled_set(), and rrdhost_system_info_mc_version_set() setters",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e53ff54018d0060c612c9c7948d95666",
+    "title": "1.8: Consolidates v1 info endpoint JSON output into rrdhost_system_info_to_json_v1()",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "5cf68c0abaf3599c639c300c94f229e6",
+    "title": "1.9: Consolidates v2 contexts endpoint JSON output into rrdhost_system_info_to_json_v2()",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "9d70af261ee541300caefd62a2e7219d",
+    "title": "1.10: Consolidates streaming handshake encoding into rrdhost_system_info_to_url_encode_stream()",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "232d963d89cc24c565651e71b6a79904",
+    "title": "1.11: Consolidates system info to label export into rrdhost_system_info_to_rrdlabels()",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "1297a825873eab0206eeb681dca5103f",
+    "title": "1.12: Implements rrdhost_system_info_from_host_labels() for creating system info from labels",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "47265de3c53be58dbd5b4486683070db",
+    "title": "1.13: Consolidates sqlite key/value persistence into rrdhost_system_info_foreach()",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ec8ff75eadc2d6699e01a0df48312a3d",
+    "title": "1.14: Consolidates ACLK node info population into rrdhost_system_info_to_node_info()",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a0f8e8067c48acd09ea092593ba2dd8e",
+    "title": "1.15: Moves system detection logic into rrdhost_system_info_detect()",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "636d07bea3a387f6e799a5585b8ffb5f",
+    "title": "1.16: Simplifies get_install_type() to accept struct rrdhost_system_info * directly",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "c4802be519846796f94aebef21ba208f",
+    "title": "1.17: Promotes buffer_key_value_urlencode() to a shared header",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "59542f9c848fd01f2fe8f2358ad0bfba",
+    "title": "1.18: Replaces all 24 direct struct field accesses in external consumers with accessor function calls, including rrdhost_system_info_hops() in aclk.c (6 sites), aclk_rx_msgs.c (1 site), rrdfunctions.c (1 site), rrdhost-status.c (1 site), stream-connector.c (1 site), sqlite_metadata.c (2 sites), api_v1_info.c (1 site), rrdhost_system_info_hops_set() in sqlite_aclk.c (1 site) and stream-receiver-connection.c (2 sites), rrdhost_system_info_ml_capable_set/ml_enabled_set/mc_version_set in rrdhost.c (3 sites) and stream-receiver-connection.c (3 sites), rrdhost_system_info_install_type/prebuilt_dist in analytics.c (2 sites) ...",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "2ac32aa13fc2070cb4313ad76597e0bd",
+    "title": "1.19: Updates CMakeLists.txt to include new system info module files in the build",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "cf9cc5427cb23e0c6e1f45785d88c7a5",
+    "title": "2: Artifact Cleanup",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "0cfbf5422cc12f99949a95af6ca22d47",
+    "title": "2.1: Removes the full struct rrdhost_system_info definition from rrd.h",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ad6eaad79e725b13273764a95809a2d9",
+    "title": "3: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "fb66131f5bcf137b336d2d84f8e77f39",
+    "title": "3.1: Introduces circular header dependency between rrdhost-system-info.h and rrd.h",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "8123dd53a817620094796df270087856",
+    "title": "3.2: Removes rrdhost_system_info_free() from the public API without replacement",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "05a754e12982e4429b95492980497748",
+    "title": "3.3: Changes the key names in the URL encoded streaming handshake parameters",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

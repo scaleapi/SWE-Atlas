@@ -1,1 +1,0 @@
-FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_TW_foxcpp_maddy_6902ef3ab97fe23e2ad27268_1.1@sha256:a484e99e91d1452a79418e2b51f0ecdd09eaf3252d0804e77c1d2983095dac04

@@ -1,0 +1,106 @@
+[
+  {
+    "id": "07b8204829d5203011d155883788805c",
+    "title": "1: Code Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f4b3da7a4e33f87dcd8dc025dd6df9e1",
+    "title": "1.1: Adds `_pkt_ls(obj, verbose=False)` function in `scapy/packet.py` that returns field metadata as list",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "89fb3282b33e39e70d4255fb204eb869",
+    "title": "1.2: Documentation renders Packet `fields_desc` as a structured table with field names, types, and defaults",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "bb07d59d10843b0df72942341c5b4acb",
+    "title": "1.3: Documentation renders `payload_guess` attribute showing which layers can follow which",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e971585378e228f8bb48e0cb0da299f9",
+    "title": "1.4: Removes 'module' suffix from all 199 RST module page titles (including scapy.packet, scapy.fields, scapy.volatile, scapy.layers.inet, scapy.contrib.ospf, scapy.ansmachine, scapy.config, scapy.automaton, scapy.asn1fields, scapy.dadict, ...)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "824baf221a54f5b559e213b6e2517c9c",
+    "title": "1.5: Removes all 11 'Submodules' section headers from 11 RST parent pages (including scapy.contrib.automotive.bmw, scapy.contrib.automotive.gm, scapy.contrib.automotive.obd.iid, scapy.contrib.automotive.obd.mid, scapy.contrib.automotive.obd.pid, scapy.contrib.automotive.obd.tid, scapy.contrib.automotive.obd, scapy.contrib.automotive, scapy.contrib.scada.iec104, scapy.layers.tls.crypto, ...)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "ad349795d13f9064b06eaaa03c67f2fd",
+    "title": "1.6: Removes all 4 'Subpackages' section headers from 4 RST parent pages (scapy.contrib.automotive, scapy.contrib.automotive.obd, scapy.contrib.scada, scapy.layers.tls)",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "25bea55f48ea4e9c93aeabebef03c99f",
+    "title": "1.7: Changes `AutoTime` class in `scapy/volatile.py` to inherit from `RandNum` with `__init__(self, base=None)`",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "e91dee94544ccb2b11161709f75490a2",
+    "title": "2: Documentation Maintainability",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "cb6b2f1d255dd0899494d208e7f9f27e",
+    "title": "2.1: Includes docstrings in new Python files created for documentation processing",
+    "annotations": {
+      "type": "positive hli verifier",
+      "importance": "nice to have"
+    }
+  },
+  {
+    "id": "7bc2b2ff9c4e7440a6f23dda66608f37",
+    "title": "3: Negative Rubrics",
+    "annotations": {
+      "type": "high level intent",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "a422730cdcc44799d00afad00c393a5d",
+    "title": "3.1: Produces documentation containing raw Python object repr strings (such as '<scapy.fields.ByteField object at 0x...>') in Packet class pages",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  },
+  {
+    "id": "f6efe67e5a55d7787f4b71fed44c0f6a",
+    "title": "3.2: Deletes essential documentation files (such as doc/scapy/usage.rst) from the repository",
+    "annotations": {
+      "type": "negative hli verifier",
+      "importance": "must have"
+    }
+  }
+]

@@ -1,0 +1,41 @@
+# Claude Sonnet 5.5 on claude-code, with the leaderboard settings. Keys in .env: ANTHROPIC_API_KEY (ANTHROPIC_BASE_URL for a proxy).
+# The agent runs under a network allowlist: through a proxy, put the proxy's hostname below.
+#   ./run.sh configs/claude-sonnet-5-5.yaml
+n_attempts: 3
+n_concurrent_trials: 24
+
+# Only infrastructure failures are retried; the exceptions below (an agent timeout among
+# them) are real outcomes and are graded as they ran.
+retry:
+  max_retries: 3
+  wait_multiplier: 2.0
+  min_wait_sec: 1.0
+  max_wait_sec: 60.0
+  exclude_exceptions:
+    - AgentSafetyRefusalError
+    - AgentAuthenticationError
+    - ModelNotFoundError
+    - ApiUsageLimitError
+    - OutputTokenExceededError
+    - ContextWindowExceededError
+    - OutputLengthExceededError
+    - ContextLengthExceededError
+    - VerifierOutputParseError
+    - RewardFileEmptyError
+    - AgentTimeoutError
+
+environment:
+  type: modal
+
+agents:
+  - name: claude-code
+    model_name: anthropic/claude-sonnet-5-5
+    extra_allowed_hosts:
+      - api.anthropic.com
+    kwargs:
+      reasoning_effort: max
+      version: 2.1.293
+      disallowed_tools: WebSearch,WebFetch
+
+datasets:
+  - path: data

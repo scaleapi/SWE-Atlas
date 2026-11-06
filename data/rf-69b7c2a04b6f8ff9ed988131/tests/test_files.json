@@ -1,0 +1,4 @@
+{
+  "files": [],
+  "note": "Empty on purpose: this task's unit tests live inside src/detect-filename.c, which the refactor must change, so no file can be protected without failing the reference solution."
+}

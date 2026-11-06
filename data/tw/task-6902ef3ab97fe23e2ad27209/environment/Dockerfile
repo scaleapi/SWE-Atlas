@@ -1,1 +1,0 @@
-FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_TW_grafana_grafana_6902ef3ab97fe23e2ad27209_1.1@sha256:89b37962f88fe69295c19bf88d2625ecb3c05fee07bd380754da0f44edcbae2d

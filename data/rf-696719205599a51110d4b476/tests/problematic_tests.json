@@ -1,0 +1,30 @@
+{
+  "OpcDaRequest": {
+    "reason": "broken_by_design",
+    "detail": "Fails on the base commit before any patch: the pre-existing test passes reservedForFutur=0 to OpcDaHeaderMessage, a field the base source does not define (AttributeError). The test patch rewrites the test, so it can only be fail_to_pass, which the RF gate rejects."
+  },
+  "OpcDaRequestLE": {
+    "reason": "broken_by_design",
+    "detail": "Fails on the base commit before any patch: the pre-existing test passes reservedForFutur=0 to OpcDaHeaderMessage, a field the base source does not define (AttributeError). The test patch rewrites the test, so it can only be fail_to_pass, which the RF gate rejects."
+  },
+  "OpcDaPing": {
+    "reason": "broken_by_design",
+    "detail": "Fails on the base commit before any patch: the pre-existing test passes reservedForFutur=0 to OpcDaHeaderMessage, a field the base source does not define (AttributeError). The test patch rewrites the test, so it can only be fail_to_pass, which the RF gate rejects."
+  },
+  "OpcDaResponse": {
+    "reason": "broken_by_design",
+    "detail": "Fails on the base commit before any patch: the pre-existing test passes reservedForFutur=0 to OpcDaHeaderMessage, a field the base source does not define (AttributeError). The test patch rewrites the test, so it can only be fail_to_pass, which the RF gate rejects."
+  },
+  "OpcDaResponseLE": {
+    "reason": "broken_by_design",
+    "detail": "Fails on the base commit before any patch: the pre-existing test passes reservedForFutur=0 to OpcDaHeaderMessage, a field the base source does not define (AttributeError). The test patch rewrites the test, so it can only be fail_to_pass, which the RF gate rejects."
+  },
+  "OpcDaAlter_context": {
+    "reason": "broken_by_design",
+    "detail": "Fails on the base commit before any patch: the pre-existing test passes reservedForFutur=0 to OpcDaHeaderMessage, a field the base source does not define (AttributeError). The test patch rewrites the test, so it can only be fail_to_pass, which the RF gate rejects."
+  },
+  "OpcDaAlter_contextLE": {
+    "reason": "broken_by_design",
+    "detail": "Fails on the base commit before any patch: the pre-existing test passes reservedForFutur=0 to OpcDaHeaderMessage, a field the base source does not define (AttributeError). The test patch rewrites the test, so it can only be fail_to_pass, which the RF gate rejects."
+  }
+}

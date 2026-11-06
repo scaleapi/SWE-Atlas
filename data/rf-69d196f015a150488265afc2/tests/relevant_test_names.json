@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "workers/repository/extract/supersedes > processSupersedesManagers > handles empty input"
+    },
+    {
+      "name": "workers/repository/extract/supersedes > processSupersedesManagers > handles missing secondary extract manager"
+    },
+    {
+      "name": "workers/repository/extract/supersedes > processSupersedesManagers > handles primary extract with undefined packageFiles"
+    },
+    {
+      "name": "workers/repository/extract/supersedes > processSupersedesManagers > handles secondary extract with undefined packageFiles"
+    },
+    {
+      "name": "workers/repository/extract/supersedes > processSupersedesManagers > ignores extracts without superseding managers"
+    },
+    {
+      "name": "workers/repository/extract/supersedes > processSupersedesManagers > keeps non-superseded package files"
+    },
+    {
+      "name": "workers/repository/extract/supersedes > processSupersedesManagers > keeps superseded package files with lock files"
+    },
+    {
+      "name": "workers/repository/extract/supersedes > processSupersedesManagers > removes superseded package files without lock files"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+SWE Atlas
+
+Some QnA rubric criteria in data/qa use wording from SWE-Atlas-QnA-AA
+(https://huggingface.co/datasets/ArtificialAnalysis/SWE-Atlas-QnA-AA),
+which carries the following notice:
+
+  SWE-Atlas-QnA-AA
+  Copyright 2026 Artificial Analysis
+
+  This dataset is a modified version of SWE-Atlas-QnA by Scale AI:
+    https://huggingface.co/datasets/ScaleAI/SWE-Atlas-QnA
+    https://github.com/scaleapi/SWE-Atlas
+  Scale AI's work is licensed under the Apache License, Version 2.0.
+
+  Changes made by Artificial Analysis (see README.md):
+    - data/test-00000-of-00001.parquet: the `title` of 127 rubric criteria is reworded, and two
+      criteria take Scale's fix from github.com/scaleapi/SWE-Atlas commit 9acc18e; every rubric item also carries
+      `original_title` (Scale's text) and `change`. Questions, repositories, base commits,
+      Docker images, reference answers, criterion ids, polarity and importance are unchanged.
+    - rubric_evaluation_config.yaml: the judge model, voting, output schema and prompts used by
+      Artificial Analysis replace Scale's judge configuration.
+    - data/test/cae_qna_124_public.csv: removed; the parquet file is the single data source.
+
+  The modifications are licensed under the Apache License, Version 2.0 as well.
