@@ -149,6 +149,7 @@ describe('Initialization Order Investigation', () => {
   beforeAll(() => {
     console.log('\n=== BEFORE ALL (client test) ===');
     console.log('In beforeAll - Has fetch:', typeof fetch !== 'undefined');
+    console.log('In beforeAll - Has CSS.supports:', typeof CSS !== 'undefined' && typeof CSS.supports !== 'undefined');
   });
   
   it('checks what is available during test execution', () => {
@@ -447,7 +448,7 @@ The initialization sequence occurs in this order:
 
 This matters because in test-client, globals like fetch exist at stage 4 (module load), while in test-packages they don't exist at any stage. Code that checks for API availability at module scope will behave differently.
 
-Checking how test-client configuration specifies jsdom - examining test/client/jest.config.js:
+Checking which environment the test-client configuration actually specifies - examining test/client/jest.config.js:
 
 const path = require( 'path' );
 const base = require( '@automattic/calypso-jest' );
@@ -476,7 +477,33 @@ module.exports = {
   },
 };
 
-It doesn't explicitly set testEnvironment but inherits from base which sets 'node'. However, the setupFilesAfterEnv and testEnvironmentOptions with url suggest jsdom usage. Looking at the actual test run output, tests have access to document and window, confirming jsdom despite the base saying 'node'. This happens because Jest's default environment is 'jsdom' when not specified at the top level, and the base preset's 'node' setting gets overridden implicitly by the test environment detection.
+It doesn't explicitly set testEnvironment, so the `...base` spread keeps the base preset's testEnvironment: 'node'. Rather than assume, I verified what environment actually hosts test-client runs with a probe:
+
+// client/test/environment-check-client-test.js
+describe('Client Environment Check', () => {
+  it('reports whether DOM globals exist during test-client runs', () => {
+    console.log('Has document:', typeof document !== 'undefined');
+    console.log('Has window:', typeof window !== 'undefined');
+    console.log('userAgent:', typeof navigator !== 'undefined' ? navigator.userAgent : 'no navigator');
+  });
+});
+
+Executed with:
+
+$ cd /app && yarn test-client --testPathPattern="environment-check-client-test" 2>&1
+
+Output:
+
+    console.log
+      Has document: false
+
+    console.log
+      Has window: false
+
+    console.log
+      userAgent: Node.js/22
+
+test-client runs in the node environment: there is no document and no window, and navigator.userAgent reports Node.js/22 (Node's built-in navigator object). The browser-like APIs observed earlier (fetch, CSS.supports, TextEncoder) are not evidence of jsdom - each one is individually assigned onto the node global by setup-test-framework.js. The testEnvironmentOptions url value is simply inert under the node environment.
 
 The complete picture shows three critical differences causing tests to pass individually but fail in suites:
 
@@ -484,6 +511,6 @@ First, calypso-config resolution differs. In test-client and test-server, it red
 
 Second, global API availability differs. test-client provides fetch, CSS.supports, TextEncoder, TextDecoder, ReadableStream, and TransformStream. test-packages only provides ResizeObserver and matchMedia. test-server relies on native Node.js APIs. Tests depending on these globals fail in test-packages but pass in test-client.
 
-Third, test environment (node vs jsdom) varies per package in test-packages based on individual overrides, while test-client consistently uses jsdom. Packages without testEnvironment overrides run in node with no document or window, failing tests that expect browser DOM APIs.
+Third, the test environment is uniformly node for test-client and test-server (both inherit testEnvironment: 'node' from the calypso-jest preset, and the environment probes confirmed no document and no window in each), while in test-packages the environment varies per package: individual jest.config.js files can override it, as help-center does with testEnvironment: 'jsdom' (gaining document and window), whereas packages like i18n-utils that don't override it run in node. A test that relies on DOM globals passes under a package with a jsdom override but fails when executed in one of the node-environment contexts.
 
 The module resolution for internal packages remains consistent across all test commands, the custom resolver in packages/calypso-jest/src/module-resolver.js always prioritizes calypso:src field, loading source TypeScript files instead of built distributions. This consistency means internal dependencies don't contribute to test failures - the resolution doesn't differ based on execution context. 

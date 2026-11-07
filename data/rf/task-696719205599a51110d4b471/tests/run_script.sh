@@ -17,8 +17,36 @@ LOG_OUTPUT="$TEMP_DIR/test_output.log"
 # Change to the app directory
 cd /app
 
+# PATH puts a CPython 3.12 venv (judge tooling only) ahead of the image's python:3.8, and
+# the vendored six in scapy/modules/six.py only loads on interpreters that still call
+# find_module(). Use the first interpreter that can import the checkout.
+PYTHON=""
+for cand in python python3 python3.8 /usr/local/bin/python3; do
+    if command -v "$cand" >/dev/null 2>&1 && \
+       "$cand" -c 'import scapy.modules.six.moves' >/dev/null 2>&1; then
+        PYTHON="$cand"
+        break
+    fi
+done
+: "${PYTHON:=python}"
+echo "run_script.sh: using $PYTHON ($("$PYTHON" --version 2>&1))"
+
+# scapy/arch/bpf/core.py calls ctypes.util.find_library("libc"), which fails on this image
+# (the gcc fallback looks for liblibc.a) and aborts the scapy import. Resolve the legacy
+# name to "c" through a sitecustomize on PYTHONPATH; source and tests stay untouched.
+SHIM_DIR="$TEMP_DIR/pyshim"
+mkdir -p "$SHIM_DIR"
+cat > "$SHIM_DIR/sitecustomize.py" <<'PYSHIM'
+import ctypes.util as _ctypes_util
+_find_library = _ctypes_util.find_library
+def find_library(name):
+    return _find_library("c" if name == "libc" else name)
+_ctypes_util.find_library = find_library
+PYSHIM
+export PYTHONPATH="$SHIM_DIR${PYTHONPATH:+:$PYTHONPATH}"
+
 utscapy_supports_flag() {
-    python -m scapy.tools.UTscapy "$1" </dev/null 2>&1 | grep -q "option $1 not recognized" && return 1
+    "$PYTHON" -m scapy.tools.UTscapy "$1" </dev/null 2>&1 | grep -q "option $1 not recognized" && return 1
     return 0
 }
 
@@ -47,7 +75,7 @@ if [[ $# -gt 0 ]]; then
                 continue
             fi
             # Python unittest file: run with unittest in verbose mode
-            python -m unittest discover -s "$(dirname "$f")" -p "$(basename "$f")" -v \
+            "$PYTHON" -m unittest discover -s "$(dirname "$f")" -p "$(basename "$f")" -v \
                 2>&1 | tee -a "$LOG_OUTPUT"
         else
             # UTscapy .uts file: run with UTscapy as before
@@ -73,7 +101,7 @@ if [[ $# -gt 0 ]]; then
                 FILE_ARGS=("${COMMON_ARGS[@]}")
             fi
 
-            python -m scapy.tools.UTscapy -t "$f" \
+            "$PYTHON" -m scapy.tools.UTscapy -t "$f" \
                 -P "load_contrib('${CONTRIB_NAME}')" \
                 "${FILE_ARGS[@]}" \
                 2>&1 | tee -a "$LOG_OUTPUT"
@@ -91,18 +119,21 @@ with open('test/configs/linux.utsc') as f:
     cfg = json.load(f)
 cfg['breakfailed'] = False
 cfg['onlyfailed'] = False
+# The TLS netaccess campaign runs live loopback TLS sessions, which hang in
+# sandboxes without full networking; -K netaccess already excludes network tests.
+cfg['testfiles'] = [t for t in cfg.get('testfiles', []) if 'netaccess' not in t]
 with open(sys.argv[1], 'w') as f:
     json.dump(cfg, f, indent=2)
 " "$PATCHED_CONFIG"
 
-    python -m scapy.tools.UTscapy -c "$PATCHED_CONFIG" \
+    "$PYTHON" -m scapy.tools.UTscapy -c "$PATCHED_CONFIG" \
         "${COMMON_ARGS[@]}" \
         2>&1 | tee "$LOG_OUTPUT"
 
     # UTscapy only handles .uts files.  Also run any Python unittest files
     # (test_*.py) so that the full suite captures all test types.
     while IFS= read -r -d '' pyfile; do
-        python -m unittest discover -s "$(dirname "$pyfile")" -p "$(basename "$pyfile")" -v \
+        "$PYTHON" -m unittest discover -s "$(dirname "$pyfile")" -p "$(basename "$pyfile")" -v \
             2>&1 | tee -a "$LOG_OUTPUT"
     done < <(find test -name 'test_*.py' -print0 2>/dev/null)
 fi

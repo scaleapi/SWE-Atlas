@@ -17,7 +17,7 @@
   },
   {
     "id": "7ba25a6c25b942d749c72ce925bbed02",
-    "title": "1.3: States that size quota limits do NOT prevent uploading a file that would exceed the quota because SFTPgo only checks current usage, not incoming file size",
+    "title": "1.3: States that size quota limits do NOT prevent uploading a file that would exceed the quota because SFTPGo only checks current usage, not incoming file size",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -25,7 +25,7 @@
   },
   {
     "id": "285a88749b4173ca1ae22cc35f968ec4",
-    "title": "1.4: Reports that after quota limits are exceeded, all subsequent uploads are immediately blocked with the same failure behavior",
+    "title": "1.4: Reports that after quota limits are exceeded, all subsequent uploads of new files are immediately blocked with the same failure behavior",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "a0e78f7715ef05c0bbc4e8c7fa859852",
-    "title": "1.7: States that quota usage reported by SFTPgo matches actual file sizes on disk.",
+    "title": "1.7: States that quota usage reported by SFTPGo matches actual file sizes on disk.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "ff9983e31eeff4c351313d0e022d5cd3",
-    "title": "1.8: Reports that blocked attempts do not generate the standard 'Upload' sender log entries that appear for completed transfers.",
+    "title": "1.8: Reports, through description or log examples, that blocked attempts do not generate the standard 'Upload' sender log entries that appear for completed transfers.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

@@ -104,24 +104,8 @@
     }
   },
   {
-    "id": "c6642a9807f00b7614004c35d9f752bf",
-    "title": "2: Documentation Maintainability",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "nice to have"
-    }
-  },
-  {
-    "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -129,7 +113,7 @@
   },
   {
     "id": "4fd1dec7aaaecae4729ab2af4d8162a4",
-    "title": "4.1: Changes the function signature of any of the 4 exported functions (NewWebhookCustomRegex, FromData, Keywords, Type) in custom_detectors.go",
+    "title": "2.1: Changes the function signature of any of the 4 exported functions (NewWebhookCustomRegex, FromData, Keywords, Type) in custom_detectors.go",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -137,7 +121,7 @@
   },
   {
     "id": "ae2440ce08adb5c04df4e1a74a1b3e2d",
-    "title": "4.2: Alters any of the 2 pre-processing steps (regex matching and permutation via permutateMatches) preceding match processing in FromData",
+    "title": "2.2: Alters any of the 2 pre-processing steps (regex matching and permutation via permutateMatches) preceding match processing in FromData",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

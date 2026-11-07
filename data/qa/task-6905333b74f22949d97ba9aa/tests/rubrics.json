@@ -41,7 +41,7 @@
   },
   {
     "id": "d5238bc26be57bd56df71148c39dc37e",
-    "title": "1.6: Reports runtime evidence of user interacting with the aliases, confirming that the interaction was successful. For example: printing statements like \"alias_enabled_after_toggle False\", \"alias_note_after_update Updated via API test\", etc.",
+    "title": "1.6: Reports runtime evidence of the user acting on an existing alias (e.g., toggling, updating or deleting it), confirming that the action succeeded. For example: printing statements like \"alias_enabled_after_toggle False\", \"alias_note_after_update Updated via API test\", or equivalent observed output.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "b48ddc5c7b0b92c339edfe22602eb603",
-    "title": "1.8: States that email_handler and job_runner does not become active when the server starts.",
+    "title": "1.8: States that email_handler and job_runner do not become active when the server starts.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "3dc36807bcd7ecead1bce89aa1e5842b",
-    "title": "1.9: States that logs like \"Start mail controller 0.0.0.0 20381\" confirms that email_handler is active.",
+    "title": "1.9: States that logs like \"Start mail controller 0.0.0.0 20381\" confirm that email_handler is active.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "df27e9adf001d94f6775b798cb3da06c",
-    "title": "1.10 States that the job_runner polls for pending jobs periodically and when it detects pending job, it prints logs like \"Take job <Job 5 onboarding-1>\", confirming the expected behavior when the job_runner is active.",
+    "title": "1.10: States that the job_runner polls for pending jobs periodically and when it detects pending job, it prints logs like \"Take job <Job 5 onboarding-1>\", confirming the expected behavior when the job_runner is active.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

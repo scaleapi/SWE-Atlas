@@ -1,4 +1,4 @@
-Can you add some tests for the screen margin behavior? We're missing coverage for:
+Can you add some tests for the screen margin behavior? We're missing coverage for a few cases.
 
 Specifically, cover scrolling when only the bottom margin is set, when only the top margin is set, and when both top and bottom margins are configured.
 

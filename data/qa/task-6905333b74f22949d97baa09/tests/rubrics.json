@@ -9,7 +9,7 @@
   },
   {
     "id": "8d12c50eaeb85fa39c341330787b00d3",
-    "title": "1.2: Explains that detectors are compiled into the binary as Go structs rather than loaded from external files at runtime (e.g., no JSON/YAML config files, detectors instantiated in source code).\n",
+    "title": "1.2: Explains that detectors are compiled into the binary as Go structs rather than loaded from external files at runtime (e.g., no JSON/YAML config files, detectors instantiated in source code).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -17,7 +17,7 @@
   },
   {
     "id": "fddb9de5bee98676135038f0319c919d",
-    "title": "1.3: Explains that detectors are registered at startup without individual per-detector messages (e.g., shows system-level initialization like \"engine initialized\", \"aho-corasick core\" setup, but no per-detector registration logs).\n",
+    "title": "1.3: Explains that detectors are registered at startup without individual per-detector messages (e.g., shows system-level initialization like \"engine initialized\", \"aho-corasick core\" setup, but no per-detector registration logs).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -25,7 +25,7 @@
   },
   {
     "id": "cc9b43137e19de392f631d6fcc0e994a",
-    "title": "1.4: States that HTTP client libraries are present in build dependencies (e.g., go-retryablehttp or similar HTTP libraries for network verification).\n",
+    "title": "1.4: States that HTTP client libraries are present in build dependencies (e.g., go-retryablehttp or similar HTTP libraries for network verification).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "0fe35234b42086e155f99f2cb293470d",
-    "title": "1.6: Reports that the JSON output schema includes key fields (e.g., Verified, SourceMetadata, DetectorType/DetectorName, Raw/Redacted).\n",
+    "title": "1.6: Reports that the JSON output schema includes key fields (e.g., Verified, SourceMetadata, DetectorType/DetectorName, Raw/Redacted).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "6b89e253d37a77d211299a1804c82569",
-    "title": "1.7: States that TruffleHog doesn't use confidence scores (e.g., uses binary verified/unverified status instead of scoring).\n",
+    "title": "1.7: States that TruffleHog doesn't use confidence scores (e.g., uses binary verified/unverified status instead of scoring).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "845f6dd168851facbcf1d5c5d230f8e2",
-    "title": "1.8: Reports file scanning behavior observed in verbose logs (e.g., \n\"handling binary file\", \"skipping binary file\", MIME type detection \nlike \"application/octet-stream\", files processed per commit).",
+    "title": "1.8: Reports file scanning behavior observed in verbose logs (e.g., \"handling binary file\", \"skipping binary file\", MIME type detection like \"application/octet-stream\", files processed per commit).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "cbf260c411a64ad42171918e74dc1d5f",
-    "title": "1.9: States that binary files are scanned by default (e.g., .bin, .dat, .exe files processed, or requires --force-skip-binaries flag to skip).",
+    "title": "1.9: States that binary files are scanned by default (e.g., .bin, .dat files processed, or requires --force-skip-binaries flag to skip).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "29add8d627b4360dc7e80e66154723a6",
-    "title": "1.10: Reports help flag output showing available detection capabilities (e.g., scan sources like git/github/filesystem, detector filtering flags like --include-detectors).\n",
+    "title": "1.10: Reports help flag output showing available detection capabilities (e.g., scan sources like git/github/filesystem, detector filtering flags like --include-detectors).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

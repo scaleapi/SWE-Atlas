@@ -6,7 +6,7 @@ I've uploaded a code repository in the directory /app. Consider the following te
 <testing_objective>
 I need a few more integration tests around kitty graphics image loading.
 
-Basically: load raw images (both 24 and 32-bit) including when the data comes in chunks, load PNGs in a couple common modes (RGBA/RGB and grayscale ish), have one super tiny PNG sanity check + make sure bad PNG data errors out, cover using IDs vs numbers for load/put/delete (also chunked), and poke the animation frame stuff (new frames, edits/partial edits, composing from another frame, deleting frames, and the gap timing bits).
+Basically: load raw images (both 24 and 32-bit) including when the data comes in chunks or from a file, a temp file or shared memory, load PNGs in a couple common modes (RGBA/RGB and grayscale ish), have one super tiny PNG sanity check + make sure bad PNG data errors out, cover using IDs vs numbers for load/put/delete (also chunked), and poke the animation frame stuff (new frames, edits/partial edits, composing from another frame, deleting frames, switching the current frame, and the gap timing bits).
 </testing_objective>
 
 Your tests MUST be runnable using the following script (be careful if/when you run it as it may run all tests and take a long time):
@@ -19,7 +19,6 @@ export PIP_BREAK_SYSTEM_PACKAGES=1
 
 build_project() {
     echo "Building project..."
-    # Allow unused functions to avoid errors when skeleton code removes callers
     export CFLAGS="${CFLAGS:+$CFLAGS }-Wno-error=unused-function"
     python setup.py build --verbose
     echo "Build complete."
@@ -86,6 +85,7 @@ run_selected_tests "${TEST_FILES[@]}"
 
 Can you help me write comprehensive tests for this codebase?
 Your task is to create a test suite in /app that verifies correct implementation behavior according to the testing objective.
+
 Follow these steps to complete the task:
 1. Explore the repository structure to understand how the codebase is organized and identify existing test patterns
 2. Find and read the source code relevant to the testing objective to understand the functionality to be tested
@@ -112,3 +112,5 @@ Use the appropriate naming convention for the language:
 - Go: TestFunctionName
 - JavaScript/TypeScript: "describe block > it/test name" or test function name
 - Java: testMethodName or ClassName.testMethodName
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

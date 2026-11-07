@@ -17,7 +17,7 @@
   },
   {
     "id": "9d90fbc7b5ce1e6d917cc7653c92595a",
-    "title": "1.5: States that SIGCHLD is the OS-level signal Kitty listens for to detect child process termination",
+    "title": "1.3: States that SIGCHLD is the OS-level signal Kitty listens for to detect child process termination",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -25,7 +25,7 @@
   },
   {
     "id": "425a236f8d473a127f504250a88f793c",
-    "title": "1.6: States that waitpid() is the system call Kitty uses to retrieve the child's exit status",
+    "title": "1.4: States that waitpid() is the system call Kitty uses to retrieve the child's exit status",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "bb77ec3fabbcfbe4b0fdbec937aff2dc",
-    "title": "1.7: States that OSC 133 escape sequences are the protocol mechanism that carries exit status from shell to the message-generating function",
+    "title": "1.5: States that OSC 133 escape sequences are the protocol mechanism that carries exit status from shell to the message-generating function",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "d93eb710c088e0818914aed47feea26b",
-    "title": "1.8: States that child program output appears in Kitty's terminal window (via PTY) rather than the outer shell",
+    "title": "1.6: States that child program output appears in Kitty's terminal window (via PTY) rather than the outer shell",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

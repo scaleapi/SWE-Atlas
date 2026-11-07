@@ -81,7 +81,7 @@
   },
   {
     "id": "b7086a113ab0cc612cc27b4a68b23ff2",
-    "title": "1.11: Explains how parallel highlighting does not have conflicts (e.g., buffered channel distributing work, sync.WaitGroup coordinating goroutines, each worker processing independent files, sync.RWMutex protecting cache access)",
+    "title": "1.11: Explains how parallel highlighting avoids conflicts in distributing and processing files (e.g., buffered channel distributing work, sync.WaitGroup coordinating goroutines, each worker processing independent files, sync.RWMutex protecting cached file-data reads)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

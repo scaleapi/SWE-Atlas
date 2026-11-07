@@ -85,7 +85,7 @@
       "importance": "nice to have"
     },
     "id": "ef835f199e66750099d27e959ee6f635",
-    "title": "3.1: All tests use Scapy's UTScapy test framework with = test header syntax"
+    "title": "3.1: All tests use Scapy's UTscapy test framework with = test header syntax"
   },
   {
     "annotations": {

@@ -15,7 +15,7 @@ Constraints:
 - Must validate data structures before and after operations
 - No changes to user-facing APIs
 
-I've already taken care of all changes to the test files. This means you DON'T have to modify the testing logic or any of the tests in any way!
+I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way.
 
 Your task is to make the minimal changes to non-tests files in the working directory to ensure the task is satisfied.
 
@@ -45,3 +45,5 @@ Use the below interface:
 - Input: `table_id_t table_id`
 - Output: `bool`
 - Description: Check whether the given table_id corresponds to a system table. Returns true if the table is a system table (sys_tables, sys_columns, sys_indexes, sys_fields, sys_foreign, sys_foreign_cols, or sys_virtual).
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

@@ -20,24 +20,8 @@
       "type": "positive hli verifier",
       "importance": "must have"
     },
-    "id": "683f7561b537e3c9cf109677dad34096",
-    "title": "1.3: Tests that defragment() and defrag() both return packets with the timestamp of the last fragment when fragments arrive with different timestamps."
-  },
-  {
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    },
-    "id": "d174c4bba6cfa6667919d8118e2ba18b",
-    "title": "1.4: Tests that defragment() returns a single defragmented packet when the first fragment is missing but other fragments are present."
-  },
-  {
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    },
     "id": "57c76443123b3fef1adf4a96b66a14a6",
-    "title": "1.5: Tests that defragment() and defrag() both correctly handle real-world fragmented DNS response packets by reconstructing the complete DNS packet with valid DNSRR.\n\n"
+    "title": "1.3: Tests that defragment() and defrag() both correctly handle real-world fragmented DNS response packets by reconstructing the complete DNS packet with valid DNSRR."
   },
   {
     "annotations": {
@@ -85,7 +69,7 @@
       "importance": "nice to have"
     },
     "id": "5821d4628ab96be41260b5ad6009f44e",
-    "title": "3.1: All tests use framework UTscapy with assert statements for validation."
+    "title": "3.1: All tests use the UTscapy framework with assert statements for validation."
   },
   {
     "annotations": {

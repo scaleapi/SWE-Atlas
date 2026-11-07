@@ -96,16 +96,8 @@
     }
   },
   {
-    "id": "9cd24570779c7745931e66a3378eb64a",
-    "title": "1.12: Adds a `getRepository` RTK Query endpoint in `public/app/features/provisioning/api/endpoints.ts` that fetches a single repository resource by name",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "6c23fb7ca681cbc1a215656897742227",
-    "title": "1.13: Adds a `listRepositoryHistory` RTK Query endpoint in `public/app/features/provisioning/api/endpoints.ts` that forwards `ref` as a query parameter",
+    "title": "1.12: Adds a `listRepositoryHistory` RTK Query endpoint in `public/app/features/provisioning/api/endpoints.ts` that forwards `ref` as a query parameter",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -113,7 +105,7 @@
   },
   {
     "id": "908e355c19ef7b0438e5b30283e429da",
-    "title": "1.14: Adds a `getRepositoryHistory` RTK Query endpoint in `public/app/features/provisioning/api/endpoints.ts` that includes the file path segment in the URL",
+    "title": "1.13: Adds a `getRepositoryHistory` RTK Query endpoint in `public/app/features/provisioning/api/endpoints.ts` that includes the file path segment in the URL",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -121,7 +113,7 @@
   },
   {
     "id": "8e282b0ca9039d67519347b2d3330ccd",
-    "title": "1.15: Adds a `deleteRepositoryFiles` RTK Query mutation in `public/app/features/provisioning/api/endpoints.ts` that passes `ref` and `message` as query parameters on DELETE",
+    "title": "1.14: Adds a `deleteRepositoryFiles` RTK Query mutation in `public/app/features/provisioning/api/endpoints.ts` that passes `ref` and `message` as query parameters on DELETE",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -129,7 +121,7 @@
   },
   {
     "id": "2c0a4ff490f375dd25b6911936b6d6fc",
-    "title": "1.16: Adds a `getRepositoryWebhook` RTK Query endpoint in `public/app/features/provisioning/api/endpoints.ts` targeting the webhook route via GET",
+    "title": "1.15: Adds a `getRepositoryWebhook` RTK Query endpoint in `public/app/features/provisioning/api/endpoints.ts` targeting the webhook route via GET",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -137,7 +129,7 @@
   },
   {
     "id": "47b4213d8855f9d1a2ddf345516389a7",
-    "title": "1.17: Adds a `postRepositoryWebhook` RTK Query mutation in `public/app/features/provisioning/api/endpoints.ts` targeting the webhook route via POST",
+    "title": "1.16: Adds a `postRepositoryWebhook` RTK Query mutation in `public/app/features/provisioning/api/endpoints.ts` targeting the webhook route via POST",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -145,7 +137,7 @@
   },
   {
     "id": "7838a71655b74a16cde1d51391b307f7",
-    "title": "1.18: Replaces the hand-rolled `ScopedResourceClient` usage in `RepositoryStatusPage.tsx` with RTK Query hooks from the provisioning API",
+    "title": "1.17: Replaces the hand-rolled `ScopedResourceClient` usage in `RepositoryStatusPage.tsx` with RTK Query hooks from the provisioning API",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -153,31 +145,15 @@
   },
   {
     "id": "28568499c5cf1e86359a2176c00d39b3",
-    "title": "1.19: `RepositoryStatusPage.tsx` preserves loading, error, and empty states when using RTK Query hooks",
+    "title": "1.18: `RepositoryStatusPage.tsx` preserves loading, error, and empty states when using RTK Query hooks",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "c6642a9807f00b7614004c35d9f752bf",
-    "title": "2: Documentation Maintainability",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "nice to have"
-    }
-  },
-  {
-    "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -185,7 +161,7 @@
   },
   {
     "id": "0c371736dfc11d5d224e123dfb4ac579",
-    "title": "4.1: Removes or renames existing public exports from `public/app/features/apiserver/client.ts` that other call sites depend on",
+    "title": "2.1: Removes or renames existing public exports from `public/app/features/apiserver/client.ts` that other call sites depend on",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -193,7 +169,7 @@
   },
   {
     "id": "8c8e947363a68af5655461ca0893d8f2",
-    "title": "4.2: Inlined selector serialization logic inside endpoint definitions in `endpoints.ts` instead of importing `parseListOptionsSelector` from `client.ts`",
+    "title": "2.2: Inlined selector serialization logic inside endpoint definitions in `endpoints.ts` instead of importing `parseListOptionsSelector` from `client.ts`",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

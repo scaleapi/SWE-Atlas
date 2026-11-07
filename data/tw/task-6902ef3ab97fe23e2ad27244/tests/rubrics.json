@@ -45,15 +45,15 @@
       "importance": "must have"
     },
     "id": "bc70a6936501893facf27262d9a7c945",
-    "title": "1.8: Tests that overwriting hyperlinked text with non-hyperlinked text followed by garbage_collect_hyperlink_pool() results in remaining non-overwritten hyperlinks appearing in hyperlinks_as_list() with potentially remapped IDs when verifying garbage collection remapping"
+    "title": "1.6: Tests that overwriting hyperlinked text with non-hyperlinked text followed by garbage_collect_hyperlink_pool() results in remaining non-overwritten hyperlinks appearing in hyperlinks_as_list() with potentially remapped IDs when verifying garbage collection remapping"
   },
   {
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
     },
-    "id": "9c332271311ccb77627ba7d9757993c6",
-    "title": "1.9: Tests that reusing a previously created hyperlink by calling set_link with same URL-ID combination results in that hyperlink appearing at the end of hyperlinks_as_list() output when tracking most recently used hyperlinks"
+    "id": "618da1a754fb70638c82c71bebbc6fb3",
+    "title": "1.7: Tests that reusing an earlier hyperlink with the same URL-ID combination, after other hyperlinks were created, moves that hyperlink to the end (most recently used position) of the screen's hyperlink list"
   },
   {
     "annotations": {
@@ -61,7 +61,7 @@
       "importance": "must have"
     },
     "id": "f92eb501aed142d79ecb215a858edeb1",
-    "title": "1.10: Tests that current_url_text() returns joined text from all lines sharing the same hyperlink ID when extracting multi-line hyperlink text"
+    "title": "1.8: Tests that current_url_text() returns joined text from all lines sharing the same hyperlink ID when extracting multi-line hyperlink text"
   },
   {
     "annotations": {
@@ -69,7 +69,7 @@
       "importance": "must have"
     },
     "id": "128a17721b3145b3a03ac0089c40df21",
-    "title": "1.11: Tests that calling hyperlink_at() with specific x,y coordinates returns the URL string or None based on whether a hyperlink exists at specific coordinates"
+    "title": "1.9: Tests that calling hyperlink_at() with specific x,y coordinates returns the URL string or None based on whether a hyperlink exists at specific coordinates"
   },
   {
     "annotations": {
@@ -77,7 +77,7 @@
       "importance": "must have"
     },
     "id": "c984cdc795c6df5e00289bd90d6264fd",
-    "title": "1.12: Tests that creating a hyperlink that wraps across line boundaries due to exceeding screen column width results in the same hyperlink ID appearing in hyperlink_ids() tuple for all wrapped line segments when verifying text wrapping behavior"
+    "title": "1.10: Tests that creating a hyperlink that wraps across line boundaries due to exceeding screen column width results in the same hyperlink ID appearing in hyperlink_ids() tuple for all wrapped line segments when verifying text wrapping behavior"
   },
   {
     "annotations": {

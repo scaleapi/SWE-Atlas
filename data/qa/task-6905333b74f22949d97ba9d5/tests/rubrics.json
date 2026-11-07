@@ -57,7 +57,7 @@
   },
   {
     "id": "a533e81a95629e9e4682b8385970346f",
-    "title": "1.8: States that processed documents are stored in the documents_document table with fields e.g., content, checksum, mime_type, filename",
+    "title": "1.8: States that processed documents are stored in the documents_document table with fields (e.g., content, checksum, mime_type, filename)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "2df16f6b9e0b835c4cf22f83568c1fe0",
-    "title": "1.11: States that task execution records are stored in the django_q_task table with fields e.g., task name, function path, start/stop timestamps, success status",
+    "title": "1.11: States that task execution records are stored in the django_q_task table with fields (e.g., task name, function path, start/stop timestamps, success status)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

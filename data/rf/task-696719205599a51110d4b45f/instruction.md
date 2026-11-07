@@ -28,3 +28,5 @@ Use the below interface for your solution:
 - Input: `filterState: RulesFilter`
 - Output: `string | undefined`
 - Description: Combines ruleName and freeFormWords from the filter state into a single title search string for backend filtering. Returns undefined if no title filters are provided.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

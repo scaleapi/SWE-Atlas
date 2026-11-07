@@ -4,19 +4,16 @@
 I've uploaded a code repository in the directory /app. Consider the following testing objective:
 
 <testing_objective>
-I need you to add some tests around how we present alias "From" names. Make sure we're correctly choosing what recipient/display name to use when sending from an alias across the realistic combinations: plain alias, alias with a configured name, alias on a custom domain (with and without a domain display name), and the precedence rules when both alias + domain names exist. Cover both the returned display string and whether we surface any user-facing note/indicator that an override was applied-- Keep it focused on exercising the behavior through the existing model setup
+I need you to add some tests around how we present alias "From" names. Make sure we're correctly choosing what recipient/display name to use when sending from an alias across the realistic combinations: plain alias, alias with a configured name, alias on a custom domain (with and without a domain display name), and the precedence rules when both alias + domain names exist. Cover both the returned display string and whether we surface any user-facing note/indicator that an override was applied. Keep it focused on exercising the behavior through the existing model setup.
 </testing_objective>
 
 Your tests MUST be runnable using the following script (be careful if/when you run it as it may run all tests and take a long time):
 <run_script>
 #!/bin/bash
-### COMMON SETUP; DO NOT MODIFY ###
 set -e
 
 # Change to the app directory
 cd /app
-
-# --- CONFIGURE THIS SECTION ---
 
 start_services() {
     echo "Starting PostgreSQL and Redis services..."
@@ -223,9 +220,6 @@ run_selected_tests() {
     
     return 0
 }
-# --- END CONFIGURATION SECTION ---
-
-### COMMON EXECUTION; DO NOT MODIFY ###
 
 # No args is all tests
 if [ $# -eq 0 ]; then
@@ -246,6 +240,7 @@ run_selected_tests "${TEST_FILES[@]}"
 
 Can you help me write comprehensive tests for this codebase?
 Your task is to create a test suite in /app that verifies correct implementation behavior according to the testing objective.
+
 Follow these steps to complete the task:
 1. Explore the repository structure to understand how the codebase is organized and identify existing test patterns
 2. Find and read the source code relevant to the testing objective to understand the functionality to be tested
@@ -272,3 +267,5 @@ Use the appropriate naming convention for the language:
 - Go: TestFunctionName
 - JavaScript/TypeScript: "describe block > it/test name" or test function name
 - Java: testMethodName or ClassName.testMethodName
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

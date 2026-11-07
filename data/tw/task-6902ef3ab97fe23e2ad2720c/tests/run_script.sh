@@ -3,11 +3,15 @@
 set -e
 
 # ─── Install Go if missing ──────────────────────────────────
-if ! command -v go &> /dev/null; then
+# Only Go targets need the toolchain, and a Go installed by an earlier run is reused.
+export PATH=$PATH:/usr/local/go/bin
+_needs_go=1
+if [ $# -gt 0 ]; then case "$*" in *.go*) ;; *) _needs_go=0 ;; esac; fi
+if [ "$_needs_go" = 1 ] && ! command -v go &> /dev/null; then
   echo "[HOOK] Go not found — installing Go 1.23.1..."
   apt-get update -qq > /dev/null 2>&1 || true
   apt-get install -y -qq wget > /dev/null 2>&1 || true
-  wget -q https://go.dev/dl/go1.23.1.linux-amd64.tar.gz -O /tmp/go.tar.gz
+  wget -q --tries=3 --timeout=60 https://go.dev/dl/go1.23.1.linux-amd64.tar.gz -O /tmp/go.tar.gz
   tar -C /usr/local -xzf /tmp/go.tar.gz
   rm /tmp/go.tar.gz
   echo "[HOOK] Go installed: $(go version)"

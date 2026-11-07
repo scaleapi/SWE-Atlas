@@ -201,7 +201,7 @@
   },
   {
     "id": "5d105912ee2600e26bff97055f0b44c7",
-    "title": "4.2: Leaves production code reading TrendSink statistics via direct access to any of the 4 unexported fields (.Min, .Max, .Avg, .Count) instead of using accessor methods",
+    "title": "4.2: Leaves production code reading TrendSink statistics via direct access to any of the 4 fields being unexported (.Min, .Max, .Avg, .Count) instead of using accessor methods",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

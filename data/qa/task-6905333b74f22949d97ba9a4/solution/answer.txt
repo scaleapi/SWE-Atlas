@@ -12,17 +12,25 @@ The console output during startup was:
 >>> URL: http://localhost:7777
 MAX_NB_EMAIL_FREE_PLAN is not set, use 5 as default value
 Paddle param not set
-WARNING: Use a temp directory for GNUPGHOME /tmp/orszwtalwnnbrhphfulr
+WARNING: Use a temp directory for GNUPGHOME /tmp/ksmuutfethoskjzkuuvo
 Upload files to local dir
 >>> init logging <<<
+2026-08-25 15:48:08,846 - SL - DEBUG - 81 - "/app/app/utils.py:17" - <module>() -  - load words file: /app/local_data/test_words.txt
  * Serving Flask app "server" (lazy loading)
  * Environment: production
    WARNING: This is a development server. Do not use it in a production deployment.
    Use a production WSGI server instead.
  * Debug mode: on
+>>> URL: http://localhost:7777
+MAX_NB_EMAIL_FREE_PLAN is not set, use 5 as default value
+Paddle param not set
+WARNING: Use a temp directory for GNUPGHOME /tmp/uxcwwipdcdazacasncoe
+Upload files to local dir
+>>> init logging <<<
+2026-08-25 15:48:10,827 - SL - DEBUG - 94 - "/app/app/utils.py:17" - <module>() -  - load words file: /app/local_data/test_words.txt
 ```
 
-The first message >>> URL: http://localhost:7777 comes from app/config.py when it loads the URL environment variable. The >>> init logging <<< message from app/log.py confirms logging is ready. Flask then prints its startup banner showing debug mode is on.
+The first message >>> URL: http://localhost:7777 comes from app/config.py when it loads the URL environment variable. The >>> init logging <<< message from app/log.py confirms logging is ready, followed by a DEBUG line loading the word list from local_data/test_words.txt. Flask then prints its startup banner showing debug mode is on, and because debug mode enables the werkzeug reloader, the whole startup sequence prints a second time for the reloader child process (note the different GNUPGHOME temp directories for the two processes). There is no explicit "Running on" or listening log line with this app's logging configuration; readiness is confirmed by the health endpoint responding (below). Once the first request is served, the log also shows a flask_debugtoolbar UserWarning ("Could not insert debug toolbar. </body> tag not found in response.") because the health response is plain text.
 
 The server listens on port 7777 as configured in local_main() via app.run(debug=True, port=7777).
 
@@ -52,7 +60,9 @@ Testing with an invalid API key:
 
 ```
 $ curl -s -H "Authentication: badkey" http://localhost:7777/api/user_info
-{"error": "Wrong api key"}
+{
+  "error": "Wrong api key"
+}
 ```
 
 The API returns JSON with "Wrong api key" error from authorize_request() which validates the Authentication header.

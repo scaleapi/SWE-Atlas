@@ -1,7 +1,7 @@
 [
   {
     "id": "616bf973c33de562637efe4a689570f1",
-    "title": "1.1: Shows that the reply email address used for resolution is derived from the inbound message recipient field (e.g., reply_email extraction from message.To field.)",
+    "title": "1.1: Shows that the reply email address used for resolution is derived from the inbound message recipient field (e.g., reply_email extraction from the SMTP envelope recipient rcpt_to).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "ba4108eeccda808c3a0973bf23b4ae99",
-    "title": "1.6: States that two separate reply handling events occurred for the same reply_email value at different times, e.g., Contact.get_by() calls for with timestamps or sequence markers.",
+    "title": "1.6: States that two separate reply handling events occurred for the same reply_email value at different times, e.g., Contact.get_by() calls with timestamps or sequence markers.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "ca07d9b79afaf7e849df6b0806ce5321",
-    "title": "1.7: Shows the resolved contact identifier from each of the two reply events tracked, e.g., e.g., runtime output showing 'Contact id=5, user_id=3' for first event and 'Contact id=7, user_id=2' for second event.",
+    "title": "1.7: Shows the resolved contact identifier from each of the two reply events tracked, e.g., runtime output showing 'Contact id=5, user_id=3' for first event and 'Contact id=7, user_id=2' for second event.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

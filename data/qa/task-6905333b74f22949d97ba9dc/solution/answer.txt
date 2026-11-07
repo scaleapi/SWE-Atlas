@@ -55,7 +55,7 @@ The log `Parsing test_multipage.pdf...` confirms that the parsing of the uploade
 
 The log `Extracted text from PDF file ...` confirms that the paperless tried to extract any existing text from the PDF (via a text extractor).
 
-The log `Calling OCRmyPDF with args: {..}` shows the OCRmyPDF invocation parameters and it reveals how the system processes documents. The parameters show parallel processing with 4 jobs, English language, image preprocessing enabled (clean, deskew, rotation), and a sidecar text file for extracted content. The `skip_text` parameter indicates the PDF already has text, so OCR focuses on enhancement rather than initial extraction.
+The log `Calling OCRmyPDF with args: {..}` shows the OCRmyPDF invocation parameters and it reveals how the system processes documents. The parameters show parallel processing with 4 jobs, English language, image preprocessing enabled (clean, deskew, rotation), and a sidecar text file for extracted content. The `skip_text` parameter comes from the default `PAPERLESS_OCR_MODE=skip` (set in `construct_ocrmypdf_parameters` in `src/paperless_tesseract/parsers.py`), so pages that already contain text are not OCRed again and only pages without text go through Tesseract.
 
 The log `Generating thumbnail for test_multipage.pdf...` indicates that after producing the archive, the thumbnail gets generated to display it on UI.
 
@@ -84,7 +84,7 @@ The fields that are actually stored in the database and their values for this pr
 - `mime_type` = "application/pdf"
 - `checksum` = "c34db0ccf7c863ae536130c3cc7f30dd"
 - `archive_filename` = "0000003.pdf"
-- `archive_checksum` = "8f3a9d2e1b4c7a6f5e9d8c7b6a5f4e3d"
+- `archive_checksum` = the MD5 hex digest of the generated archive PDF (a different value from `checksum`, because the archive is a new file written by OCRmyPDF)
 - `storage_type` = "unencrypted"
 - `created` = 2025-12-09 00:00:00+00:00
 - `modified` = 2025-12-09 07:01:48.575747+00:00

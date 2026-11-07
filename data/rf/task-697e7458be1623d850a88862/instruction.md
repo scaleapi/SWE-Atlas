@@ -26,3 +26,5 @@ Use the below Interface:
 - Input: NA
 - Output: `JSX.Element`
 - Description: Top-level page component for the /alerting/silences route. Default export only, wrapped in withErrorBoundary — must not have a named export. Renders AlertmanagerPageWrapper (navId="silences") containing the silences table.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

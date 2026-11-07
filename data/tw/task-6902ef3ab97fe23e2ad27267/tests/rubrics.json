@@ -13,7 +13,7 @@
       "importance": "must have"
     },
     "id": "9492fedc354f12f0c4bfc9ec6faa0778",
-    "title": "1.3: Tests two simultaneous lock attempts on the same resource where the second blocks until the first releases"
+    "title": "1.2: Tests two simultaneous lock attempts on the same resource where the second blocks until the first releases"
   },
   {
     "annotations": {
@@ -21,7 +21,7 @@
       "importance": "must have"
     },
     "id": "bb93acb78c61d3c5ed2b47a48f756f9b",
-    "title": "1.4: Tests three concurrent lock attempts on the same resource using goroutines"
+    "title": "1.3: Tests three concurrent lock attempts on the same resource using goroutines"
   },
   {
     "annotations": {
@@ -29,7 +29,7 @@
       "importance": "must have"
     },
     "id": "ca13dfaf0ed74e5942b596900a46b4ed",
-    "title": "1.5: The three-lock test uses synchronization to wait for all goroutines to complete"
+    "title": "1.4: The three-lock test uses synchronization to wait for all goroutines to complete"
   },
   {
     "annotations": {
@@ -37,7 +37,7 @@
       "importance": "must have"
     },
     "id": "bc18e94ef05c2bc17744c0ef263a6623",
-    "title": "1.7: Tests that two different resources can be locked simultaneously without blocking"
+    "title": "1.5: Tests that two different resources can be locked simultaneously without blocking"
   },
   {
     "annotations": {

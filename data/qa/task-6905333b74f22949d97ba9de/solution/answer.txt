@@ -272,53 +272,94 @@ rss_kb_after_clear: 58876
 
 This shows .all() increases RSS by ~2.3 MB (cache + model instances), while .iterator() does not increase RSS at all for the same row count. That difference is exactly the caching vs streaming behavior.
 
-To verify what is holding onto metadata in memory, I used gc.get_referrers to map the reference chain from root objects to the metadata list created for the API response:
+To see what actually holds on to a document's metadata, I loaded a real Document the way the document list API does (select_related correspondent, prefetch_related tags), called DocumentViewSet.metadata() for it with the big-metadata PDF as its original, and used gc.get_referrers to walk from each retained object back to the Document or Response that owns it:
 
 Command:
 
 ```
 cat > /tmp/paperless-mem/ref_chain.py <<'PY'
 import gc
+import hashlib
 import os
+import shutil
 import django
 
+DATA_DIR = "/tmp/paperless-refs"
+if os.path.isdir(DATA_DIR):
+    shutil.rmtree(DATA_DIR)
+
+os.environ.setdefault("PAPERLESS_DATA_DIR", DATA_DIR)
+os.environ.setdefault("PAPERLESS_MEDIA_ROOT", os.path.join(DATA_DIR, "media"))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "paperless.settings")
+
 django.setup()
 
-from rest_framework.response import Response
-from paperless_tesseract.parsers import RasterisedDocumentParser
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.management import call_command
+from rest_framework.test import APIRequestFactory, force_authenticate
+from documents.models import Correspondent, Document, Tag
+from documents.views import DocumentViewSet
 
-PDF_PATH = "/tmp/paperless-mem/bigmeta.pdf"
+call_command("migrate", verbosity=0)
 
-parser = RasterisedDocumentParser(progress_callback=None, logging_group=None)
-meta_list = parser.extract_metadata(PDF_PATH, "application/pdf")
+os.makedirs(settings.ORIGINALS_DIR, exist_ok=True)
+source = os.path.join(settings.ORIGINALS_DIR, "bigmeta.pdf")
+shutil.copyfile("/tmp/paperless-mem/bigmeta.pdf", source)
+with open(source, "rb") as f:
+    checksum = hashlib.md5(f.read()).hexdigest()
 
-meta_payload = {
-    "original_metadata": meta_list,
-    "archive_metadata": None,
-}
+correspondent = Correspondent.objects.create(name="ACME")
+tag = Tag.objects.create(name="invoices")
+created = Document.objects.create(
+    title="bigmeta",
+    mime_type="application/pdf",
+    checksum=checksum,
+    filename="bigmeta.pdf",
+    correspondent=correspondent,
+)
+created.tags.add(tag)
 
-response = Response(meta_payload)
+docs = list(Document.objects.select_related("correspondent").prefetch_related("tags"))
+doc = docs[0]
+tag_obj = doc.tags.all()[0]
+correspondent_obj = doc.correspondent
 
-payload_ref = None
-for ref in gc.get_referrers(meta_list):
-    if isinstance(ref, dict) and ref.get("original_metadata") is meta_list:
-        payload_ref = ref
-        break
+user = User.objects.create_superuser("admin", "admin@example.com", "admin")
+request = APIRequestFactory().get(f"/api/documents/{doc.pk}/metadata/")
+force_authenticate(request, user=user)
+response = DocumentViewSet.as_view({"get": "metadata"})(request, pk=doc.pk)
+meta_list = response.data["original_metadata"]
 
-root_ref = None
-for ref in gc.get_referrers(payload_ref):
-    if isinstance(ref, dict) and ref.get("response") is response:
-        root_ref = ref
-        break
 
-print(f"metadata_list_id: {id(meta_list)} entries: {len(meta_list)}")
-print(f"payload_dict_id: {id(payload_ref)} keys: {list(payload_ref.keys())}")
-print(f"response_id: {id(response)} data_is_payload: {response.data is meta_payload}")
-print(f"root_dict_id: {id(root_ref)} has_response_key: {'response' in root_ref}")
+def holder(obj, target):
+    for ref in gc.get_referrers(obj):
+        if ref is target:
+            return type(ref).__name__
+        if ref is getattr(target, "__dict__", None):
+            return f"{type(target).__name__}.__dict__"
+    return None
 
-print("ref_chain:")
-print("gc.get_referrers(metadata_list) -> payload_dict -> module_globals -> response -> payload_dict")
+
+tags_qs = doc._prefetched_objects_cache["tags"]
+print(f"document: pk={doc.pk} filename={doc.filename}")
+print("tag chain:")
+print(f"  Tag {tag_obj.name!r} <- {holder(tag_obj, tags_qs._result_cache)} (tags QuerySet._result_cache)")
+print(f"  _result_cache <- {holder(tags_qs._result_cache, tags_qs)} (tags QuerySet)")
+print(f"  QuerySet <- {holder(tags_qs, doc._prefetched_objects_cache)} (doc._prefetched_objects_cache)")
+print(f"  _prefetched_objects_cache <- {holder(doc._prefetched_objects_cache, doc)} (Document {doc.pk})")
+print(f"  Document {doc.pk} <- {holder(doc, docs)} (evaluated queryset list)")
+print("correspondent chain:")
+print(f"  Correspondent {correspondent_obj.name!r} <- {holder(correspondent_obj, doc._state.fields_cache)} (doc._state.fields_cache)")
+print(f"  fields_cache <- {holder(doc._state.fields_cache, doc._state)} (ModelState)")
+print(f"  ModelState <- {holder(doc._state, doc)} (Document {doc.pk})")
+print("metadata chain:")
+meta_chars = sum(len(m["value"]) for m in meta_list)
+print(f"  original_metadata: {len(meta_list)} entries, {meta_chars} value chars")
+print(f"  original_metadata <- {holder(meta_list, response.data)} (response.data)")
+print(f"  response.data <- {holder(response.data, response)} (Response)")
+print(f"  held by a Document: {any(isinstance(owner, Document) for owner in gc.get_referrers(meta_list))}")
+print(f"  Document attributes: {sorted(k for k in vars(doc) if not k.startswith('_'))}")
 PY
 PYTHONPATH=/app/src python3 /tmp/paperless-mem/ref_chain.py
 ```
@@ -326,15 +367,26 @@ PYTHONPATH=/app/src python3 /tmp/paperless-mem/ref_chain.py
 Output:
 
 ```
-metadata_list_id: 140000567971264 entries: 11
-payload_dict_id: 140000531487872 keys: ['original_metadata', 'archive_metadata']
-response_id: 140000617673344 data_is_payload: True
-root_dict_id: 140000654593088 has_response_key: True
-ref_chain:
-gc.get_referrers(metadata_list) -> payload_dict -> module_globals -> response -> payload_dict
+document: pk=1 filename=0000001.pdf
+tag chain:
+  Tag 'invoices' <- list (tags QuerySet._result_cache)
+  _result_cache <- QuerySet.__dict__ (tags QuerySet)
+  QuerySet <- dict (doc._prefetched_objects_cache)
+  _prefetched_objects_cache <- Document.__dict__ (Document 1)
+  Document 1 <- list (evaluated queryset list)
+correspondent chain:
+  Correspondent 'ACME' <- dict (doc._state.fields_cache)
+  fields_cache <- ModelState.__dict__ (ModelState)
+  ModelState <- Document.__dict__ (Document 1)
+metadata chain:
+  original_metadata: 11 entries, 7000188 value chars
+  original_metadata <- dict (response.data)
+  response.data <- Response.__dict__ (Response)
+  held by a Document: False
+  Document attributes: ['added', 'archive_checksum', 'archive_filename', 'archive_serial_number', 'checksum', 'content', 'correspondent_id', 'created', 'document_type_id', 'filename', 'id', 'mime_type', 'modified', 'storage_type', 'title']
 ```
 
-That chain makes it clear the metadata list is retained by the response payload until the response is finished (rooted by module globals or request lifecycle). That is not a leak, but it explains why memory spikes correlate with API metadata calls or batch responses.
+The Document instance keeps its tag and correspondent objects alive: Tag <- tags QuerySet._result_cache <- doc._prefetched_objects_cache <- Document, and Correspondent <- doc._state.fields_cache <- ModelState <- Document, with every Document in turn held by the evaluated queryset list. As long as such a list is alive, each document's related objects stay in memory with it, which is why .all() over a batch grows with the batch size. The extracted PDF metadata (11 entries, about 7 MB of value strings) is not stored on the Document: it has no metadata attribute, and DocumentViewSet.metadata() re-extracts it from the file on every request. The list is held only by the response payload (original_metadata <- response.data <- Response) and is freed when the response is released. That is not a leak, but it explains why memory spikes correlate with API metadata calls or batch responses.
 
 Finally, I measured memory per signal handler executed at the end of Consumer.try_consume_file() (document consumption finished). These handlers are connected in documents/apps.py and can contribute to memory in post-consume stages.
 

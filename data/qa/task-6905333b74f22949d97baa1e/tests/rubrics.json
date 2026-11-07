@@ -1,7 +1,7 @@
 [
   {
     "id": "6b7974e6bde6f05d8eddf298eb28734e",
-    "title": "1.1 Reports whether write operations succeed or fail when a drive becomes unavailable (e.g., upload completing with 3/4 drives, or write failing due to insufficient quorum)",
+    "title": "1.1: Reports whether write operations succeed or fail when a drive becomes unavailable (e.g., upload completing with 3/4 drives, or write failing due to insufficient quorum)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "69d2fe63cef3e814f49e97f6c09bbef2",
-    "title": "1.5: Explains what triggers healing when a drive comes back online (e.g., missing format.json, stale data, healing tracker present)\n",
+    "title": "1.5: Explains what triggers healing when a drive comes back online (e.g., missing format.json, stale data, healing tracker present)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "2689c8faadcb484fadd86766950b8515",
-    "title": "1.7: Reports log messages during healing operations (e.g., Healing drive X', Healing of drive X is finished)",
+    "title": "1.7: Reports log messages during healing operations (e.g., Healing drive 'X', Healing of drive 'X' is finished)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

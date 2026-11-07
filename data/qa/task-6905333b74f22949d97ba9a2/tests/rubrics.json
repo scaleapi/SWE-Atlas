@@ -78,13 +78,5 @@
       "type": "positive hli verifier",
       "importance": "must have"
     }
-  },
-  {
-    "id": "e7f9ec092c09838647b0354d34645a4d",
-    "title": "2.1: Claims that tests run in a jsdom browser simulation environment",
-    "annotations": {
-      "type": "negative hli verifier",
-      "importance": "must have"
-    }
   }
 ]

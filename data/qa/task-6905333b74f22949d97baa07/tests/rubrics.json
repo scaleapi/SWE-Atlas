@@ -9,7 +9,7 @@
   },
   {
     "id": "344c17ef03ec17b2882fef977560c5d3",
-    "title": "1.2: Identifies buffering mechanisms in the child monitor, VT parser (e.g., read buffer size limits, BUF_SZ constant)",
+    "title": "1.2: Identifies buffering mechanisms in the child monitor and VT parser (e.g., read buffer size limits, BUF_SZ constant)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "668e023e60ebe17b29c68d824b8f5cfc",
-    "title": "1.6: States non blocking write behavior (e.g., EWOULDBLOCK handling, EAGAIN response)",
+    "title": "1.6: States non-blocking write behavior (e.g., EWOULDBLOCK handling, EAGAIN response)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

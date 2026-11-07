@@ -8,7 +8,7 @@
     }
   },
   {
-    "id": "a2b3c4d5e6f7890123456789abcdef01",
+    "id": "ff064b51f259e18f6a14cee84712ba21",
     "title": "1.1: Renames the CUE definition variable from pluginMetaV0Alpha1 to metaV0Alpha1 in apps/plugins/kinds/",
     "annotations": {
       "type": "positive hli verifier",
@@ -24,7 +24,7 @@
     }
   },
   {
-    "id": "7a8b9c0d1e2f3456789012345678abce",
+    "id": "faabcf0de0b313134d942737f3218a73",
     "title": "1.3: Removes or changes the hardcoded plural 'pluginsmeta' so the resulting plural is 'metas'",
     "annotations": {
       "type": "positive hli verifier",
@@ -40,7 +40,7 @@
     }
   },
   {
-    "id": "b32768c7797071abc92788ba51ae1500",
+    "id": "9b7528cc429762921276d0a33836ef7b",
     "title": "1.5: Renames all 42 PluginMeta* type definitions (including PluginMeta \u2192 Meta, PluginMetaList \u2192 MetaList, PluginMetaSpec \u2192 MetaSpec, PluginMetaJSONData \u2192 MetaJSONData, PluginMetaClient \u2192 MetaClient, PluginMetaJSONCodec \u2192 MetaJSONCodec, PluginMetaStorage \u2192 MetaStorage, PluginMetaJSONDataType \u2192 MetaJSONDataType, PluginMetaInclude \u2192 MetaInclude, PluginMetaRoute \u2192 MetaRoute, ...) to their Meta* equivalents",
     "annotations": {
       "type": "positive hli verifier",
@@ -48,7 +48,7 @@
     }
   },
   {
-    "id": "b32768c7797071abc92788ba51ae1501",
+    "id": "32b3d9013d7f02246ac1198bfb97313c",
     "title": "1.6: Renames all 37 PluginMeta* package-level functions (including PluginMetaKind() \u2192 MetaKind(), PluginMetaSchema() \u2192 MetaSchema(), NewPluginMetaClient() \u2192 NewMetaClient(), NewPluginMetaStorage() \u2192 NewMetaStorage(), NewPluginMetaSpec() \u2192 NewMetaSpec(), NewPluginMetaJSONData() \u2192 NewMetaJSONData(), NewPluginMetaInfo() \u2192 NewMetaInfo(), createPluginMetaFromPluginMetaJSONData() \u2192 createMetaFromMetaJSONData(), jsonDataToPluginMetaJSONData() \u2192 jsonDataToMetaJSONData(), NewPluginMetaClientFromGenerator() \u2192 NewMetaClientFromGenerator(), ...) to their Meta* equivalents",
     "annotations": {
       "type": "positive hli verifier",
@@ -56,7 +56,7 @@
     }
   },
   {
-    "id": "b32768c7797071abc92788ba51ae1502",
+    "id": "744764b54ae711658367e327256385a2",
     "title": "1.7: Renames all 48 PluginMeta* methods (including (*PluginMeta).GetSpec \u2192 (*Meta).GetSpec, (*PluginMeta).SetSpec \u2192 (*Meta).SetSpec, (*PluginMeta).DeepCopy \u2192 (*Meta).DeepCopy, (*PluginMeta).Copy \u2192 (*Meta).Copy, (*PluginMetaClient).Create \u2192 (*MetaClient).Create, (*PluginMetaClient).Get \u2192 (*MetaClient).Get, (*PluginMetaList).GetItems \u2192 (*MetaList).GetItems, (*PluginMetaJSONCodec).Read \u2192 (*MetaJSONCodec).Read, (*PluginMetaStorage).List \u2192 (*MetaStorage).List, (*PluginMetaSpec).DeepCopy \u2192 (*MetaSpec).DeepCopy, ...) to their Meta* equivalents",
     "annotations": {
       "type": "positive hli verifier",
@@ -80,7 +80,7 @@
     }
   },
   {
-    "id": "e5f6a7b8c9d0123456789abcdef01236",
+    "id": "992bb6dcb7e9cecc46ff260c235bdbee",
     "title": "1.10: Uses NewPlugin() in Plugin schema registration instead of a bare struct literal",
     "annotations": {
       "type": "positive hli verifier",
@@ -88,7 +88,7 @@
     }
   },
   {
-    "id": "f6a7b8c9d0e1234567890abcdef01237",
+    "id": "3db9be3aee50f0e60709051f4cb68463",
     "title": "1.11: Updates the app manifest to register the renamed 'Meta' kind with MetaKind()",
     "annotations": {
       "type": "positive hli verifier",
@@ -96,7 +96,7 @@
     }
   },
   {
-    "id": "a7b8c9d0e1f2345678901abcdef01238",
+    "id": "f05e4b8181eb541e88fc6d55474b7751",
     "title": "1.12: Updates the storage layer to reference renamed Meta types instead of PluginMeta types",
     "annotations": {
       "type": "positive hli verifier",
@@ -104,7 +104,7 @@
     }
   },
   {
-    "id": "b8c9d0e1f2a3456789012bcdef01239",
+    "id": "a32380daf3a321b01fc21643c3cf457e",
     "title": "1.13: Updates the metadata providers in apps/plugins/pkg/app/meta/ to use Meta types",
     "annotations": {
       "type": "positive hli verifier",
@@ -112,7 +112,7 @@
     }
   },
   {
-    "id": "c9d0e1f2a3b4567890123cdef0123a",
+    "id": "b201a1c7d4104502139df0acf3a8299f",
     "title": "1.14: Updates all 4 RBAC action strings (plugins.pluginsmeta:create, plugins.pluginsmeta:write, plugins.pluginsmeta:read, plugins.pluginsmeta:delete) to use 'plugins.metas' as the resource prefix",
     "annotations": {
       "type": "positive hli verifier",
@@ -120,7 +120,7 @@
     }
   },
   {
-    "id": "c9d0e1f2a3b4567890123cdef8888a",
+    "id": "60c30c35cc640a240c6e46f47bb1261a",
     "title": "1.15: Updates the RBAC scope provider from 'plugins.pluginsmeta' to 'plugins.metas'",
     "annotations": {
       "type": "positive hli verifier",
@@ -128,7 +128,7 @@
     }
   },
   {
-    "id": "d0e1f2a3b4c5678901234def01234b",
+    "id": "f190d3ebfd3390de2eac6155d4ac6531",
     "title": "1.16: Updates the 2 RBAC role names (fixed:plugins.pluginsmeta:reader, fixed:plugins.pluginsmeta:writer) to use 'fixed:plugins.metas' as the role prefix",
     "annotations": {
       "type": "positive hli verifier",
@@ -136,7 +136,7 @@
     }
   },
   {
-    "id": "e1f2a3b4c5d6789012345ef012345c",
+    "id": "630f97167e0c4e921355d139bdc50ebd",
     "title": "1.17: Updates the permission registry entry from 'plugins.pluginsmeta' to 'plugins.metas'",
     "annotations": {
       "type": "positive hli verifier",
@@ -144,7 +144,7 @@
     }
   },
   {
-    "id": "f2a3b4c5d6e7890123456f0123456d",
+    "id": "05310a23004e1049b0e84d73be452a4b",
     "title": "1.18: Updates the auth mapper resource translation from 'pluginsmeta' to 'metas'",
     "annotations": {
       "type": "positive hli verifier",
@@ -176,7 +176,7 @@
     }
   },
   {
-    "id": "a3b4c5d6e7f8901234567012345678e",
+    "id": "b98f4b5b973a0eff069519275d6131c4",
     "title": "3.1: Removes or replaces all 7 old pluginmeta gen files (pluginmeta_client_gen.go, pluginmeta_codec_gen.go, pluginmeta_metadata_gen.go, pluginmeta_object_gen.go, pluginmeta_status_gen.go, pluginmeta_schema_gen.go, pluginmeta_spec_gen.go) so no duplicate type definitions remain",
     "annotations": {
       "type": "positive hli verifier",
@@ -192,7 +192,7 @@
     }
   },
   {
-    "id": "c5d6e7f8a9b0123456789012345678ab",
+    "id": "83bf33b094a5205de7f5ce94053580e3",
     "title": "4.1: Renames or removes any of the existing Plugin kind types (Plugin, PluginList, PluginSpec, PluginStatus, PluginKind, PluginClient) or their methods instead of targeting only PluginMeta types",
     "annotations": {
       "type": "negative hli verifier",

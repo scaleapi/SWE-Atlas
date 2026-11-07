@@ -59,3 +59,5 @@ Use the below interface for your solution:
 - Input: `config cloudapi.Config`
 - Output: `bool`
 - Description: Returns true if the k6 x Tempo feature is enabled by checking config.TracesEnabled.ValueOrZero().
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

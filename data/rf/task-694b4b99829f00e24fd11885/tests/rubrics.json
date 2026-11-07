@@ -1,6 +1,6 @@
 [
   {
-    "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    "id": "b5c6d6f4a2415f4ddc83e6b7ba3b19df",
     "title": "1: Code Maintainability",
     "annotations": {
       "type": "high level intent",
@@ -8,7 +8,7 @@
     }
   },
   {
-    "id": "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d601",
+    "id": "46eaa69d9f43a731337bb82d6e5f0401",
     "title": "1.1: Defines a UserRes struct type with all 7 fields (Login, Type, SiteAdmin, Name, Company, UserURL, LdapDN) in v1 accessible by both detectors",
     "annotations": {
       "type": "positive hli verifier",
@@ -16,15 +16,15 @@
     }
   },
   {
-    "id": "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d602",
-    "title": "1.2: Defines a HeaderInfo struct type with all 2 fields (Scopes, Expiry) in v1 for header data",
+    "id": "3c86d1a405c01431983516d1dfc68783",
+    "title": "1.2: Defines a HeaderInfo struct type with both fields (Scopes, Expiry) in v1 for header data",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "c3d4e5f6a7b8c9d0e1f2a3b4c5d60102",
+    "id": "4211e4a56345abfb97b67208bed31b3e",
     "title": "1.3: Implements a VerifyGithub method on Scanner with inline HTTP request logic for token verification, with signature (ctx context.Context, client *http.Client, token string) returning (bool, *UserRes, *HeaderInfo, error)",
     "annotations": {
       "type": "positive hli verifier",
@@ -32,7 +32,7 @@
     }
   },
   {
-    "id": "d4e5f6a7b8c9d0e1f2a3b4c5d6010203",
+    "id": "375d03f6728c43ba6f4a4c7abc6dba51",
     "title": "1.4: Implements a SetUserResponse function with signature (userResponse *UserRes, s1 *detectors.Result) that populates ExtraData with user information",
     "annotations": {
       "type": "positive hli verifier",
@@ -40,7 +40,7 @@
     }
   },
   {
-    "id": "d4e5f6a7b8c9d0e1f2a3b4c5d6010204",
+    "id": "0de10b105f2e20aec995ecaff0d71e56",
     "title": "1.5: Implements a SetHeaderInfo function with signature (headers *HeaderInfo, s1 *detectors.Result) that populates ExtraData with scopes and expiry",
     "annotations": {
       "type": "positive hli verifier",
@@ -48,7 +48,7 @@
     }
   },
   {
-    "id": "f6a7b8c9d0e1f2a3b4c5d60102030405",
+    "id": "028a23fe1e7a78498cbc4d463f0bea88",
     "title": "1.6: Modifies v2 Scanner struct to embed v1.Scanner for reusing verification logic",
     "annotations": {
       "type": "positive hli verifier",
@@ -56,7 +56,7 @@
     }
   },
   {
-    "id": "f6a7b8c9d0e1f2a3b4c5d60102030406",
+    "id": "974280e5b4e474c57e0b7d28197b65fc",
     "title": "1.7: Calls all 3 shared functions (VerifyGithub, SetUserResponse, SetHeaderInfo) from v1 in v2 instead of duplicating inline logic",
     "annotations": {
       "type": "positive hli verifier",
@@ -64,72 +64,64 @@
     }
   },
   {
-    "id": "a7b8c9d0e1f2a3b4c5d6010203040506",
-    "title": "1.8: Exports all 2 struct types (UserRes, HeaderInfo) from v1 so v2 detector can import and use them",
+    "id": "9c93db3e9c10945aec20204c6143125d",
+    "title": "1.8: Exports both struct types (UserRes, HeaderInfo) from v1 so v2 detector can import and use them",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "f2a3b4c5d6a7b8c9d0e1f2a3b4c5d6a8",
-    "title": "1.9: Removes all 2 unused imports (encoding/json, net/http) from v2 detector after consolidation",
+    "id": "c4bb94bda2c469de917f833f513fc6cb",
+    "title": "1.9: Removes both unused imports (encoding/json, net/http) from v2 detector after consolidation",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "b8c9d0e1f2a3b4c5d6a7b8c9d0e1f2a3",
-    "title": "2: Documentation Maintainability",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "nice to have"
-    }
-  },
-  {
-    "id": "c9d0e1f2a3b4c5d6a7b8c9d0e1f2a3b4",
-    "title": "3: Artifact Cleanup",
+    "id": "6618759fb2dccfc4900e116c6a8f43b4",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
     }
   },
   {
-    "id": "d0e1f2a3b4c5d6a7b8c9d0e1f2a3b4c5",
-    "title": "3.1: Removes the duplicate userRes struct definition from v2 detector after consolidation",
+    "id": "a7f68c6b3681db76b5a5ffa853e60d94",
+    "title": "2.1: Removes the duplicate userRes struct definition from v2 detector after consolidation",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "e1f2a3b4c5d6a7b8c9d0e1f2a3b4c5d6",
-    "title": "3.2: Removes the duplicate inline verification loop from the FromData function in v2 detector after consolidation",
+    "id": "6733bebceacf34fa28112bcc4e46257c",
+    "title": "2.2: Removes the duplicate inline verification loop from the FromData function in v2 detector after consolidation",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "a3b4c5d6a7b8c9d0e1f2a3b4c5d6a7b8",
-    "title": "4: Negative Rubrics",
+    "id": "e27daae394acf8c1a64e8667eab98157",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
     }
   },
   {
-    "id": "e7b8c9d0e1f2a3b4c5d6a7b8c9d0e1f2",
-    "title": "4.1: Alters the token verification logic so that HTTP 2xx status codes with a decodable JSON response no longer set Verified to true",
+    "id": "948bc5bb16293265b6f558ff4a356376",
+    "title": "3.1: Alters the token verification logic so that HTTP 2xx status codes with a decodable JSON response no longer set Verified to true",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "f8c9d0e1f2a3b4c5d6a7b8c9d0e1f2a3",
-    "title": "4.2: Removes the version-specific token pattern matching (keyPat regex) from either v1 or v2 detector",
+    "id": "07c22b7fb819601b07c22f76dfb294b4",
+    "title": "3.2: Removes the version-specific token pattern matching (keyPat regex) from either v1 or v2 detector",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

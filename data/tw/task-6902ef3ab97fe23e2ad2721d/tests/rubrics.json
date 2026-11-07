@@ -77,7 +77,7 @@
       "importance": "nice to have"
     },
     "id": "aa572959ff1b0436a306c38dd3e83e73",
-    "title": "2.1: Places the test for RandUUID default behaviour in test/regression.uts"
+    "title": "2.1: Places the test for RandUUID default behavior in test/regression.uts"
   },
   {
     "annotations": {
@@ -149,7 +149,7 @@
       "importance": "nice to have"
     },
     "id": "324c2484b41ee4c2cffc8cbbc2998b2b",
-    "title": "3.1: All tests use the UTScapy framework with test blocks starting with '= <test_name>'"
+    "title": "3.1: All tests use the UTscapy framework with test blocks starting with '= <test_name>'"
   },
   {
     "annotations": {

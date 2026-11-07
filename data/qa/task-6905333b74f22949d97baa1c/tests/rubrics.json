@@ -1,7 +1,7 @@
 [
   {
     "id": "5929c555dc34520715228a89cf36ce33",
-    "title": "1.1. States that MinIO reconstructs objects when the number of valid shards is greater than or equal to the read quorum (e.g., 'healing succeeds when valid shards >= data blocks' or 'reconstructs if at least read quorum shards exist').",
+    "title": "1.1: States that MinIO reconstructs objects when the number of valid shards is greater than or equal to the read quorum (e.g., 'healing succeeds when valid shards >= data blocks' or 'reconstructs if at least read quorum shards exist').",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -9,7 +9,7 @@
   },
   {
     "id": "d8562714499ae64d79bc8b7f9218ca19",
-    "title": "1.2: States that healing fails when valid shards fall below the read quorum, resulting in an ObjectNotFound error (e.g., 'returns ObjectNotFound when insufficient shards' or 'error: Object not found').",
+    "title": "1.2: States that healing fails when valid shards fall below the read quorum, resulting in an ObjectNotFound error in the dangling-object case (e.g., 'returns ObjectNotFound when insufficient shards leave a dangling object' or 'error: Object not found').",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "c097e24f56b455b764f559e893fa450a",
-    "title": "1.5: Identifies the four possible drive states in healing output (e.g., 'states can be ok, missing, corrupt, or offline').\", ",
+    "title": "1.5: Identifies the four possible drive states in healing output (e.g., 'states can be ok, missing, corrupt, or offline').",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "df44cd985f3b00aa9570f8785bcce1bb",
-    "title": "1.7: States that corrupted data shards are treated similarly to missing shards for healing purposes (e.g., 'corrupted shards are reconstructed like missing ones' or 'corrupt state triggers same healing as missing').",
+    "title": "1.7: States that corrupted data shards are treated similarly to missing shards for healing purposes when enough valid shards remain to meet read quorum (e.g., 'corrupted shards are reconstructed like missing ones' or 'corrupt state triggers same healing as missing').",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "f307dbfcdfddb050e7d8253e06bc4c97",
-    "title": "1.8: States that healing output does not include explicit log messages explaining why MinIO chose to restore versus leave an object alone (e.g., 'output shows state transitions but no reasoning' or 'no why explanation in logs').\"",
+    "title": "1.8: States that healing output does not include explicit log messages explaining why MinIO chose to restore versus leave an object alone (e.g., 'output shows state transitions but no reasoning' or 'no why explanation in logs').",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

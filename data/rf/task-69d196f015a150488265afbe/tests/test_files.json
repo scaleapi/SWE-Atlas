@@ -1,4 +1,10 @@
-[
-  "client/landing/stepper/declarative-flow/internals/components/checklist-card/test/index.tsx",
-  "client/landing/stepper/declarative-flow/internals/steps-repository/site-migration-application-password-authorization/test/authorization-benefits.tsx"
-]
+{
+  "files": [
+    {
+      "name": "client/landing/stepper/declarative-flow/internals/components/checklist-card/test/index.tsx"
+    },
+    {
+      "name": "client/landing/stepper/declarative-flow/internals/steps-repository/site-migration-application-password-authorization/test/authorization-benefits.tsx"
+    }
+  ]
+}

@@ -65,7 +65,7 @@
   },
   {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "c25a9d52304d630dd816f2192b8e8283",
-    "title": "3.1: Removes the createGraphFrames function definition and its private helpers (convertTraceToGraph, findTraceDuration) and associated type definitions (Row, Node, Edge) from graphTransform.ts",
+    "title": "2.1: Removes the createGraphFrames function definition and its private helpers (convertTraceToGraph, findTraceDuration) and associated type definitions (Row, Node, Edge) from graphTransform.ts",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "b931066868fa1553d2a96f2f06b5bc1a",
-    "title": "3.2: Removes the unused import of helper functions (getNonOverlappingDuration, getStats, makeFrames, makeSpanMap) from @grafana/o11y-ds-frontend in graphTransform.ts",
+    "title": "2.2: Removes the unused import of helper functions (getNonOverlappingDuration, getStats, makeFrames, makeSpanMap) from @grafana/o11y-ds-frontend in graphTransform.ts",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "241694042374609b7cb75ae4b9bcf3ba",
-    "title": "4.1: Removes or modifies the mapPromMetricsToServiceMap function or its related metric constants in graphTransform.ts",
+    "title": "3.1: Removes or modifies the mapPromMetricsToServiceMap function or its related metric constants in graphTransform.ts",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "4e65b1bd8317adae1b4bce52f32e18f0",
-    "title": "4.2: Modifies any file with a .test.ts or .test.tsx extension",
+    "title": "3.2: Modifies any file with a .test.ts or .test.tsx extension",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "276171f5e77220cc4d145f2969b5eb74",
-    "title": "4.3: Alters the function signatures or exported behavior of existing shared utilities (getNonOverlappingDuration, getStats, makeFrames, makeSpanMap) in the @grafana/o11y-ds-frontend package",
+    "title": "3.3: Alters the function signatures or exported behavior of existing shared utilities (getNonOverlappingDuration, getStats, makeFrames, makeSpanMap) in the @grafana/o11y-ds-frontend package",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

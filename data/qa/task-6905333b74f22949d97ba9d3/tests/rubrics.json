@@ -9,7 +9,7 @@
   },
   {
     "id": "6e292e429f95ebfc723adfc7d8257182",
-    "title": "1.2: States that processed documents are stored in three directories which are originals for source files, archive for PDF/A converted versions, and thumbnails for preview images to identify storage locations",
+    "title": "1.2: States that processed documents are stored in three directories which are originals for source files, archive for converted PDF versions, and thumbnails for preview images to identify storage locations",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "ad5f4cc22436906e02913e49ef1d045c",
-    "title": "1.7: identifies gunicorn as the service that serves the API and web interface allowing users to search browse and manage their document archive.",
+    "title": "1.7: Identifies gunicorn as the service that serves the API and web interface allowing users to search browse and manage their document archive.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "fefa6499454c34256253aaf29920b823",
-    "title": "1.8: Identifies consumer_service as the service that monitors the consume directory for new files and processes them through the ingestion pipeline.",
+    "title": "1.8: Identifies the consumer service as the service that monitors the consume directory for new files and passes them into the ingestion pipeline.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "6353bccae19feeec13b491268e483f39",
-    "title": "1.9:  Identifies Django qcluster scheduler as the service that runs in the background, waiting for tasks to be queued such as classifier training or bulk document operations.",
+    "title": "1.9: Identifies Django qcluster scheduler as the service that runs in the background, waiting for tasks to be queued such as classifier training or bulk document operations.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

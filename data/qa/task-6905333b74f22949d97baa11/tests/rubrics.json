@@ -1,7 +1,7 @@
 [
   {
     "id": "8b7b9ab5ac8363178b83ed43b64f5a41",
-    "title": "1.1: States the verbatim `maddy version` output as `maddy unknown (built from source tree)`.",
+    "title": "1.1: States the verbatim version output of the built `maddy` binary (e.g., `maddy unknown (built from source tree)`).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

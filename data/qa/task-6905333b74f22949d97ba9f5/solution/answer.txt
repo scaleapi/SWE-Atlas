@@ -32,14 +32,24 @@ $ xdotool key a b c Return
 
 The debug output showed the complete input flow:
 
-[14.501] Press xkb_keycode: 0x26 clean_sym: a composed_sym: a text: a mods: none glfw_key: 97 (a) xkb_key: 97 (a)
-[14.501] on_key_input: glfw key: 0x61 native_code: 0x61 action: PRESS mods: text: 'a' state: 0
-sent key as text to child: a
-[14.502] Release xkb_keycode: 0x26 clean_sym: a mods: none glfw_key: 97 (a) xkb_key: 97 (a)
-[14.502] on_key_input: glfw key: 0x61 native_code: 0x61 action: RELEASE mods: text: 'a' state: 0
-ignoring as keyboard mode does not support encoding key releases
+[8.002] Press xkb_keycode: 0x26 clean_sym: a composed_sym: a text: a mods: none glfw_key: 97 (a) xkb_key: 97 (a)
+[8.002] on_key_input: glfw key: 0x61 native_code: 0x61 action: PRESS mods: none text: 'a' state: 0 sent key as text to child: a
+[8.004] Release xkb_keycode: 0x26 clean_sym: a mods: none glfw_key: 97 (a) xkb_key: 97 (a)
+[8.004] on_key_input: glfw key: 0x61 native_code: 0x61 action: RELEASE mods: none text: '' state: 0 ignoring as keyboard mode does not support encoding this event
+[8.011] Press xkb_keycode: 0x38 clean_sym: b composed_sym: b text: b mods: none glfw_key: 98 (b) xkb_key: 98 (b)
+[8.011] on_key_input: glfw key: 0x62 native_code: 0x62 action: PRESS mods: none text: 'b' state: 0 sent key as text to child: b
+[8.019] Release xkb_keycode: 0x38 clean_sym: b mods: none glfw_key: 98 (b) xkb_key: 98 (b)
+[8.019] on_key_input: glfw key: 0x62 native_code: 0x62 action: RELEASE mods: none text: '' state: 0 ignoring as keyboard mode does not support encoding this event
+[8.027] Press xkb_keycode: 0x36 clean_sym: c composed_sym: c text: c mods: none glfw_key: 99 (c) xkb_key: 99 (c)
+[8.027] on_key_input: glfw key: 0x63 native_code: 0x63 action: PRESS mods: none text: 'c' state: 0 sent key as text to child: c
+[8.034] Release xkb_keycode: 0x36 clean_sym: c mods: none glfw_key: 99 (c) xkb_key: 99 (c)
+[8.034] on_key_input: glfw key: 0x63 native_code: 0x63 action: RELEASE mods: none text: '' state: 0 ignoring as keyboard mode does not support encoding this event
+[8.041] Press xkb_keycode: 0x24 clean_sym: Return composed_sym: Return mods: none glfw_key: 57345 (ENTER) xkb_key: 65293 (Return)
+[8.041] on_key_input: glfw key: 0xe001 native_code: 0xff0d action: PRESS mods: none text: '' state: 0 sent encoded key to child: 0xd
+[8.054] Release xkb_keycode: 0x24 clean_sym: Return mods: none glfw_key: 57345 (ENTER) xkb_key: 65293 (Return)
+[8.054] on_key_input: glfw key: 0xe001 native_code: 0xff0d action: RELEASE mods: none text: '' state: 0 ignoring as keyboard mode does not support encoding this event
 
-This output reveals the complete input decision process. The Press event shows GLFW receiving the X11 keycode (0x26), translating it via XKB to the symbol 'a', and invoking the C-level on_key_input handler. The handler determines this is a text key and sends it to the child process. The Release event is explicitly ignored because the terminal's keyboard mode doesn't require release events to be encoded.
+This output reveals the complete input decision process. The Press event shows GLFW receiving the X11 keycode (0x26), translating it via XKB to the symbol 'a', and invoking the C-level on_key_input handler. The handler determines this is a text key and sends it to the child process; Return has no text, so it is sent as an encoded key (0xd). Every Release event reaches on_key_input with empty text and is ignored, because the current keyboard mode does not support encoding this event.
 
 To capture a stack-level snapshot of the input handling, I used py-spy to dump the Python call stack:
 
@@ -59,28 +69,70 @@ Thread 8087 (idle): "MainThread"
     _run_code (<frozen runpy>:88)
     _run_module_as_main (<frozen runpy>:198)
 
-The Python stack shows the main thread running _run_app in kitty/main.py, which is the event loop. However, this only shows the Python portion. To see the complete picture including C code, I used strace with multi-thread tracing:
+The Python stack shows the main thread running _run_app in kitty/main.py, which starts the event loop. However, this only shows the Python portion. To see the complete picture including C code, I used strace with multi-thread tracing and microsecond timestamps (-tt), with Kitty's debug output going to a log file:
 
-$ strace -f -p $KITTY_PID -e trace=write -s 10 -t 2>&1
+$ strace -f -tt -p $KITTY_PID -e trace=write -s 40 -o /tmp/st_write.txt &
 
 While sending a keypress:
 $ xdotool key y
 
-The strace output showed the complete end-to-end correlation from keypress to pty:
+The strace output showed the complete end-to-end correlation from keypress to pty (thread id, then time):
 
-[pid  8353] 04:52:12 write(2, "on_key_input"..., 99) = -1 EPIPE
-[pid  8353] 04:52:12 write(8, "\1\0\0\0\0\0\0\0", 8) = 8
-[pid  8353] 04:52:12 write(2, "sent key as text to child: y\n", 29) = -1 EPIPE
-[pid  8353] 04:52:12 write(6, "\1\0\0\0\0\0\0\0", 8) = 8
-[pid  8389] 04:52:12 write(10, "y", 1)  = 1
-[pid  8389] 04:52:12 write(6, "\1\0\0\0\0\0\0\0", 8) = 8
+699   16:56:41.438925 write(2, "\33[33mon_key_input\33[m: glfw key: 0x79 nat"..., 99) = 99
+699   16:56:41.439344 write(7, "\1\0\0\0\0\0\0\0", 8) = 8
+699   16:56:41.439423 write(2, "sent key as text to child: y\n", 29) = 29
+699   16:56:41.439460 write(4, "\1\0\0\0\0\0\0\0", 8 <unfinished ...>
+711   16:56:41.439552 write(10, "y", 1 <unfinished ...>
+699   16:56:41.439576 <... write resumed>) = 8
+711   16:56:41.439641 <... write resumed>) = 1
+711   16:56:41.439752 write(4, "\1\0\0\0\0\0\0\0", 8) = 8
 
-This trace is critical for understanding the architecture. Thread 8353 (the main/UI thread) processes the key in on_key_input, then writes to fd 8 to signal the child monitor thread. Thread 8389 (the ChildMonitor thread) then writes the actual character "y" to fd 10, which is the pty master (/dev/pts/ptmx). I verified this by checking the file descriptors:
+This trace is critical for understanding the architecture. Thread 699 (the main/UI thread, the process itself) logs on_key_input, then writes to the eventfd on fd 7 to wake the ChildMonitor thread. Thread 711 (KittyChildMon) then writes the actual character "y" to fd 10, which is the pty master (/dev/pts/ptmx), 208 µs after the wakeup. I verified this by checking the file descriptors and thread names:
 
-$ ls -la /proc/$KITTY_PID/fd/10
-lrwx------ 1 root root 64 Jan 21 04:50 10 -> /dev/pts/ptmx
+$ ls -la /proc/$KITTY_PID/fd | grep -E 'ptmx|pts|event|pipe|socket'
+lrwxrwxrwx 1 root root 0 Oct 30 16:56 10 -> /dev/pts/ptmx
+lrwxrwxrwx 1 root root 0 Oct 30 16:56 3 -> socket:[364]
+lrwxrwxrwx 1 root root 0 Oct 30 16:56 4 -> anon_inode:[eventfd]
+lrwxrwxrwx 1 root root 0 Oct 30 16:56 6 -> socket:[368]
+lrwxrwxrwx 1 root root 0 Oct 30 16:56 7 -> anon_inode:[eventfd]
+lrwxrwxrwx 1 root root 0 Oct 30 16:56 9 -> anon_inode:[eventfd]
 
-This confirms the complete path: GLFW callback (C) → on_key_input in keys.c (C) → schedule_write_to_child queues data → ChildMonitor thread writes to pty.
+$ for t in /proc/$KITTY_PID/task/*; do echo $(basename $t) $(cat $t/comm); done
+699 kitty
+701 llvmpipe-0
+702 llvmpipe-1
+703 llvmpipe-2
+704 llvmpipe-3
+705 kitty
+706 kitty
+707 kitty
+708 kitty
+709 kitty:disk$0
+710 KittyPeerMon
+711 KittyChildMon
+
+A gdb snapshot of the same process shows where the ChildMonitor and main threads sit (output trimmed to those two threads):
+
+$ gdb -p $KITTY_PID -batch -ex 'thread apply all bt 8'
+Thread 2 (Thread 0x2b3beaea46c0 (LWP 711) "KittyChildMon"):
+#0  0x00002b3bda63879d in __GI___poll (fds=0x2b3bdb230b80 <children_fds>, nfds=4, timeout=-1) at ../sysdeps/unix/sysv/linux/poll.c:29
+#1  0x00002b3bdac9f125 in io_loop () from /app/kitty/launcher/../../kitty/fast_data_types.so
+#2  0x00002b3bda5b9b84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#3  0x00002b3bda646ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 1 (Thread 0x2b3bda862840 (LWP 699) "kitty"):
+#0  0x00002b3bda638cd0 in __GI_ppoll (fds=0x2b3bdc464b50 <_glfw+133552>, nfds=2, timeout=<optimized out>, sigmask=0x0) at ../sysdeps/unix/sysv/linux/ppoll.c:42
+#1  0x00002b3bdc3fec2d in glfwRunMainLoop () from /app/kitty/glfw-x11.so
+#2  0x00002b3bdac9dcec in main_loop.lto_priv () from /app/kitty/launcher/../../kitty/fast_data_types.so
+#3  0x00002b3bd9e05ce2 in ?? () from /lib/x86_64-linux-gnu/libpython3.12.so.1.0
+#4  0x00002b3bd9df7b2c in PyObject_Vectorcall () from /lib/x86_64-linux-gnu/libpython3.12.so.1.0
+#5  0x00002b3bd9d925ee in _PyEval_EvalFrameDefault () from /lib/x86_64-linux-gnu/libpython3.12.so.1.0
+#6  0x00002b3bd9df9580 in _PyObject_FastCallDictTstate () from /lib/x86_64-linux-gnu/libpython3.12.so.1.0
+#7  0x00002b3bd9df97ee in _PyObject_Call_Prepend () from /lib/x86_64-linux-gnu/libpython3.12.so.1.0
+
+The main thread's loop is glfwRunMainLoop in glfw-x11.so, called from main_loop in fast_data_types.so; the Python interpreter frames sit underneath it as the caller that started the loop. The ChildMonitor thread waits in poll() inside io_loop, the C function that performs the pty write.
+
+This confirms the complete path: GLFW callback (C) → on_key_input in keys.c (C) → schedule_write_to_child queues data and wakes the I/O thread → ChildMonitor thread writes to pty.
 
 Examining the source code confirms this architecture. In keys.c, the on_key_input function is called from the GLFW key callback:
 
@@ -128,22 +180,24 @@ This captured runtime output confirms there is no queuing of input for unfocused
 
 From the runtime artifacts, I can infer the Python/C/GLFW boundaries:
 
-1. GLFW (external library): Handles X11/Wayland communication, receives raw key events via XKB, manages window focus. This is evident from the "xkb_keycode" in debug output and the poll() calls on fd 5 (the X11 connection).
+1. GLFW (external library): Handles X11/Wayland communication, receives raw key events via XKB, manages window focus. This is evident from the "xkb_keycode" in debug output and from the main thread (TID 699) reading the X11 connection on fd 3 (socket:[364] in the fd listing) with recvmsg(3, ...), as in the 16:56:47.497429 step below.
 
 2. C layer (kitty/keys.c, kitty/child-monitor.c): The on_key_input function processes keys, encodes them, and schedules writes via schedule_write_to_child. The ChildMonitor runs in a separate thread and performs actual writes to the pty.
 
-3. Python layer (kitty/main.py, kitty/boss.py): The main event loop runs in Python (_run_app), and shortcut handling goes through Python (dispatch_possible_special_key is called via PyObject_CallMethod in keys.c).
+3. Python layer (kitty/main.py, kitty/boss.py): The main event loop is started from Python (_run_app calls into main_loop in C), and shortcut handling goes through Python (dispatch_possible_special_key is called via PyObject_CallMethod in keys.c).
 
 I can rule out two plausible but incorrect interpretations:
 
-First incorrect interpretation: "Python handles the primary input dispatch." The strace timing evidence disproves this. Looking at the timestamps:
-- 04:52:12 on_key_input is called
-- 04:52:12 (same millisecond) write(8) signals ChildMonitor
-- 04:52:12 (same millisecond) write(10, "y") goes to pty
+First incorrect interpretation: "Python handles the primary input dispatch." The strace timing evidence disproves this. I traced one more keypress with `strace -f -tt -T -p $KITTY_PID -e trace=write,read,recvmsg,recvfrom,poll,ppoll,futex -s 40 -o /tmp/st_full.txt` while running `xdotool key z`. The steps arrive in this order:
+- 16:56:47.497429 thread 699 reads the key event from the X11 socket (recvmsg on fd 3)
+- 16:56:47.497981 thread 699 logs GLFW's XKB translation ("Press xkb_keycode: 0x34 ... z")
+- 16:56:47.498883 thread 699 logs on_key_input (C, keys.c)
+- 16:56:47.500096 thread 699 writes fd 7, waking the ChildMonitor
+- 16:56:47.500821 thread 711 writes "z" to fd 10, the pty
 
-If Python were in the primary dispatch path for regular text input, there would be GIL acquisition overhead and Python bytecode execution visible in the timing. Instead, the C code in on_key_input directly calls schedule_write_to_child without going through Python for normal text keys. Python is only invoked for potential shortcuts via dispatch_possible_special_key, and only if that returns "not consumed" does the key proceed to the child.
+The whole path from the X event to the pty write takes 3.4 ms and runs on two native threads. The thread list has no Python worker thread, and the gdb snapshot shows the main thread's event loop is GLFW's C loop, with Python only below it as the caller that started it. Python does run on the main thread during a key press: on_key_input calls boss.dispatch_possible_special_key to check for shortcuts, inside the 1.2 ms between the on_key_input line and the fd 7 wakeup. But the event is received and translated before that, and the pty write comes after it on the C ChildMonitor thread. Normal text keys reach the child through C; Python only gets a chance to consume a key as a shortcut.
 
-Second incorrect interpretation: "GLFW directly writes to the child pty." The multi-thread strace proves this wrong. GLFW runs in the main thread (pid 8353), but the actual pty write happens in thread 8389 (ChildMonitor). GLFW only delivers the key event; it has no knowledge of child processes or ptys. The C code in kitty acts as the bridge, queuing data and signaling the ChildMonitor thread.
+Second incorrect interpretation: "GLFW directly writes to the child pty." The multi-thread strace proves this wrong. GLFW runs in the main thread (TID 699): every X11 socket read happens there. Every write to the pty fd 10 comes from TID 711 (KittyChildMon), always after the main thread's fd 7 wakeup. In a burst (`xdotool type --delay 0 'hello world'` under `strace -f -tt`), all 11 characters followed this pattern: 11 separate one-byte writes to fd 10 from TID 711, each 174–424 µs after its wakeup. GLFW only delivers the key event; it has no knowledge of child processes or ptys. The C code in kitty acts as the bridge, queuing data and signaling the ChildMonitor thread.
 
 Regarding correctness-versus-responsiveness tradeoffs, I observed mutex locking in the write path. Looking at child-monitor.c:
 
@@ -157,9 +211,22 @@ screen_mutex(lock, write);
 if (screen->write_buf_used) wakeup_io_loop(self, false);
 screen_mutex(unlock, write);
 
-This locking mechanism is a synchronous correctness guarantee at the cost of responsiveness. The main thread acquires the write_buf_lock mutex before adding data to the buffer, then releases it. The ChildMonitor thread must acquire the same lock before reading the buffer. 
+This locking mechanism is a synchronous correctness guarantee at the cost of responsiveness. The main thread takes the children lock and the write_buf_lock mutex, adds the data to the buffer, wakes the ChildMonitor and only then releases the locks. The ChildMonitor thread must acquire the locks before it can drain the buffer.
 
-The timing evidence supports this: in the strace, the write(8) to signal the ChildMonitor and the subsequent write(10) to the pty both occur within the same millisecond (04:52:12). This low latency (sub-millisecond) suggests the locking overhead is minimal, but it's still a synchronous lock that could cause the main thread to block if the ChildMonitor is holding the lock during a slow pty write. An alternative lock-free design using a lock-free queue would trade correctness guarantees (like memory ordering) for potentially better responsiveness under contention, but Kitty chose the mutex approach for predictable behavior.
+The burst trace shows this lock at work. For "o", the ChildMonitor woke while the main thread still held the children lock and blocked on it (the futex address 0x2b3bdb21f6c0 is in fast_data_types.so's static data, next to children_fds in the gdb output):
+
+699   16:56:53.548958 write(7, "\1\0\0\0\0\0\0\0", 8 <unfinished ...>
+711   16:56:53.548985 futex(0x2b3bdb21f6c0, FUTEX_WAIT_PRIVATE, 2, NULL <unfinished ...>
+699   16:56:53.549014 <... write resumed>) = 8
+699   16:56:53.549064 futex(0x2b3bdb21f6c0, FUTEX_WAKE_PRIVATE, 1) = 1
+699   16:56:53.549114 write(2, "sent key as text to child: o\n", 29 <unfinished ...>
+711   16:56:53.549145 <... futex resumed>) = 0
+699   16:56:53.549171 <... write resumed>) = 29
+711   16:56:53.549194 futex(0x2b3bdb21f6c0, FUTEX_WAKE_PRIVATE, 1) = 0
+699   16:56:53.549240 write(4, "\1\0\0\0\0\0\0\0", 8) = 8
+711   16:56:53.549321 write(10, "o", 1 <unfinished ...>
+
+Thread 711 waited 160 µs (16:56:53.548985 → .549145) until the main thread released the lock, then wrote "o". For "r" the same lock was contended briefly (FUTEX_WAIT returned EAGAIN at .558127) before the write at .558305. The tradeoff: the main thread never waits on a slow pty write and goes back to reading X events, and the locked, shared buffer keeps every byte in order (h-e-l-l-o- -w-o-r-l-d reached fd 10 in exactly the order the keys were queued). The cost is a cross-thread handoff of a few hundred microseconds per key (174–424 µs in the burst, 208 µs for "y", 725 µs for "z"), plus occasional lock waits. The same lock can make the main thread wait while the ChildMonitor holds it during a write to the pty. An alternative lock-free design using a lock-free queue would trade correctness guarantees (like memory ordering) for potentially better responsiveness under contention, but Kitty chose the mutex approach for predictable behavior.
 
 Additionally, there's a buffer size tradeoff visible in the code: the write buffer can grow up to 100MB before input is discarded ("Too much data being sent to child...ignoring it"). This queuing behavior prioritizes eventual delivery over immediate backpressure, which improves responsiveness for burst input but could delay feedback if the child is slow.
 

@@ -136,3 +136,5 @@ Use the below interface for your solution:
 - Input: `RRDSET_TYPE chart_type`
 - Output: `const char *`
 - Description: Returns the string name for a given chart type enum value. Extracted from `rrdset.c` into `rrdset-type.c`.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

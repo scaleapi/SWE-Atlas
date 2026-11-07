@@ -32,16 +32,8 @@
     }
   },
   {
-    "id": "e6866101ed25dddc7fde8a71f1db57c7",
-    "title": "1.4: Removes all 5 verification-tracking definitions (detectorKey struct, DetectorInfo struct, detectorTypeToDetectorInfo field, detectors map[bool][] field, keywordsToDetectors field) from pkg/engine/ahocorasickcore.go",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "db4d84a8b8a44cb643b09362712c8432",
-    "title": "1.5: Uses the Engine-level verify setting for chunk verification in pkg/engine/engine.go instead of per-detector ShouldVerify",
+    "title": "1.4: Uses the Engine-level verify setting for chunk verification in pkg/engine/engine.go instead of per-detector ShouldVerify",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +41,7 @@
   },
   {
     "id": "e43d032e4d67b884636e9465dca5dea0",
-    "title": "1.6: Updates main.go to pass verification via WithVerify instead of through WithDetectors",
+    "title": "1.5: Updates main.go to pass verification via WithVerify instead of through WithDetectors",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -72,16 +64,8 @@
     }
   },
   {
-    "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -89,15 +73,7 @@
   },
   {
     "id": "1e901659d858f6f55a5184ab8a77d4ea",
-    "title": "4.1: Misbuilds the keyword-to-detector mappings in NewAhoCorasickCore, causing MatchString or PopulateDetectorsByMatch to return wrong results in pkg/engine/ahocorasickcore.go",
-    "annotations": {
-      "type": "negative hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
-    "id": "f8bc6e3dd98d3540e45b3408d283b073",
-    "title": "4.2: Removes the ability to configure verification entirely (no WithVerify option or verify setting not applied to Chunk.Verify during scanning) in pkg/engine/engine.go",
+    "title": "3.1: Misbuilds the keyword-to-detector-type mappings in NewAhoCorasickCore, causing MatchString or PopulateDetectorsByMatch to miss a matched detector type, add a type whose keyword did not match, or return no detector for a matched type in pkg/engine/ahocorasickcore.go",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -105,7 +81,7 @@
   },
   {
     "id": "fdb66f489ad26f646fbf5fc07f7b0f42",
-    "title": "4.3: Adds redundant verify fields to internal structs (such as, AhoCorasickCore, detectableChunk) instead of using the single Engine.verify field in pkg/engine/engine.go",
+    "title": "3.2: Adds redundant verify fields to internal structs (such as, AhoCorasickCore, detectableChunk) instead of using the single Engine.verify field in pkg/engine/engine.go",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

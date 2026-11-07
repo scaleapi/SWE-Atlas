@@ -4,7 +4,7 @@
 I've uploaded a code repository in the directory /app. Consider the following testing objective:
 
 <testing_objective>
-I want to strengthen the integration test coverage for the external authentication functionality in SFTGo.
+I want to strengthen the integration test coverage for the external authentication functionality in SFTPGo.
 
 The code is working correctly, but we're missing some integration tests for the external authentication program feature. This feature allows users to authenticate via an external program that validates credentials and returns user information.
 
@@ -19,17 +19,13 @@ Write 1 integration test for each of the following scenarios:
 Your tests MUST be runnable using the following script (be careful if/when you run it as it may run all tests and take a long time):
 <run_script>
 #!/bin/bash
-### COMMON SETUP; DO NOT MODIFY ###
 set -e
 
-# --- CONFIGURE THIS SECTION ---
-# Replace this with your command to run all tests
 run_all_tests() {
   echo "Running all tests..."
   MINIO_API_REQUESTS_MAX=10000 CGO_ENABLED=1 go test -timeout 120s -v -tags kqueue,dev ./... || true
 }
 
-# Replace this with your command to run specific test files
 run_selected_tests() {
   local test_files=("$@")
   echo "Running selected tests: ${test_files[@]}"
@@ -56,7 +52,6 @@ run_selected_tests() {
     done
   done
 }
-# --- END CONFIGURATION SECTION ---
 
 # Initialize SQLite database for sftpgo tests (required by TestMain in sftpd_test.go)
 init_test_database() {
@@ -81,7 +76,6 @@ EOF
 
 init_test_database
 
-### COMMON EXECUTION; DO NOT MODIFY ###
 if [ $# -eq 0 ]; then
   run_all_tests
   exit $?
@@ -99,6 +93,7 @@ run_selected_tests "${TEST_FILES[@]}"
 
 Can you help me write comprehensive tests for this codebase?
 Your task is to create a test suite in /app that verifies correct implementation behavior according to the testing objective.
+
 Follow these steps to complete the task:
 1. Explore the repository structure to understand how the codebase is organized and identify existing test patterns
 2. Find and read the source code relevant to the testing objective to understand the functionality to be tested
@@ -125,3 +120,5 @@ Use the appropriate naming convention for the language:
 - Go: TestFunctionName
 - JavaScript/TypeScript: "describe block > it/test name" or test function name
 - Java: testMethodName or ClassName.testMethodName
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

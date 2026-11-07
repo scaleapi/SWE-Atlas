@@ -102,6 +102,8 @@ tail -30 /tmp/qcluster_patched.log
 12:12:32 [Q] INFO Process-1:6 ready for work at 53701
 ```
 
+The first line is a startup shim that patches `PIL.ImageFont.LAYOUT_BASIC` so Pillow loads fonts under the version pinned in this image; it only affects image parsing and does not change the consumer flow shown below.
+
 The worker logs "processing [complete_test.txt]" when it starts, then "Consuming complete_test.txt" marks entry into the Consumer.try_consume_file method in /app/src/documents/consumer.py. This method orchestrates parsing, classification, and indexing.
 
 The try_consume_file method's structure shows the processing workflow:

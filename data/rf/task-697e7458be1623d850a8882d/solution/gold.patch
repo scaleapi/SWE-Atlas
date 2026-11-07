@@ -2,7 +2,7 @@ diff --git a/pkg/sources/git/git.go b/pkg/sources/git/git.go
 index 63f70b2e6c0e..34cf260dd18a 100644
 --- a/pkg/sources/git/git.go
 +++ b/pkg/sources/git/git.go
-@@ -721,68 +721,100 @@ func (s *Git) ScanRepo(ctx context.Context, repo *git.Repository, repoPath strin
+@@ -721,68 +721,99 @@ func (s *Git) ScanRepo(ctx context.Context, repo *git.Repository, repoPath strin
  		}
  	}
  
@@ -124,12 +124,11 @@ index 63f70b2e6c0e..34cf260dd18a 100644
 +		return nil, false, fmt.Errorf("unable to resolve commit: %w", err)
 +	}
 +
-+	wasSet := originalRef != resolvedRef
-+	if wasSet {
++	if originalRef != resolvedRef {
 +		*ref = resolvedRef
 +	}
 +
-+	return commit, wasSet, nil
++	return commit, true, nil
 +}
 +
 +func resolveHash(repo *git.Repository, ref string) (string, error) {

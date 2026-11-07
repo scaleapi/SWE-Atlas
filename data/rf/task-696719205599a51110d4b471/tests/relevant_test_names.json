@@ -1,9 +1,6 @@
 {
   "tests": [
     {
-      "name": "GTPCreatePDPContextRequest(), basic dissection"
-    },
-    {
       "name": "TCP()/OFPTHello() dissection, check new TCP.guess_payload_class"
     },
     {

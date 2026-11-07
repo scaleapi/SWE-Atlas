@@ -2,7 +2,7 @@ I started my investigation by exploring Minio's policy evaluation logic and secu
 
 ```
 $ mkdir -p /tmp/minio-data{1..4}
-$ /go/bin/minio server /tmp/minio-data{1..4} --address :9000 --console-address :9001 &
+$ MINIO_CI_CD=on /app/minio server /tmp/minio-data{1..4} --address :9000 --console-address :9001 &
 $ mc alias set myminio http://localhost:9000 minioadmin minioadmin
 ```
 
@@ -11,7 +11,7 @@ Output:
 INFO: Formatting 1st pool, 1 set(s), 4 drives per set.
 MinIO Object Storage Server
 Copyright: 2015-2026 MinIO, Inc.
-API: http://127.0.0.1:9000
+API: http://172.20.46.81:9000  http://127.0.0.1:9000
 Added `myminio` successfully.
 ```
 
@@ -63,32 +63,35 @@ $ mc cp /tmp/test.txt encuser-alias/enc-required-bucket/unencrypted.txt
 ```
 Output:
 ```
-mc: <ERROR> Failed to copy `/tmp/test.txt`. Access Denied.
+mc: <ERROR> Failed to copy `/tmp/test.txt`. Insufficient permissions to access this path `http://localhost:9000/enc-required-bucket/unencrypted.txt`
 ```
-The server trace logs capture the following runtime execution sequence:
+The server trace logs capture the following runtime execution sequence for the upload (the s3.GetBucketLocation and s3.GetBucketObjectLockConfig probes that mc sends first were also answered 403, and the s3.HeadObject existence check 404):
 ```json
 {
   "status": "success",
   "host": "localhost:9000",
-  "time": "2026-01-24T16:29:57.190183628Z",
-  "client": "[::1]",
+  "time": "2026-11-03T01:12:20.628997276Z",
+  "client": "127.0.0.1",
   "callStats": {
-    "rx": 339,
-    "tx": 0,
-    "duration": 20196316,
-    "timeToFirstByte": 19863351
+    "rx": 135,
+    "tx": 359,
+    "duration": 126003,
+    "timeToFirstByte": 110988
   },
+  "duration": 126003,
+  "timeToFirstByte": 0,
   "api": "s3.PutObject",
   "path": "/enc-required-bucket/unencrypted.txt",
   "query": "",
   "statusCode": 403,
   "statusMsg": "Forbidden",
   "type": "S3",
-  "size": 339,
-  "error": "Access Denied"
+  "size": 494,
+  "error": "",
+  "extra": null
 }
 ```
-The trace shows that s3.PutObject request being rejected with statusCode 403 (Forbidden) and error "Access Denied". This confirms that the bucket-level encryption takes precedence over the user's broad write permissions. 
+The trace shows the s3.PutObject request being rejected with statusCode 403 (statusMsg "Forbidden"); the "status": "success" field only means the trace record itself was collected. This confirms that the bucket-level encryption requirement takes precedence over the user's broad write permissions.
 
 Object locking and manual deletion:
 
@@ -104,7 +107,7 @@ Output:
 ```
 Bucket created successfully `myminio/lock-test`.
 `/tmp/locked.txt` -> `myminio/lock-test/protected.txt`
-Total: 15 B  Transferred: 15 B  Duration: 00m00s
+Total: 15 B, Transferred: 15 B, Speed: 1.49 KiB/s
 Object retention successfully set for `myminio/lock-test/protected.txt`.
 Name    : myminio/lock-test/protected.txt
 Mode    : GOVERNANCE, expiring in 29 days
@@ -121,57 +124,26 @@ $ mc ls myminio/lock-test --versions
 Output:
 ```
 Lifecycle configuration imported successfully to `myminio/lock-test`.
-Created delete marker `myminio/lock-test/protected.txt` (versionId=775cc8c9-55ed-49a2-8bc3-4011be19c1d5).
-[2026-01-24 13:27:39 UTC]     0B STANDARD 775cc8c9-55ed-49a2-8bc3-4011be19c1d5 v2 DEL protected.txt
-[2026-01-24 13:27:39 UTC]    15B STANDARD 074a34de-7afd-4ff5-bb57-6d4ee74a02cd v1 PUT protected.txt
+Created delete marker `myminio/lock-test/protected.txt` (versionId=a993cd15-390a-4615-a9f9-8791acca2375).
+[2026-11-03 01:12:22 UTC]     0B STANDARD a993cd15-390a-4615-a9f9-8791acca2375 v2 DEL protected.txt
+[2026-11-03 01:12:22 UTC]    15B STANDARD dc7d3023-34af-4730-99d2-5f0f2ed936ba v1 PUT protected.txt
 ```
-The delete command created a delete marker but preserved the actual object version. When I attempted to permanently delete the protected version:
+The delete command created a delete marker but preserved the actual object version. I enabled tracing to capture the specific runtime logs and then attempted to permanently delete the protected version:
 ```
-$ mc rm myminio/lock-test/protected.txt --version-id 074a34de-7afd-4ff5-bb57-6d4ee74a02cd
+$ mc admin trace myminio --all --json > /tmp/lock_trace.json &
+$ mc rm myminio/lock-test/protected.txt --version-id dc7d3023-34af-4730-99d2-5f0f2ed936ba
 ```
 Output:
 ```
-mc: <ERROR> Failed to remove `myminio/lock-test/protected.txt`. Object, 'protected.txt (Version ID=074a34de-7afd-4ff5-bb57-6d4ee74a02cd)' is WORM protected and cannot be overwritten
+mc: <ERROR> Failed to remove `myminio/lock-test/protected.txt`. Object, 'protected.txt (Version ID=dc7d3023-34af-4730-99d2-5f0f2ed936ba)' is WORM protected and cannot be overwritten
 ```
-To capture the specific runtime logs when attempting to delete a locked object, I enabled tracking:
-```
-$ mc admin trace myminio --all --json > /tmp/lock_trace.json &
-$ mc rm myminio/lock-test/protected.txt --version-id 074a34de-7afd-4ff5-bb57-6d4ee74a02cd
-```
-The server trace logs show the delete attempt execution sequence:
+The server trace logs show the delete attempt execution sequence (JSON lines as written by mc admin trace):
 ```json
-{
-  "status": "success",
-  "host": "127.0.0.1:9000",
-  "time": "2026-01-24T16:30:13.413786968Z",
-  "api": "storage.ReadVersion",
-  "path": "/tmp/minio-data4 lock-trace-test protected.txt",
-  "type": "Storage",
-  "error": "",
-  "extra": {"total-errs-availability": "0", "total-errs-timeout": "0"}
-}
-{
-  "status": "success",
-  "host": "127.0.0.1:9000",
-  "time": "2026-01-24T16:30:13.413790054Z",
-  "api": "storage.ReadVersion",
-  "path": "/tmp/minio-data1 lock-trace-test protected.txt",
-  "type": "Storage",
-  "error": ""
-}
-{
-  "status": "success",
-  "host": "localhost:9000",
-  "time": "2026-01-24T16:30:13.41480119Z",
-  "client": "[::1]",
-  "callStats": {"rx": 242, "tx": 310, "duration": 528116},
-  "api": "s3.DeleteMultipleObjects",
-  "path": "/lock-trace-test/",
-  "query": "delete=",
-  "statusCode": 200,
-  "statusMsg": "OK",
-  "type": "S3"
-}
+{"status":"success","host":"127.0.0.1:9000","time":"2026-11-03T01:12:24.991533624Z","client":"","duration":80324,"timeToFirstByte":0,"api":"storage.ReadVersion","path":"/tmp/minio-data4 lock-test protected.txt","query":"","statusCode":0,"statusMsg":"","type":"Storage","error":"","extra":{"total-errs-availability":"0","total-errs-timeout":"0"}}
+{"status":"success","host":"127.0.0.1:9000","time":"2026-11-03T01:12:24.991601455Z","client":"","duration":98109,"timeToFirstByte":0,"api":"storage.ReadVersion","path":"/tmp/minio-data1 lock-test protected.txt","query":"","statusCode":0,"statusMsg":"","type":"Storage","error":"","extra":{"total-errs-availability":"0","total-errs-timeout":"0"}}
+{"status":"success","host":"127.0.0.1:9000","time":"2026-11-03T01:12:24.991632697Z","client":"","duration":98756,"timeToFirstByte":0,"api":"storage.ReadVersion","path":"/tmp/minio-data3 lock-test protected.txt","query":"","statusCode":0,"statusMsg":"","type":"Storage","error":"","extra":{"total-errs-availability":"0","total-errs-timeout":"0"}}
+{"status":"success","host":"127.0.0.1:9000","time":"2026-11-03T01:12:24.991621444Z","client":"","duration":125639,"timeToFirstByte":0,"api":"storage.ReadVersion","path":"/tmp/minio-data2 lock-test protected.txt","query":"","statusCode":0,"statusMsg":"","type":"Storage","error":"","extra":{"total-errs-availability":"0","total-errs-timeout":"0"}}
+{"status":"success","host":"localhost:9000","time":"2026-11-03T01:12:24.991330546Z","client":"127.0.0.1","callStats":{"rx":242,"tx":310,"duration":593040,"timeToFirstByte":581554},"duration":593040,"timeToFirstByte":0,"api":"s3.DeleteMultipleObjects","path":"/lock-test/","query":"delete=","statusCode":200,"statusMsg":"OK","type":"S3","size":552,"error":"","extra":null}
 ```
 The trace shows Minio reading the object version metadata from all four data drives via storage.ReadVersion calls to check the retention status. The s3.DeleteMultipleObjects API returns 200 OK at the protocol level, but the response body contains the WORM protection error. This confirms that object locking takes precedence over lifecycle expiration - when lifecycle attempts to delete locked objects, the same WORM protection applies internally.
 
@@ -187,79 +159,34 @@ Output:
 ```
 Bucket created successfully `myminio/bitrot-test`.
 `/tmp/large.bin` -> `myminio/bitrot-test/bigfile.bin`
-Total: 256.00 KiB  Transferred: 256.00 KiB  Speed: 7.37 MiB/s
-b6ac8aa811bf022b44350109a55533c5  -
+Total: 256.00 KiB, Transferred: 256.00 KiB, Speed: 20.03 MiB/s
+d1301d771176b34dfacdca2843643a45  -
 ```
-I then corrupted one of the data files in the storage backend:
+I then corrupted one of the data files in the storage backend. Each drive holds only an xl.meta for this object (a 256 KiB object is stored inline in xl.meta, with no separate part files), so I appended bytes to the copy on data1:
 ```
 $ XL_META=$(find /tmp/minio-data1/bitrot-test -name "xl.meta" | head -1)
 $ echo "CORRUPTED_DATA" >> "$XL_META"
+$ ls -l /tmp/minio-data*/bitrot-test/bigfile.bin/xl.meta
 $ mc admin trace myminio --all --json > /tmp/trace.txt 2>&1 &
 $ mc cat myminio/bitrot-test/bigfile.bin | md5sum
 ```
 Output:
 ```
-b6ac8aa811bf022b44350109a55533c5  -
+-rw-r--r--    1 root     root        131534 Nov  3 01:12 /tmp/minio-data1/bitrot-test/bigfile.bin/xl.meta
+-rw-r--r--    1 root     root        131519 Nov  3 01:12 /tmp/minio-data2/bitrot-test/bigfile.bin/xl.meta
+-rw-r--r--    1 root     root        131519 Nov  3 01:12 /tmp/minio-data3/bitrot-test/bigfile.bin/xl.meta
+-rw-r--r--    1 root     root        131519 Nov  3 01:12 /tmp/minio-data4/bitrot-test/bigfile.bin/xl.meta
+d1301d771176b34dfacdca2843643a45  -
 ```
-The GET request succeeded with the same checksum. The server trace logs captured during this corrupted read show the specific runtime execution:
+The GET request succeeded with the same checksum. The server trace logs captured during this corrupted read show the specific runtime execution of the GET (the preceding s3.HeadObject issued by mc cat read only the metadata, 403 bytes per drive):
 ```json
-{
-  "status": "success",
-  "host": "127.0.0.1:9000",
-  "time": "2026-01-24T16:30:30.878397362Z",
-  "api": "storage.ReadXL",
-  "path": "/tmp/minio-data4 bitrot-trace-test testfile.bin",
-  "type": "Storage",
-  "size": 399,
-  "error": "",
-  "extra": {"total-errs-availability": "0", "total-errs-timeout": "0"}
-}
-{
-  "status": "success",
-  "host": "127.0.0.1:9000",
-  "time": "2026-01-24T16:30:30.878417985Z",
-  "api": "storage.ReadXL",
-  "path": "/tmp/minio-data2 bitrot-trace-test testfile.bin",
-  "type": "Storage",
-  "size": 399,
-  "error": ""
-}
-{
-  "status": "success",
-  "host": "127.0.0.1:9000",
-  "time": "2026-01-24T16:30:30.878449182Z",
-  "api": "storage.ReadXL",
-  "path": "/tmp/minio-data3 bitrot-trace-test testfile.bin",
-  "type": "Storage",
-  "size": 399,
-  "error": ""
-}
-{
-  "status": "success",
-  "host": "127.0.0.1:9000",
-  "time": "2026-01-24T16:30:30.878524575Z",
-  "api": "storage.ReadXL",
-  "path": "/tmp/minio-data1 bitrot-trace-test testfile.bin",
-  "type": "Storage",
-  "size": 399,
-  "error": ""
-}
-{
-  "status": "success",
-  "host": "localhost:9000",
-  "time": "2026-01-24T16:30:30.879222728Z",
-  "client": "[::1]",
-  "callStats": {"rx": 93, "tx": 65536, "duration": 1115669},
-  "api": "s3.GetObject",
-  "path": "/bitrot-trace-test/testfile.bin",
-  "statusCode": 200,
-  "statusMsg": "OK",
-  "type": "S3",
-  "size": 65629,
-  "error": ""
-}
+{"status":"success","host":"127.0.0.1:9000","time":"2026-11-03T01:12:29.157523658Z","client":"","duration":167104,"timeToFirstByte":0,"api":"storage.ReadXL","path":"/tmp/minio-data4 bitrot-test bigfile.bin","query":"","statusCode":0,"statusMsg":"","type":"Storage","size":131519,"error":"","extra":{"total-errs-availability":"0","total-errs-timeout":"0"}}
+{"status":"success","host":"127.0.0.1:9000","time":"2026-11-03T01:12:29.157540521Z","client":"","duration":205500,"timeToFirstByte":0,"api":"storage.ReadXL","path":"/tmp/minio-data2 bitrot-test bigfile.bin","query":"","statusCode":0,"statusMsg":"","type":"Storage","size":131519,"error":"","extra":{"total-errs-availability":"0","total-errs-timeout":"0"}}
+{"status":"success","host":"127.0.0.1:9000","time":"2026-11-03T01:12:29.157557644Z","client":"","duration":195406,"timeToFirstByte":0,"api":"storage.ReadXL","path":"/tmp/minio-data1 bitrot-test bigfile.bin","query":"","statusCode":0,"statusMsg":"","type":"Storage","size":131534,"error":"","extra":{"total-errs-availability":"0","total-errs-timeout":"0"}}
+{"status":"success","host":"127.0.0.1:9000","time":"2026-11-03T01:12:29.157584024Z","client":"","duration":172646,"timeToFirstByte":0,"api":"storage.ReadXL","path":"/tmp/minio-data3 bitrot-test bigfile.bin","query":"","statusCode":0,"statusMsg":"","type":"Storage","size":131519,"error":"","extra":{"total-errs-availability":"0","total-errs-timeout":"0"}}
+{"status":"success","host":"localhost:9000","time":"2026-11-03T01:12:29.157400682Z","client":"127.0.0.1","callStats":{"rx":93,"tx":262144,"duration":1019421,"timeToFirstByte":926067},"duration":1019421,"timeToFirstByte":0,"api":"s3.GetObject","path":"/bitrot-test/bigfile.bin","query":"","statusCode":200,"statusMsg":"OK","type":"S3","size":262237,"error":"","extra":null}
 ```
-The trace shows Minio's erasure coding in action: storage.ReadXL calls are made to all four data drives (minio-data1 through minio-data4). Even though data1 has corrupted xl.meta, the reads from the healthy drives (data2,data3,data4) succeed with size=399 bytes each. The final s3.GetObject returns statusCode200 with full 65536 bytes transferred. Minio uses HighwayHash256 checksums on each part, and erasure coding can tolerate up to N/2 drive failures in a set of N drives, automatically reconstructing data from healthy shards. 
+The trace shows storage.ReadXL calls to all four drives (minio-data1 through minio-data4). The data1 read returns 131534 bytes against 131519 on the other three drives, so the modified xl.meta, including the 15 appended bytes, was read, yet that read reports no error and no bitrot error appears anywhere in the trace. The final s3.GetObject returns statusCode 200 with the full 262144 bytes transferred, and the content matches the original checksum. Minio protects shard data with HighwayHash256 bitrot checksums, and erasure coding can tolerate up to N/2 drive failures in a set of N drives, reconstructing data from the remaining shards when a shard does fail verification.
 
 Session policy enforcement on temporary credentials:
 I created a parent user with consoleAdmin policy and then generated a service account with a highly restrictive session policy:

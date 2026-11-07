@@ -14,6 +14,9 @@
     },
     {
       "name": "pkg/storage/unified/sql/rvmanager/queries_coverage_test.go"
+    },
+    {
+      "name": "pkg/storage/unified/sql/rvmanager/rv_manager_test.go"
     }
   ]
 }

@@ -40,7 +40,7 @@ $ grep -n "Time resolution" lib/netext/httpext/tracer_test.go
 
 The comment explains that Windows has coarse timer granularity. ConnectStart and ConnectDone can register the same timestamp on Windows because the OS timer resolution is too low (approximately 15ms quantum). Fast operations complete within the same time quantum, making start and end timestamps identical. This is why the test adds artificial delays on Windows - it's a workaround for an OS limitation, not a bug in k6's tracer.
 
-The multiple ConnectStart/ConnectDone calls for a single request is the dual stack "Happy Eyeballs" algorithm at work:
+The multiple ConnectStart/ConnectDone calls for a single request mean there was more than one connection attempt for that request. The tracer comments mention dual stack "Happy Eyeballs" dialing as one source:
 
 $ grep -n "Happy Eyeballs\|dual-stack" lib/netext/httpext/tracer.go
 192:// If net.Dialer.DualStack (IPv6 "Happy Eyeballs") support is
@@ -48,7 +48,7 @@ $ grep -n "Happy Eyeballs\|dual-stack" lib/netext/httpext/tracer.go
 207:// If net.Dialer.DualStack ("Happy Eyeballs") support is
 214:	// If using dual stack dialing, it's possible to get this
 
-Go's net.Dialer enables DualStack by default, meaning it attempts to connect via both IPv4 and IPv6 simultaneously. The tracer handles this using atomic CompareAndSwap operations to ensure only the first timestamp is recorded:
+That is not what happens on k6's request path, though: k6's own netext.Dialer resolves the host first and dials a single IP address (getDialAddr returns remote.String()), so there is no IPv4/IPv6 race. The repeated calls come from repeated connection attempts, such as the retries of the HTTP/2 roundtripper that the tracer comments also mention. The tracer handles this using atomic CompareAndSwap operations to ensure only the first timestamp is recorded:
 
 $ grep -n "CompareAndSwap" lib/netext/httpext/tracer.go | head -6
 201:	atomic.CompareAndSwapInt64(&t.connectStart, 0, now())
@@ -58,7 +58,7 @@ $ grep -n "CompareAndSwap" lib/netext/httpext/tracer.go | head -6
 269:	// put incorrect values in them (they use CompareAndSwap)
 285:		// Using CompareAndSwap here because the HTTP/2 roundtripper has retries and
 
-The CompareAndSwap ensures that regardless of how many times the hooks are called during dual stack dialing, only the first timestamp is recorded, providing consistent measurements.
+The CompareAndSwap ensures that regardless of how many times the hooks are called across connection attempts, only the first timestamp is recorded, providing consistent measurements.
 
 The scenario where Reused=false but timestamps match is a documented Go stdlib HTTP/2 quirk:
 
@@ -86,4 +86,4 @@ ok  	go.k6.io/k6/lib/netext/httpext	(cached)
 
 All tests pass with the race detector enabled, confirming thread safety. The timing values can absolutely be trusted for performance analysis - they accurately reflect what happened on the wire. Zero connection time means a connection was reused (good for performance). High blocked time means connection pool contention (potential bottleneck).
 
-In conclusion, the HTTP tracer component is not fundamentally broken. It correctly handles connection reuse, dual stack dialing, HTTP/2 edge cases, and platform specific timing limitations. All the "strange" behaviors are documented in the code and have appropriate handling.
+In conclusion, the HTTP tracer component is not fundamentally broken. It correctly handles connection reuse, repeated connection attempts, HTTP/2 edge cases, and platform specific timing limitations. All the "strange" behaviors are documented in the code and have appropriate handling.

@@ -6,7 +6,7 @@ I've uploaded a code repository in the directory /app. Consider the following te
 <testing_objective>
 The text drawing functionality in kitty terminal works fine, but we are missing tests for some specific character drawing behaviors.
 
-Create unit test for each of these behaviors:
+Create a unit test for each of these behaviors:
 
 1. when a character is drawn and then a repeat control sequence is sent, the character should be duplicated the specified number of times on the current line
 2. when drawing emoji with skin tone modifier codepoints, they should render as combined character and the cursor should advance by the correct display width
@@ -24,7 +24,6 @@ export PIP_BREAK_SYSTEM_PACKAGES=1
 
 build_project() {
     echo "Building project..."
-    # Allow unused functions to avoid errors when skeleton code removes callers
     export CFLAGS="${CFLAGS:+$CFLAGS }-Wno-error=unused-function"
     python setup.py build --verbose
     echo "Build complete."
@@ -91,6 +90,7 @@ run_selected_tests "${TEST_FILES[@]}"
 
 Can you help me write comprehensive tests for this codebase?
 Your task is to create a test suite in /app that verifies correct implementation behavior according to the testing objective.
+
 Follow these steps to complete the task:
 1. Explore the repository structure to understand how the codebase is organized and identify existing test patterns
 2. Find and read the source code relevant to the testing objective to understand the functionality to be tested
@@ -117,3 +117,5 @@ Use the appropriate naming convention for the language:
 - Go: TestFunctionName
 - JavaScript/TypeScript: "describe block > it/test name" or test function name
 - Java: testMethodName or ClassName.testMethodName
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

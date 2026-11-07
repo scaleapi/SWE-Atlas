@@ -37,7 +37,7 @@
       "importance": "must have"
     },
     "id": "c192bd50a18ed3c001abd589d5eca0e8",
-    "title": "1.5: Newsletter-unsubscribe integration test asserts the encoded unsubscribe GET response status_code is in the 200\u2013399 range"
+    "title": "1.5: Newsletter-unsubscribe integration test asserts the encoded unsubscribe GET response status_code is in the 200-399 range"
   },
   {
     "annotations": {
@@ -133,6 +133,6 @@
       "importance": "nice to have"
     },
     "id": "f960accfab39f50d0aac95ba73c1f59a",
-    "title": "4.7: Original-unsubscribe forwarding test clears stored outbound emails before sending (e.g., mail_sender.purge_stored_emails())"
+    "title": "4.3: Original-unsubscribe forwarding test clears stored outbound emails before sending (e.g., mail_sender.purge_stored_emails())"
   }
 ]

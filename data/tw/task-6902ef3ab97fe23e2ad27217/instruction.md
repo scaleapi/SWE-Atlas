@@ -18,11 +18,8 @@ Create one unit test case for each of the aforementioned instances.
 Your tests MUST be runnable using the following script (be careful if/when you run it as it may run all tests and take a long time):
 <run_script>
 #!/bin/bash
-### COMMON SETUP; DO NOT MODIFY ###
 set -e
 
-# --- CONFIGURE THIS SECTION ---
-# Replace this with your command to run all tests
 run_all_tests() {
   echo "Running all tests..."
   export PIP_BREAK_SYSTEM_PACKAGES=1
@@ -45,7 +42,6 @@ run_all_tests() {
   done
 }
 
-# Replace this with your command to run specific test files
 run_selected_tests() {
   local test_files=("$@")
   echo "Running selected tests: ${test_files[@]}"
@@ -72,9 +68,6 @@ run_selected_tests() {
     fi
   done
 }
-# --- END CONFIGURATION SECTION ---
-
-### COMMON EXECUTION; DO NOT MODIFY ###
 
 # No args is all tests
 if [ $# -eq 0 ]; then
@@ -95,6 +88,7 @@ run_selected_tests "${TEST_FILES[@]}"
 
 Can you help me write comprehensive tests for this codebase?
 Your task is to create a test suite in /app that verifies correct implementation behavior according to the testing objective.
+
 Follow these steps to complete the task:
 1. Explore the repository structure to understand how the codebase is organized and identify existing test patterns
 2. Find and read the source code relevant to the testing objective to understand the functionality to be tested
@@ -121,3 +115,5 @@ Use the appropriate naming convention for the language:
 - Go: TestFunctionName
 - JavaScript/TypeScript: "describe block > it/test name" or test function name
 - Java: testMethodName or ClassName.testMethodName
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

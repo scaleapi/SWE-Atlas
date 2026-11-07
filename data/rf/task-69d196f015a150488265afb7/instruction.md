@@ -1,6 +1,6 @@
 The GTP (GPRS Tunnelling Protocol) modules in Scapy need updates for 3GPP Release 16 compliance and general cleanup of how Information Element (IE) lengths are computed in GTPv2.
 
-Currently, almost every IE class in `scapy/contrib/gtp_v2.py` uses `FieldLenField` with custom `adjust` lambdas to compute the length field. These lambdas are inconsistent across classes, some compute length incorrectly, and they add unnecessary complexity. Instead of each IE class manually computing its own length, the length should be computed automatically during packet building by the base class `IE_Base` in `scapy/contrib/gtp.py`. All IE classes should use a simple `ShortField` for their length field with a default of `None`, and the base class should handle filling in the correct value during `post_build`. This cleanup affects roughly 25+ IE classes across the file.
+Currently, almost every IE class in `scapy/contrib/gtp_v2.py` uses `FieldLenField` with custom `adjust` lambdas to compute the length field. These lambdas are inconsistent across classes, some compute length incorrectly, and they add unnecessary complexity. Instead of each IE class manually computing its own length, the length should be computed automatically during packet building by the base class `IE_Base` in `scapy/contrib/gtp.py`. All IE classes should use a simple `ShortField` for their length field with a default of `None`, and the base class should handle filling in the correct value during `post_build`. This cleanup affects all 35 existing IE classes across the file.
 
 The `IE_IPv4` class is too limited. It only supports IPv4 addresses, but the 3GPP spec for IE type 74 requires support for both IPv4 and IPv6. The class should be renamed to reflect that it handles both address types, and it should conditionally parse either a 4 byte IPv4 or 16 byte IPv6 address based on the length field. The `IEType` dictionary and the IE dispatcher dictionary should be updated accordingly.
 
@@ -179,7 +179,7 @@ Use the below interface for your solution:
   - Input: NA
   - Output: NA
   - Bases: `PCO_Protocol` (changed from `PCO_Option`)
-  - Description: Re-parented to `PCO_Protocol`. No other signature changes.
+  - Description: Re-parented to `PCO_Protocol`. `length_from` changed from `len_options` to `lambda pkt: pkt.length`.
 
 - Path: `scapy/contrib/gtp_v2.py`
   - Name: `PCO_QoS_Flow_Descriptions_With_Support_Indicator`
@@ -187,7 +187,7 @@ Use the below interface for your solution:
   - Input: NA
   - Output: NA
   - Bases: `PCO_Protocol` (changed from `PCO_Option`)
-  - Description: Re-parented to `PCO_Protocol`. No other signature changes.
+  - Description: Re-parented to `PCO_Protocol`. `length_from` changed from `len_options` to `lambda pkt: pkt.length`.
 
 - Path: `scapy/contrib/gtp_v2.py`
   - Name: `PCO_S_Nssai`
@@ -284,3 +284,5 @@ Use the below interface for your solution:
   - Output: NA
   - Bases: `GTPV2Command`
   - Description: New GTPv2 command class for Context Acknowledge, bound to GTPHeader with gtp_type 132.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

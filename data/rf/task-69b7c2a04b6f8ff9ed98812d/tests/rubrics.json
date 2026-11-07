@@ -1,7 +1,7 @@
 [
   {
     "id": "8a9318679bdb26719276055ef4c84d3e",
-    "title": "Code Maintainability",
+    "title": "1: Code Maintainability",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -112,7 +112,7 @@
     }
   },
   {
-    "id": "f7a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6",
+    "id": "4b7bbec35b3a597e4a096c75d0292a67",
     "title": "1.14: Processes non-page-0 files when --tablespace-flags is provided",
     "annotations": {
       "type": "positive hli verifier",
@@ -120,7 +120,7 @@
     }
   },
   {
-    "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    "id": "86a58af77dadb65eeec6a62fab011fc3",
     "title": "1.15: Warns about flag mismatch when provided flags differ from stored flags on page 0",
     "annotations": {
       "type": "positive hli verifier",
@@ -128,24 +128,8 @@
     }
   },
   {
-    "id": "c3a8f210b7e94d5a8b1c6f2e3d4a5b6c",
-    "title": "Documentation Maintainability",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "nice to have"
-    }
-  },
-  {
-    "id": "d4b9e321c8fa5e6b9c2d7f3e4a5b6c7d",
-    "title": "Artifact Cleanup",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "0248934eb1b30de7faea157dd07d4b5d",
-    "title": "Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -153,7 +137,7 @@
   },
   {
     "id": "05e956f0b190cf3bd71c05320a06927b",
-    "title": "4.1: Removes existing innochecksum command line options (such as --skip-freed-pages) or their functionality",
+    "title": "2.1: Removes existing innochecksum command line options (such as --skip-freed-pages) or their functionality",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -161,7 +145,7 @@
   },
   {
     "id": "9150602d8cd145a11a4530c37fc7df18",
-    "title": "4.2: Breaks existing checksum verification or page processing for non-doublewrite pages by incorrectly passing flags or skipping normal pages",
+    "title": "2.2: Breaks existing checksum verification or page processing for non-doublewrite pages by incorrectly passing flags or skipping normal pages when a single file is checked without --tablespace-flags",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

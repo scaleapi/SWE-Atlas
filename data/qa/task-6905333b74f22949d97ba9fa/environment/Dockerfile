@@ -1,1 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_QnA_kovidgoyal_kitty_1.1@sha256:65b38adaca2d3d9debcceaefee45c98c8afd7b226ffb8c52b5522acac7b5346b
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:qa-6905333b74f22949d97ba9fa-815df1e-v1.01.99@sha256:e99ced1f496ee8efa04c9d09d640108df1b21f3026da0474db8860b13ad20689

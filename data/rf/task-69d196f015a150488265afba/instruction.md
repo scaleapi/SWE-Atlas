@@ -16,3 +16,5 @@ Use the below interface for your solution:
 - Input: `data: DataFrame`
 - Output: `DataFrame[]`
 - Description: Converts trace span data into node graph frames, returning an array of two DataFrames (nodes and edges). Renamed and moved from the Tempo plugin's createGraphFrames.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

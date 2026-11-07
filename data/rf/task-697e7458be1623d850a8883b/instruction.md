@@ -42,3 +42,5 @@ Use the below interface for your solution:
 - Input: `NA`
 - Output: `str`
 - Description: Returns a string that can recreate the EcuState instance, e.g., "EcuState(key='value')".
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

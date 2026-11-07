@@ -35,6 +35,12 @@
     },
     {
       "name": "pkg/tests/apis/plugins/plugininstalls_test.go"
+    },
+    {
+      "name": "pkg/tests/apis/plugins/metas_test.go"
+    },
+    {
+      "name": "pkg/tests/apis/plugins/plugins_test.go"
     }
   ]
 }

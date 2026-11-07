@@ -17,7 +17,7 @@
   },
   {
     "id": "e454782117fb47ce61f18b6f22053cd1",
-    "title": "1.3: Reports that fast_data_types.so is a core extension module in the main Kitty process",
+    "title": "1.3: Reports that fast_data_types.so is loaded into the main Kitty process as its core C extension module (e.g., listed in /proc/<pid>/maps, or stack frames such as io_loop or talk_loop resolving to fast_data_types.so)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -25,7 +25,7 @@
   },
   {
     "id": "9fe3d23caac0f477a5cde5162db973b8",
-    "title": "1.4: Reports thread activity differences between idle and stress states (e.g., main thread CPU usage increases significantly under load)",
+    "title": "1.4: Reports measured per-thread activity at idle and under stress, showing which threads become busy (e.g., KittyChildMon and the main kitty thread near zero at idle and consuming large CPU shares under stress, from /proc/<pid>/task/*/stat ticks or top -H)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "f0977b54e147ab21f1817beddceaa06b",
-    "title": "1.5: Describes a portability-versus-performance tradeoff observed at runtime (e.g., GLFW platform abstraction or software vs hardware rendering)",
+    "title": "1.5: Describes a portability-versus-performance tradeoff tied to an observed runtime artifact (e.g., only glfw-x11.so loaded out of the per-platform GLFW backends, or Mesa's llvmpipe software rasterizer threads consuming CPU because no GPU is available)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "6e8d7005375a171995dba592b73b3934",
-    "title": "1.11: Reports that Python handles configuration, orchestration, or remote control in Kitty",
+    "title": "1.11: Reports that Python handles configuration, orchestration, or remote control in Kitty (e.g., kitty/main.py starting the app before calling into the C main loop, or kitty/rc/*.py modules serving remote-control commands)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "2ecef928306e9cd02021080d7fcd62ce",
-    "title": "2.2: Claims analysis conclusions without providing supporting runtime evidence",
+    "title": "2.2: Presents conclusions about the Python, C and Go split without any supporting output collected from a running Kitty (e.g., relying only on reading source files)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "1a2dd5ab805d2b56ff4685b6b16111d5",
-    "title": "2.3: Claims that kitten communicates with Kitty through shared memory",
+    "title": "2.3: Claims that kitten communicates with Kitty through shared memory other than graphics-protocol image transfers or probes",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

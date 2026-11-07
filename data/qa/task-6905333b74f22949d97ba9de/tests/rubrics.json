@@ -41,7 +41,7 @@
   },
   {
     "id": "3e5cd2289218f65707646c37ea6d6e22",
-    "title": "1.6: Maps reference chains showing how document objects retain metadata in memory (e.g., shows Document\u2192Metadata\u2192Tag\u2192Classifier chain).",
+    "title": "1.6: Maps reference chains showing how documents and their metadata are retained in memory (e.g., Tag <- tags QuerySet._result_cache <- doc._prefetched_objects_cache <- Document, or the extracted metadata list held by the API response payload rather than by the Document, as revealed by gc.get_referrers).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "effa4365d8d53a964d559e238efbe851",
-    "title": "2.1: Claims to use valgrind or other C-level profiling tools on Python code. ",
+    "title": "2.1: Claims to use valgrind or other C-level profiling tools on Python code.",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

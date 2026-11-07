@@ -4,7 +4,7 @@
 I've uploaded a code repository in the directory /app. Consider the following testing objective:
 
 <testing_objective>
-We're short on unit test coverage for the text buffer rewrapping logic, ie. handling buffer dimension changes during rewrap operations. I need to validate these scenarios:
+We're short on unit test coverage for the text buffer rewrapping logic, i.e. handling buffer dimension changes during rewrap operations. I need to validate these scenarios:
 
 1. Handling rewrapping when the source and destination buffers have identical dimensions (same width and height), verifying that content is preserved exactly and cursor position remains correct
 2. Handling rewrapping when the destination buffer is wider than the source, verifying that continued lines are merged correctly, line continuation flags are set properly, and dirty line tracking is accurate
@@ -21,7 +21,6 @@ export PIP_BREAK_SYSTEM_PACKAGES=1
 
 build_project() {
     echo "Building project..."
-    # Allow unused functions to avoid errors when skeleton code removes callers
     export CFLAGS="${CFLAGS:+$CFLAGS }-Wno-error=unused-function"
     python setup.py build --verbose
     echo "Build complete."
@@ -88,6 +87,7 @@ run_selected_tests "${TEST_FILES[@]}"
 
 Can you help me write comprehensive tests for this codebase?
 Your task is to create a test suite in /app that verifies correct implementation behavior according to the testing objective.
+
 Follow these steps to complete the task:
 1. Explore the repository structure to understand how the codebase is organized and identify existing test patterns
 2. Find and read the source code relevant to the testing objective to understand the functionality to be tested
@@ -114,3 +114,5 @@ Use the appropriate naming convention for the language:
 - Go: TestFunctionName
 - JavaScript/TypeScript: "describe block > it/test name" or test function name
 - Java: testMethodName or ClassName.testMethodName
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

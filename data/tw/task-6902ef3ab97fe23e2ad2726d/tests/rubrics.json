@@ -149,7 +149,7 @@
       "importance": "nice to have"
     },
     "id": "5b6a156d6f3fb2d5dd6b259896d6cc4b",
-    "title": "4.4: All new remote delivery tests configure the Target with a mockdns.Resolver initialized with the test\u2019s Zones"
+    "title": "4.4: All new remote delivery tests configure the Target with a mockdns.Resolver initialized with the test's Zones"
   },
   {
     "annotations": {

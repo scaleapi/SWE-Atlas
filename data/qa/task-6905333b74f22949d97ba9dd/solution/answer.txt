@@ -1,327 +1,195 @@
-I set up Paperless-NGX from the provided repository on this system by cloning it into `/app`, and I treated the current `HEAD` as the reference point (recorded via `git rev-parse HEAD`) so that all behavior I observed corresponds to this specific commit and to the default Docker-based deployment, without modifying any source files.
+I worked with the Paperless-NGX checkout in `/app` as it is (version 1.7.0 in `src/paperless/version.py`), without modifying any source files. At this commit Paperless-NGX does not use Celery: background work runs on django-q with Redis as the broker, the consumption directory is watched by the `document_consumer` management command, and the default database is SQLite at `/app/data/db.sqlite3`. I ran every service directly from `/app/src` with debug logging enabled (`PAPERLESS_DEBUG=true`).
 
 ```bash
-cd /app
-git clone https://github.com/paperless-ngx/paperless-ngx.git
-cd /app/paperless-ngx
-git rev-parse HEAD
+cd /app/src
+mkdir -p ../consume ../media ../data
+redis-server --daemonize yes
+python3 manage.py migrate
+gunicorn -c ../gunicorn.conf.py paperless.asgi:application > /tmp/gunicorn.log 2>&1 &
+python3 manage.py document_consumer > /tmp/consumer.log 2>&1 &
 ```
 
-To get the full environment running, I used the repository’s Docker Compose setup with PostgreSQL, Redis, the web app, a Celery worker, a Celery beat scheduler, and the auxiliary Tika and Gotenberg services, wiring them to host directories under `/tmp/paperless-ngx-test` for data, media, and consumption; after writing the `.env` file to point to these directories, I launched the stack and verified that all containers were running normally.
+`migrate` applied 92 migrations ("Apply all migrations: admin, auth, authtoken, contenttypes, django_q, documents, paperless_mail, sessions"), which creates the SQLite database. I deliberately started the django-q cluster (`qcluster`, which is both the worker pool and the scheduler) only after the first file had been queued, so that the queued task could still be inspected in the broker. Before dropping the file I confirmed that the broker, the webserver and the consumer were up:
 
 ```bash
-cd /app/paperless-ngx
-
-mkdir -p /tmp/paperless-ngx-test/{data,media,consume}
-
-cp -n docker/compose/docker-compose.env.example docker/compose/.env
-cp -n docker/compose/docker-compose.example.yml docker/compose/docker-compose.yml
-
-sed -i 's|PAPERLESS_DATA_DIR=.*|PAPERLESS_DATA_DIR=/tmp/paperless-ngx-test/data|' docker/compose/.env
-sed -i 's|PAPERLESS_MEDIA_ROOT=.*|PAPERLESS_MEDIA_ROOT=/tmp/paperless-ngx-test/media|' docker/compose/.env
-sed -i 's|PAPERLESS_CONSUMPTION_DIR=.*|PAPERLESS_CONSUMPTION_DIR=/tmp/paperless-ngx-test/consume|' docker/compose/.env
-
-cd docker/compose
-docker compose up -d
-docker compose ps
+ps -eo pid,args | grep -E "redis-server|gunicorn|document_consumer|qcluster" | grep -v grep
+redis-cli ping
+curl -s -o /dev/null -w "webserver HTTP %{http_code}\n" http://localhost:8000/
 ```
 
 ```text
-NAME                              COMMAND                  STATE    PORTS
-paperless-ngx-db-1                "docker-entrypoint.s…"   Up      5432/tcp
-paperless-ngx-broker-1            "docker-entrypoint.s…"   Up      6379/tcp
-paperless-ngx-webserver-1         "/entrypoint.sh gun…"   Up      0.0.0.0:8000->8000/tcp
-paperless-ngx-worker-1            "/entrypoint.sh cel…"   Up
-paperless-ngx-scheduler-1         "/entrypoint.sh cel…"   Up
-paperless-ngx-tika-1              "tika -h 0.0.0.0"       Up      9998/tcp
-paperless-ngx-gotenberg-1         "gotenberg"             Up      3000/tcp
+   34 redis-server *:6379
+   54 /usr/local/bin/python3.9 /usr/local/bin/gunicorn -c ../gunicorn.conf.py paperless.asgi:application
+   55 python3 manage.py document_consumer
+   58 /usr/local/bin/python3.9 /usr/local/bin/gunicorn -c ../gunicorn.conf.py paperless.asgi:application
+   59 /usr/local/bin/python3.9 /usr/local/bin/gunicorn -c ../gunicorn.conf.py paperless.asgi:application
+PONG
+webserver HTTP 302
 ```
 
-Once the environment was up, I focused on the ingestion flow starting from how Paperless-NGX detects new files in the consumption directory; I followed the `worker` and `scheduler` logs, where Celery beat emits periodic messages about sending the `paperless.tasks.consume_from_consume_dir` task, and the worker shows when this task is received and executed.
+The 302 is the webserver redirecting the anonymous request to the login page. The consumer had started watching the consumption directory:
+
+```text
+[2026-11-03 01:18:54,607] [INFO] [paperless.management.consumer] Using inotify to watch directory for changes: /app/src/../consume
+```
+
+I then placed a small text file into the consumption directory and confirmed it was on disk:
 
 ```bash
-cd /app/paperless-ngx/docker/compose
-docker compose logs -f worker scheduler | sed -n '1,80p'
+printf 'Test document for Paperless-NGX ingestion\n' > /app/consume/test_document.txt
+ls -l /app/consume
 ```
 
 ```text
-paperless-ngx-scheduler-1  | [2025-12-11 06:40:01,002: INFO/MainProcess] beat: Starting...
-paperless-ngx-scheduler-1  | [2025-12-11 06:40:01,007: INFO/MainProcess] Scheduler: Sending due task consume_from_consume_dir (paperless.tasks.consume_from_consume_dir)
-paperless-ngx-worker-1     | [2025-12-11 06:40:01,034: INFO/MainProcess] Connected to redis://broker:6379/0
-paperless-ngx-worker-1     | [2025-12-11 06:40:01,052: INFO/MainProcess] celery@worker-1 ready.
+total 1
+-rw-r--r-- 1 root testuser 42 Nov  3 01:19 test_document.txt
 ```
 
-To observe the entire pipeline for a concrete document, I placed a small test file into the configured consumption directory; for simplicity I used a plain text file (`test_document.txt`) rather than a complex PDF, since Paperless-NGX’s Tika-based parser can handle text files as well, and I confirmed that the file appeared on disk with ordinary permissions.
+The consumer log shows the moment the file was detected and handed to the task queue. At this commit the detection message is "Adding <path> to the task queue." (there is no separate "Found new file" message), and the django-q client confirms the enqueue in the same process:
+
+```text
+[2026-11-03 01:19:04,601] [INFO] [paperless.management.consumer] Adding /app/src/../consume/test_document.txt to the task queue.
+01:19:04 [Q] INFO Enqueued 1
+```
+
+The ingestion task that gets triggered is `documents.tasks.consume_file`. While it was queued (no worker running yet) I looked at what Redis was storing:
 
 ```bash
-printf 'Test document for Paperless-NGX ingestion\n' > /tmp/paperless-ngx-test/consume/test_document.txt
-ls -l /tmp/paperless-ngx-test/consume
+redis-cli KEYS '*'
+redis-cli LLEN django_q:paperless:q
+redis-cli LRANGE django_q:paperless:q 0 -1
 ```
 
 ```text
--rw-r--r-- 1 root root 45 Dec 11 06:41 test_document.txt
+django_q:paperless:q
+1
+gAWVHwEAAAAAAAB9lCiMAmlklIwgY2UyMmUyODcxZjUwNGE0NDkyOThkZDRiNGFkNjUwY2WUjARuYW1llIwRdGVzdF9kb2N1bWVudC50eHSUjARmdW5jlIwcZG9jdW1lbnRzLnRhc2tzLmNvbnN1bWVfZmlsZZSMBGFyZ3OUjCUvYXBwL3NyYy8uLi9jb25zdW1lL3Rlc3RfZG9jdW1lbnQudHh0lIWUjAZrd2FyZ3OUfZSMEG92ZXJyaWRlX3RhZ19pZHOUTnOMB3N0YXJ0ZWSUjAhkYXRldGltZZSMCGRhdGV0aW1llJOUQwoH6gsDARMECTP_lGgOjAh0aW1lem9uZZSTlGgOjAl0aW1lZGVsdGGUk5RLAEsASwCHlFKUhZRSlIaUUpR1Lg:1xO3B2:1goOOQ5ADIgHq0uZUdHYE705tuAUpV3J9KGmUn7JGAo
 ```
 
-During the next Celery beat tick, the scheduler sent `consume_from_consume_dir`, and the worker logs show the moment the system detected the new file and queued a more specific ingestion task; the first log line shows the periodic scan, then the worker logs show that `consume_from_consume_dir` started scanning `/tmp/paperless-ngx-test/consume`, found `test_document.txt`, and enqueued a `consume_file` task.
+The broker holds a single Redis list, `django_q:paperless:q` (django-q's list key for the cluster name "paperless" set in `Q_CLUSTER` in `src/paperless/settings.py`), with one entry per queued task. The entry is not JSON: it is a pickled Python dict, compressed and signed with Django's signing module (`base64 payload:timestamp:signature`) by `django_q.signing.SignedPackage`. Decoding it with the same class shows the task structure:
 
 ```bash
-cd /app/paperless-ngx/docker/compose
-sleep 10
-docker compose logs --since=30s worker scheduler | sed -n '1,160p'
+python3 manage.py shell -c "
+import redis, pprint
+from django_q.signing import SignedPackage
+raw = redis.Redis().lrange('django_q:paperless:q', 0, -1)[0]
+pprint.pprint(SignedPackage.loads(raw))
+"
 ```
 
 ```text
-paperless-ngx-scheduler-1  | [2025-12-11 06:41:01,008: INFO/MainProcess] Scheduler: Sending due task consume_from_consume_dir (paperless.tasks.consume_from_consume_dir)
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,025: INFO/MainProcess] Task paperless.tasks.consume_from_consume_dir[8c3c1c18-b7f0-4e9e-9b11-7f2b9f75f6e5] received
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,048: INFO/ForkPoolWorker-1] Starting consumption from /tmp/paperless-ngx-test/consume
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,053: INFO/ForkPoolWorker-1] Found new file for consumption: /tmp/paperless-ngx-test/consume/test_document.txt
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,060: INFO/ForkPoolWorker-1] Enqueuing consumption task for test_document.txt
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,064: INFO/MainProcess] Task paperless.tasks.consume_from_consume_dir[8c3c1c18-b7f0-4e9e-9b11-7f2b9f75f6e5] succeeded in 0.040123s: None
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,071: INFO/MainProcess] Task paperless.tasks.consume_file[de24b4c6-3080-4eb9-8723-df54f0aea0b8] received
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,083: INFO/ForkPoolWorker-1] Consuming file: /tmp/paperless-ngx-test/consume/test_document.txt
+{'args': ('/app/src/../consume/test_document.txt',),
+ 'func': 'documents.tasks.consume_file',
+ 'id': 'ce22e2871f504a449298dd4b4ad650ce',
+ 'kwargs': {'override_tag_ids': None},
+ 'name': 'test_document.txt',
+ 'started': datetime.datetime(2026, 11, 3, 1, 19, 4, 603135, tzinfo=datetime.timezone.utc)}
 ```
 
-After `consume_file` started, the logs show the sequence of additional tasks that represent parsing, classification, and indexing; `consume_file` created a `Document` record and then scheduled `parse_document`, which in turn scheduled `classify_document`, and finally `classify_document` scheduled `index_document`, so for this single file I saw four distinct task names in order.
+So the queued task is a dict with the dotted function path (`func`), the positional arguments (`args`, whose only element is the path of the file in the consumption directory), the keyword arguments (`kwargs`), the task name (the file's base name), a task id and the enqueue time.
+
+Next I started the worker and scheduler process:
 
 ```bash
-docker compose logs --since=30s worker | sed -n '1,200p'
+python3 manage.py qcluster > /tmp/qcluster.log 2>&1 &
+```
+
+The qcluster log shows the cluster coming up, a worker picking up the queued task and the consumer pipeline running inside it:
+
+```text
+01:19:08 [Q] INFO Q Cluster bluebird-fruit-pasta-four starting.
+01:19:08 [Q] INFO Process-1:1 ready for work at 105
+01:19:08 [Q] INFO Process-1:2 ready for work at 106
+01:19:08 [Q] INFO Process-1:3 ready for work at 107
+01:19:08 [Q] INFO Process-1:4 ready for work at 108
+01:19:08 [Q] INFO Process-1:5 monitoring at 109
+01:19:08 [Q] INFO Process-1 guarding cluster bluebird-fruit-pasta-four
+01:19:08 [Q] INFO Process-1:6 pushing tasks at 110
+01:19:08 [Q] INFO Q Cluster bluebird-fruit-pasta-four running.
+01:19:08 [Q] INFO Process-1:1 processing [test_document.txt]
+[2026-11-03 01:19:08,698] [INFO] [paperless.consumer] Consuming test_document.txt
+[2026-11-03 01:19:08,700] [DEBUG] [paperless.consumer] Detected mime type: text/plain
+[2026-11-03 01:19:08,703] [DEBUG] [paperless.consumer] Parser: TextDocumentParser
+[2026-11-03 01:19:08,707] [DEBUG] [paperless.consumer] Parsing test_document.txt...
+[2026-11-03 01:19:08,707] [DEBUG] [paperless.consumer] Generating thumbnail for test_document.txt...
+[2026-11-03 01:19:08,721] [DEBUG] [paperless.parsing.text] Execute: optipng -silent -o5 /tmp/paperless/paperless-s5_srpo7/thumb.png -out /tmp/paperless/paperless-s5_srpo7/thumb_optipng.png
+[2026-11-03 01:19:09,064] [DEBUG] [paperless.classifier] Document classification model does not exist (yet), not performing automatic matching.
+[2026-11-03 01:19:09,068] [DEBUG] [paperless.consumer] Saving record to database
+[2026-11-03 01:19:09,082] [DEBUG] [paperless.consumer] Deleting file /app/src/../consume/test_document.txt
+[2026-11-03 01:19:09,082] [DEBUG] [paperless.parsing.text] Deleting directory /tmp/paperless/paperless-s5_srpo7
+[2026-11-03 01:19:09,082] [INFO] [paperless.consumer] Document 2026-11-03 test_document consumption finished
+01:19:09 [Q] INFO Process-1:1 stopped doing work
+01:19:09 [Q] INFO Processed [test_document.txt]
+```
+
+No additional tasks show up for parsing, classification or indexing: the qcluster processed exactly one task, `[test_document.txt]`, and `LLEN django_q:paperless:q` returned 0 afterwards. All stages run inside that single `consume_file` task. `Consumer.try_consume_file` in `src/documents/consumer.py` detects the MIME type, selects and runs the parser (the parsing stage), generates the thumbnail, loads the classifier (the classification stage, which here reports that no model exists yet) and saves the record. It then sends the `document_consumption_finished` signal, whose handlers are connected in `src/documents/apps.py`: `add_inbox_tags`, `set_correspondent`, `set_document_type`, `set_tags`, `set_log_entry` and `add_to_index`. The last one writes the document into the Whoosh full-text index (the indexing stage), still within the same task.
+
+After processing completed I queried the database. The document record is stored in the `documents_document` table:
+
+```bash
+python3 manage.py shell -c "
+from documents.models import Document
+d = Document.objects.get()
+print(Document._meta.db_table)
+print([f.name for f in Document._meta.concrete_fields])
+for f in ['id','title','mime_type','checksum','filename','storage_type','created','added','modified','content','correspondent_id','document_type_id','archive_serial_number','archive_filename']:
+    print(f, '=', repr(getattr(d, f)))
+"
 ```
 
 ```text
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,210: INFO/ForkPoolWorker-1] Task paperless.tasks.parse_document[56c4cfa5-875e-4e22-a9fb-5cd5a84cfb2c] scheduled for Document ID 1
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,214: INFO/MainProcess] Task paperless.tasks.consume_file[de24b4c6-3080-4eb9-8723-df54f0aea0b8] succeeded in 0.131234s: 1
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,219: INFO/MainProcess] Task paperless.tasks.parse_document[56c4cfa5-875e-4e22-a9fb-5cd5a84cfb2c] received
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,245: INFO/ForkPoolWorker-1] Parsing document 1 using Tika at http://tika:9998
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,612: INFO/ForkPoolWorker-1] Task paperless.tasks.classify_document[5a7fa3aa-708b-4493-b911-e7ff82e2f1ca] scheduled for Document ID 1
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,617: INFO/MainProcess] Task paperless.tasks.parse_document[56c4cfa5-875e-4e22-a9fb-5cd5a84cfb2c] succeeded in 0.392001s: 1
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,621: INFO/MainProcess] Task paperless.tasks.classify_document[5a7fa3aa-708b-4493-b911-e7ff82e2f1ca] received
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,644: INFO/ForkPoolWorker-1] Classifying document 1 (language detection, correspondent, type, tags)
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,729: INFO/ForkPoolWorker-1] Task paperless.tasks.index_document[e1f9fdf6-6bd5-47b1-8e2e-8a0c33ece92a] scheduled for Document ID 1
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,733: INFO/MainProcess] Task paperless.tasks.classify_document[5a7fa3aa-708b-4493-b911-e7ff82e2f1ca] succeeded in 0.111560s: 1
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,737: INFO/MainProcess] Task paperless.tasks.index_document[e1f9fdf6-6bd5-47b1-8e2e-8a0c33ece92a] received
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,764: INFO/ForkPoolWorker-1] Indexing document 1 for full-text search
-paperless-ngx-worker-1     | [2025-12-11 06:41:01,802: INFO/MainProcess] Task paperless.tasks.index_document[e1f9fdf6-6bd5-47b1-8e2e-8a0c33ece92a] succeeded in 0.060178s: 1
+documents_document
+['id', 'correspondent', 'title', 'document_type', 'content', 'mime_type', 'checksum', 'archive_checksum', 'created', 'modified', 'storage_type', 'added', 'filename', 'archive_filename', 'archive_serial_number']
+id = 1
+title = 'test_document'
+mime_type = 'text/plain'
+checksum = '5d0f0ddeac840544d41662496987ce30'
+filename = '0000001.txt'
+storage_type = 'unencrypted'
+created = datetime.datetime(2026, 11, 3, 1, 19, 3, 596934, tzinfo=datetime.timezone.utc)
+added = datetime.datetime(2026, 11, 3, 1, 19, 9, 69060, tzinfo=datetime.timezone.utc)
+modified = datetime.datetime(2026, 11, 3, 1, 19, 9, 81765, tzinfo=datetime.timezone.utc)
+content = 'Test document for Paperless-NGX ingestion\n'
+correspondent_id = None
+document_type_id = None
+archive_serial_number = None
+archive_filename = None
 ```
 
-To inspect how a queued ingestion task is represented in the message broker while it is still pending, I added a second test file and quickly looked into the Redis instance backing Celery; there I saw the `celery` list key with JSON-encoded messages whose headers named `paperless.tasks.consume_file` and whose body contained a base64-encoded inner payload with the task arguments.
+The parsed metadata matches the input file: `content` holds exactly the text I wrote, `mime_type` is `text/plain` as detected in the log, `title` is derived from the file name, `checksum` is the MD5 of the original file and `filename` is the stored original (`0000001.txt`). `created` comes from date parsing (no date in the text, so the file time is used), `added`/`modified` are the ingestion times, and `correspondent_id`, `document_type_id` and the `documents_document_tags` many-to-many table hold classification results (empty here because no correspondents, types or tags exist). There is no `archive_filename` because the text parser produces no archive PDF. There is no language column at this commit.
+
+The record of task execution is kept by django-q in the `django_q_task` table (the database also has `django_q_ormq` and `django_q_schedule`):
 
 ```bash
-printf 'Second test document\n' > /tmp/paperless-ngx-test/consume/test_document_2.txt
-
-cd /app/paperless-ngx/docker/compose
-docker compose exec -T broker redis-cli KEYS '*'
-docker compose exec -T broker redis-cli LRANGE celery 0 -1 | head -n 3
+python3 manage.py shell -c "
+from django_q.models import Task
+print(Task._meta.db_table)
+for t in Task.objects.all().order_by('started'):
+    print(t.id, '|', t.name, '|', t.func, '|', t.args, '|', t.kwargs, '|', t.success, '|', t.started, '|', t.stopped, '|', t.result)
+"
 ```
 
 ```text
-1) "celery"
-2) "_kombu.binding.celery"
-3) "_kombu.binding.celery.pidbox"
-"[{\"body\": \"W1siYmQ0ZDIyMTYtZGUyNy00ZmRjLWFkZjItY2E2ZWU5OWUwMjQ4IiwiY3R5cGUiLCJwYXBlcmxlc3MudGFza3MuY29uc3VtZV9maWxlIiwiWycvdG1wL3BhcGVybGVzcy1uZ3gtdGVzdC9jb25zdW1lL3Rlc3RfZG9jdW1lbnRfMi50eHQnXSwge30sIDAsIG51bGxdXQ==\", \"headers\": {\"lang\": \"py\", \"task\": \"paperless.tasks.consume_file\", \"id\": \"bd4d2216-de27-4fdc-adf2-ca6ee99e0248\", \"shadow\": null, \"eta\": null, \"expires\": null, \"group\": null, \"retries\": 0, \"timelimit\": [null, null], \"root_id\": \"bd4d2216-de27-4fdc-adf2-ca6ee99e0248\", \"parent_id\": null, \"argsrepr\": \"('/tmp/paperless-ngx-test/consume/test_document_2.txt',)\", \"kwargsrepr\": \"{}\", \"origin\": \"celery@worker-1\"}, \"content-type\": \"application/json\", \"content-encoding\": \"utf-8\", \"properties\": {\"correlation_id\": \"bd4d2216-de27-4fdc-adf2-ca6ee99e0248\", \"reply_to\": \"e7e89f1f-14ae-33ea-949c-bc82f4da9572\", \"delivery_mode\": 2, \"delivery_info\": {\"exchange\": \"\", \"routing_key\": \"celery\"}, \"priority\": 0, \"body_encoding\": \"base64\", \"delivery_tag\": \"1\"}}]"
+django_q_task
+ce22e2871f504a449298dd4b4ad650ce | test_document.txt | documents.tasks.consume_file | ('/app/src/../consume/test_document.txt',) | {'override_tag_ids': None} | True | 2026-11-03 01:19:04.603135+00:00 | 2026-11-03 01:19:09.085529+00:00 | Success. New document id 1 created
 ```
 
-To decode the Celery message body and see the underlying data structure, I piped the first list element through a small Python snippet that base64-decodes the `body` field; this revealed that the application-level task payload is a JSON list whose elements include the task ID, the task name, and the args list, where the only argument is the absolute path to the file in the consumption directory, and kwargs is an empty object.
+The row has the same id as the queued broker payload, the function, its arguments, the success flag, the enqueue and finish times, and the return value of `consume_file`. The `documents_log` table, which normally receives the consumer's log lines through the database log handler, stayed empty because this environment sets `PAPERLESS_DISABLE_DBHANDLER=true`.
 
-```bash
-docker compose exec -T broker redis-cli LRANGE celery 0 0 \
-  | python - << 'PY'
-import json, base64, sys
-raw = sys.stdin.read().strip()
-msg = json.loads(raw.strip('[]'))
-body_b64 = msg["body"]
-decoded = base64.b64decode(body_b64)
-print(decoded.decode("utf-8"))
-PY
+With that behavior in mind, I traced the code path. The part of the system that detects new files is the `document_consumer` management command in `src/documents/management/commands/document_consumer.py`. `Command.handle` first calls `_consume()` for every file already in the directory, then watches it. With inotify available and `PAPERLESS_CONSUMER_POLLING` at 0 it runs `handle_inotify`, which logs "Using inotify to watch directory for changes", waits for `CLOSE_WRITE`/`MOVED_TO` events and calls `_consume(filepath)` once a file has been quiet for 0.5 s. Otherwise `handle_polling` uses a watchdog `PollingObserver` whose `Handler.on_created`/`on_moved` call `_consume_wait_unmodified`, which calls `_consume`.
+
+`_consume()` in the same file is the component that creates the ingestion task object. It skips directories, ignored and unsupported files, checks that the file can be opened, optionally derives tag ids from sub-directories, and then calls:
+
+```python
+logger.info(f"Adding {filepath} to the task queue.")
+async_task(
+    "documents.tasks.consume_file",
+    filepath,
+    override_tag_ids=tag_ids if tag_ids else None,
+    task_name=os.path.basename(filepath)[:100],
+)
 ```
 
-```text
-[["bd4d2216-de27-4fdc-adf2-ca6ee99e0248", "ctyp", "paperless.tasks.consume_file", ["/tmp/paperless-ngx-test/consume/test_document_2.txt"], {}, 0, null]]
-```
+`async_task` comes from `django_q.tasks` (django-q 1.3.9 is installed). It builds the task dict seen in the broker (id, name, func, args, kwargs, started), packs it with `SignedPackage.dumps` and pushes it with the Redis broker's `enqueue` (`RPUSH` onto `django_q:paperless:q`). The broker connection comes from `Q_CLUSTER` in `src/paperless/settings.py` (`"name": "paperless"`, `"redis": os.getenv("PAPERLESS_REDIS", "redis://localhost:6379")`). The queuing framework that dispatches the task is therefore django-q on Redis. The `qcluster` process pulls the entry, runs `documents.tasks.consume_file(path, override_tag_ids=None)`, which calls `Consumer().try_consume_file(...)`, and stores the outcome in `django_q_task`. The same cluster also runs the periodic schedules registered by migration `1001_auto_20201109_1636` (classifier training and index optimization).
 
-Once the ingestion and follow-on tasks completed, I examined the PostgreSQL database to see how the document record is stored and where parsed metadata lands; Paperless-NGX uses Django with a `documents_document` table as the core storage for each ingested file, so I listed the tables and then queried the most recent `documents_document` row, which showed `title`, `original_file_name`, `mime_type`, `language`, and `storage_path` populated for the newly ingested `test_document.txt`.
-
-```bash
-cd /app/paperless-ngx/docker/compose
-docker compose exec -T db psql -U paperless paperless -c '\dt'
-docker compose exec -T db psql -U paperless paperless -c \
-  "SELECT id, title, original_file_name, mime_type, language, storage_path, created, modified
-   FROM documents_document
-   ORDER BY id DESC
-   LIMIT 1"
-```
-
-```text
-  1 | test_document        | test_document.txt  | text/plain         | en       | documents/2025/12/11/test_document_ku0g5d.txt | 2025-12-11 06:41:01.190918 | 2025-12-11 06:41:01.780123
-(1 row)
-```
-
-To understand which fields specifically capture parsed metadata and classification results, I described the `documents_document` table; in this schema, `content` holds the full extracted text from Tika, `checksum` enforces deduplication, `archive_filename` and `storage_path` tie the record to the file on disk, and `correspondent_id`, `document_type_id`, and the many-to-many `documents_document_tags` table represent the classification output such as correspondent, document type, and tags.
-
-```bash
-docker compose exec -T db psql -U paperless paperless -c '\d+ documents_document'
-```
-
-```text
- id                | integer                  |           | not null | nextval('documents_document_id_seq'::regclass)
- title             | character varying(255)|not null |
- content           | text                 
- created           | timestamp with time zone |not null |
- modified          | timestamp with time zone |not null |
- original_file_name| character varying(255) 
- mime_type         | character varying(100)  
- language          | character varying(8) 
- checksum          | character varying(64)    | not null |
- archive_filename  | character varying(255)   | not null |
- storage_path      | character varying(255)   |not null |
- correspondent_id  | integer          
- document_type_id  | integer              
- ...
-Indexes:
-    "documents_document_pkey" PRIMARY KEY, btree (id)
-    "documents_document_checksum_key" UNIQUE CONSTRAINT, btree (checksum)
-Foreign-key constraints:
-    "documents_document_correspondent_id_..._fkey" FOREIGN KEY (correspondent_id) REFERENCES documents_correspondent(id)
-    "documents_document_document_type_id_..._fkey" FOREIGN KEY (document_type_id) REFERENCES documents_documenttype(id)
-```
-
-For a record of task execution history beyond transient logs, I looked at the Celery result backend tables that Paperless-NGX configures; the `django_celery_results_taskresult` table stores one row per completed task, including the task name, ID, status, and completion timestamp, and querying it showed entries for `consume_from_consume_dir`, `consume_file`, `parse_document`, `classify_document`, and `index_document` for my test document in the order they ran.
-
-```bash
-docker compose exec -T db psql -U paperless paperless -c \
-  "SELECT task_id, task_name, status, date_done
-   FROM django_celery_results_taskresult
-   ORDER BY date_done DESC
-   LIMIT 5"
-```
-
-```text
- e1f9fdf6-6bd5-47b1-8e2e-8a0c33ece92a | paperless.tasks.index_document            | SUCCESS  | 2025-12-11 06:41:01.802165+00
- 5a7fa3aa-708b-4493-b911-e7ff82e2f1ca | paperless.tasks.classify_document         | SUCCESS  | 2025-12-11 06:41:01.733412+00
- 56c4cfa5-875e-4e22-a9fb-5cd5a84cfb2c | paperless.tasks.parse_document            | SUCCESS  | 2025-12-11 06:41:01.617943+00
- de24b4c6-3080-4eb9-8723-df54f0aea0b8 | paperless.tasks.consume_file              | SUCCESS  | 2025-12-11 06:41:01.214773+00
- 8c3c1c18-b7f0-4e9e-9b11-7f2b9f75f6e5 | paperless.tasks.consume_from_consume_dir  | SUCCESS  | 2025-12-11 06:41:01.064512+00
-(5 rows)
-```
-
-With the runtime behavior in mind, I then traced the high-level code path that drives this workflow, starting from the code that detects new files in the consumption directory; using ripgrep in the source tree, I found that the Celery beat schedule targets `paperless.tasks.consume_from_consume_dir`, which is defined as a shared Celery task in `src/paperless/tasks.py`, and that the `PAPERLESS_CONSUMPTION_DIR` setting comes from `settings.py`.
-
-```bash
-cd /app/paperless-ngx
-rg "consume_from_consume_dir" -n
-rg "PAPERLESS_CONSUMPTION_DIR" -n
-sed -n '40,80p' src/paperless/tasks.py
-```
-
-```text
-src/paperless/tasks.py:45: @shared_task(name="paperless.tasks.consume_from_consume_dir")
-src/paperless/tasks.py:46: def consume_from_consume_dir():
-src/paperless/settings.py:210: PAPERLESS_CONSUMPTION_DIR = env("PAPERLESS_CONSUMPTION_DIR", default="/usr/src/paperless/consume")
-
-@shared_task(name="paperless.tasks.consume_from_consume_dir")
-def consume_from_consume_dir():
-    logger.info("Starting consumption from %s", settings.PAPERLESS_CONSUMPTION_DIR)
-    for path in iter_consumption_files(settings.PAPERLESS_CONSUMPTION_DIR):
-        logger.info("Found new file for consumption: %s", path)
-        consume_file.delay(str(path))
-```
-
-From the task definition, the part of the application responsible for creating the ingestion task object is the call to `consume_file.delay(str(path))` inside `consume_from_consume_dir`; this uses Celery’s `@shared_task` decorator and `.delay()` API to construct a Celery task request, hand it to the Celery client library, and enqueue it via the configured broker, which in this deployment is Redis.
-
-```bash
-sed -n '80,160p' src/paperless/tasks.py
-```
-
-```text
-@shared_task(name="paperless.tasks.consume_file")
-def consume_file(path: str) -> int:
-    logger.info("Consuming file: %s", path)
-    document = DocumentConsumer().consume(path)
-    parse_document.delay(document.pk)
-    return document.pk
-```
-
-Following the chain of components further, `consume_file` delegates the actual file handling and `Document` creation to a `DocumentConsumer` class in the consumption app; that class encapsulates checksum calculation, moving the file into the media storage hierarchy, and creating a `documents_document` model instance, after which `consume_file` enqueues the next `parse_document` task with the newly assigned primary key as the argument.
-
-```bash
-rg "class DocumentConsumer" -n
-sed -n '1,120p' src/paperless/apps/consumption/document_consumer.py
-```
-
-```text
-class DocumentConsumer:
-    def consume(self, path: str) -> Document:
-        document = Document.objects.create_from_path(path)
-        logger.debug("Created document %s for path %s", document.pk, path)
-        return document
-```
-
-The later stages in the workflow each have their own task definitions in the same tasks module: `parse_document` loads the `Document` from the database, calls a `DocumentParser` to invoke Tika and Gotenberg and fill in the `content` and related metadata, then calls `classify_document.delay(document_id)`; `classify_document` uses a `DocumentClassifier` to infer language, correspondent, type, and tags, then calls `index_document.delay(document_id)`; and `index_document` uses a `DocumentIndexer` to update whatever search backend Paperless-NGX is configured with, which explains the distinct log messages and task records I observed for each phase.
-
-```bash
-rg "parse_document" src -n
-rg "classify_document" src -n
-rg "index_document" src -n
-sed -n '160,260p' src/paperless/tasks.py
-```
-
-```text
-@shared_task(name="paperless.tasks.parse_document")
-def parse_document(document_id: int) -> int:
-    document = Document.objects.get(pk=document_id)
-    logger.info("Parsing document %s using Tika", document_id)
-    DocumentParser().parse(document)
-    classify_document.delay(document_id)
-    return document_id
-
-
-@shared_task(name="paperless.tasks.classify_document")
-def classify_document(document_id: int) -> int:
-    document = Document.objects.get(pk=document_id)
-    logger.info("Classifying document %s", document_id)
-    DocumentClassifier().classify(document)
-    index_document.delay(document_id)
-    return document_id
-
-
-@shared_task(name="paperless.tasks.index_document")
-def index_document(document_id: int) -> int:
-    document = Document.objects.get(pk=document_id)
-    logger.info("Indexing document %s", document_id)
-    DocumentIndexer().index(document)
-    return document_id
-```
-
-Looking at the Celery configuration confirms that Paperless-NGX relies on Celery with Redis as its queuing framework and the Django database as the result backend; `src/paperless/celery.py` creates the Celery application, loads settings with a `CELERY_` namespace, and autodiscovers tasks, and in `settings.py` the `CELERY_BROKER_URL` points at the Redis `broker` container while `CELERY_RESULT_BACKEND` is set to `"django-db"`, which matches the Redis task messages and the `django_celery_results_taskresult` table I inspected.
-
-```bash
-sed -n '1,120p' src/paperless/celery.py
-sed -n '200,260p' src/paperless/settings.py
-```
-
-```text
-from celery import Celery
-
-app = Celery("paperless")
-app.config_from_object("django.conf:settings", namespace="CELERY")
-app.autodiscover_tasks()
-
-
-CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://broker:6379/0")
-CELERY_RESULT_BACKEND = "django-db"
-```
-
-After confirming the runtime behavior, the broker payload format, the database schema, and the code path from file detection through task creation and execution, I shut down the Docker stack and removed the temporary host directories used for data, media, and consumption, along with the test files, leaving the cloned source tree in `/app/paperless-ngx` but no lingering runtime artifacts from this experiment.
-
-```bash
-cd /app/paperless-ngx/docker/compose
-docker compose down -v
-rm -rf /tmp/paperless-ngx-test
-echo 'paperless-ngx ingestion test cleanup complete'
-```
-
-```text
-Removing network paperless-ngx_default
-Removing volume paperless-ngx_db-data
-Removing volume paperless-ngx_redis-data
-paperless-ngx ingestion test cleanup complete
-``` 
+When I was done I stopped the gunicorn, consumer and qcluster processes and the Redis server, and removed the temporary `/app/consume`, `/app/media` and `/app/data` directories, so the test file, the stored document, the SQLite database and the index were all deleted and the repository was left unchanged.

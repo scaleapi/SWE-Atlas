@@ -6,6 +6,8 @@ package main
 
 import (
     "fmt"
+    "path"
+    "path/filepath"
     "strings"
 )
 
@@ -17,16 +19,24 @@ func parseCommandPayload(command string) (string, []string, error) {
     return parts[0], parts[1:], nil
 }
 
+// getDestPath is the verbatim body of (*sshCommand).getDestPath from
+// sftpd/ssh_cmd.go, lifted to run on the args slice directly so this
+// standalone program exercises the real destination-path logic.
 func getDestPath(args []string) string {
     if len(args) == 0 {
         return ""
     }
-    destPath := args[len(args)-1]
-    if strings.HasPrefix(destPath, "'") && strings.HasSuffix(destPath, "'") {
-        destPath = strings.TrimPrefix(destPath, "'")
-        destPath = strings.TrimSuffix(destPath, "'")
+    destPath := strings.Trim(args[len(args)-1], "'")
+    destPath = strings.Trim(destPath, "\"")
+    destPath = filepath.ToSlash(destPath)
+    if !path.IsAbs(destPath) {
+        destPath = "/" + destPath
     }
-    return destPath
+    result := path.Clean(destPath)
+    if strings.HasSuffix(destPath, "/") && !strings.HasSuffix(result, "/") {
+        result += "/"
+    }
+    return result
 }
 
 func main() {
@@ -54,7 +64,7 @@ Input: rsync --server --rsync-path=/bin/sh . /uploads
   Name: rsync, Args: [--server --rsync-path=/bin/sh . /uploads], DestPath: /uploads
 
 Input: rsync --server . '/uploads/my file.txt'
-  Name: rsync, Args: [--server . '/uploads/my file.txt'], DestPath: file.txt'
+  Name: rsync, Args: [--server . '/uploads/my file.txt'], DestPath: /file.txt
 
 That second test case is interesting . the "--rsync-path=/bin/sh" flag just gets passed through as a regular argument. There's no filtering happening here at all. The function splits on spaces and that's it. Whatever arguments the client sends become part of the args slice.
 
@@ -254,7 +264,52 @@ Input: rsync --server '--flag=value with space' . /uploads
 
 The quotes are treated as literal characters. A path like '/uploads/my file.txt' gets split into two pieces with the quotes still attached. This isn't really an attack vector on its own, but it shows how minimal the parsing is, there's no attempt to handle structured input properly.
 
-What really matters is the order of operations. I wanted to understand exactly when different checks happen in the processing chain:
+What really matters is the order of operations. To ground this, here is the real getSystemCommand method, copied verbatim from /app/sftpd/ssh_cmd.go, which is what actually assembles and runs the command:
+
+```go
+func (c *sshCommand) getSystemCommand() (systemCommand, error) {
+	command := systemCommand{
+		cmd:      nil,
+		realPath: "",
+	}
+	args := make([]string, len(c.args))
+	copy(args, c.args)
+	var path string
+	if len(c.args) > 0 {
+		var err error
+		sshPath := c.getDestPath()
+		path, err = c.connection.fs.ResolvePath(sshPath)
+		if err != nil {
+			return command, err
+		}
+		args = args[:len(args)-1]
+		args = append(args, path)
+	}
+	if c.command == "rsync" {
+		// we cannot avoid that rsync create symlinks so if the user has the permission
+		// to create symlinks we add the option --safe-links to the received rsync command if
+		// it is not already set. This should prevent to create symlinks that point outside
+		// the home dir.
+		// If the user cannot create symlinks we add the option --munge-links, if it is not
+		// already set. This should make symlinks unusable (but manually recoverable)
+		if c.connection.User.HasPerm(dataprovider.PermCreateSymlinks, c.getDestPath()) {
+			if !utils.IsStringInSlice("--safe-links", args) {
+				args = append([]string{"--safe-links"}, args...)
+			}
+		} else {
+			if !utils.IsStringInSlice("--munge-links", args) {
+				args = append([]string{"--munge-links"}, args...)
+			}
+		}
+	}
+	c.connection.Log(logger.LevelDebug, logSenderSSH, "new system command %#v, with args: %v path: %v", c.command, args, path)
+	cmd := exec.Command(c.command, args...)
+	// ... wrapCmd / uid / gid setup, then:
+	return command, nil
+}
+```
+
+The real code copies the full argument slice produced by parseCommandPayload, derives the destination with getDestPath, resolves only that single last argument through ResolvePath, swaps it back into place, and then hands the whole slice, with every other flag left untouched, to exec.Command. To make that ordering concrete I wrote an illustrative model that walks through those same steps. This is a hand-written trace of the ordering, not the server's own code path, and its ResolvePath line is a simplified stand-in for the real vfs ResolvePath:
 
 ```bash
 cat > /tmp/test_permission_order.go << 'EOF'
@@ -327,7 +382,7 @@ Step 5: exec.Command
 CONCLUSION: Malicious flag present at Step 1, permission check at Step 4
 By Step 4, the flag is already in args - cannot be prevented!
 
-The malicious flag is already in the args array before any permission checking happens. The permission system can't help because it only looks at path permissions, not at what flags are being passed. By the time we get to step 4, the damage is done , the flag is already going to be passed to exec.Command.
+This trace mirrors the real getSystemCommand above: the injected flag is already sitting in the args slice before ResolvePath ever runs, and ResolvePath only validates the final destination argument, never the flags in between. The permission and path checks operate on the resolved path, not on what flags are being passed, so by the time exec.Command(c.command, args...) is reached the malicious flag is already part of the command line and cannot be stripped out.
 
 I also looked at the symlink protections. The server tries to add --safe-links or --munge-links to prevent symlink-based escapes, but there's a problem with how it checks if the flag is already present:
 
@@ -389,10 +444,29 @@ Args: [--server --safe-links=0 . /uploads]
 
 See that last case, if you send --safe-links=0, the exact string match for "--safe-links" fails, so the server adds "--safe-links" to the beginning. But now rsync sees both flags, and depending on how rsync handles duplicates, the --safe-links=0 might take precedence and disable the protection entirely.
 
-There's also an issue with the path containment check in isSubDir:
+There's also an issue with the path containment check. When a resolved path is validated against the user's home directory, ResolvePath in vfs/osfs.go calls isSubDir. Here is the real function, copied verbatim from /app/vfs/osfs.go:
+
+```go
+func (fs *OsFs) isSubDir(sub, rootPath string) error {
+	// rootPath must exist and it is already a validated absolute path
+	parent, err := filepath.EvalSymlinks(rootPath)
+	if err != nil {
+		fsLog(fs, logger.LevelWarn, "invalid home dir %#v: %v", rootPath, err)
+		return err
+	}
+	if !strings.HasPrefix(sub, parent) {
+		err = fmt.Errorf("path %#v is not inside: %#v", sub, parent)
+		fsLog(fs, logger.LevelWarn, "error: %v ", err)
+		return err
+	}
+	return nil
+}
+```
+
+So the containment test is a single `strings.HasPrefix(sub, parent)` with no trailing-separator guard. I isolated that exact primitive on the candidate paths to observe how it behaves:
 
 ```bash
-cat > /tmp/test_path_resolution.go << 'EOF'
+cat > /tmp/test_hasprefix.go << 'EOF'
 package main
 
 import (
@@ -400,13 +474,9 @@ import (
     "strings"
 )
 
-func isSubDir(parent, sub string) bool {
-    return strings.HasPrefix(sub, parent)
-}
-
 func main() {
-    fmt.Println("Testing isSubDir() - exact code from vfs/osfs.go")
-    
+    // The containment test inside (*OsFs).isSubDir is exactly:
+    //     if !strings.HasPrefix(sub, parent) { ... return error }
     tests := []struct {
         parent string
         sub    string
@@ -415,22 +485,19 @@ func main() {
         {"/home/user", "/home/user_attacker"},
         {"/home/user", "/home/user2"},
     }
-
     for _, t := range tests {
-        result := isSubDir(t.parent, t.sub)
-        fmt.Printf("isSubDir('%s', '%s') = %v\n", t.parent, t.sub, result)
+        fmt.Printf("strings.HasPrefix(%q, %q) = %v\n", t.sub, t.parent, strings.HasPrefix(t.sub, t.parent))
     }
 }
 EOF
-go run /tmp/test_path_resolution.go
+go run /tmp/test_hasprefix.go
 ```
 
 Output:
-Testing isSubDir() - exact code from vfs/osfs.go
-isSubDir('/home/user', '/home/user/uploads') = true
-isSubDir('/home/user', '/home/user_attacker') = true
-isSubDir('/home/user', '/home/user2') = true
+strings.HasPrefix("/home/user/uploads", "/home/user") = true
+strings.HasPrefix("/home/user_attacker", "/home/user") = true
+strings.HasPrefix("/home/user2", "/home/user") = true
 
-Using strings.HasPrefix means /home/user_attacker passes as a subdirectory of /home/user because it starts with the same prefix. That's a classic path traversal bug.
+Because the real check is a bare prefix comparison, /home/user_attacker is treated as being inside /home/user even though it is a sibling, not a child. Without appending a path separator to parent before the prefix test, any home directory whose path is a string prefix of another user's home can slip past containment. That's a classic prefix-matching path-containment weakness.
 
 Putting this all together, the security model has some serious holes. The command name gets checked against an allowlist, and the final path argument goes through ResolvePath, but everything in between , all those flags and intermediate arguments , just passes straight through to exec.Command with no validation. The parseCommandPayload function uses basic string splitting, quotes aren't handled as grouping delimiters, and the symlink protections can be bypassed with flag value tricks. The whole thing adds up to CVE-2025-24366, which lets attackers inject arbitrary rsync flags including --rsync-path for command execution.

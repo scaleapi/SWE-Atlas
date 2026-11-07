@@ -61,7 +61,7 @@
       "importance": "must have"
     },
     "id": "0a3fae5e90e38dae5b8f1dd4c11ce977",
-    "title": "1.8: Tests that List returns items after closing and re-opening the store to verify persistence"
+    "title": "1.8: Tests that List returns items after re-opening the store on the same directory to verify persistence"
   },
   {
     "annotations": {

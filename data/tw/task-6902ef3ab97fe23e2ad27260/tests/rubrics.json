@@ -5,7 +5,7 @@
       "importance": "must have"
     },
     "id": "cb821c1c987618bb2aa298f66d3579ec",
-    "title": "1.1: Tests that FromReader returns all expected diffs with full commit metadata ('Hash', 'Author', 'Date', 'Message') and correct paths/content when parsing full commit history with staged=false."
+    "title": "1.1: Tests that each diff FromReader emits matches its expected diff with full commit metadata ('Hash', 'Author', 'Date', 'Message') and correct paths/content when parsing full commit history with staged=false."
   },
   {
     "annotations": {
@@ -21,7 +21,7 @@
       "importance": "must have"
     },
     "id": "683f7561b537e3c9cf109677dad34096",
-    "title": "1.3: Tests that FromReader returns multiple staged diffs (7 diffs including text, binary, and multi-hunk files) with empty commit metadata (Hash='', Author='') when parsing staged changes with BufferWriter"
+    "title": "1.3: Tests that each staged diff FromReader emits matches its expected diff (7 diffs including text, binary, and multi-hunk files) with empty commit metadata (Hash='', Author='') when parsing staged changes with BufferWriter"
   },
   {
     "annotations": {
@@ -29,7 +29,7 @@
       "importance": "must have"
     },
     "id": "02ddb1cd0d874086ed71aa1ec58a9d5b",
-    "title": "1.5: Tests that FromReader recovers from malformed commit sections then returns multiple valid diffs (minimum 3) including commit before corruption, malformed commit representation, and commit after recovery when processing data with BufferWriter"
+    "title": "1.4: Tests that FromReader recovers from malformed commit sections then returns multiple valid diffs (minimum 3) including commit before corruption, malformed commit representation, and commit after recovery when processing data with BufferWriter"
   },
   {
     "annotations": {
@@ -37,7 +37,7 @@
       "importance": "must have"
     },
     "id": "798a7f49268a5f691216142d3d69c9fd",
-    "title": "1.6: Tests that FromReader recovers from corrupted staged diff sections then returns multiple valid diffs (minimum 3) including diffs before corruption and diffs after recovery when staged=true"
+    "title": "1.5: Tests that FromReader recovers from corrupted staged diff sections then returns multiple valid diffs (minimum 3) including diffs before corruption and diffs after recovery when staged=true"
   },
   {
     "annotations": {

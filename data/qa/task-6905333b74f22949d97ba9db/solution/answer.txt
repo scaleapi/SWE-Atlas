@@ -241,64 +241,80 @@ def pre_check_duplicate(self):
         )
 ```
 
-To demonstrate the checksum comparison at the moment of judgment:
+To see the checksums compared at the moment of judgment, I ran the real consumer against a temporary data directory: one PDF is consumed normally, then a byte-identical copy under another name and the archived (OCR) version of the stored document are handed to Consumer.try_consume_file(), with the SQL of the duplicate check captured.
 
 ```bash
-python3 -c "
+redis-server --daemonize yes
+cat > /tmp/dup_check.py <<'PY'
 import hashlib
+import os
+import shutil
 
-# Document 1 - original file
-doc1_content = b'This is a test PDF document content'
-doc1_md5 = hashlib.md5(doc1_content).hexdigest()
+import django
 
-# Document 2 - same content, different filename
-doc2_content = b'This is a test PDF document content'
-doc2_md5 = hashlib.md5(doc2_content).hexdigest()
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "paperless.settings")
+django.setup()
 
-# Document 3 - different content
-doc3_content = b'This is a DIFFERENT PDF document'
-doc3_md5 = hashlib.md5(doc3_content).hexdigest()
+from django.core.management import call_command
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
+from documents.consumer import Consumer, ConsumerError
 
-print('Document 1 (invoice_2024.pdf):')
-print(f'  Content: {doc1_content}')
-print(f'  MD5:     {doc1_md5}')
-print()
-print('Document 2 (receipt_copy.pdf) - SAME CONTENT:')
-print(f'  Content: {doc2_content}')
-print(f'  MD5:     {doc2_md5}')
-print(f'  Checksums match: {doc1_md5 == doc2_md5}')
-print(f'  Result: REJECTED - Duplicate detected!')
-print()
-print('Document 3 (different_doc.pdf):')
-print(f'  Content: {doc3_content}')
-print(f'  MD5:     {doc3_md5}')
-print(f'  Checksums match doc1: {doc1_md5 == doc3_md5}')
-print(f'  Result: Accepted')
-print()
-print('Log message: \"Not consuming receipt_copy.pdf: It is a duplicate.\"')
-"
+call_command("migrate", verbosity=0)
+
+
+def md5(path):
+    with open(path, "rb") as f:
+        return hashlib.md5(f.read()).hexdigest()
+
+
+inbox = "/tmp/dup-demo/inbox"
+os.makedirs(inbox, exist_ok=True)
+sample = "/app/src/documents/tests/samples/simple.pdf"
+first = shutil.copy(sample, os.path.join(inbox, "invoice_2024.pdf"))
+second = shutil.copy(sample, os.path.join(inbox, "receipt_copy.pdf"))
+
+doc = Consumer().try_consume_file(first)
+print(f"Stored document {doc.pk}: checksum={doc.checksum} archive_checksum={doc.archive_checksum}")
+
+candidates = [second]
+if doc.has_archive_version:
+    candidates.append(shutil.copy(doc.archive_path, os.path.join(inbox, "invoice_ocr.pdf")))
+
+for path in candidates:
+    print(f"Incoming {os.path.basename(path)}: md5={md5(path)}")
+    with CaptureQueriesContext(connection) as queries:
+        try:
+            Consumer().try_consume_file(path)
+        except ConsumerError as e:
+            print(f"ConsumerError: {e}")
+    for q in queries.captured_queries:
+        if "checksum" in q["sql"]:
+            print(f"SQL: {q['sql']}")
+PY
+PYTHONPATH=/app/src PAPERLESS_DATA_DIR=/tmp/dup-demo/data PAPERLESS_MEDIA_ROOT=/tmp/dup-demo/media python3 /tmp/dup_check.py
+rm -rf /tmp/dup-demo /tmp/dup_check.py
 ```
 
 Output:
 ```
-Document 1 (invoice_2024.pdf):
-  Content: b'This is a test PDF document content'
-  MD5:     b02a96abfff0931372cffb4c3c217d5a
-
-Document 2 (receipt_copy.pdf) - SAME CONTENT:
-  Content: b'This is a test PDF document content'
-  MD5:     b02a96abfff0931372cffb4c3c217d5a
-  Checksums match: True
-  Result: REJECTED - Duplicate detected!
-
-Document 3 (different_doc.pdf):
-  Content: b'This is a DIFFERENT PDF document'
-  MD5:     5b34d26873a8ef6d6e58405cd943f680
-  Checksums match doc1: False
-  Result: Accepted
-
-Log message: "Not consuming receipt_copy.pdf: It is a duplicate."
+[2026-10-30 16:55:08,111] [INFO] [paperless.consumer] Consuming invoice_2024.pdf
+convert-im6.q16: attempt to perform an operation not allowed by the security policy `PDF' @ error/constitute.c/IsCoderAuthorized/426.
+convert-im6.q16: no images defined `/tmp/paperless/paperless-yy45fuc8/convert.png' @ error/convert.c/ConvertImageCommand/3229.
+[2026-10-30 16:55:08,634] [WARNING] [paperless.parsing] Thumbnail generation with ImageMagick failed, falling back to ghostscript. Check your /etc/ImageMagick-x/policy.xml!
+[2026-10-30 16:55:09,088] [INFO] [paperless.consumer] Document 2026-10-30 invoice_2024 consumption finished
+Stored document 1: checksum=42995833e01aea9b3edee44bbfdd7ce1 archive_checksum=a36fd8d504817fa3075cf217aa04f445
+Incoming receipt_copy.pdf: md5=42995833e01aea9b3edee44bbfdd7ce1
+[2026-10-30 16:55:09,098] [ERROR] [paperless.consumer] Not consuming receipt_copy.pdf: It is a duplicate.
+ConsumerError: receipt_copy.pdf: Not consuming receipt_copy.pdf: It is a duplicate.
+SQL: SELECT (1) AS "a" FROM "documents_document" WHERE ("documents_document"."checksum" = '42995833e01aea9b3edee44bbfdd7ce1' OR "documents_document"."archive_checksum" = '42995833e01aea9b3edee44bbfdd7ce1') LIMIT 1
+Incoming invoice_ocr.pdf: md5=a36fd8d504817fa3075cf217aa04f445
+[2026-10-30 16:55:09,104] [ERROR] [paperless.consumer] Not consuming invoice_ocr.pdf: It is a duplicate.
+ConsumerError: invoice_ocr.pdf: Not consuming invoice_ocr.pdf: It is a duplicate.
+SQL: SELECT (1) AS "a" FROM "documents_document" WHERE ("documents_document"."checksum" = 'a36fd8d504817fa3075cf217aa04f445' OR "documents_document"."archive_checksum" = 'a36fd8d504817fa3075cf217aa04f445') LIMIT 1
 ```
+
+The stored document has checksum 42995833e01aea9b3edee44bbfdd7ce1 (original) and archive_checksum a36fd8d504817fa3075cf217aa04f445 (OCR archive). receipt_copy.pdf hashes to 42995833e01aea9b3edee44bbfdd7ce1 and matches the checksum column; invoice_ocr.pdf is a different file but hashes to a36fd8d504817fa3075cf217aa04f445 and matches the archive_checksum column. Both are rejected by the same query before any parsing starts, and the files stay in the inbox because PAPERLESS_CONSUMER_DELETE_DUPLICATES is off.
 
 Two files that look completely different visually can be rejected as duplicates if their binary content produces the same MD5 hash. The system checks both the original checksum and archive_checksum fields, so even uploading an archived version of an existing document will be caught.
 

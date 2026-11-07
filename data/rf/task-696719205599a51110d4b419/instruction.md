@@ -12,3 +12,5 @@ Use the below interface for your solution:
 - Input: `originalChunk *Chunk`
 - Output: `chan *Chunk`
 - Description: Takes a Chunk and splits it into smaller chunks of ChunkSize. If the original chunk's data is small enough (at or below ChunkSize + PeekSize), it is passed through unchanged. For larger data, it reads in ChunkSize segments with PeekSize overlap, copying the original chunk's metadata into each resulting sub-chunk.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

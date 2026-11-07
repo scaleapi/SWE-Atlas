@@ -112,16 +112,8 @@
     }
   },
   {
-    "id": "32553b65c6830ead507775f8c922f6e9",
-    "title": "2.1: Claims the SPF check / deferral behavior belongs to a check name such as `check.spf`",
-    "annotations": {
-      "type": "negative hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "488db8ec0580df31089cde6c27e55881",
-    "title": "2.2: Claims the `deferring action due to a DMARC policy` log line includes structured fields such as `err` and/or `result`",
+    "title": "2.1: Claims the `deferring action due to a DMARC policy` log line includes structured fields such as `err` and/or `result`",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

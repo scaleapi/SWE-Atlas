@@ -60,16 +60,8 @@
       "type": "positive hli verifier",
       "importance": "must have"
     },
-    "id": "0a00bb49a9d0922e81e3b3ac2d39a76c",
-    "title": "1.8: Tests that `actions_for_url`returns matching actions when URL protocol matches the protocol criteria in the spec"
-  },
-  {
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    },
     "id": "15fa6fc6f9fe0c44da21d415975fae22",
-    "title": "1.9: Tests that actions_for_url returns matching actions when file MIME type matches the mime criteria in the spec"
+    "title": "1.8: Tests that actions_for_url returns matching actions when file MIME type matches the mime criteria in the spec"
   },
   {
     "annotations": {
@@ -77,7 +69,7 @@
       "importance": "must have"
     },
     "id": "9031882a935875be8070dbe0f885c7fe",
-    "title": "1.10: Tests that `actions_for_url` returns matching actions when file extension matches the ext criteria in the spec"
+    "title": "1.9: Tests that `actions_for_url` returns matching actions when file extension matches the ext criteria in the spec"
   },
   {
     "annotations": {
@@ -85,7 +77,7 @@
       "importance": "must have"
     },
     "id": "6b117d337509768376073778e24fc73b",
-    "title": "1.11: Tests that actions_for_url expands environment variables when action commands contain $VARIABLE syntax"
+    "title": "1.10: Tests that actions_for_url expands environment variables when action commands contain $VARIABLE syntax"
   },
   {
     "annotations": {
@@ -93,7 +85,7 @@
       "importance": "must have"
     },
     "id": "26761bb93f4bcb243b34001a1261d79e",
-    "title": "1.12: Tests that configuration parsing handles font_size when configuration contains font settings"
+    "title": "1.11: Tests that configuration parsing handles font_size when configuration contains font settings"
   },
   {
     "annotations": {
@@ -101,7 +93,7 @@
       "importance": "must have"
     },
     "id": "4ba74adf9702e927252d0502577beef9",
-    "title": "1.13: Tests that configuration parsing creates keyboard mappings when configuration contains map directives"
+    "title": "1.12: Tests that configuration parsing creates keyboard mappings when configuration contains map directives"
   },
   {
     "annotations": {
@@ -109,7 +101,7 @@
       "importance": "must have"
     },
     "id": "85b0e91b9b48773559b80f6b184542b6",
-    "title": "1.14: Tests that configuration parsing creates mouse mappings when configuration contains mouse_map directives"
+    "title": "1.13: Tests that configuration parsing creates mouse mappings when configuration contains mouse_map directives"
   },
   {
     "annotations": {
@@ -117,7 +109,7 @@
       "importance": "must have"
     },
     "id": "6508f6ea3efa1a92baa60897c2bf9d20",
-    "title": "1.15: Tests that configuration parsing resolves action aliases when configuration contains action_alias directives"
+    "title": "1.14: Tests that configuration parsing resolves action aliases when configuration contains action_alias directives"
   },
   {
     "annotations": {
@@ -125,7 +117,7 @@
       "importance": "must have"
     },
     "id": "756cc459339ced42dc92d8d8532678c1",
-    "title": "1.16: Tests that configuration parsing expands environment variables when env directives reference previously defined variables"
+    "title": "1.15: Tests that configuration parsing expands environment variables when env directives reference previously defined variables"
   },
   {
     "annotations": {
@@ -133,7 +125,7 @@
       "importance": "must have"
     },
     "id": "7037c6ae9c2cfd8264c55db09ccc4579",
-    "title": "1.17: Tests that configuration parsing joins split lines when configuration uses backslash line continuation"
+    "title": "1.16: Tests that configuration parsing joins split lines when configuration uses backslash line continuation"
   },
   {
     "annotations": {

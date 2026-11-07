@@ -1,4 +1,4 @@
-I want to strengthen the integration test coverage for the external authentication functionality in SFTGo.
+I want to strengthen the integration test coverage for the external authentication functionality in SFTPGo.
 
 The code is working correctly, but we're missing some integration tests for the external authentication program feature. This feature allows users to authenticate via an external program that validates credentials and returns user information.
 

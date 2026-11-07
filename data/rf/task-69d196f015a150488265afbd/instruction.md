@@ -31,3 +31,5 @@ I've already taken care of all changes to the test files. Do NOT modify any test
 
 - **File:** `client/my-sites/plans-features-main/hooks/use-generate-action-callback.ts`
 - **Change:** Internal upgrade handling accepts optional `redirectTo?: string`. When building checkout URLs, if `redirectTo` is set, merge `redirect_to: redirectTo` into the object passed to `addQueryArgs` together with any existing `coupon` argument. Dependency arrays must include `redirectTo` where applicable.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

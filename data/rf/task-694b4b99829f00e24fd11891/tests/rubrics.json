@@ -81,7 +81,7 @@
   },
   {
     "id": "b3c2ac02c178b3b0f4576cc2fefdcdaf",
-    "title": "1.10: Replaces all 14 pre-existing direct isEnabled('marketplace-redesign') call sites (full-width-section/index.jsx, categories/index.tsx, use-categories.tsx, education-footer/index.tsx, plugin-details-header/index.jsx, plugin-details.jsx, plugins-browser-item/index.jsx, collection-list-view/index.tsx, plugins-browser/index.jsx, single-list-view/index.jsx, plugins-category-results-page/index.jsx, plugins-discovery-page/index.jsx, plugins-search-results-page/index.jsx, related-plugins/index.tsx) with useIsMarketplaceRedesignEnabled",
+    "title": "1.10: Replaces the pre-existing direct isEnabled('marketplace-redesign') call sites in the affected files with the useIsMarketplaceRedesignEnabled value, read directly or passed in by the caller (such as the `enabled` prop of FullWidthSection or the parameter of getCategories)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "a8e53cccfebfb39bfe1fd665b0e9ccab",
-    "title": "1.11: Converts both static module-level flag-dependent constants (COLLECTION_LIST_LENGTH in collection-list-view/index.tsx, SHORT_LIST_LENGTH in single-list-view/index.jsx) into runtime computations",
+    "title": "1.11: Removes the flag dependency from both module-level constants (COLLECTION_LIST_LENGTH in collection-list-view/index.tsx, SHORT_LIST_LENGTH in single-list-view/index.jsx), so neither is derived from isEnabled at module scope and the flag-dependent length is resolved at runtime instead",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -137,7 +137,7 @@
   },
   {
     "id": "381c081fa0bd7b8c929fd623a4084d8b",
-    "title": "3.1: Removes all 13 isEnabled imports from '@automattic/calypso-config' (including full-width-section/index.jsx, categories/index.tsx, use-categories.tsx, education-footer/index.tsx, plugin-details-header/index.jsx, plugin-details.jsx, plugins-browser-item/index.jsx, collection-list-view/index.tsx, ...) where isEnabled was only used for the marketplace-redesign check",
+    "title": "3.1: Removes the isEnabled imports from '@automattic/calypso-config' in the files that no longer call it (full-width-section/index.jsx, categories/index.tsx, use-categories.tsx, education-footer/index.tsx, plugin-details-header/index.jsx, plugin-details.jsx, plugins-browser-item/index.jsx, collection-list-view/index.tsx)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

@@ -49,7 +49,7 @@
   },
   {
     "id": "ebfbe07c75f88c44bc629f16c4437253",
-    "title": "1.7: Reports actual log messages observed during concurrent session and quota burst (e.g., \"authentication refused...too many open sessions\", \"quota exceed for user\", \"denying file write due to space limit\").\n",
+    "title": "1.7: Reports actual log messages observed during concurrent session and quota burst (e.g., \"authentication refused...too many open sessions\", \"quota exceed for user\", \"denying file write due to space limit\").",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "8ad1e8ee87b956b40ebeb4655a45883b",
-    "title": "1.9: Reports observable behavior when idle timeout terminates connection (e.g., \"close idle connection, idle time: 4m49s\", specific timeout duration)\n",
+    "title": "1.9: Reports observable behavior when idle timeout terminates connection (e.g., \"close idle connection, idle time: 4m49s\", specific timeout duration)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "d53c6a014f8f226a43ae9bb389678ebf",
-    "title": "1.10: Identifies observable log markers distinguishing successful upload completion from interrupted transfer (e.g., \"atomic upload completed, rename\" for success vs \"atomic upload completed with error...delete temporary file\" for interruption).\n",
+    "title": "1.10: Identifies observable log markers distinguishing successful upload completion from interrupted transfer (e.g., \"atomic upload completed, rename\" for success vs \"atomic upload completed with error...delete temporary file\" for interruption).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "e4a293d9b3ea3a780fa8d557b0f57d7d",
-    "title": "1.11: Explains how session management coordinates with other subsystems (e.g., global mutex-protected openConnections map).\n",
+    "title": "1.11: Explains how session management coordinates with other subsystems (e.g., global mutex-protected openConnections map).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

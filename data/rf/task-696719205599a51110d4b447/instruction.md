@@ -57,3 +57,23 @@ Use the below interface for your solution:
 - Input: `sampleContainers []metrics.SampleContainer`
 - Output: `None`
 - Description: Receives a set of metric samples. This method is never called concurrently, so it defers work to asynchronous goroutines initialized in Start().
+
+---
+
+- Path: `output/cloud/output.go`
+- Name: `versionedOutput`
+- Type: interface
+- Input: `NA`
+- Output: `NA`
+- Description: Interface of a protocol version's output with the methods `Start() error`, `StopWithTestError(testRunErr error) error`, `SetTestRunStopCallback(func(error))`, `SetReferenceID(id string)` and `AddMetricSamples(samples []metrics.SampleContainer)`. The main cloud `Output` struct embeds it, so the active version is reachable as `out.versionedOutput`.
+
+---
+
+- Path: `output/cloud/output.go`
+- Name: `Output.startVersionedOutput`
+- Type: method
+- Input: `NA`
+- Output: `error`
+- Description: Creates the v1 output for the current test run, passes it the reference ID and the test run stop callback, and starts it. Returns an error containing "ReferenceID is required" when no reference ID is set.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

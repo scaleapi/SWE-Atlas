@@ -120,3 +120,5 @@ Use the below interface for your solution:
 - Input: `NA`
 - Output: `*template.Template`
 - Description: Exported parsed SQL template variable for inserting a new resource version row.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

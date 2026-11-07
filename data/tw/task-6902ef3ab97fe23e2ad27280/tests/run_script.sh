@@ -1,15 +1,11 @@
 #!/bin/bash
-### COMMON SETUP; DO NOT MODIFY ###
 set -e
 
-# --- CONFIGURE THIS SECTION ---
-# Replace this with your command to run all tests
 run_all_tests() {
   echo "Running all tests..."
   MINIO_API_REQUESTS_MAX=10000 CGO_ENABLED=1 go test -timeout 120s -v -tags kqueue,dev ./... || true
 }
 
-# Replace this with your command to run specific test files
 run_selected_tests() {
   local test_files=("$@")
   echo "Running selected tests: ${test_files[@]}"
@@ -36,7 +32,6 @@ run_selected_tests() {
     done
   done
 }
-# --- END CONFIGURATION SECTION ---
 
 # Initialize SQLite database for sftpgo tests (required by TestMain in sftpd_test.go)
 init_test_database() {
@@ -61,7 +56,6 @@ EOF
 
 init_test_database
 
-### COMMON EXECUTION; DO NOT MODIFY ###
 if [ $# -eq 0 ]; then
   run_all_tests
   exit $?

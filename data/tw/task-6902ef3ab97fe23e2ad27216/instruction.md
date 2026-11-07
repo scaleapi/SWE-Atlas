@@ -6,7 +6,7 @@ I've uploaded a code repository in the directory /app. Consider the following te
 <testing_objective>
 The paperless-ngx document management system has some integration test gaps. The bulk download API endpoint is working correctly, but we're missing some test cases.
 
-Add distinct integrations tests for:
+Add distinct integration tests for:
 
 Cover downloading documents when requesting only the original source files, using the default content setting, requesting both original and archived versions together, and downloading multiple documents that would result in filename conflicts.
 </testing_objective>
@@ -83,6 +83,7 @@ run_selected_tests "${TEST_FILES[@]}"
 
 Can you help me write comprehensive tests for this codebase?
 Your task is to create a test suite in /app that verifies correct implementation behavior according to the testing objective.
+
 Follow these steps to complete the task:
 1. Explore the repository structure to understand how the codebase is organized and identify existing test patterns
 2. Find and read the source code relevant to the testing objective to understand the functionality to be tested
@@ -109,3 +110,5 @@ Use the appropriate naming convention for the language:
 - Go: TestFunctionName
 - JavaScript/TypeScript: "describe block > it/test name" or test function name
 - Java: testMethodName or ClassName.testMethodName
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

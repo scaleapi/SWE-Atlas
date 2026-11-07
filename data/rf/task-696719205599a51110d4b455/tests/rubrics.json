@@ -16,7 +16,7 @@
     }
   },
   {
-    "id": "d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8",
+    "id": "c9e0ede4ffac99f630af81d590bb0e51",
     "title": "1.2: Moves all 5 exported SQL template variable declarations (SqlResourceUpdateRV, SqlResourceHistoryUpdateRV, SqlResourceVersionGet, SqlResourceVersionUpdate, SqlResourceVersionInsert) from queries.go into the rvmanager package",
     "annotations": {
       "type": "positive hli verifier",
@@ -32,15 +32,15 @@
     }
   },
   {
-    "id": "f8e2a3b1c4d5e6f7a8b9c0d1e2f3a4b5",
-    "title": "1.4: Rewires both parent package source files (backend.go and bulk.go) to import and delegate resource version operations to the rvmanager package",
+    "id": "7d8ccf540cdb5e7b64714b9d82db374f",
+    "title": "1.4: Rewires both parent package source files to delegate resource version operations to the rvmanager package (backend.go imports it, and bulk.go calls the manager's exported Lock and SaveRV methods)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    "id": "32caa0561bdd7d97195cfcd179182e4d",
     "title": "1.5: Sets up independent template loading in the rvmanager package that parses SQL files from its own data directory into the exported template variables",
     "annotations": {
       "type": "positive hli verifier",
@@ -57,7 +57,7 @@
   },
   {
     "id": "ce2ac7c6b0d96d897e615f007eed2451",
-    "title": "1.7: Removes all 4 RV-related type definitions (sqlResourceUpdateRVRequest, resourceVersionResponse, sqlResourceVersionUpsertRequest, sqlResourceVersionGetRequest) entirely from queries.go",
+    "title": "1.7: Removes the RV-related type definitions (sqlResourceUpdateRVRequest, resourceVersionResponse, sqlResourceVersionUpsertRequest, sqlResourceVersionGetRequest) from pkg/storage/unified/sql/queries.go",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "a258b940d177fe62794a6bb8765b6b6b",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -73,15 +73,15 @@
   },
   {
     "id": "9a343e6462977fa73023f69f1e547eaa",
-    "title": "4.1: Keeps ResourceVersionManager or its methods unexported in the rvmanager package",
+    "title": "2.1: Keeps ResourceVersionManager or its methods unexported in the rvmanager package",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0",
-    "title": "4.2: Leaves SQL template files in the parent package instead of moving them to rvmanager/data/",
+    "id": "1535a1c946d0ddae25a6f32a4a50f00c",
+    "title": "2.2: Leaves SQL template files in the parent package instead of moving them to rvmanager/data/",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

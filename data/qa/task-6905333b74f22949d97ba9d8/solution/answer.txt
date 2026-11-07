@@ -86,7 +86,7 @@ python manage.py test documents.tests.test_consumer.TestConsumer.testClassifyDoc
 
 The testClassifyDocument test creates one correspondent, one document type, and two tags (without MATCH_AUTO algorithm), then mocks the classifier using `@mock.patch("documents.consumer.load_classifier")`. The mock classifier's predict methods return the IDs of the created objects. No actual training occurs in this test—the classifier behavior is entirely simulated. This test verifies that when a classifier returns predictions, those predictions are correctly applied to the consumed document.
 
-It is important to note the ordering the test setup uses for training timing: training occurs before document consumption. When a test exercises the real pipeline, `train_classifier()` is called during the setup phase, before any document is consumed, so the trained model already exists on disk by the time the consume step runs and calls `load_classifier()`. In other words, `train_classifier()` (training) runs first and document consumption happens afterward — consumption reads an already-trained model rather than triggering training inline.
+It is important to note the ordering the test setup uses for training timing: training occurs after the training-document inserts and before document consumption, as in `test_one_correspondent_predict_manydocs`, which creates its two documents with `Document.objects.create()` and only then calls `self.classifier.train()`. When a test exercises the real pipeline, `train_classifier()` is called during the setup phase, before any document is consumed, so the trained model already exists on disk by the time the consume step runs and calls `load_classifier()`. In other words, `train_classifier()` (training) runs first and document consumption happens afterward — consumption reads an already-trained model rather than triggering training inline.
 
 The confidence threshold for predictions is not configurable. The classifier uses sklearn `MLPClassifier.predict()` which returns the most likely class without probability thresholds.
 
@@ -103,18 +103,23 @@ def predict_correspondent(self, content):
 
 There is no confidence filtering. The prediction is accepted if it returns any valid ID other than -1. This means low-confidence predictions can still be assigned, which could cause non-deterministic behavior if training data is minimal.
 
-For OCR edge cases, I ran a test that processes an image with the tesseract parser.
+For OCR edge cases, I ran a test that processes an image with the tesseract parser. The default OCR_OUTPUT_TYPE is pdfa, so this exercises the ghostscript PDF/A rendering path in addition to tesseract.
 
 ```
 python manage.py test paperless_tesseract.tests.test_parser.TestParser.test_image_simple --verbosity=2
 ```
 
 ```
-[2025-12-26 05:08:36,058] [ERROR] [ocrmypdf._exec.tesseract] [tesseract] Error during processing.
-[2025-12-26 05:08:36,589] [ERROR] [ocrmypdf._exec.ghostscript] GPL Ghostscript 10.0.0
-Unrecoverable error: rangecheck in .putdeviceprops
-ocrmypdf.exceptions.SubprocessOutputError: Ghostscript PDF/A rendering failed
+test_image_simple (paperless_tesseract.tests.test_parser.TestParser) ... [2026-08-25 20:22:37,230] [ERROR] [ocrmypdf._exec.tesseract] [tesseract] Error during processing.
+ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.226s
+
+OK
 ```
+
+The test passes. The single `[ERROR] [ocrmypdf._exec.tesseract] [tesseract] Error during processing.` line is a log message emitted by ocrmypdf's tesseract wrapper, not a test failure: ocrmypdf still produces the archive PDF and both assertions (`os.path.isfile(parser.archive_path)` and the extracted text containing "This is a test document.") pass, so the runner reports `ok` / `OK`. The ghostscript PDF/A step runs as well — the image ships GPL Ghostscript 9.53.3 — and completes without error.
 
 The OCR is invoked by `RasterisedDocumentParser` (in `paperless_tesseract`) through the `ocrmypdf.ocr()` Python API: the parser calls `ocrmypdf.ocr()` directly as its OCR invocation method rather than shelling out to the `ocrmypdf` command-line tool, and that library call internally drives both tesseract for text extraction and ghostscript for PDF rendering. The arguments passed to `ocrmypdf.ocr()` are constructed in the `construct_ocrmypdf_parameters` method.
 
@@ -304,6 +309,6 @@ In summary, non-deterministic test failures can arise from several sources. The 
 
 The machine learning classifier training pipeline exhibits deterministic behavior when the hash-based caching works correctly, but the timing of when training occurs relative to document insertion matters significantly. If a test creates documents and immediately queries the classifier without calling `train_classifier()` first, the classifier will use whatever model was previously trained, which may not include the newly created documents. This ordering dependency is particularly problematic when tests run in parallel or when test execution order changes between runs, as the effective training dataset can vary depending on which documents exist at the moment training is invoked.
 
-The OCR pipeline introduces additional complexity because external subprocesses like tesseract and ghostscript have their own failure modes that are not controlled by the test framework. Environment differences such as installed library versions, available fonts, and system memory can cause OCR to succeed on one machine but fail on another with the same input file. The test output showed ghostscript failing with a rangecheck error, which typically indicates a configuration or compatibility issue rather than a problem with the test logic itself. These environmental dependencies make it difficult to achieve consistent test results across different development and continuous integration environments.
+The OCR pipeline does add complexity because external subprocesses like tesseract and ghostscript run outside the test framework's control and emit their own log output. In this environment the test_image_simple run logs a single `[ERROR] [ocrmypdf._exec.tesseract] [tesseract] Error during processing.` line, yet the test still passes: that line is a benign log message from ocrmypdf's tesseract wrapper, not a fatal error, and the ghostscript PDF/A step (GPL Ghostscript 9.53.3) completes normally. The general point still holds that environment differences such as installed library versions, available fonts, and system memory could cause OCR behavior to differ across machines, but on this image the OCR path for a simple image is deterministic and produces a passing (green) test.
 
 The interaction between synchronous signal handlers and the whoosh `AsyncWriter` creates a subtle race condition window. While the six signal handlers connected to `document_consumption_finished` all execute synchronously on the main thread, the final handler `add_to_index` delegates to `AsyncWriter` which may spawn a background thread for the actual index commit. If a test completes its assertions and begins teardown while this background thread is still running, the index operations could interfere with directory cleanup or leak into subsequent tests. The `DirectoriesMixin` mitigates this by creating isolated index directories, but any test that shares an index directory or does not properly wait for background operations to complete could experience intermittent failures that are difficult to reproduce and diagnose.

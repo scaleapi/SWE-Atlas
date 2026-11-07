@@ -5,7 +5,7 @@
       "importance": "must have"
     },
     "id": "aea1d83862baa333c95f618b0d915631",
-    "title": "1.1:  Tests that set_margins() with bottom margin only results in content moving to history buffer when scrolling beyond the bottom margin"
+    "title": "1.1: Tests that set_margins() with bottom margin only results in content moving to history buffer when scrolling beyond the bottom margin"
   },
   {
     "annotations": {
@@ -21,7 +21,7 @@
       "importance": "must have"
     },
     "id": "85f22fd577b3c132079e894cc217346e",
-    "title": "1.3: Tests that set_margins() with both top and bottom margins results in content outside the scroll region being preserved and scrolling occurring only within the defined margin boundaries\n"
+    "title": "1.3: Tests that set_margins() with both top and bottom margins results in content outside the scroll region being preserved and scrolling occurring only within the defined margin boundaries"
   },
   {
     "annotations": {

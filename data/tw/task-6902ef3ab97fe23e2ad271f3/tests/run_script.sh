@@ -1,5 +1,4 @@
 #!/bin/bash
-### COMMON SETUP; DO NOT MODIFY ###
 set -e
 
 # Change to the app directory where the tests are located
@@ -17,6 +16,22 @@ export PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/root/.cache/ms-playwright/chromium-*
 # We must: (a) replace the ENTIRE function body (not just the signature),
 #           (b) restore dist from backup when skeleton is NOT applied.
 
+_block_live_site() {
+    # The system under test is the live site: under the swap it must be unreachable, so a test
+    # that bypasses getCalypsoURL (CALYPSO_BASE_URL, a hardcoded URL) still fails.
+    export CALYPSO_BASE_URL="https://skeleton.invalid"
+    if [ -w /etc/hosts ] && ! grep -q '# swe-atlas-skeleton' /etc/hosts; then
+        printf '0.0.0.0 wordpress.com www.wordpress.com # swe-atlas-skeleton\n:: wordpress.com www.wordpress.com # swe-atlas-skeleton\n' >> /etc/hosts
+    fi
+}
+
+_unblock_live_site() {
+    if [ -w /etc/hosts ] && grep -q '# swe-atlas-skeleton' /etc/hosts; then
+        grep -v '# swe-atlas-skeleton' /etc/hosts > /tmp/hosts.swe-atlas && cat /tmp/hosts.swe-atlas > /etc/hosts
+        rm -f /tmp/hosts.swe-atlas
+    fi
+}
+
 _sync_skeleton_to_dist() {
     local src_file="/app/packages/calypso-e2e/src/data-helper.ts"
     local dist_dir="/app/packages/calypso-e2e/dist/esm/src"
@@ -25,6 +40,7 @@ _sync_skeleton_to_dist() {
 
     if grep -q 'skeleton.invalid' "$src_file" 2>/dev/null; then
         echo "[HOOK] Skeleton detected in source — syncing to dist"
+        _block_live_site
         # Backup the original dist file (only once)
         if [ -f "$dist_file" ] && [ ! -f "$backup_file" ]; then
             cp "$dist_file" "$backup_file"
@@ -82,6 +98,7 @@ with open('$dist_file', 'w') as f:
 }
 
 _restore_dist() {
+    _unblock_live_site
     local dist_dir="/app/packages/calypso-e2e/dist/esm/src"
     local dist_file="$dist_dir/data-helper.js"
     local backup_file="$dist_dir/data-helper.js.bak"

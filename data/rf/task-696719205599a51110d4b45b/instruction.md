@@ -7,3 +7,5 @@ Similarly, `search_request.go` bundles together the search request types alongsi
 All code should remain in the same `es` package and no functional behavior should change. This is a pure structural refactor to improve code organization.
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

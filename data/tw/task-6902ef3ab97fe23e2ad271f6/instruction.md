@@ -4,7 +4,7 @@
 I've uploaded a code repository in the directory /app. Consider the following testing objective:
 
 <testing_objective>
-need better test coverage for the mail account handler in paperless-ngx.
+We need better test coverage for the mail account handler in paperless-ngx.
 
 Right now we have tests for individual pieces like message handling and correspondent extraction, but we're missing integration tests that verify what happens when you actually process a full mail account with rules configured. The mail module supports different post-consume actions on matched messages and various filter criteria on rules.
 
@@ -89,6 +89,7 @@ run_selected_tests "${TEST_FILES[@]}"
 
 Can you help me write comprehensive tests for this codebase?
 Your task is to create a test suite in /app that verifies correct implementation behavior according to the testing objective.
+
 Follow these steps to complete the task:
 1. Explore the repository structure to understand how the codebase is organized and identify existing test patterns
 2. Find and read the source code relevant to the testing objective to understand the functionality to be tested
@@ -115,3 +116,5 @@ Use the appropriate naming convention for the language:
 - Go: TestFunctionName
 - JavaScript/TypeScript: "describe block > it/test name" or test function name
 - Java: testMethodName or ClassName.testMethodName
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

@@ -38,3 +38,5 @@ Use the below interface for your solution:
 - Input: N/A
 - Output: N/A
 - Description: The path identifier for the root group. Defined as an empty string constant.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

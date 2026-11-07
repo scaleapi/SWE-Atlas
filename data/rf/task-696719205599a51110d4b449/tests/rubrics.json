@@ -78,13 +78,5 @@
       "type": "positive hli verifier",
       "importance": "must have"
     }
-  },
-  {
-    "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "must have"
-    }
   }
 ]

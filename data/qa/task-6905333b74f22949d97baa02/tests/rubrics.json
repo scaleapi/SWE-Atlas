@@ -33,7 +33,7 @@
   },
   {
     "id": "fa8be44ee6b825b5826e0a8b4920cbe3",
-    "title": "1.5: States that the byte offset position for the exit code marker across all tested exit codes (0, 1, 127) as numeric value like 71.",
+    "title": "1.5: States the byte offset position of the exit code marker across all tested exit codes (0, 1, 127) as numeric value like 71.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "550b9832b3bfa824291edc11db004cd3",
-    "title": "1.6: States the presence of \"D;99\" in the captured output, when test was run with exit code 99, proving that the value 99 was processed and passed through the entire code path.",
+    "title": "1.6: States the presence of \"D;99\" in the output captured from actually running the test with exit code 99.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

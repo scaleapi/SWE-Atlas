@@ -1,7 +1,7 @@
 [
   {
     "id": "9fc3117ea9667ddbcc86e56d9f9fd16e",
-    "title": "1.1 Reports how maddy handles a message body containing an embedded single dot line (e.g., content before dot, \".\", content after dot)",
+    "title": "1.1: Reports how maddy handles a message body containing an embedded single dot line (e.g., content before dot, \".\", content after dot)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

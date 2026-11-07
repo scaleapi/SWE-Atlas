@@ -1,5 +1,5 @@
 diff --git a/internal/cmd/runtime_options.go b/internal/cmd/runtime_options.go
-index dd6cef91dc..3221e828a0 100644
+index dd6cef91dc..b461bf24bf 100644
 --- a/internal/cmd/runtime_options.go
 +++ b/internal/cmd/runtime_options.go
 @@ -41,25 +41,35 @@ extended: base + sets "global" as alias for "globalThis"
@@ -51,18 +51,18 @@ index dd6cef91dc..3221e828a0 100644
  	opts := lib.RuntimeOptions{
  		TestType:             getNullString(flags, "type"),
  		IncludeSystemEnvVars: getNullBool(flags, "include-system-env-vars"),
-@@ -70,65 +80,69 @@ func getRuntimeOptions(flags *pflag.FlagSet, environment map[string]string) (lib
+@@ -70,15 +80,20 @@ func getRuntimeOptions(flags *pflag.FlagSet, environment map[string]string) (lib
  		TracesOutput:         getNullString(flags, "traces-output"),
  		Env:                  make(map[string]string),
  	}
 +	return opts
 +}
++
++func populateRuntimeOptionsFromEnv(opts lib.RuntimeOptions, environment map[string]string) (lib.RuntimeOptions, error) {
++	// Only override if not explicitly set via the CLI flag
  
 -	if envVar, ok := environment["K6_TYPE"]; ok && !opts.TestType.Valid {
 -		// Only override if not explicitly set via the CLI flag
-+func populateRuntimeOptionsFromEnv(opts lib.RuntimeOptions, environment map[string]string) (lib.RuntimeOptions, error) {
-+	// Only override if not explicitly set via the CLI flag
-+
 +	if envVar, ok := environment["K6_TYPE"]; !opts.TestType.Valid && ok {
  		opts.TestType = null.StringFrom(envVar)
  	}
@@ -72,11 +72,11 @@ index dd6cef91dc..3221e828a0 100644
 +	if envVar, ok := environment["K6_COMPATIBILITY_MODE"]; !opts.CompatibilityMode.Valid && ok {
  		opts.CompatibilityMode = null.StringFrom(envVar)
  	}
--	if _, err := lib.ValidateCompatibilityMode(opts.CompatibilityMode.String); err != nil {
--		// some early validation
--		return opts, err
--	}
- 
++
+ 	if _, err := lib.ValidateCompatibilityMode(opts.CompatibilityMode.String); err != nil {
+ 		// some early validation
+ 		return opts, err
+@@ -87,48 +102,47 @@ func getRuntimeOptions(flags *pflag.FlagSet, environment map[string]string) (lib
  	if err := saveBoolFromEnv(environment, "K6_INCLUDE_SYSTEM_ENV_VARS", &opts.IncludeSystemEnvVars); err != nil {
  		return opts, err
  	}
@@ -93,27 +93,22 @@ index dd6cef91dc..3221e828a0 100644
 -		if !opts.SummaryExport.Valid {
 -			opts.SummaryExport = null.StringFrom(envVar)
 -		}
-+	if _, err := lib.ValidateCompatibilityMode(opts.CompatibilityMode.String); err != nil {
-+		// some early validation
-+		return opts, err
++	if envVar, ok := environment["K6_SUMMARY_EXPORT"]; !opts.SummaryExport.Valid && ok {
++		opts.SummaryExport = null.StringFrom(envVar)
  	}
  
 -	if envVar, ok := environment["SSLKEYLOGFILE"]; ok {
 -		if !opts.KeyWriter.Valid {
 -			opts.KeyWriter = null.StringFrom(envVar)
 -		}
-+	if envVar, ok := environment["K6_SUMMARY_EXPORT"]; !opts.SummaryExport.Valid && ok {
-+		opts.SummaryExport = null.StringFrom(envVar)
++	if envVar, ok := environment["SSLKEYLOGFILE"]; !opts.KeyWriter.Valid && ok {
++		opts.KeyWriter = null.StringFrom(envVar)
  	}
  
 -	if envVar, ok := environment["K6_TRACES_OUTPUT"]; ok {
 -		if !opts.TracesOutput.Valid {
 -			opts.TracesOutput = null.StringFrom(envVar)
 -		}
-+	if envVar, ok := environment["SSLKEYLOGFILE"]; !opts.KeyWriter.Valid && ok {
-+		opts.KeyWriter = null.StringFrom(envVar)
-+	}
-+
 +	if envVar, ok := environment["K6_TRACES_OUTPUT"]; !opts.TracesOutput.Valid && ok {
 +		opts.TracesOutput = null.StringFrom(envVar)
  	}

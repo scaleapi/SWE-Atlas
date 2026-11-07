@@ -13,7 +13,7 @@
       "importance": "must have"
     },
     "id": "a30c20dd9eac661c57bb193b7c2c114f",
-    "title": "1.2: Tests that DNS packet parsing extracts target name, port, priority, weight values when SRV records appear with associated TXT record data."
+    "title": "1.2: Tests that DNS packet parsing decodes SRV records as DNSRRSRV with the expected target name when SRV records appear with associated TXT record data."
   },
   {
     "annotations": {
@@ -29,7 +29,7 @@
       "importance": "must have"
     },
     "id": "0936312a1a0faedb571b5ca37bba9148",
-    "title": "1.4: Tests that building a DNS response then reparsing it maintains identical record names, record types, record data values."
+    "title": "1.4: Tests that a DNS response built from multiple record types and reparsed from its serialized form still contains the expected record type, with record names and record data values matching the values it was built with."
   },
   {
     "annotations": {

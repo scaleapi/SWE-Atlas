@@ -49,7 +49,7 @@
   },
   {
     "id": "0782ec4402f082f954899437d77dafbd",
-    "title": "1.7 : Explains what data gets sent to the verification webhook endpoint (e.g., \"JSON payload with matched secrets\", \"detector name and regex matches\", \"secrets transmitted in request body\", \"matched values sent to webhook\")",
+    "title": "1.7: Explains what data gets sent to the verification webhook endpoint (e.g., \"JSON payload with matched secrets\", \"detector name and regex matches\", \"secrets transmitted in request body\", \"matched values sent to webhook\")",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

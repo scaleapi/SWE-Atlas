@@ -79,3 +79,5 @@ Use the below Interface:
 \- Output: `NA`
 
 \- Description: Restructure VQPEntry fields: update FieldLenField `len` to auto-compute length with `length_of="data"` and `fmt="H"`, rename the `datatom` IPField to `data`, and replace multiple ConditionalField entries (for IP, MAC, and string data) with a single MultipleTypeField that selects the correct field type based on `datatype`.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

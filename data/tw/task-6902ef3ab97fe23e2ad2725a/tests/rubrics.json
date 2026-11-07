@@ -29,7 +29,7 @@
       "importance": "nice to have"
     },
     "id": "e4718eb98a1aa3e05191592e8630fb31",
-    "title": "2.1: Places the test for REP control sequence in kitty_tests/screen.py.\n"
+    "title": "2.1: Places the test for REP control sequence in kitty_tests/screen.py."
   },
   {
     "annotations": {
@@ -53,7 +53,7 @@
       "importance": "nice to have"
     },
     "id": "1ea19d9f009330186c211010502c12a6",
-    "title": "2.4: Places the test for test for zero-width joiners (ZWJ) in kitty_tests/screen.py."
+    "title": "2.4: Places the test for zero-width joiners (ZWJ) in kitty_tests/screen.py."
   },
   {
     "annotations": {
@@ -69,6 +69,6 @@
       "importance": "nice to have"
     },
     "id": "2a21f760172c2502cdf7affb1400d965",
-    "title": "3.2:  All tests follow the test naming pattern test_<functionality>."
+    "title": "3.2: All tests follow the test naming pattern test_<functionality>."
   }
 ]

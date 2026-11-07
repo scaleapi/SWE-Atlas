@@ -53,7 +53,7 @@
       "importance": "must have"
     },
     "id": "32c5e5d2b32a2a6f18c849c43daaa0a1",
-    "title": "1.7: Verifies that round-trip conversion using in6_mactoifaceid followed by in6_ifaceidtomac produces a MAC address consistent with the original when ulbit=0"
+    "title": "1.7: Verifies that round-trip conversion using in6_mactoifaceid followed by in6_ifaceidtomac produces the original MAC address with its universal/local bit (0x02 of the first octet) set when ulbit=0"
   },
   {
     "annotations": {
@@ -85,7 +85,7 @@
       "importance": "must have"
     },
     "id": "a3b3504cfa1b8d3db7d8731aaf653b8c",
-    "title": "1.11: Verifies that round-trip conversion produces a MAC address consistent with the original for a second MAC when ulbit=1"
+    "title": "1.11: Verifies that round-trip conversion produces the original MAC address with its universal/local bit (0x02 of the first octet) cleared for a second MAC when ulbit=1"
   },
   {
     "annotations": {

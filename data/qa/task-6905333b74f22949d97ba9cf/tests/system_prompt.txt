@@ -19,12 +19,12 @@ The rubric criteria to rate are in the following format (actual rubric object pr
 
 ## Rating Object
 
-Return a JSON object containing a nested object with the key "ratings". The "ratings" key contains an array where each item is an object with the following fields: "rubric_statement", "status", "score", and "justification".
+Return a JSON object containing a nested object with the key "ratings". The "ratings" key contains an array where each item is an object with the following fields, in this order: "rubric_statement", "justification", "status", and "score".
 
 - The "rubric_statement" field should match the "rubric_statement" of the original criterion object exactly as provided.
-- The "status" field must be either "YES" or "NO".
-- The "score" field must be either "1" (YES) or "0" (NO), indicating whether the response meets the criteria of the rubric item. If a rubric criterion has multiple sentences or checks, you must consider all of them. If any of the checks is not met, the answer should be "0". Only return "1" if all of the checks are met.
 - The "justification" field must be a string explaining why the response does or does not meet the criteria of the rubric item.
+- The "status" field must be either "YES" or "NO", decided after the justification is written.
+- The "score" field must be either "1" (YES) or "0" (NO), indicating whether the response meets the criteria of the rubric item. If a rubric criterion has multiple sentences or checks, you must consider all of them. If any of the checks is not met, the answer should be "0". Only return "1" if all of the checks are met.
 
 ## Grading Logic
 
@@ -59,9 +59,9 @@ Return your rating response using the below JSON schema:
   "ratings": [
     {
       "rubric_statement": "...",
+      "justification": "...",
       "status": "YES" or "NO",
-      "score": "1" or "0",
-      "justification": "..."
+      "score": "1" or "0"
     }
   ]
 }

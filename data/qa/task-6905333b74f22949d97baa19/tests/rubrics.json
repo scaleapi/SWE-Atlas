@@ -1,7 +1,7 @@
 [
   {
     "id": "f05948f7e78427d2288dd35d436e5c04",
-    "title": "1.1: Explains why the timing measurements show linear or non linear scaling behavior (e.g., processing time scales proportionally with input size, no exponential blowup observed, time remains in milliseconds for large inputs)",
+    "title": "1.1: Explains why the timing measurements show linear or non-linear scaling behavior (e.g., processing time scales proportionally with input size, no exponential blowup observed, time remains in milliseconds for large inputs)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

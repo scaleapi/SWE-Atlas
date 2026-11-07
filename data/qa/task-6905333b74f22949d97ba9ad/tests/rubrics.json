@@ -9,7 +9,7 @@
   },
   {
     "id": "3e13cf8801d03c7101d10cc0b956f533",
-    "title": "1.2: Reports that requesting / returns an HTTP 302 redirect to /auth/login, confirming that authentication routing is functional.   ",
+    "title": "1.2: Reports that requesting / returns an HTTP 302 redirect to /auth/login, confirming that authentication routing is functional.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -25,7 +25,7 @@
   },
   {
     "id": "74f02ced96297e4cabcc62fbffca0834",
-    "title": "1.4: Reports seeing the registration confirmation screen such as the message \u201cAn email to validate your email is on its way\u201d after submitting a signup form, confirming activation was triggered.",
+    "title": "1.4: Reports seeing the registration confirmation screen such as the message 'An email to validate your email is on its way' after submitting a signup form, confirming activation was triggered.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "b1e1d7850532703bb822cb191f7f5d06",
-    "title": "1.7: Reports alias creation by showing a new alias entry listed in the dashboard such as after clicking \u201cRandom Alias\u201d confirming alias persistence.",
+    "title": "1.7: Reports alias creation by showing a new alias entry listed in the dashboard such as after clicking 'Random Alias' confirming alias persistence.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "c33725fafaec07ce452151e99fed47d1",
-    "title": "1.9: States that the dashboard \u201cForwarded\u201d counter increases after the inbound email is delivered confirming that forwarding execution updated runtime statistics.",
+    "title": "1.9: States that the dashboard 'Forwarded' counter increases after the inbound email is delivered confirming that forwarding execution updated runtime statistics.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "05ead14757bf28d2151a60def2f367e9",
-    "title": "1.11: Identifies background job runner activity through runtime logs such as seeing \u201cTake job \u2026\u201d confirming scheduled work is processed.",
+    "title": "1.10: Identifies background job runner activity through runtime logs such as seeing 'Take job ...' confirming scheduled work is processed.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "3dfa3b85f794293659085827f2d649e9",
-    "title": "1.12: Identifies email handler startup through runtime logs such as \u201cStart mail controller 0.0.0.0 20381\u201d confirming SMTP handling is active.",
+    "title": "1.11: Identifies email handler startup through runtime logs such as 'Start mail controller 0.0.0.0 20381' confirming SMTP handling is active.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

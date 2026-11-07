@@ -1,7 +1,7 @@
 [
   {
     "id": "8a9318679bdb26719276055ef4c84d3e",
-    "title": "Code Maintainability",
+    "title": "1: Code Maintainability",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "59298234f5176b41059190eb4c468965",
-    "title": "Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "88975e1746cd3f0f7bf1cd0fc8270724",
-    "title": "3.1: Removes SiteSpecificPlanProduct type from plans types module",
+    "title": "2.1: Removes SiteSpecificPlanProduct type from plans types module",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "a258156f3a71d6c9f17fe10a898c75f0",
-    "title": "3.2: Removes SiteSpecificPlanCostOverride type from plans types module",
+    "title": "2.2: Removes SiteSpecificPlanCostOverride type from plans types module",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "196bdac42f0fc1af246be38721194fd1",
-    "title": "3.3: Removes fetchPricedSitePlans function from plans fetchers module",
+    "title": "2.3: Removes fetchPricedSitePlans function from plans fetchers module",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "d394f042ac41cb204c147f117d1056f3",
-    "title": "3.4: Removes normalizeSiteSpecificPlanProduct function from plans fetchers module",
+    "title": "2.4: Removes normalizeSiteSpecificPlanProduct function from plans fetchers module",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -129,7 +129,7 @@
   },
   {
     "id": "55f6d9b3642c962eeaa1a7d0fe5b04b2",
-    "title": "3.5: Removes sitePricedPlansQuery from plans queries module",
+    "title": "2.5: Removes sitePricedPlansQuery from plans queries module",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -137,7 +137,7 @@
   },
   {
     "id": "0248934eb1b30de7faea157dd07d4b5d",
-    "title": "Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -145,7 +145,7 @@
   },
   {
     "id": "01873200688729f0975dec3ad1d2ebc8",
-    "title": "4.1: Removes normalization logic for site plan numeric fields",
+    "title": "3.1: Removes normalization logic for site plan numeric fields",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -153,7 +153,7 @@
   },
   {
     "id": "8695dacc3ef136e7b2907aeeac1954f3",
-    "title": "4.2: Sets coupon as a required parameter in fetchSitePlans",
+    "title": "3.2: Sets coupon as a required parameter in fetchSitePlans",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

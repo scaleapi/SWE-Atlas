@@ -49,7 +49,7 @@
   },
   {
     "id": "b0dbaf2179ac12574b6d721ae57be591",
-    "title": "1.7:  Reports observed argv for an adversarial looking invocation under a different permission context attempting to confuse option handling (e.g., client supplies both --safe-links and --munge-links with restricted permissions)\n",
+    "title": "1.7: Reports observed argv for an adversarial looking invocation under a different permission context attempting to confuse option handling (e.g., client supplies both --safe-links and --munge-links with restricted permissions)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

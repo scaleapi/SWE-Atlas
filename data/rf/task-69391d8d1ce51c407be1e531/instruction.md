@@ -138,3 +138,5 @@ Use the below Interface:
 - Input: `ctx context.Context, opts ...Option`
 - Output: `*BufferedFileWriter`
 - Description: Creates a new BufferedFileWriter. Now accepts a context.Context as its first parameter to pass to the shared buffer pool's Get method. Previously took only options.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

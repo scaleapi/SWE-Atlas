@@ -13,7 +13,7 @@
       "importance": "must have"
     },
     "id": "a30c20dd9eac661c57bb193b7c2c114f",
-    "title": "1.3: Tests that Close returns error containing 'incomplete download' when bytesSent is less than expectedSize for download transfers"
+    "title": "1.2: Tests that Close returns error containing 'incomplete download' when bytesSent is less than expectedSize for download transfers"
   },
   {
     "annotations": {
@@ -21,7 +21,7 @@
       "importance": "must have"
     },
     "id": "85f22fd577b3c132079e894cc217346e",
-    "title": "1.4: Tests that WriteAt returns error when underlying file handle is closed"
+    "title": "1.3: Tests that WriteAt returns error when underlying file handle is closed"
   },
   {
     "annotations": {
@@ -29,7 +29,7 @@
       "importance": "must have"
     },
     "id": "6723f89d601cd32cc08a485b68eb91c9",
-    "title": "1.5: Tests that ReadAt returns error when underlying file handle is closed"
+    "title": "1.4: Tests that ReadAt returns error when underlying file handle is closed"
   },
   {
     "annotations": {
@@ -37,7 +37,7 @@
       "importance": "must have"
     },
     "id": "709d72788c4310922083b0709b0c2f4f",
-    "title": "1.6: Tests that ReadAt returns error on pipe after closeIO() is called"
+    "title": "1.5: Tests that ReadAt returns error on pipe after closeIO() is called"
   },
   {
     "annotations": {
@@ -45,7 +45,7 @@
       "importance": "must have"
     },
     "id": "917e843903b11056d8f83bb8f2f4337b",
-    "title": "1.7: Tests that WriteAt returns error on pipe after closeIO() is called"
+    "title": "1.6: Tests that WriteAt returns error on pipe after closeIO() is called"
   },
   {
     "annotations": {
@@ -53,7 +53,7 @@
       "importance": "must have"
     },
     "id": "7aece6b5e4969de68cd9dc35caea9400",
-    "title": "1.8: Tests that Close returns the error set by TransferError in atomic upload mode"
+    "title": "1.7: Tests that Close returns the error set by TransferError in atomic upload mode"
   },
   {
     "annotations": {
@@ -61,7 +61,7 @@
       "importance": "must have"
     },
     "id": "aad4569795e4677c725066806359b62e",
-    "title": "1.10: Tests that target file is deleted after transfer error in atomic upload mode"
+    "title": "1.8: Tests that target file is deleted after transfer error in atomic upload mode"
   },
   {
     "annotations": {
@@ -69,7 +69,7 @@
       "importance": "must have"
     },
     "id": "7fb5dcef82b9c2c58c7dab9ed874fc32",
-    "title": "1.11: Tests that temp file is deleted after transfer error in atomic upload mode"
+    "title": "1.9: Tests that temp file is deleted after transfer error in atomic upload mode"
   },
   {
     "annotations": {

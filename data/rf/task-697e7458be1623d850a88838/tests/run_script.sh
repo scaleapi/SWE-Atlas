@@ -14,6 +14,25 @@ LOG_OUTPUT="$TEMP_DIR/test_output.log"
 
 cd /app
 
+# Interpreter selection.  The image is python:3.8 with the checkout installed into it
+# (/usr/local/lib/python3.8/site-packages/scapy.egg-link plus cryptography, python-can,
+# mock), but PATH starts with /opt/venv/bin, a CPython 3.12 venv that only holds the
+# judge tooling.  A bare `python` therefore resolves to 3.12, and Python >= 3.12 no
+# longer calls the legacy find_module() protocol that the vendored six 1.10.0
+# (scapy/modules/six.py) registers, so every `python -m scapy.tools.UTscapy` dies with
+# "ModuleNotFoundError: No module named 'scapy.modules.six.moves'" before a single test
+# runs.  Use the first interpreter that can actually import the checkout.
+PYTHON=""
+for cand in python python3 python3.8 /usr/local/bin/python3; do
+    if command -v "$cand" >/dev/null 2>&1 && \
+       "$cand" -c 'import scapy.modules.six.moves' >/dev/null 2>&1; then
+        PYTHON="$cand"
+        break
+    fi
+done
+: "${PYTHON:=python}"
+echo "run_script.sh: using $PYTHON ($("$PYTHON" --version 2>&1))"
+
 COMMON_ARGS=(
     -K tshark
     -K vcan_socket
@@ -49,7 +68,7 @@ SCOPED_FILES=(
 
 run_unittest_file() {
     local f="$1"
-    python -m unittest discover -s "$(dirname "$f")" -p "$(basename "$f")" -v \
+    "$PYTHON" -m unittest discover -s "$(dirname "$f")" -p "$(basename "$f")" -v \
         2>&1 | tee -a "$LOG_OUTPUT"
 }
 
@@ -86,7 +105,7 @@ run_uts_file() {
         file_args=("${COMMON_ARGS[@]}")
     fi
 
-    timeout 120 python -m scapy.tools.UTscapy -t "$f" \
+    timeout 120 "$PYTHON" -m scapy.tools.UTscapy -t "$f" \
         -P "load_contrib('${contrib_name}')" \
         "${file_args[@]}" \
         2>&1 | tee -a "$LOG_OUTPUT"
@@ -104,7 +123,7 @@ for f in "$@"; do
         if [[ "$(basename "$f")" == test_* ]]; then
             run_unittest_file "$f"
         else
-            python "$f" 2>&1 | tee -a "$LOG_OUTPUT"
+            "$PYTHON" "$f" 2>&1 | tee -a "$LOG_OUTPUT"
         fi
     else
         run_uts_file "$f"

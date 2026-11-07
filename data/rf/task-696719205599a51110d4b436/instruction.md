@@ -68,3 +68,5 @@ Use the below interface for your solution:
 - Input: `tb testing.TB, arc *lib.Archive, opts ...interface{}`
 - Output: `*Bundle, error`
 - Description: Test helper that creates a bundle from an archive by constructing the module resolver externally.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

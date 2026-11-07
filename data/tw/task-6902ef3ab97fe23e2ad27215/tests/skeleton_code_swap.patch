@@ -1,5 +1,5 @@
 diff --git a/scapy/utils.py b/scapy/utils.py
-index b882b01f..df7a8350 100644
+index b882b01f..9f28aee2 100644
 --- a/scapy/utils.py
 +++ b/scapy/utils.py
 @@ -378,113 +378,7 @@ def hexdiff(a, b, autojunk=False):
@@ -113,7 +113,7 @@ index b882b01f..df7a8350 100644
 -                doy = 1
 -            else:
 -                i += 16
-+    pass
++    raise NotImplementedError
  
  
  if struct.pack("H", 1) == b"\x00\x01":  # big endian

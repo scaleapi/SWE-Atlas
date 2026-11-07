@@ -4,86 +4,112 @@ I installed the Python dependencies first by running pip install
 
 pip install -r requirements.txt
 
-The installation completed with 127 packages including django, whoosh for search indexing, scikit learn for the ML classifier, and celery for task scheduling. The scikit learn package is particularly important because it provides the MLPClassifier neural network used to automatically categorize documents based on their content. Whoosh provides full text search capabilities allowing users to find documents by searching their OCR extracted content.
+The installation completed with django, whoosh for search indexing, scikit learn for the ML classifier, and django-q for task scheduling. The scikit learn package is particularly important because it provides the MLPClassifier neural network used to automatically categorize documents based on their content. Whoosh provides full text search capabilities allowing users to find documents by searching their OCR extracted content.
 
 Next I set up the database and created the required directories
 
 cd src
 python manage.py migrate
 
-The migration output showed 47 migrations applied across the documents app, auth, sessions, and admin tables. The key tables created include documents_document, documents_correspondent, documents_documenttype, documents_tag, and documents_log. The documents_document table is the central table storing all document metadata including title, content extracted via OCR, checksums for duplicate detection, timestamps, and foreign keys to correspondent and document type records.
+The migration output listed 'Apply all migrations: admin, auth, authtoken, contenttypes, django_q, documents, paperless_mail, sessions' and applied 92 migrations. The key tables created include documents_document, documents_correspondent, documents_documenttype, documents_tag, and documents_log. The documents_document table is the central table storing all document metadata including title, content extracted via OCR, checksums for duplicate detection, timestamps, and foreign keys to correspondent and document type records.
 
-I started redis as the message broker on port 6379 then launched all three services. The consumer service watches for files in the consume directory using filesystem polling while gunicorn serves the web interface on port 8000. The qcluster scheduler runs in the background waiting for tasks to be queued such as classifier training or bulk document operations.
+I started redis as the message broker on port 6379 then launched all three services. The consumer service watches for files in the consume directory using inotify while gunicorn serves the web interface on port 8000. The qcluster scheduler runs in the background waiting for tasks to be queued such as classifier training or bulk document operations.
 
 python manage.py document_consumer &
 python manage.py qcluster &
 gunicorn -c gunicorn.conf.py paperless.asgi:application &
 
-The startup logs showed the consumer initializing and beginning to watch the consume directory for new files
+The startup logs showed the consumer initializing with inotify on the consume directory and the qcluster scheduler starting its worker pool (debug logging enabled with PAPERLESS_DEBUG=true)
 
-[INFO] paperless.consumer: Starting consumer
-[INFO] paperless.consumer: Watching directory /app/consume
-[DEBUG] paperless.consumer: Consumer is ready
+[2026-11-03 00:56:26,885] [INFO] [paperless.management.consumer] Using inotify to watch directory for changes: /app/src/../consume
+00:56:26 [Q] INFO Q Cluster connecticut-william-enemy-robert starting.
+00:56:26 [Q] INFO Process-1:1 ready for work at 504
+00:56:26 [Q] INFO Process-1:2 ready for work at 505
+00:56:26 [Q] INFO Process-1:3 ready for work at 506
+00:56:26 [Q] INFO Process-1:4 ready for work at 507
+00:56:26 [Q] INFO Process-1:5 monitoring at 508
+00:56:26 [Q] INFO Process-1 guarding cluster connecticut-william-enemy-robert
+00:56:26 [Q] INFO Process-1:6 pushing tasks at 509
+00:56:26 [Q] INFO Q Cluster connecticut-william-enemy-robert running.
 
-For the first test I created a simple PDF document and placed it in the consume directory. The consumer service polls this directory at regular intervals and when it detects a new file it immediately begins the ingestion process. The file is first checked for duplicates using an MD5 hash comparison against existing documents in the database.
+For the first test I created a simple text document and placed it in the consume directory. The consumer watches this directory with inotify and when it detects a new file it queues a consume_file task in Redis, which a qcluster worker picks up to run the ingestion process. The file is first checked for duplicates using an MD5 hash comparison against existing documents in the database.
 
-echo "This is a test document for paperless ngx ingestion analysis" > /tmp/test_content.txt
-convert -size 612x792 xc:white -font Helvetica -pointsize 12 -annotate +50+50 @/tmp/test_content.txt /app/consume/test_document_001.pdf
+printf 'This is a test document for paperless ngx ingestion analysis\n' > /app/consume/test_document_001.txt
 
-The consumer detected the file immediately and the logs showed the complete ingestion sequence. The parser selection happens automatically based on the detected MIME type. For PDF files the system uses the RasterisedDocumentParser which converts each page to an image and runs Tesseract OCR to extract text content.
+The consumer detected the file immediately, enqueued it, and the worker logs showed the complete ingestion sequence. The parser selection happens automatically based on the detected MIME type. For this text file the system selected the TextDocumentParser; PDF files route to the RasterisedDocumentParser in src/paperless_tesseract/parsers.py, which converts each page to an image and runs Tesseract OCR to extract text content.
 
-[INFO] paperless.consumer: Consuming test_document_001.pdf
-[DEBUG] paperless.consumer: Detected mime type: application/pdf
-[DEBUG] paperless.consumer: Parser: RasterisedDocumentParser
-[INFO] paperless.consumer: Parsing test_document_001.pdf
-[DEBUG] paperless.consumer: OCR completed in 2.3 seconds
-[DEBUG] paperless.consumer: Generating thumbnail for test_document_001.pdf
-[INFO] paperless.consumer: Document test_document_001.pdf consumption finished
+[2026-11-03 00:56:38,452] [INFO] [paperless.management.consumer] Adding /app/src/../consume/test_document_001.txt to the task queue.
+00:56:38 [Q] INFO Enqueued 1
+00:56:38 [Q] INFO Process-1:1 processing [test_document_001.txt]
+[2026-11-03 00:56:38,566] [INFO] [paperless.consumer] Consuming test_document_001.txt
+[2026-11-03 00:56:38,569] [DEBUG] [paperless.consumer] Detected mime type: text/plain
+[2026-11-03 00:56:38,572] [DEBUG] [paperless.consumer] Parser: TextDocumentParser
+[2026-11-03 00:56:38,576] [DEBUG] [paperless.consumer] Parsing test_document_001.txt...
+[2026-11-03 00:56:38,576] [DEBUG] [paperless.consumer] Generating thumbnail for test_document_001.txt...
+[2026-11-03 00:56:38,591] [DEBUG] [paperless.parsing.text] Execute: optipng -silent -o5 /tmp/paperless/paperless-ijt5hvc0/thumb.png -out /tmp/paperless/paperless-ijt5hvc0/thumb_optipng.png
+[2026-11-03 00:56:38,943] [DEBUG] [paperless.classifier] Document classification model does not exist (yet), not performing automatic matching.
+[2026-11-03 00:56:38,946] [DEBUG] [paperless.consumer] Saving record to database
+[2026-11-03 00:56:38,962] [DEBUG] [paperless.consumer] Deleting file /app/src/../consume/test_document_001.txt
+[2026-11-03 00:56:38,963] [DEBUG] [paperless.parsing.text] Deleting directory /tmp/paperless/paperless-ijt5hvc0
+[2026-11-03 00:56:38,963] [INFO] [paperless.consumer] Document 2026-11-03 test_document_001 consumption finished
+00:56:38 [Q] INFO Process-1:1 stopped doing work
+00:56:38 [Q] INFO Processed [test_document_001.txt]
 
 The services involved in this single document ingestion span multiple modules working together in a coordinated pipeline. The consumer service defined in src/documents/consumer.py orchestrates the entire process detecting new files and managing the workflow. The parsers module in src/documents/parsers.py determines which parser to use based on the detected MIME type. For PDF documents the paperless_tesseract parser in src/paperless_tesseract/parsers.py handles the actual OCR extraction converting images to searchable text. The classifier module in src/documents/classifier.py loads any trained machine learning model to automatically assign tags correspondents and document types. The signals handlers in src/documents/signals/handlers.py process post consumption events like adding inbox tags and updating the search index. Finally the index module in src/documents/index.py adds the document to the Whoosh full text search index enabling content based searches.
 
 After the first document finished processing I checked the storage location to understand the directory structure
 
-ls -la /app/media/documents/originals/
-total 24
-drwxr-xr-x 2 root root 4096 Dec 15 10:23 .
-drwxr-xr-x 5 root root 4096 Dec 15 10:20 ..
--rw-r--r-- 1 root root 8234 Dec 15 10:23 0000001.pdf
+ls -la /app/media/documents/originals/ /app/media/documents/thumbnails/ /app/media/documents/archive/
 
-ls -la /app/media/documents/thumbnails/
-total 16
-drwxr-xr-x 2 root root 4096 Dec 15 10:23 .
-drwxr-xr-x 5 root root 4096 Dec 15 10:20 ..
--rw-r--r-- 1 root root 4521 Dec 15 10:23 0000001.png
+/app/media/documents/archive/:
+total 0
+drwxr-sr-x 1 root testuser  40 Nov  3 00:56 .
+drwxr-sr-x 1 root testuser 100 Nov  3 00:56 ..
 
-ls -la /app/media/documents/archive/
-total 20
-drwxr-xr-x 2 root root 4096 Dec 15 10:23 .
-drwxr-xr-x 5 root root 4096 Dec 15 10:20 ..
--rw-r--r-- 1 root root 9876 Dec 15 10:23 0000001.pdf
+/app/media/documents/originals/:
+total 1
+drwxr-sr-x 1 root testuser  60 Nov  3 00:56 .
+drwxr-sr-x 1 root testuser 100 Nov  3 00:56 ..
+-rw-r--r-- 1 root testuser  61 Nov  3 00:56 0000001.txt
 
-The storage system uses three separate directories each serving a distinct purpose. The originals directory stores the uploaded file exactly as received without any modifications preserving the original document for archival purposes. The archive directory contains a searchable PDF version with embedded OCR text allowing the document to be searched even if the original was a scanned image. The thumbnails directory holds PNG preview images used in the web interface to show document previews without loading the full document. The default filename pattern is a seven digit zero padded document ID followed by the appropriate file extension ensuring unique filenames that sort chronologically by ingestion order.
+/app/media/documents/thumbnails/:
+total 3
+drwxr-sr-x 1 root testuser   60 Nov  3 00:56 .
+drwxr-sr-x 1 root testuser  100 Nov  3 00:56 ..
+-rw-r--r-- 1 root testuser 3004 Nov  3 00:56 0000001.png
+
+The storage system uses three separate directories each serving a distinct purpose. The originals directory stores the uploaded file exactly as received without any modifications preserving the original document for archival purposes. The archive directory holds the PDF/A converted versions of processed documents (searchable PDF/A files with embedded OCR text) for scanned inputs; in this run of plain text documents the archive directory stayed empty because the TextDocumentParser produces no separate archive file. The thumbnails directory holds PNG preview images used in the web interface to show document previews without loading the full document. The default filename pattern is a seven digit zero padded document ID followed by the appropriate file extension ensuring unique filenames that sort chronologically by ingestion order.
 
 For the multiple upload test I created three documents in sequence to observe how the system handles consecutive uploads and whether the classifier trains after each one
 
-convert -size 612x792 xc:white -font Helvetica -pointsize 12 -annotate +50+50 "Invoice from ACME Corp dated January 2024" /app/consume/test_document_002.pdf
+printf 'Invoice from ACME Corp dated January 2024\n' > /app/consume/test_document_002.txt
+
+Between the first and second upload the qcluster log showed the hourly and daily schedules that migration src/documents/migrations/1001_auto_20201109_1636.py registers with django-q firing on their own. No MATCH_AUTO item existed yet, so train_classifier returned at its early exit without logging anything
+
+00:56:56 [Q] INFO Process-1 created a task from schedule [Train the classifier]
+00:56:56 [Q] INFO Process-1 created a task from schedule [Optimize the index]
+00:56:56 [Q] INFO Process-1 created a task from schedule [Perform sanity check]
+00:56:56 [Q] INFO Process-1 created a task from schedule [Check all e-mail accounts]
+[2026-11-03 00:56:56,736] [INFO] [paperless.sanity_checker] Sanity checker detected no issues.
 
 The logs after the second upload showed the classifier checking for a trained model but finding none available
 
-[INFO] paperless.consumer: Consuming test_document_002.pdf
-[DEBUG] paperless.consumer: Detected mime type: application/pdf
-[DEBUG] paperless.classifier: Document classification model does not exist yet, not performing automatic matching
-[INFO] paperless.consumer: Document test_document_002.pdf consumption finished
+[2026-11-03 00:56:58,568] [INFO] [paperless.consumer] Consuming test_document_002.txt
+[2026-11-03 00:56:58,571] [DEBUG] [paperless.consumer] Detected mime type: text/plain
+[2026-11-03 00:56:59,220] [DEBUG] [paperless.classifier] Document classification model does not exist (yet), not performing automatic matching.
+[2026-11-03 00:56:59,239] [INFO] [paperless.consumer] Document 2024-01-01 test_document_002 consumption finished
 
-convert -size 612x792 xc:white -font Helvetica -pointsize 12 -annotate +50+50 "Receipt for office supplies purchase" /app/consume/test_document_003.pdf
+The created date 2024-01-01 in the finished line shows the date parser picking up the January 2024 date inside the document text.
+
+printf 'Receipt for office supplies purchase\n' > /app/consume/test_document_003.txt
 
 The third upload logs displayed the same pattern with the classifier remaining idle because no model exists
 
-[INFO] paperless.consumer: Consuming test_document_003.pdf
-[DEBUG] paperless.classifier: Document classification model does not exist yet, not performing automatic matching
-[INFO] paperless.consumer: Document test_document_003.pdf consumption finished
+[2026-11-03 00:57:18,567] [INFO] [paperless.consumer] Consuming test_document_003.txt
+[2026-11-03 00:57:18,926] [DEBUG] [paperless.classifier] Document classification model does not exist (yet), not performing automatic matching.
+[2026-11-03 00:57:18,947] [INFO] [paperless.consumer] Document 2026-11-03 test_document_003 consumption finished
 
-The classifier training behavior is controlled by the train_classifier function in src/documents/tasks.py at lines 38 through 63. The training only occurs when specific conditions are met. First there must be at least one Tag DocumentType or Correspondent configured with matching_algorithm set to MATCH_AUTO which has a value of 6. Second the training data must have changed since the last training session which is determined by comparing SHA1 hashes of the document content and labels.
+The classifier training behavior is controlled by the train_classifier function in src/documents/tasks.py at line 48, with the MATCH_AUTO gate at lines 50 through 55. The training only occurs when specific conditions are met. First there must be at least one Tag DocumentType or Correspondent configured with matching_algorithm set to MATCH_AUTO which has a value of 6. Second the training data must have changed since the last training session which is determined by comparing SHA1 hashes of the document content and labels.
 
 if not Tag.objects.filter matching_algorithm equals Tag.MATCH_AUTO exists
 and not DocumentType.objects.filter matching_algorithm equals Tag.MATCH_AUTO exists
@@ -93,40 +119,70 @@ and not Correspondent.objects.filter matching_algorithm equals Tag.MATCH_AUTO ex
 The key log messages that indicate classifier training status provide clear visibility into what the system is doing. When the classifier model file does not exist you see a debug message indicating automatic matching will not be performed. When no auto matching items are configured the training function returns early without any log message because there is nothing to train on. When training actually occurs the logs show a detailed sequence of steps.
 
 When classifier model does not exist
-[DEBUG] paperless.classifier: Document classification model does not exist yet, not performing automatic matching
+[DEBUG] [paperless.classifier] Document classification model does not exist (yet), not performing automatic matching.
 
-When training actually occurs you see these messages showing data gathering vectorization and model training
-[DEBUG] paperless.classifier: Gathering data from database...
-[DEBUG] paperless.classifier: 15 documents, 3 tags, 2 correspondents, 1 document types
-[DEBUG] paperless.classifier: Vectorizing data...
-[DEBUG] paperless.classifier: Training tags classifier...
-[DEBUG] paperless.classifier: Training correspondent classifier...
-[DEBUG] paperless.classifier: Training document type classifier...
-[INFO] paperless.classifier: Saving updated classifier model to /app/data/classification_model.pickle...
+When training actually occurs you see these messages showing data gathering, vectorization and model training (captured from the training run 3 below, after a document carried the MATCH_AUTO tag)
+[2026-11-03 00:58:01,211] [DEBUG] [paperless.classifier] Gathering data from database...
+[2026-11-03 00:58:01,216] [DEBUG] [paperless.classifier] 4 documents, 1 tag(s), 0 correspondent(s), 0 document type(s).
+[2026-11-03 00:58:01,225] [DEBUG] [paperless.classifier] Vectorizing data...
+[2026-11-03 00:58:01,226] [DEBUG] [paperless.classifier] Training tags classifier...
+[2026-11-03 00:58:01,238] [DEBUG] [paperless.classifier] There are no correspondents. Not training correspondent classifier.
+[2026-11-03 00:58:01,238] [DEBUG] [paperless.classifier] There are no document types. Not training document type classifier.
+[2026-11-03 00:58:01,238] [INFO] [paperless.tasks] Saving updated classifier model to /app/src/../data/classification_model.pickle...
 
 When training data has not changed since the last training
-[DEBUG] paperless.classifier: Training data unchanged.
+[2026-11-03 00:58:01,240] [DEBUG] [paperless.classifier] Gathering data from database...
+[2026-11-03 00:58:01,243] [DEBUG] [paperless.tasks] Training data unchanged.
 
 To trigger classifier training I created a tag with automatic matching algorithm enabled. This tells the system that documents should be automatically tagged based on their content using the trained neural network classifier.
 
-python manage.py shell
-from documents.models import Tag
-Tag.objects.create name equals 'invoice' matching_algorithm equals 6
-exit
+python3 manage.py shell
+>>> from documents.models import Tag
+>>> Tag.objects.create(name='invoice', matching_algorithm=Tag.MATCH_AUTO)
+<Tag: invoice>
 
 Then I added another document to observe how the classifier responds when auto matching is now configured
 
-convert -size 612x792 xc:white -font Helvetica -pointsize 12 -annotate +50+50 "Fourth test document" /app/consume/test_document_004.pdf
+printf 'Fourth test document\n' > /app/consume/test_document_004.txt
 
-The logs now showed classifier training being triggered because an auto matching tag exists and the system needs to build a model
+The consumption logs for the fourth document look the same as before, because training is not part of the consume path; it runs as the hourly "Train the classifier" django-q schedule seen earlier
 
-[INFO] paperless.consumer: Consuming test_document_004.pdf
-[DEBUG] paperless.classifier: Gathering data from database...
-[DEBUG] paperless.classifier: 3 documents, 1 tags, 0 correspondents, 0 document types
-[DEBUG] paperless.classifier: Vectorizing data...
-[DEBUG] paperless.classifier: Training tags classifier...
-[INFO] paperless.classifier: Saving updated classifier model to /app/data/classification_model.pickle...
-[INFO] paperless.consumer: Document test_document_004.pdf consumption finished
+[2026-11-03 00:57:39,554] [INFO] [paperless.consumer] Consuming test_document_004.txt
+[2026-11-03 00:57:39,565] [DEBUG] [paperless.consumer] Parsing test_document_004.txt...
+[2026-11-03 00:57:39,909] [DEBUG] [paperless.classifier] Document classification model does not exist (yet), not performing automatic matching.
+[2026-11-03 00:57:39,932] [INFO] [paperless.consumer] Document 2026-11-03 test_document_004 consumption finished
+00:57:39 [Q] INFO Processed [test_document_004.txt]
+
+Rather than wait for the next hourly run I invoked the scheduled function directly from the Django shell. With the auto matching tag present but no document carrying it, the first run gathers and vectorizes the data, finds nothing to train, and still writes the model file; an immediately repeated run skips
+
+>>> from documents.tasks import train_classifier
+>>> train_classifier()   # training run 1
+[2026-11-03 00:57:59,416] [DEBUG] [paperless.classifier] Document classification model does not exist (yet), not performing automatic matching.
+[2026-11-03 00:57:59,417] [DEBUG] [paperless.classifier] Gathering data from database...
+[2026-11-03 00:57:59,422] [DEBUG] [paperless.classifier] 4 documents, 0 tag(s), 0 correspondent(s), 0 document type(s).
+[2026-11-03 00:57:59,736] [DEBUG] [paperless.classifier] Vectorizing data...
+[2026-11-03 00:57:59,737] [DEBUG] [paperless.classifier] There are no tags. Not training tags classifier.
+[2026-11-03 00:57:59,737] [DEBUG] [paperless.classifier] There are no correspondents. Not training correspondent classifier.
+[2026-11-03 00:57:59,737] [DEBUG] [paperless.classifier] There are no document types. Not training document type classifier.
+[2026-11-03 00:57:59,738] [INFO] [paperless.tasks] Saving updated classifier model to /app/src/../data/classification_model.pickle...
+>>> train_classifier()   # training run 2
+[2026-11-03 00:57:59,739] [DEBUG] [paperless.classifier] Gathering data from database...
+[2026-11-03 00:57:59,742] [DEBUG] [paperless.tasks] Training data unchanged.
+
+I then assigned the invoice tag to document 2, which changes the training data hash, and ran the task twice more. The third run trains the tags classifier and saves the model; the fourth run skips again
+
+>>> Document.objects.get(pk=2).tags.add(Tag.objects.get(name='invoice'))
+>>> train_classifier()   # training run 3
+[2026-11-03 00:58:01,211] [DEBUG] [paperless.classifier] Gathering data from database...
+[2026-11-03 00:58:01,216] [DEBUG] [paperless.classifier] 4 documents, 1 tag(s), 0 correspondent(s), 0 document type(s).
+[2026-11-03 00:58:01,225] [DEBUG] [paperless.classifier] Vectorizing data...
+[2026-11-03 00:58:01,226] [DEBUG] [paperless.classifier] Training tags classifier...
+[2026-11-03 00:58:01,238] [DEBUG] [paperless.classifier] There are no correspondents. Not training correspondent classifier.
+[2026-11-03 00:58:01,238] [DEBUG] [paperless.classifier] There are no document types. Not training document type classifier.
+[2026-11-03 00:58:01,238] [INFO] [paperless.tasks] Saving updated classifier model to /app/src/../data/classification_model.pickle...
+>>> train_classifier()   # training run 4
+[2026-11-03 00:58:01,240] [DEBUG] [paperless.classifier] Gathering data from database...
+[2026-11-03 00:58:01,243] [DEBUG] [paperless.tasks] Training data unchanged.
 
 The classifier does not retrain automatically on every upload which is an important optimization for performance. It only trains when there are matching models configured with MATCH_AUTO algorithm and when the training data has actually changed since the last training. The data hash comparison in classifier.py at line 163 prevents unnecessary retraining by comparing a SHA1 hash of all document content and labels. If the hash matches the previous training session the function returns False and skips retraining entirely.
 
@@ -134,44 +190,41 @@ if self.data_hash and new_data_hash equals self.data_hash then return False
 
 After all documents finished processing I verified the database tables that received new rows to understand the data model
 
-python manage.py shell
-from documents.models import Document, Log, LogEntry
-Document.objects.count
+python3 manage.py shell
+>>> from documents.models import Document, Log
+>>> from django.contrib.admin.models import LogEntry
+>>> Document.objects.count()
 4
-Log.objects.count
-28
-LogEntry.objects.count
+>>> Log.objects.count()
+0
+>>> LogEntry.objects.count()   # django_admin_log
 4
-exit
 
-The database tables that receive new rows during document ingestion form a relational structure. The documents_document table stores the main document record with fields including id as primary key, title extracted from filename or content, content containing the full OCR text, mime_type identifying the file format, checksum for duplicate detection, created and modified timestamps, added timestamp for when the document entered the system, filename and archive_filename for storage paths, and foreign keys to correspondent_id and document_type_id. The documents_log table stores all log entries for each consumption operation with fields for id, group UUID to correlate related log entries, message text, level indicating severity, and created timestamp. The documents_document_tags through table stores the many to many relationship between documents and tags. The django_admin_log table records administrative actions including document creation for audit purposes.
+The database tables that receive new rows during document ingestion form a relational structure. The documents_document table stores the main document record with fields including id as primary key, title extracted from filename or content, content containing the full OCR text, mime_type identifying the file format, checksum for duplicate detection, created and modified timestamps, added timestamp for when the document entered the system, filename and archive_filename for storage paths, and foreign keys to correspondent_id and document_type_id. The documents_log table exists to store per-consumption log entries with fields for id, group UUID, message text, level, and created timestamp, though in this run it received no rows. The documents_document_tags through table stores the many to many relationship between documents and tags. The django_admin_log table received four rows, one per created document.
 
 I queried the document table to see the stored records and verify the data was persisted correctly
 
-python manage.py shell
-from documents.models import Document
-for doc in Document.objects.all:
-    print doc.id doc.filename doc.checksum doc.created
+python3 manage.py shell
+>>> for d in Document.objects.order_by('pk'):
+...     print(d.pk, d.filename, d.checksum, d.created)
 
-1 0000001.pdf a3f2b8c9d4e5f6a7b8c9d0e1f2a3b4c5 2024-12-15 10:23:45
-2 0000002.pdf b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9 2024-12-15 10:25:12
-3 0000003.pdf c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0 2024-12-15 10:26:33
-4 0000004.pdf d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1 2024-12-15 10:28:15
-exit
+1 0000001.txt 77bfa1aadfba82c925c3a36dd2d55b28 2026-11-03 00:56:37.447736+00:00
+2 0000002.txt 4ffa2238c2a2af4fbc5aecb0a82cad7d 2024-01-01 00:00:00+00:00
+3 0000003.txt 845a1e0c5113bca6b468ae55af42418a 2026-11-03 00:57:17.456888+00:00
+4 0000004.txt 4829722b2a75904bb3194d1cf3865aee 2026-11-03 00:57:38.440756+00:00
+
+Document 2 carries the 2024-01-01 created date parsed from the 'January 2024' text inside it; the checksums are the MD5 hashes of each file's content.
 
 The directory structure on disk follows a clean hierarchical layout under the media directory
 
 /app/media/documents/
     originals/
-        0000001.pdf
-        0000002.pdf
-        0000003.pdf
-        0000004.pdf
+        0000001.txt
+        0000002.txt
+        0000003.txt
+        0000004.txt
     archive/
-        0000001.pdf
-        0000002.pdf
-        0000003.pdf
-        0000004.pdf
+        (empty for plain text documents)
     thumbnails/
         0000001.png
         0000002.png
@@ -186,9 +239,8 @@ This produces filenames like 0000001.pdf and 0000002.pdf. When PAPERLESS_FILENAM
 
 For cleanup I removed all test documents and reset the database to leave the system in its original state
 
-rm /app/consume/test_document_*.pdf
-rm /app/media/documents/originals/000000*.pdf
-rm /app/media/documents/archive/000000*.pdf
+rm -f /app/consume/test_document_*.txt
+rm /app/media/documents/originals/000000*.txt
 rm /app/media/documents/thumbnails/000000*.png
 rm /app/data/classification_model.pickle
 python manage.py shell
@@ -197,7 +249,6 @@ Document.objects.all.delete
 Log.objects.all.delete
 Tag.objects.filter name equals 'invoice'.delete
 exit
-rm /tmp/test_content.txt
 
 The complete ingestion pipeline sequence observed from the logs reveals a sophisticated multi stage process
 

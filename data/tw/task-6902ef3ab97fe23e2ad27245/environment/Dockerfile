@@ -1,1 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_TW_minio_minio_6902ef3ab97fe23e2ad27245_1.1@sha256:ff3ad82cc9301b1ea217f542ffaebcb02a933a51fd041b578201c04711619251
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:tw-6902ef3ab97fe23e2ad27245-c07e5b4-v1.01.99@sha256:1c4c5820cdbe0d4b05acbf552f485c3dae7f8fb4de2511f2f708da04edf7fce5

@@ -41,7 +41,7 @@
   },
   {
     "id": "9c9e99ca9cd6cd83f1aaf61eede113dc",
-    "title": "1.5: Replaces all 2 duplicated AKM field definitions (nb_akm_suites, akm_suites) in Dot11EltMicrosoftWPA with shared ones in scapy/layers/dot11.py",
+    "title": "1.5: Replaces both duplicated AKM field definitions (nb_akm_suites, akm_suites) in Dot11EltMicrosoftWPA with shared ones in scapy/layers/dot11.py",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -104,24 +104,8 @@
     }
   },
   {
-    "id": "c6642a9807f00b7614004c35d9f752bf",
-    "title": "2: Documentation Maintainability",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "nice to have"
-    }
-  },
-  {
-    "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -129,7 +113,7 @@
   },
   {
     "id": "dbcd9529c268e36e473359ebc2473c80",
-    "title": "4.1: Breaks existing packet parsing behavior for any of the 3 refactored Dot11 element classes (Dot11EltMicrosoftWPA, Dot11EltRSN, Dot11EltVendorSpecific) in scapy/layers/dot11.py",
+    "title": "2.1: Breaks existing packet parsing behavior for any of the 3 refactored Dot11 element classes (Dot11EltMicrosoftWPA, Dot11EltRSN, Dot11EltVendorSpecific) in scapy/layers/dot11.py",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

@@ -74,10 +74,10 @@ $ mkdir -p /tmp/maddy_state /tmp/maddy_runtime
 $ ./maddy -config /tmp/test_maddy.conf -debug 2>&1
 
 [debug] sql: go-imap-sql version 0.4.0	
-[debug] /tmp/test_maddy.conf:21: reference &local_mailboxes	
+[debug] /tmp/test_maddy.conf:16: reference &local_mailboxes	
 smtp: listening on tcp://127.0.0.1:2525	
-[debug] /tmp/test_maddy.conf:29: reference &local_authdb	
-[debug] /tmp/test_maddy.conf:30: reference &local_mailboxes	
+[debug] /tmp/test_maddy.conf:23: reference &local_authdb	
+[debug] /tmp/test_maddy.conf:24: reference &local_mailboxes	
 imap: listening on tcp://127.0.0.1:1993	
 imap: TLS is disabled, this is insecure configuration and should be used only for testing!	
 ```
@@ -183,13 +183,13 @@ imap tcp://127.0.0.1:1993 {
 EOF
 $ ./maddy -config /tmp/test_maddy_full.conf -debug 2>&1
 
-[debug] /tmp/test_maddy_full.conf:20: new module require_mx_record []	
-[debug] /tmp/test_maddy_full.conf:25: new module replace_rcpt [/(.+)\+(.+)@(.+)/ $1@$3]	
+[debug] /tmp/test_maddy_full.conf:15: new module require_mx_record []	
+[debug] /tmp/test_maddy_full.conf:19: new module replace_rcpt [/(.+)\+(.+)@(.+)/ $1@$3]	
 [debug] sql: go-imap-sql version 0.4.0	
-[debug] /tmp/test_maddy_full.conf:28: reference &local_mailboxes	
+[debug] /tmp/test_maddy_full.conf:22: reference &local_mailboxes	
 smtp: listening on tcp://127.0.0.1:2525	
-[debug] /tmp/test_maddy_full.conf:36: reference &local_authdb	
-[debug] /tmp/test_maddy_full.conf:37: reference &local_mailboxes	
+[debug] /tmp/test_maddy_full.conf:29: reference &local_authdb	
+[debug] /tmp/test_maddy_full.conf:30: reference &local_mailboxes	
 imap: listening on tcp://127.0.0.1:1993	
 imap: TLS is disabled, this is insecure configuration and should be used only for testing!	
 ```

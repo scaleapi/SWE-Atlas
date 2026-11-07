@@ -149,7 +149,7 @@
       "importance": "must have"
     },
     "id": "ebec592f94f6dee3696ca1b3d28110f3",
-    "title": "1.20: Tests that Parse returns an error for a long hex ETag input that includes a '-' multipart separator"
+    "title": "1.19: Tests that Parse returns an error for a long hex ETag input that includes a '-' multipart separator"
   },
   {
     "annotations": {
@@ -157,7 +157,7 @@
       "importance": "must have"
     },
     "id": "c43b2c3e8e0c4eb811d9e430578669ed",
-    "title": "1.22: Tests that Equal returns false when comparing a plain ETag '<hex>' to a multipart ETag '<hex>-<n>' with the same digest prefix"
+    "title": "1.20: Tests that Equal returns false when comparing a plain ETag '<hex>' to a multipart ETag '<hex>-<n>' with the same digest prefix"
   },
   {
     "annotations": {
@@ -165,7 +165,7 @@
       "importance": "must have"
     },
     "id": "6d297b6202f4f26bebd0ba090b6079b6",
-    "title": "1.23: Tests that Multipart counts identical part ETags as separate parts when computing the resulting multipart ETag"
+    "title": "1.21: Tests that Multipart counts identical part ETags as separate parts when computing the resulting multipart ETag"
   },
   {
     "annotations": {
@@ -173,7 +173,7 @@
       "importance": "must have"
     },
     "id": "913407b899b1aefda70e8c97c9e7519b",
-    "title": "1.24: Tests that IsEncrypted returns false for a multipart ETag with a large numeric part-count suffix"
+    "title": "1.22: Tests that IsEncrypted returns false for a multipart ETag with a large numeric part-count suffix"
   },
   {
     "annotations": {

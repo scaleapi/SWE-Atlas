@@ -1,7 +1,7 @@
 [
   {
     "id": "f25d2a5c73c3a6b6c2e1b354e6d03244",
-    "title": "1.1: 1.1: States that the exception type raised when accessing the login page with an empty database is sqlalchemy.exc.ProgrammingError.",
+    "title": "1.1: States that the exception type raised when accessing the login page with an empty database is sqlalchemy.exc.ProgrammingError.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "b8d0ac07dcdebe3034333b8dd056ed6b",
-    "title": "1.5: Shows a Flask server startup log containing Running on http://127.0.0.1:7777 (e.g., * Running on http://127.0.0.1:7777/ (Press CTRL+C to quit)).",
+    "title": "1.5: Shows a Flask server startup log and observed confirmation that the server is running on http://127.0.0.1:7777 (e.g., * Serving Flask app \"server\" (lazy loading), together with a listening socket on 127.0.0.1:7777 or a successful HTTP request to it).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "76976862760b3270a9425be6ffbe526c",
-    "title": "1.10: States that job_runner.py has no explicit startup ready log message.",
+    "title": "1.9: States that job_runner.py has no explicit startup ready log message.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "e2fcfc7f8131d4d3eb3807563bea119c",
-    "title": "1.11: Shows a log message indicating the alias cannot be created on-the-fly with a 550 rejection (e.g., alias test@sl.local cannot be created on-the-fly, return 550).",
+    "title": "1.10: Shows a log message indicating the alias cannot be created on-the-fly with a 550 rejection (e.g., alias test@sl.local cannot be created on-the-fly, return 550).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

@@ -7,3 +7,5 @@ Can you refactor the S3 source to consolidate client creation into a single func
 There is also a bug in `scanBuckets` where a failure to create a regional S3 client is logged but execution continues with an invalid client, which would cause a panic. This should be fixed so that the affected bucket is skipped gracefully.
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

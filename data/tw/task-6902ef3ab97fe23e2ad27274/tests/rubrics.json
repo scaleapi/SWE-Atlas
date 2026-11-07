@@ -28,16 +28,8 @@
       "type": "positive hli verifier",
       "importance": "must have"
     },
-    "id": "38df8bece8ddb5ac868f3807974ac1d0",
-    "title": "1.4: Tests that PutBucketPolicy handler returns HTTP 400 Bad Request when request body reader is nil"
-  },
-  {
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    },
     "id": "ad453b4a924e138ced4ea15ef2db67c4",
-    "title": "1.5: Tests that PutBucketPolicy handler returns HTTP 403 Forbidden when credentials (access key and secret key) are empty"
+    "title": "1.4: Tests that PutBucketPolicy handler returns HTTP 403 Forbidden when credentials (access key and secret key) are empty"
   },
   {
     "annotations": {
@@ -45,7 +37,7 @@
       "importance": "must have"
     },
     "id": "f0ea876fb71d4878c8570b6517957a0d",
-    "title": "1.6: Tests that PutBucketPolicy handler returns HTTP 400 Bad Request when policy JSON is malformed or invalid"
+    "title": "1.5: Tests that PutBucketPolicy handler returns HTTP 400 Bad Request when policy JSON is malformed or invalid"
   },
   {
     "annotations": {
@@ -53,7 +45,7 @@
       "importance": "must have"
     },
     "id": "dea28b586b79c1478c9ee56c57d7e52b",
-    "title": "1.7: Tests that PutBucketPolicy handler returns HTTP 400 Bad Request when policy resource ARN bucket name differs from request bucket name"
+    "title": "1.6: Tests that PutBucketPolicy handler returns HTTP 400 Bad Request when policy resource ARN bucket name differs from request bucket name"
   },
   {
     "annotations": {
@@ -61,7 +53,7 @@
       "importance": "must have"
     },
     "id": "5a765e9fe87459ae2eb51d8d5e3dd1fb",
-    "title": "1.8: Tests that PutBucketPolicy handler returns HTTP 404 Not Found when targeting a non-existent bucket"
+    "title": "1.7: Tests that PutBucketPolicy handler returns HTTP 404 Not Found when targeting a non-existent bucket"
   },
   {
     "annotations": {
@@ -69,7 +61,7 @@
       "importance": "must have"
     },
     "id": "1602fd4e61752579c61239c2447a69aa",
-    "title": "1.9: Tests that PutBucketPolicy handler returns HTTP 400 Bad Request when bucket name has invalid format (e.g., starts with a dot)"
+    "title": "1.8: Tests that PutBucketPolicy handler returns HTTP 400 Bad Request when bucket name has invalid format (e.g., starts with a dot)"
   },
   {
     "annotations": {
@@ -77,7 +69,7 @@
       "importance": "must have"
     },
     "id": "7187497f659daa48f01bb02e0d5ea3d4",
-    "title": "1.10: Tests that PutBucketPolicy handler returns HTTP 400 Bad Request when policy Version field is empty"
+    "title": "1.9: Tests that PutBucketPolicy handler returns HTTP 400 Bad Request when policy Version field is empty"
   },
   {
     "annotations": {
@@ -85,7 +77,7 @@
       "importance": "must have"
     },
     "id": "4c3877f3a4743f91ab52daca952b253b",
-    "title": "1.11: Tests that GetBucketPolicy handler returns HTTP 200 OK with the correct policy content when given valid credentials and an existing bucket with policy"
+    "title": "1.10: Tests that GetBucketPolicy handler returns HTTP 200 OK with the correct policy content when given valid credentials and an existing bucket with policy"
   },
   {
     "annotations": {
@@ -93,7 +85,7 @@
       "importance": "must have"
     },
     "id": "0c4a49f2bc06e48324541309e05e407b",
-    "title": "1.12: Tests that GetBucketPolicy handler returns HTTP 404 Not Found for non-existent bucket"
+    "title": "1.11: Tests that GetBucketPolicy handler returns HTTP 404 Not Found for non-existent bucket"
   },
   {
     "annotations": {
@@ -101,7 +93,7 @@
       "importance": "must have"
     },
     "id": "9f298a37c72c26ae83854059dfd1acc1",
-    "title": "1.13: Tests that DeleteBucketPolicy handler returns HTTP 204 No Content when deleting policy from existing bucket with valid credentials"
+    "title": "1.12: Tests that DeleteBucketPolicy handler returns HTTP 204 No Content when deleting policy from existing bucket with valid credentials"
   },
   {
     "annotations": {
@@ -109,7 +101,7 @@
       "importance": "must have"
     },
     "id": "ea36b703e2100af1790c925f506cc747",
-    "title": "1.14: Tests that DeleteBucketPolicy handler returns HTTP 404 Not Found for non-existent bucket"
+    "title": "1.13: Tests that DeleteBucketPolicy handler returns HTTP 404 Not Found for non-existent bucket"
   },
   {
     "annotations": {
@@ -117,7 +109,7 @@
       "importance": "must have"
     },
     "id": "855ae52aa17b68c8c8d540d4a3c67c33",
-    "title": "1.16: Tests that handlers return access denied for anonymous/unsigned HTTP requests"
+    "title": "1.14: Tests that handlers return access denied for anonymous/unsigned HTTP requests"
   },
   {
     "annotations": {
@@ -125,7 +117,7 @@
       "importance": "must have"
     },
     "id": "2ab4653cb1f1471f2c6e0516eb8464d9",
-    "title": "1.17: Tests that GetBucketPolicy handler returns HTTP 400 Bad Request when bucket name has invalid format"
+    "title": "1.15: Tests that GetBucketPolicy handler returns HTTP 400 Bad Request when bucket name has invalid format"
   },
   {
     "annotations": {
@@ -197,7 +189,7 @@
       "importance": "nice to have"
     },
     "id": "9b4f95400c0a2f3ea0e5fdde4ced24fc",
-    "title": "4.2: Validates anonymous request handling using the suite\u2019s anonymous-testing pattern (e.g., ExecObjectLayerAPIAnonTest) or an equivalent two-phase check"
+    "title": "4.2: Validates anonymous request handling using the suite's anonymous-testing pattern (e.g., ExecObjectLayerAPIAnonTest) or an equivalent two-phase check"
   },
   {
     "annotations": {

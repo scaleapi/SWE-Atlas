@@ -69,7 +69,7 @@
       "importance": "must have"
     },
     "id": "81c7b365e17fe1e34c1ce5baa26e6332",
-    "title": "1.9: Tests that domain-only source matching is case-insensitive"
+    "title": "1.9: Tests that source matching is case-insensitive in the domain part alone (lowercase local part, mixed-case domain)"
   },
   {
     "annotations": {

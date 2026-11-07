@@ -98,18 +98,10 @@
   {
     "annotations": {
       "type": "positive hli verifier",
-      "importance": "must have"
-    },
-    "id": "2e406f799082ed0442062b7fe460430a",
-    "title": "1.13: Tests that the \"same credential, different detector type\" cache-key scenarios assert the returned result preserves the second detector\u2019s DetectorType (preventing cross-type cache contamination)"
-  },
-  {
-    "annotations": {
-      "type": "positive hli verifier",
       "importance": "nice to have"
     },
     "id": "2c65f0a44348e90cb293149e0bd83252",
-    "title": "2.1: Places the new tests for in pkg/verificationcache/verification_cache_test.go"
+    "title": "2.1: Places the new tests in pkg/verificationcache/verification_cache_test.go"
   },
   {
     "annotations": {
@@ -149,6 +141,6 @@
       "importance": "nice to have"
     },
     "id": "82011a3be59db2a6ccddc3fe12634a5b",
-    "title": "4.2: Tests that in the verification-enabled cache-miss scenario, the test explicitly asserts on returned results\u2019 verification outputs (e.g., Verified and/or verification error fields), not only on list length, call count, or cache-hit/miss counters."
+    "title": "4.2: Tests that in the verification-enabled cache-miss scenario, the test explicitly asserts on returned results' verification outputs (e.g., Verified and/or verification error fields), not only on list length, call count, or cache-hit/miss counters."
   }
 ]

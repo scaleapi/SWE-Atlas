@@ -5,7 +5,7 @@
       "importance": "must have"
     },
     "id": "aea1d83862baa333c95f618b0d915631",
-    "title": "1.1: Tests that document.content is asserted against an explicit expected text value from the consumed input (e.g., assertEqual/ assertIn with a known expected string/snippet)\n"
+    "title": "1.1: Tests that document.content is asserted against an explicit expected text value from the consumed input (e.g., assertEqual/ assertIn with a known expected string/snippet)"
   },
   {
     "annotations": {
@@ -13,7 +13,7 @@
       "importance": "must have"
     },
     "id": "babbf95e0cfc6c11e30de86419b9aaee",
-    "title": "1.2: In the end-to-end lifecycle test (the one that asserts parsed content and that the original input file is removed), the test includes an assertion on document.filename (e.g., assertEqual/assertIsNotNone/assertTrue on document.filename)\n"
+    "title": "1.2: In the end-to-end lifecycle test (the one that asserts parsed content and that the original input file is removed), the test includes an assertion on document.filename (e.g., assertEqual/assertIsNotNone/assertTrue on document.filename)"
   },
   {
     "annotations": {
@@ -21,7 +21,7 @@
       "importance": "must have"
     },
     "id": "fe07aeb88631a72679d98c97725aa871",
-    "title": "1.3: In the end-to-end lifecycle test (the one that asserts parsed content and that the original input file is removed), the test includes an assertion on document.archive_filename (e.g., assertEqual/assertIsNotNone/assertTrue on document.archive_filename)\n"
+    "title": "1.3: In the end-to-end lifecycle test (the one that asserts parsed content and that the original input file is removed), the test includes an assertion on document.archive_filename (e.g., assertEqual/assertIsNotNone/assertTrue on document.archive_filename)"
   },
   {
     "annotations": {
@@ -29,7 +29,7 @@
       "importance": "must have"
     },
     "id": "2cda0fc47e0a2b567bf93ed03a2770e4",
-    "title": "1.5: In a baseline consumption test where no override_correspondent_id is provided, the test asserts document.correspondent is None after successful processing\n"
+    "title": "1.4: In a baseline consumption test where no override_correspondent_id is provided, the test asserts document.correspondent is None after successful processing"
   },
   {
     "annotations": {
@@ -37,7 +37,7 @@
       "importance": "must have"
     },
     "id": "2025f23a83176a679bba51e1f929a833",
-    "title": "1.6: In a baseline consumption test where no override_document_type_id is provided, the test asserts document.document_type is None after successful processing\n"
+    "title": "1.5: In a baseline consumption test where no override_document_type_id is provided, the test asserts document.document_type is None after successful processing"
   },
   {
     "annotations": {
@@ -45,7 +45,7 @@
       "importance": "must have"
     },
     "id": "de0dae3eb6f8b4968248f6282eab7502",
-    "title": "1.7: Tests that the source file exists at document.source_path after document processing"
+    "title": "1.6: Tests that the source file exists at document.source_path after document processing"
   },
   {
     "annotations": {
@@ -53,7 +53,7 @@
       "importance": "must have"
     },
     "id": "74b9cbffe1554cfc12a31be96c24b107",
-    "title": "1.8: Tests that a thumbnail file is created at document.thumbnail_path after document processing"
+    "title": "1.7: Tests that a thumbnail file is created at document.thumbnail_path after document processing"
   },
   {
     "annotations": {
@@ -61,7 +61,7 @@
       "importance": "must have"
     },
     "id": "d29ae5bbd5a24d8a94ae92a833451207",
-    "title": "1.9: Tests that an archive version file is created at document.archive_path after document processing"
+    "title": "1.8: Tests that an archive version file is created at document.archive_path after document processing"
   },
   {
     "annotations": {
@@ -69,7 +69,7 @@
       "importance": "must have"
     },
     "id": "12f74e8cbdda385662273ee4f033c363",
-    "title": "1.10: Tests that the original input file is deleted after successful document consumption"
+    "title": "1.9: Tests that the original input file is deleted after successful document consumption"
   },
   {
     "annotations": {
@@ -117,7 +117,7 @@
       "importance": "nice to have"
     },
     "id": "d47de9f5a7b0023c75474f4af639feab",
-    "title": "4.2: Uses self.consumer.try_consume_file() method to process the test document\n"
+    "title": "4.2: Uses self.consumer.try_consume_file() method to process the test document"
   },
   {
     "annotations": {

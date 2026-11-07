@@ -23,3 +23,5 @@ Use the below Interface:
 - Input: `NA`
 - Output: `*Plugin`
 - Description: Creates a new Plugin resource object with properly initialized Spec and Status values, where each nested subtype is recursively initialized with its own schema defaults.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

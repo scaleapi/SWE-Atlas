@@ -13,7 +13,7 @@
       "importance": "must have"
     },
     "id": "7bc8855f639cb8922693f7958ece1a5a",
-    "title": "1.2: Tests that symlink creation at the root directory succeeds when the user has permission at root\n"
+    "title": "1.2: Tests that symlink creation at the root directory succeeds when the user has permission at root"
   },
   {
     "annotations": {
@@ -109,7 +109,7 @@
       "importance": "must have"
     },
     "id": "107fe1aaa847ddbcc2ffd7e73949eacf",
-    "title": "1.15: Tests that renaming (moving) an existing path into the restricted subdirectory is denied when the user lacks the required permissions in that subdirectory"
+    "title": "1.14: Tests that renaming (moving) an existing path into the restricted subdirectory is denied when the user lacks the required permissions in that subdirectory"
   },
   {
     "annotations": {
@@ -117,7 +117,7 @@
       "importance": "must have"
     },
     "id": "1c91096c0a93ed309f831f1a0e176924",
-    "title": "1.16: Tests that creating a symlink that places an entry inside the restricted subdirectory is denied when the user lacks the required permissions in that subdirectory"
+    "title": "1.15: Tests that creating a symlink that places an entry inside the restricted subdirectory is denied when the user lacks the required permissions in that subdirectory"
   },
   {
     "annotations": {
@@ -125,7 +125,7 @@
       "importance": "must have"
     },
     "id": "4e84499afe21e393523aa19568dafc56",
-    "title": "1.17: For at least one denied operation, tests assert that an error is returned"
+    "title": "1.16: For at least one denied operation, tests assert that an error is returned"
   },
   {
     "annotations": {

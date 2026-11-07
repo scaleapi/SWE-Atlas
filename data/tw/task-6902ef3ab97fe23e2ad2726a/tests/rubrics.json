@@ -5,7 +5,7 @@
       "importance": "must have"
     },
     "id": "0d9c89393467fa3df48cbe222600219c",
-    "title": "1.1: Tests that MsgPipeline returns error when global check has InitErr set "
+    "title": "1.1: Tests that MsgPipeline returns error when a global check fails to initialize for the message"
   },
   {
     "annotations": {
@@ -13,7 +13,7 @@
       "importance": "must have"
     },
     "id": "fe7e1701e036c701c9495faadcd6d437",
-    "title": "1.2: Tests that MsgPipeline returns error when global check ConnRes.Reject is true"
+    "title": "1.2: Tests that MsgPipeline returns error when a global check rejects the connection"
   },
   {
     "annotations": {
@@ -21,7 +21,7 @@
       "importance": "must have"
     },
     "id": "b77dd1da8d100d0c87167f34388290c7",
-    "title": "1.3: Tests that MsgPipeline returns error when global check SenderRes.Reject is true"
+    "title": "1.3: Tests that MsgPipeline returns error when a global check rejects the sender (MAIL FROM)"
   },
   {
     "annotations": {
@@ -29,7 +29,7 @@
       "importance": "must have"
     },
     "id": "3c1e95d44d82768c46e10c6ed42e4a34",
-    "title": "1.4: Tests that MsgPipeline returns error when global check BodyRes.Reject is true"
+    "title": "1.4: Tests that MsgPipeline returns error when a global check rejects the message body"
   },
   {
     "annotations": {
@@ -37,7 +37,7 @@
       "importance": "must have"
     },
     "id": "dbf7b2f63421abe3ac9767c662e2fb9a",
-    "title": "1.5: Tests that MsgPipeline delivers successfully when global check has no rejection errors"
+    "title": "1.5: Tests that MsgPipeline delivers successfully when the global check rejects nothing"
   },
   {
     "annotations": {
@@ -45,7 +45,7 @@
       "importance": "must have"
     },
     "id": "58a1afbb9b83348aa085b8b1f0145171",
-    "title": "1.6: Tests that MsgPipeline returns error when source check has InitErr set"
+    "title": "1.6: Tests that MsgPipeline returns error when a source check fails to initialize for the message"
   },
   {
     "annotations": {
@@ -53,7 +53,7 @@
       "importance": "must have"
     },
     "id": "bef5bfd4d0d2ca193ab32a3459b0c4b5",
-    "title": "1.7: Tests that MsgPipeline returns error when source check ConnRes.Reject is true"
+    "title": "1.7: Tests that MsgPipeline returns error when a source check rejects the connection"
   },
   {
     "annotations": {
@@ -61,7 +61,7 @@
       "importance": "must have"
     },
     "id": "36d4583073043c4985aa6a1b7ce36d34",
-    "title": "1.8: Tests that MsgPipeline returns error when source check BodyRes.Reject is true"
+    "title": "1.8: Tests that MsgPipeline returns error when a source check rejects the message body"
   },
   {
     "annotations": {
@@ -69,7 +69,7 @@
       "importance": "must have"
     },
     "id": "9aa995cecc1e269b391107dd372be734",
-    "title": "1.9: Tests that MsgPipeline delivers successfully when source check has no rejection errors"
+    "title": "1.9: Tests that MsgPipeline delivers successfully when the source check rejects nothing"
   },
   {
     "annotations": {
@@ -77,7 +77,7 @@
       "importance": "must have"
     },
     "id": "ae225bb536e468bcf1c288c36acc0508",
-    "title": "1.10: Tests that MsgPipeline returns error when global modifier has InitErr set"
+    "title": "1.10: Tests that MsgPipeline returns error when a global modifier fails to initialize for the message"
   },
   {
     "annotations": {
@@ -85,7 +85,7 @@
       "importance": "must have"
     },
     "id": "015dba37a37c0b9c1016dbf4ae04d86f",
-    "title": "1.11: Tests that MsgPipeline returns error when global modifier has MailFromErr set"
+    "title": "1.11: Tests that MsgPipeline returns error when a global modifier fails while rewriting the sender (MAIL FROM)"
   },
   {
     "annotations": {
@@ -93,7 +93,7 @@
       "importance": "must have"
     },
     "id": "9ed7c4c9542bebe28c56d7370771a094",
-    "title": "1.12: Tests that MsgPipeline returns error when global modifier has BodyErr set"
+    "title": "1.12: Tests that MsgPipeline returns error when a global modifier fails while rewriting the message body"
   },
   {
     "annotations": {
@@ -101,7 +101,7 @@
       "importance": "must have"
     },
     "id": "8708ded9611d1ffa6b5ee5abd93fb45e",
-    "title": "1.13: Tests that MsgPipeline delivers successfully when global modifier has no errors"
+    "title": "1.13: Tests that MsgPipeline delivers successfully when the global modifier does not fail"
   },
   {
     "annotations": {
@@ -109,7 +109,7 @@
       "importance": "must have"
     },
     "id": "ec44b2d866e4ea2e6d8879c30226715b",
-    "title": "1.14: Tests that MsgPipeline returns error when source modifier has InitErr set"
+    "title": "1.14: Tests that MsgPipeline returns error when a source modifier fails to initialize for the message"
   },
   {
     "annotations": {
@@ -117,7 +117,7 @@
       "importance": "must have"
     },
     "id": "84c7a1800973f691b14cd58014cd7f6d",
-    "title": "1.15: Tests that MsgPipeline returns error when source modifier has MailFromErr set"
+    "title": "1.15: Tests that MsgPipeline returns error when a source modifier fails while rewriting the sender (MAIL FROM)"
   },
   {
     "annotations": {
@@ -125,7 +125,7 @@
       "importance": "must have"
     },
     "id": "79c2038fd593c35df912b28c131412db",
-    "title": "1.16: Tests that MsgPipeline returns error when source modifier has BodyErr set"
+    "title": "1.16: Tests that MsgPipeline returns error when a source modifier fails while rewriting the message body"
   },
   {
     "annotations": {
@@ -133,7 +133,7 @@
       "importance": "must have"
     },
     "id": "fd0989de4bc2080059d45bac2552ab7b",
-    "title": "1.17: Tests that MsgPipeline delivers successfully when source modifier has no errors"
+    "title": "1.17: Tests that MsgPipeline delivers successfully when the source modifier does not fail"
   },
   {
     "annotations": {
@@ -149,7 +149,7 @@
       "importance": "must have"
     },
     "id": "52eec548a9b8fb7ce9dd5533cbc2f5db",
-    "title": "1.19: Tests that MsgPipeline returns error when a source-level validation/check component rejects during the MAIL FROM phase\n"
+    "title": "1.19: Tests that MsgPipeline returns error when a source-level validation/check component rejects during the MAIL FROM phase"
   },
   {
     "annotations": {
@@ -165,7 +165,7 @@
       "importance": "must have"
     },
     "id": "0445fe2fca4ca6b60e1675391c9dc852",
-    "title": "1.21: Tests that MsgPipeline returns error when a global-level transformation/modifier component fails during the RCPT TO phase\n"
+    "title": "1.21: Tests that MsgPipeline returns error when a global-level transformation/modifier component fails during the RCPT TO phase"
   },
   {
     "annotations": {

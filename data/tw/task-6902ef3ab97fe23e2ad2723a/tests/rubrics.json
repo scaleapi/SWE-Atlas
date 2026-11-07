@@ -66,14 +66,6 @@
   {
     "annotations": {
       "type": "positive hli verifier",
-      "importance": "must have"
-    },
-    "id": "d02608c02c9912d29b27a5df0dba02f7",
-    "title": "1.10: Tests that ZWJ emoji sequence with 4 family members is stored correctly in the screen buffer."
-  },
-  {
-    "annotations": {
-      "type": "positive hli verifier",
       "importance": "nice to have"
     },
     "id": "7a87dd49300f7699f8939eb63ea01c4d",

@@ -290,7 +290,7 @@ got this as output
 1995470 UserTaskCreate p=2 g=18 off=1040 taskid=5 pid=1 typeid=9 name=DATA
 ```
 
-This trace output reveals the task hierarchy that maddy developers instrumented in the SMTP endpoint code. The trace events show that an `Incoming Message` parent task is created first, representing the overall SMTP transaction. Within that parent task, child tasks are spawned for each SMTP command: `MAIL FROM` for the sender envelope, `RCPT TO` for each recipient (appearing twice in this test since there are two recipients), and `DATA` for the message body transmission. These task names match exactly what the prompt asked for.
+This trace output reveals the task hierarchy that maddy developers instrumented in the SMTP endpoint code. The trace events show that an `Incoming Message` parent task is created first, representing the overall SMTP transaction. Within that parent task, child tasks are spawned for each SMTP command: `MAIL FROM` for the sender envelope, `RCPT TO` for each recipient (appearing twice in this test since there are two recipients), and `DATA` for the message body transmission.
 
 The trace also shows a `rDNS fetch` region, indicating that reverse DNS lookup happens early in the connection handling, likely for logging and access control purposes. The goroutine field (g=18) shows these all execute on the same goroutine during the synchronous SMTP protocol handling.
 

@@ -1,115 +1,115 @@
 {
   "tests": [
     {
-      "name": "TestLocatorMethodBehavior"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorMethodBehavior"
     },
     {
-      "name": "TestLocatorMethodBehavior/checkbox_cycle"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorMethodBehavior/checkbox_cycle"
     },
     {
-      "name": "TestLocatorMethodBehavior/click_and_dblclick"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorMethodBehavior/click_and_dblclick"
     },
     {
-      "name": "TestLocatorMethodBehavior/dispatch_event"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorMethodBehavior/dispatch_event"
     },
     {
-      "name": "TestLocatorMethodBehavior/element_state_queries"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorMethodBehavior/element_state_queries"
     },
     {
-      "name": "TestLocatorMethodBehavior/fill_clear_inputvalue"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorMethodBehavior/fill_clear_inputvalue"
     },
     {
-      "name": "TestLocatorMethodBehavior/focus"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorMethodBehavior/focus"
     },
     {
-      "name": "TestLocatorMethodBehavior/get_attribute"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorMethodBehavior/get_attribute"
     },
     {
-      "name": "TestLocatorMethodBehavior/hover"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorMethodBehavior/hover"
     },
     {
-      "name": "TestLocatorMethodBehavior/innerHTML_innerText_textContent"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorMethodBehavior/innerHTML_innerText_textContent"
     },
     {
-      "name": "TestLocatorMethodBehavior/select_option"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorMethodBehavior/select_option"
     },
     {
-      "name": "TestLocatorMethodBehavior/type_and_press"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorMethodBehavior/type_and_press"
     },
     {
-      "name": "TestLocatorMethodBehavior/wait_for"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorMethodBehavior/wait_for"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/Check"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/Check"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/Clear"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/Clear"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/Click"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/Click"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/Dblclick"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/Dblclick"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/DispatchEvent"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/DispatchEvent"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/Fill"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/Fill"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/Focus"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/Focus"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/GetAttribute"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/GetAttribute"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/Hover"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/Hover"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/InnerHTML"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/InnerHTML"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/InnerText"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/InnerText"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/InputValue"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/InputValue"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/IsChecked"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/IsChecked"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/IsDisabled"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/IsDisabled"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/IsEditable"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/IsEditable"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/IsEnabled"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/IsEnabled"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/Press"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/Press"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/SelectOption"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/SelectOption"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/SetChecked"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/SetChecked"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/TextContent"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/TextContent"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/Type"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/Type"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/Uncheck"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/Uncheck"
     },
     {
-      "name": "TestLocatorStrictModeEnforcement/WaitFor"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/tests/TestLocatorStrictModeEnforcement/WaitFor"
     }
   ]
 }

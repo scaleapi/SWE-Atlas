@@ -99,6 +99,50 @@ if dataBlocks == parityBlocks {
 
 For a 4-drive EC:2 configuration where dataBlocks equals parityBlocks (both are 2), write quorum is 3 drives. Read quorum is calculated as setDriveCount minus parityBlocks, which equals 2 drives for this configuration.
 
+I verified this quorum behavior directly by rebuilding the server and running a real 4-drive erasure-coded cluster (EC:2) in this environment:
+
+```bash
+go build -o /tmp/minio-bin .
+mkdir -p /tmp/mtest/disk1 /tmp/mtest/disk2 /tmp/mtest/disk3 /tmp/mtest/disk4
+MINIO_CI_CD=on MINIO_ROOT_USER=minioadmin MINIO_ROOT_PASSWORD=minioadmin MINIO_PROMETHEUS_AUTH_TYPE=public \
+/tmp/minio-bin server /tmp/mtest/disk1 /tmp/mtest/disk2 /tmp/mtest/disk3 /tmp/mtest/disk4 --address ":9000" &
+```
+
+```
+INFO: Formatting 1st pool, 1 set(s), 4 drives per set.
+INFO: WARNING: Host local has more than 2 drives of set. A host failure will result in data becoming unavailable.
+```
+
+I stored a 10 MiB baseline object and recorded its checksum:
+
+```
+$ md5sum /tmp/testfile.bin
+d56e79be119ef5f820a49f006da53df4  /tmp/testfile.bin
+```
+
+Then I made one drive path unusable (replacing the directory with a regular file, so the storage layer gets real IO errors such as `lstat /tmp/mtest/disk1/.minio.sys/format.json: not a directory`). A write with 3 of 4 drives usable still succeeds, because the write quorum of 3 is met:
+
+```
+$ /tmp/mc cp /tmp/testfile2.bin local/testbucket/
+`/tmp/testfile2.bin` -> `local/testbucket/testfile2.bin`
+```
+
+With a second drive path made unusable the same way (2 of 4 left, below the 3-drive write quorum), the write fails, and the client receives exactly the SlowDownWrite description quoted above from api-errors.go:
+
+```
+$ /tmp/mc cp /tmp/testfile3.bin local/testbucket/
+mc: <ERROR> Failed to copy `/tmp/testfile3.bin`. Resource requested is unwritable, please reduce your request rate
+```
+
+The baseline object stored before the failures read back intact at both 3/4 and 2/4 usable drives, since the EC:2 read quorum of 2 was still met:
+
+```
+$ /tmp/mc cp local/testbucket/testfile.bin /tmp/readback2.bin && md5sum /tmp/readback2.bin
+d56e79be119ef5f820a49f006da53df4  /tmp/readback2.bin
+```
+
+The checksum matches the original exactly.
+
 The metric names that track drive availability in MinIO are defined in metrics-v3-cluster-health.go:
 
 ```go
@@ -130,7 +174,32 @@ minio_cluster_health_erasure_set_healing_drives{pool="0",server="127.0.0.1:9000"
 minio_cluster_health_erasure_set_online_drives{pool="0",server="127.0.0.1:9000",set="0"} 1
 ```
 
-The above shows a single-drive setup with 1 drive online and 0 offline. In a 4-drive erasure-coded cluster (EC:2), the healthy baseline would show minio_cluster_drive_online_total as 4 and minio_cluster_drive_offline_total as 0. After one drive fails, the values change to 3 online and 1 offline. After the drive is restored and healing completes, the metrics return to baseline.
+The above shows a single-drive setup with 1 drive online and 0 offline. On a 4-drive EC:2 cluster set up the same way as above I scraped the same endpoint at baseline, after replacing /tmp/mtest/disk1 with a regular file, and again after the failed drive paths were restored as directories:
+
+```
+# healthy baseline
+minio_cluster_drive_offline_total{server="127.0.0.1:9000"} 0
+minio_cluster_drive_online_total{server="127.0.0.1:9000"} 4
+minio_cluster_drive_total{server="127.0.0.1:9000"} 4
+minio_cluster_health_erasure_set_online_drives{pool="0",server="127.0.0.1:9000",set="0"} 4
+# 15 seconds after disk1 failed
+minio_cluster_drive_offline_total{server="127.0.0.1:9000"} 0
+minio_cluster_drive_online_total{server="127.0.0.1:9000"} 4
+minio_cluster_drive_total{server="127.0.0.1:9000"} 4
+minio_cluster_health_erasure_set_online_drives{pool="0",server="127.0.0.1:9000",set="0"} 3
+# 60 seconds after disk1 failed
+minio_cluster_drive_offline_total{server="127.0.0.1:9000"} 1
+minio_cluster_drive_online_total{server="127.0.0.1:9000"} 3
+minio_cluster_drive_total{server="127.0.0.1:9000"} 4
+minio_cluster_health_erasure_set_online_drives{pool="0",server="127.0.0.1:9000",set="0"} 3
+# 90 seconds after the failed drive paths were restored (healing finished)
+minio_cluster_drive_offline_total{server="127.0.0.1:9000"} 0
+minio_cluster_drive_online_total{server="127.0.0.1:9000"} 4
+minio_cluster_drive_total{server="127.0.0.1:9000"} 4
+minio_cluster_health_erasure_set_online_drives{pool="0",server="127.0.0.1:9000",set="0"} 4
+```
+
+The per-set gauge minio_cluster_health_erasure_set_online_drives dropped to 3 at the first scrape after the failure, while the cluster totals moved from 4 online / 0 offline to 3 online / 1 offline on a later scrape. After the drives were restored and healed, every value was back at the baseline.
 
 For the healing mechanism, the system detects newly available drives through the monitorLocalDisksAndHeal function in background-newdisks-heal-ops.go which runs periodically:
 
@@ -155,6 +224,19 @@ When healing completes successfully, the message pattern is:
 ```
 Healing of drive '/path/to/disk' is finished (healed: X, skipped: Y).
 ```
+
+I observed these exact messages live in a separate failure experiment on the same 4-drive cluster: after moving two drive directories aside entirely (a failure mode where the paths simply disappear and writes continue silently on the remaining drives), restoring the directories triggered healing within about 20 seconds:
+
+```
+Healing drive '/tmp/mtest/disk2' - 'mc admin heal alias/ --verbose' to check the current status.
+Healing drive '/tmp/mtest/disk2' - use 4 parallel workers.
+Healing of drive '/tmp/mtest/disk2' is finished (healed: 3, skipped: 0).
+Healing drive '/tmp/mtest/disk1' - 'mc admin heal alias/ --verbose' to check the current status.
+Healing drive '/tmp/mtest/disk1' - use 4 parallel workers.
+Healing of drive '/tmp/mtest/disk1' is finished (healed: 5, skipped: 0).
+```
+
+The healed counts are the objects written while each drive was absent being reconstructed onto the restored drive.
 
 The criteria that determine whether a specific object needs to be healed on a particular drive are implemented in the shouldHealObjectOnDisk function in erasure-healing.go:
 

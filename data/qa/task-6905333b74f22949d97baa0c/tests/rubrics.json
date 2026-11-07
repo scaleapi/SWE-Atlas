@@ -1,7 +1,7 @@
 [
   {
     "id": "ce551928084a6404d4295f63b6dbec3a",
-    "title": "1.1: States that startup begins with the printed message `default engine options set`, as it identifies how the program begins.\n",
+    "title": "1.1: States that engine startup begins with the printed message `default engine options set`, as it identifies how the engine begins.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -25,7 +25,7 @@
   },
   {
     "id": "02b8cd6fa4ce62d6e7b9fb71d6503d2f",
-    "title": "1.5: States that detector preparation begins when the output prints a line starting with `starting detector workers`, as it describes how detectors prepare for use.\n\n",
+    "title": "1.4: States that detector worker startup begins when the output prints a line starting with `starting detector workers`, as it describes how detector workers prepare for use.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "49f410b559dd50795cf64adc03a22e7b",
-    "title": "1.7: States that operational execution begins when the output prints `running source`, as it shows movement from component bring-up into actual work.",
+    "title": "1.5: States that operational execution begins when the output prints `running source`, as it shows movement from component bring-up into actual work.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "e042ab7bccde5e5eebe6a54df081e216",
-    "title": "2.2: Claims that detector activation depends on printed secret findings.\n",
+    "title": "2.2: Claims that detector activation depends on printed secret findings.",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "7cd16f87598154ff241e8560b83b6c5f",
-    "title": "2.3:  Claims that early output such as `default engine options set` indicates scanning activity.\n ",
+    "title": "2.3: Claims that early output such as `default engine options set` indicates scanning activity.",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

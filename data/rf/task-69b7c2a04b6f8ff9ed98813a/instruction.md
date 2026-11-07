@@ -28,3 +28,5 @@ Use the below interface for your solution:
     - Input: `struct sender_state *s`
     - Output: `void`
     - Description: Runs disconnect hooks for a sender, including shared cleanup (pending command cleanup, chart and replication reset, buffer flushing) and notifying the child about parent disconnection. Callable from both the sender module and the connector thread.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

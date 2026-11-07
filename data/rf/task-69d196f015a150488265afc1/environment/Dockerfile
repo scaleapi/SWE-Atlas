@@ -1,1 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_RF_MariaDB_server_69d196f015a150488265afc1_1.1@sha256:9f2c93e53d65e3ccefaf1bb482a454a540c4ffe50dfa7c6bd25cc8ceed8e51d3
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:rf-69d196f015a150488265afc1-1ed09cf-v1.01.99@sha256:a9ee15553a33a261562121473cac3e9d37a0f6a7a914175441db4d60bae9b0af

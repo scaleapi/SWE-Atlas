@@ -1,6 +1,6 @@
 [
   {
-    "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    "id": "0a0b788407e94b89968c7f45391bd670",
     "title": "1: Code Maintainability",
     "annotations": {
       "type": "high level intent",
@@ -8,7 +8,7 @@
     }
   },
   {
-    "id": "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7",
+    "id": "683d3bcf69c532fe0b3d5897ceb85823",
     "title": "1.1: Consolidates the duplicated base and head commit resolution logic in normalizeConfig into reusable helper functions in pkg/sources/git/git.go",
     "annotations": {
       "type": "positive hli verifier",
@@ -16,7 +16,7 @@
     }
   },
   {
-    "id": "c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8",
+    "id": "e73c8c7fbe4ce7dcc31d3c42ecd86d5b",
     "title": "1.2: Preserves branch name resolution in normalizeConfig that updates hash fields when non-hash references are provided",
     "annotations": {
       "type": "positive hli verifier",
@@ -24,7 +24,7 @@
     }
   },
   {
-    "id": "d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9",
+    "id": "aa0e99bec1f36641dd75a9f2b607bcc1",
     "title": "1.3: Preserves merge base calculation in normalizeConfig between resolved commit references",
     "annotations": {
       "type": "positive hli verifier",
@@ -32,7 +32,7 @@
     }
   },
   {
-    "id": "d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0",
+    "id": "b9c1e2a46e519af0af3cd945b64d5d69",
     "title": "1.4: Formats the ScanRepo completion log message as multi-line for better readability",
     "annotations": {
       "type": "positive hli verifier",
@@ -40,7 +40,7 @@
     }
   },
   {
-    "id": "d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1",
+    "id": "2520a606bc080b7d67f3607cf8afe54c",
     "title": "1.5: Includes the remote repository URL in the ScanRepo completion log message",
     "annotations": {
       "type": "positive hli verifier",
@@ -48,7 +48,7 @@
     }
   },
   {
-    "id": "e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1",
+    "id": "aded4dc84b32b9e19ba404d6cb6dfdd5",
     "title": "1.6: Adds nil checks for both repo and ref parameters, where ref is passed as a pointer",
     "annotations": {
       "type": "positive hli verifier",
@@ -56,7 +56,7 @@
     }
   },
   {
-    "id": "f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2",
+    "id": "c1cac67c957748e9a3583c680651833a",
     "title": "1.7: Surfaces the 2 previously silently ignored CommitObject errors (base commit, head commit resolution) in normalizeConfig",
     "annotations": {
       "type": "positive hli verifier",
@@ -64,7 +64,7 @@
     }
   },
   {
-    "id": "a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3",
+    "id": "7a84b3137c56e0283d80baa0cbd5e341",
     "title": "1.8: Separates merge base error handling in normalizeConfig into distinct error messages for actual errors vs empty results",
     "annotations": {
       "type": "positive hli verifier",
@@ -72,7 +72,7 @@
     }
   },
   {
-    "id": "e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+    "id": "df76c5d462f4e3039748c244141d3d64",
     "title": "2: Documentation Maintainability",
     "annotations": {
       "type": "high level intent",
@@ -80,7 +80,7 @@
     }
   },
   {
-    "id": "f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1",
+    "id": "b2765c23ee702af1158b6d5bca3f2527",
     "title": "2.1: Adds documentation for both normalizeConfig and resolveAndSetCommit functions in pkg/sources/git/git.go",
     "annotations": {
       "type": "positive hli verifier",
@@ -88,32 +88,24 @@
     }
   },
   {
-    "id": "g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2",
-    "title": "3: Artifact Cleanup",
+    "id": "097fc7c1a443d43f1fc195e2ee3634f2",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
     }
   },
   {
-    "id": "a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2",
-    "title": "4: Negative Rubrics",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "must have"
-    }
-  },
-  {
-    "id": "c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4",
-    "title": "4.1: Removes error handling for base or head commit resolution in normalizeConfig in pkg/sources/git/git.go",
+    "id": "ea10e76eb27d210d531bd55302fd8456",
+    "title": "3.1: Removes error handling for base or head commit resolution in normalizeConfig in pkg/sources/git/git.go",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5",
-    "title": "4.2: Removes the remote repository URL from the ScanRepo completion log message in pkg/sources/git/git.go",
+    "id": "5d72ca5edc982e4a9845a23f8128a992",
+    "title": "3.2: Removes the remote repository URL from the ScanRepo completion log message in pkg/sources/git/git.go",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

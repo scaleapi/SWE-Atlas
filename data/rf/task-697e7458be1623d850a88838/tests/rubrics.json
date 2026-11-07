@@ -40,7 +40,7 @@
     }
   },
   {
-    "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    "id": "130bf250de2c908231df15c68204a6a5",
     "title": "1.5: Fixes the results_with_positive_response property in scapy/contrib/automotive/scanner/enumerator.py to exclude entries where no response was received",
     "annotations": {
       "type": "positive hli verifier",
@@ -104,16 +104,8 @@
     }
   },
   {
-    "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -121,7 +113,7 @@
   },
   {
     "id": "0e359368582e694eee9ae8b7ea9b0f92",
-    "title": "4.1: Introduces syntax errors, import errors, or undefined references in modified source files",
+    "title": "3.1: Introduces syntax errors, import errors, or undefined references in modified source files",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -129,7 +121,7 @@
   },
   {
     "id": "29289bf2c090dd17a669374cc5c9bfce",
-    "title": "4.2: Modifies test files or testing logic despite the explicit prompt constraint",
+    "title": "3.2: Modifies test files or testing logic despite the explicit prompt constraint",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

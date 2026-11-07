@@ -1,245 +1,316 @@
-Reference Answer: Grafana First-Run Initialization Ground Truth
+Grafana First-Run Initialization
+
+Everything below comes from starting the prebuilt server in /app (`./bin/grafana`, built from the checked-out commit) twice from a clean state, plus reading the code paths behind what the logs showed. Log excerpts are filtered with grep; the sed step only shortens each timestamp to the time of day and drops the `compiled=` field.
 
 Establishing Clean State
 
-To understand what actually happens on a fresh Grafana start, I first removed all existing state:
-
 ```
-$ rm -rf /app/data/
-$ ls /app/data/
-ls: cannot access '/app/data/': No such file or directory
+$ git rev-parse HEAD; git status --short | wc -l
+4550cfb5b72886782d9a3e6cf995f8dbd57ca4ff
+0
+$ ls -la /app/data
+ls: cannot access '/app/data': No such file or directory
+$ env | grep -c "^GF_"
+0
+$ ls /app/conf
+defaults.ini
+ldap.toml
+ldap_multiple.toml
+provisioning
+sample.ini
+$ ./bin/grafana --version
+grafana version 11.5.0-pre
 ```
 
-This confirms no prior database, logs, or plugins exist.
+There is no `data/` directory, no `conf/custom.ini` and no `GF_*` environment variable, so the server runs on `conf/defaults.ini` alone.
 
 ---
 
-First Run Observation
-
-Starting the server fresh and capturing output:
+First Run
 
 ```
-$ ./bin/grafana-server --homepath=/app &
-[PID 12847]
-
-Grafana server is running with elevated privileges. This is not recommended
-logger=settings t=2025-12-15T14:22:01.847Z level=info msg="Starting Grafana" version=11.5.0-pre commit=abc123 branch=main
-logger=settings t=2025-12-15T14:22:01.848Z level=info msg="Config loaded from" file=/app/conf/defaults.ini
-logger=sqlstore t=2025-12-15T14:22:01.892Z level=info msg="Connecting to DB" dbtype=sqlite3
-logger=sqlstore t=2025-12-15T14:22:01.893Z level=info msg="Creating SQLite database file" path=/app/data/grafana.db
-logger=migrator t=2025-12-15T14:22:01.921Z level=info msg="Starting DB migrations"
-logger=migrator t=2025-12-15T14:22:02.847Z level=info msg="Executing migration" id="create migration_log table"
-logger=migrator t=2025-12-15T14:22:03.102Z level=info msg="migrations completed" performed=294 skipped=0 duration=1.181s
-logger=sqlstore t=2025-12-15T14:22:03.156Z level=info msg="Created default admin" user=admin
-logger=notifications t=2025-12-15T14:22:03.201Z level=info msg="SMTP not configured, notifications disabled"
-logger=remotecache t=2025-12-15T14:22:03.215Z level=info msg="Using database as cache backend"
-logger=ngalert t=2025-12-15T14:22:03.234Z level=info msg="HA alerting disabled, no HA peers configured"
-logger=rendering t=2025-12-15T14:22:03.267Z level=warn msg="No image renderer plugin found, image rendering will be unavailable"
-logger=plugin.store t=2025-12-15T14:22:03.412Z level=info msg="Plugins loaded" count=54 duration=256ms
-logger=plugin.backgroundinstaller t=2025-12-15T14:22:03.891Z level=info msg="Installing plugin" pluginId=grafana-lokiexplore-app
-logger=plugin.backgroundinstaller t=2025-12-15T14:22:05.234Z level=info msg="Plugin downloaded" pluginId=grafana-lokiexplore-app version=1.0.10
-logger=http.server t=2025-12-15T14:22:05.456Z level=info msg="HTTP Server Listen" address=[::]:3000 protocol=http
+$ ./bin/grafana server --homepath=/app > /tmp/run1.log 2>&1 &
+$ grep -E 'Starting Grafana|Config loaded|Path (Data|Logs|Plugins)|Connecting to DB|Creating SQLite|Starting DB migrations|migrations completed|Skipping migration|Created default|renderer|Failed to load external|Plugins loaded|HTTP Server Listen|backgroundinstaller|installer.fs|Plugin registered' /tmp/run1.log | sed -E 's/ t=[0-9-]+T([0-9:]+)\.[0-9]+Z/ t=\1/; s/ compiled=[^ ]+//'
+logger=settings t=22:29:00 level=info msg="Starting Grafana" version=11.5.0-pre commit=4550cfb5b72886782d9a3e6cf995f8dbd57ca4ff branch=main
+logger=settings t=22:29:00 level=info msg="Config loaded from" file=/app/conf/defaults.ini
+logger=settings t=22:29:00 level=info msg="Path Data" path=/app/data
+logger=settings t=22:29:00 level=info msg="Path Logs" path=/app/data/log
+logger=settings t=22:29:00 level=info msg="Path Plugins" path=/app/data/plugins
+logger=sqlstore t=22:29:00 level=info msg="Connecting to DB" dbtype=sqlite3
+logger=sqlstore t=22:29:00 level=info msg="Creating SQLite database file" path=/app/data/grafana.db
+logger=migrator t=22:29:00 level=info msg="Starting DB migrations"
+logger=migrator t=22:29:00 level=warn msg="Skipping migration: Already executed, but not recorded in migration log" id="drop unique orgID index on alert_configuration if exists"
+logger=migrator t=22:29:01 level=warn msg="Skipping migration: Already executed, but not recorded in migration log" id="drop index UQE_dashboard_public_config_uid - v1"
+logger=migrator t=22:29:01 level=warn msg="Skipping migration: Already executed, but not recorded in migration log" id="drop index IDX_dashboard_public_config_org_id_dashboard_uid - v1"
+logger=migrator t=22:29:01 level=info msg="migrations completed" performed=626 skipped=0 duration=359.946737ms
+logger=sqlstore t=22:29:01 level=info msg="Created default admin" user=admin
+logger=sqlstore t=22:29:01 level=info msg="Created default organization"
+logger=renderer.manager t=22:29:01 level=error msg="Failed to get renderer plugin sources" error="failed to open plugins path"
+logger=plugin.sources t=22:29:01 level=error msg="Failed to load external plugins" error="failed to open plugins path"
+logger=plugin.store t=22:29:01 level=info msg="Plugins loaded" count=54 duration=77.90962ms
+logger=resource-migrator t=22:29:01 level=info msg="Starting DB migrations"
+logger=resource-migrator t=22:29:01 level=info msg="migrations completed" performed=18 skipped=0 duration=11.899103ms
+logger=renderer.manager t=22:29:01 level=error msg="Failed to get renderer plugin sources" error="failed to open plugins path"
+logger=http.server t=22:29:01 level=info msg="HTTP Server Listen" address=[::]:3000 protocol=http subUrl= socket=
+logger=plugin.backgroundinstaller t=22:29:01 level=info msg="Installing plugin" pluginId=grafana-lokiexplore-app version=
+logger=installer.fs t=22:29:01 level=info msg="Downloaded and extracted grafana-lokiexplore-app v1.0.10 zip successfully to /app/data/plugins/grafana-lokiexplore-app"
+logger=plugins.registration t=22:29:01 level=info msg="Plugin registered" pluginId=grafana-lokiexplore-app
+logger=plugin.backgroundinstaller t=22:29:01 level=info msg="Plugin successfully installed" pluginId=grafana-lokiexplore-app version= duration=397.246636ms
 ```
 
-Key Observations from First Run:
+The console also starts with `Grafana server is running with elevated privileges. This is not recommended` because the process runs as root.
 
-**Database Creation:** The SQLite3 database was created at `data/grafana.db`:
+What the first run decided on its own:
+
+- Database: with no `[database]` settings, the defaults select `sqlite3`, and the file is created at `data/grafana.db` (relative to the home path, so `/app/data/grafana.db`).
+- Schema: 626 migrations run on the empty database (plus 18 for the unified-storage `resource` tables). Three migrations are logged as skipped (`Already executed, but not recorded in migration log`) because the change they make was already in place.
+- Accounts: `Created default admin user=admin` and `Created default organization`. Nobody configured these; they come from `conf/defaults.ini`.
+- Plugins: 54 plugins load from the binary and `public/`; loading external plugins fails because `data/plugins` does not exist yet, and the renderer lookup fails for the same reason.
+- Network fetch: after the HTTP server is listening, a background installer downloads `grafana-lokiexplore-app` v1.0.10 from grafana.com into `data/plugins/` and registers it. Nothing asked for this plugin.
+
+Persistent state written by the first run:
+
 ```
-$ ls -la /app/data/
-total 1284
-drwxr-xr-x 4 root root    4096 Dec 15 14:22 .
--rw-r--r-- 1 root root 1306624 Dec 15 14:22 grafana.db
-drwxr-xr-x 3 root root    4096 Dec 15 14:22 plugins
-drwxr-xr-x 2 root root    4096 Dec 15 14:22 log
+$ ls -la /app/data /app/data/plugins /app/data/log; du -sh /app/data/grafana.db
+/app/data:
+total 1068
+drwxr-s--- 1 root 1001     160 Oct 31 22:29 .
+drwxr-sr-x 1 root 1001      80 Oct 31 22:29 ..
+drwx--S--- 1 root 1001      40 Oct 31 22:29 csv
+-rw-r----- 1 root 1001 1093632 Oct 31 22:29 grafana.db
+drwxr-s--- 1 root 1001      60 Oct 31 22:29 log
+drwx--S--- 1 root 1001      40 Oct 31 22:29 pdf
+drwxr-sr-x 1 root 1001      60 Oct 31 22:29 plugins
+drwx--S--- 1 root 1001      40 Oct 31 22:29 png
+
+/app/data/log:
+total 194
+drwxr-s--- 1 root 1001     60 Oct 31 22:29 .
+drwxr-s--- 1 root 1001    160 Oct 31 22:29 ..
+-rw-r--r-- 1 root 1001 197675 Oct 31 22:29 grafana.log
+
+/app/data/plugins:
+total 0
+drwxr-sr-x 1 root 1001  60 Oct 31 22:29 .
+drwxr-s--- 1 root 1001 160 Oct 31 22:29 ..
+drwxr-sr-x 1 root 1001 580 Oct 31 22:29 grafana-lokiexplore-app
+1.1M	/app/data/grafana.db
 ```
 
-**Admin User Created:** The log explicitly shows `Created default admin user=admin`.
+So the first run writes the SQLite database, a file log (`data/log/grafana.log`, besides the console), the downloaded plugin under `data/plugins/`, and empty `csv/`, `pdf/` and `png/` directories for exports and rendering. These paths come from `conf/defaults.ini`:
 
-**Plugin Downloaded:** The `grafana-lokiexplore-app` plugin was automatically downloaded to `data/plugins/`:
 ```
-$ ls /app/data/plugins/
-grafana-lokiexplore-app
+$ grep -n "^admin_user\|^admin_password\|^admin_email\|^allow_sign_up\|^disable_initial_admin_creation\|^preinstall\|^data =\|^plugins =\|^logs =" conf/defaults.ini
+15:data = data
+21:logs = data/log
+24:plugins = data/plugins
+325:disable_initial_admin_creation = false
+328:admin_user = admin
+331:admin_password = admin
+334:admin_email = admin@localhost
+483:allow_sign_up = false
+...
+1766:preinstall =
+1768:preinstall_async = true
+1770:preinstall_disabled = false
 ```
+
+(The remaining `allow_sign_up = true` lines belong to the OAuth and LDAP sections, which are all disabled by default.)
+
+Database contents after the first run:
+
+```
+$ python3 -c "import sqlite3; c=sqlite3.connect(\"/app/data/grafana.db\"); print(c.execute(\"select id, login, email, is_admin from user\").fetchall()); print(c.execute(\"select id, name from org\").fetchall()); print(c.execute(\"select count(*), sum(success) from migration_log\").fetchone()); print(c.execute(\"select count(*) from sqlite_master where type='table'\").fetchone())"
+[(1, 'admin', 'admin@localhost', 1)]
+[(1, 'Main Org.')]
+(626, 626)
+(76,)
+```
+
+One admin user, one organization `Main Org.`, 626 rows in `migration_log`, 76 tables.
 
 ---
 
-Services Disabled by Default
+Authentication: Login Attempts
 
-The startup logs reveal several services that report as "disabled" or "skipped" because they require explicit configuration:
-
-| Service | Log Message | Default State | Configuration Required |
-|---------|-------------|---------------|------------------------|
-| SMTP Notifications | `SMTP not configured, notifications disabled` | Disabled | `[smtp] enabled = true` and `host` must be set |
-| Remote Cache | `Using database as cache backend` | Database fallback | `[remote_cache] type = redis` or `memcached` with connection info |
-| HA Alerting | `HA alerting disabled, no HA peers configured` | Disabled | `[unified_alerting] ha_peers` must list peer addresses |
-| Image Renderer | `No image renderer plugin found` | Unavailable | Install `grafana-image-renderer` plugin |
-| Recording Rules | (silent - disabled by default) | Disabled | `[recording_rules] enabled = true` |
-| Remote Alertmanager | (silent - disabled by default) | Disabled | `[unified_alerting] remote.alertmanager.enabled = true` |
-
-These services implement the `registry.CanBeDisabled` interface in the codebase. Their `IsDisabled()` methods check configuration values, and when the required settings are missing or set to `false`, the services skip initialization and log their disabled status.
-
-For example, SMTP is controlled by `conf/defaults.ini`:
-```ini
-[smtp]
-enabled = false
-host =
-```
-
-Since `enabled = false` and no `host` is configured, the notification service detects this and reports itself as disabled rather than failing.
-
-This explains why "some services report disabled while others claim success" — services with no external dependencies (like the SQLStore, plugin loader, HTTP server) initialize successfully, while services requiring external infrastructure (SMTP server, Redis, HA peers, renderer plugin) report as disabled until explicitly configured.
-
----
-
-Verifying Authentication with Actual Login
-
-Testing that the default credentials work:
+Login with the default credentials:
 
 ```
-$ curl -s -X POST http://localhost:3000/login \
-  -H "Content-Type: application/json" \
-  -d '{"user":"admin","password":"admin"}' \
-  -c cookies.txt -w "\nHTTP Status: %{http_code}\n"
-
+$ curl -s -X POST http://localhost:3000/login -H "Content-Type: application/json" -d "{\"user\":\"admin\",\"password\":\"admin\"}" -c /tmp/cookies.txt -w "\nHTTP Status: %{http_code}\n"
 {"message":"Logged in","redirectUrl":"/"}
+HTTP Status: 200
+
+$ curl -s -b /tmp/cookies.txt http://localhost:3000/api/user -w "\nHTTP Status: %{http_code}\n"
+{"id":1,"uid":"fg2xgwc11cyrkf","email":"admin@localhost","name":"","login":"admin","theme":"","orgId":1,"isGrafanaAdmin":true,"isDisabled":false,"isExternal":false,"isExternallySynced":false,"isGrafanaAdminExternallySynced":false,"authLabels":[],"updatedAt":"2026-10-31T22:29:01Z","createdAt":"2026-10-31T22:29:01Z","avatarUrl":"/avatar/46d229b033af06a191ff2267bca9ae56"}
 HTTP Status: 200
 ```
 
-The login succeeds with HTTP 200 and returns `{"message":"Logged in"}`.
+A wrong password is rejected:
 
-Verifying with an authenticated API call:
 ```
-$ curl -s -b cookies.txt http://localhost:3000/api/user
-
-{"id":1,"email":"admin@localhost","name":"","login":"admin","theme":"","orgId":1,"isGrafanaAdmin":true,...}
-```
-
-The admin user has `id:1`, email `admin@localhost`, and `isGrafanaAdmin:true`.
-
-Testing unauthenticated access (anonymous auth disabled):
-```
-$ curl -s http://localhost:3000/api/user -w "\nHTTP Status: %{http_code}\n"
-
-{"message":"Unauthorized"}
+$ curl -s -X POST http://localhost:3000/login -H "Content-Type: application/json" -d "{\"user\":\"admin\",\"password\":\"wrong\"}" -w "\nHTTP Status: %{http_code}\n"
+{"statusCode":401,"messageId":"password-auth.failed","message":"Invalid username or password"}
 HTTP Status: 401
 ```
 
-Anonymous access correctly returns HTTP 401 Unauthorized, confirming anonymous authentication is disabled by default.
+Requests without credentials are rejected:
+
+```
+$ curl -s http://localhost:3000/api/user -w "\nHTTP Status: %{http_code}\n"
+{"extra":null,"message":"Unauthorized","messageId":"auth.unauthorized","statusCode":401,"traceID":""}
+
+HTTP Status: 401
+
+$ curl -s http://localhost:3000/api/dashboards/home -w "\nHTTP Status: %{http_code}\n" | tail -c 300
+{"extra":null,"message":"Unauthorized","messageId":"auth.unauthorized","statusCode":401,"traceID":""}
+
+HTTP Status: 401
+```
+
+What the server reports about its own auth and feature defaults:
+
+```
+$ curl -s -u admin:admin http://localhost:3000/api/frontend/settings | python3 -c "..."
+{'anonymousEnabled': False, 'disableLoginForm': False, 'allowOrgCreate': True, 'authProxyEnabled': False, 'ldapEnabled': False, 'rendererAvailable': False, 'alertingEnabled': None, 'unifiedAlertingEnabled': True, 'publicDashboardsEnabled': True}
+
+$ curl -s -u admin:admin http://localhost:3000/api/users
+[{"id":1,"uid":"fg2xgwc11cyrkf","name":"","login":"admin","email":"admin@localhost","avatarUrl":"/avatar/46d229b033af06a191ff2267bca9ae56","isAdmin":true,"isDisabled":false,"lastSeenAt":"2026-10-31T22:29:46Z","lastSeenAtAge":"< 1 minute","authLabels":[]}]
+```
+
+So the system is not in a permissive mode: anonymous access is off, sign-up is off, and the only account is the one created at startup from `admin_user`/`admin_password`/`admin_email` in `conf/defaults.ini`. You can log in with credentials you never set because they are the well-known defaults `admin`/`admin`. Basic auth (`-u admin:admin`) works for the API as well, because `[auth.basic] enabled = true` by default. Unified alerting and public dashboards are enabled by default; LDAP, auth proxy and the image renderer are not.
+
+---
+
+Services That Stay Disabled or Skipped
+
+These subsystems are inactive on a default start specifically because nothing configures them; Grafana falls back to a built-in default or leaves the feature off instead of failing:
+
+| Subsystem | What the run shows | Default in `conf/defaults.ini` | What turns it on |
+|-----------|--------------------|--------------------------------|------------------|
+| SMTP / email | no startup message; emails cannot be sent | `[smtp] enabled = false`, `host = localhost:25` | `[smtp] enabled = true` plus a reachable `host` |
+| Image renderer | `Failed to get renderer plugin sources` on first start; `rendererAvailable: False` | `[rendering] server_url =` (empty), no renderer plugin installed | install the `grafana-image-renderer` plugin or set `server_url` to a remote renderer |
+| Remote cache | no Redis/Memcached connection | `[remote_cache] type = database` | `type = redis` or `memcached` with a connection string |
+| Anonymous auth | `anonymousEnabled: False`; anonymous requests get 401 | `[auth.anonymous] enabled = false` | `[auth.anonymous] enabled = true` |
+| LDAP / auth proxy / OAuth | `ldapEnabled: False`, `authProxyEnabled: False` | `enabled = false` in each section | enable and configure the provider |
+| External plugins | `Failed to load external plugins` on the first start only | `plugins = data/plugins` (directory does not exist yet) | goes away once `data/plugins` exists |
+
+The relevant config sections:
+
+```
+$ grep -n -A3 "^\[smtp\]\|^\[auth.anonymous\]\|^\[remote_cache\]\|^\[rendering\]\|^\[database\]" conf/defaults.ini | head -60
+118:[database]
+...
+188:[remote_cache]
+189-# Either "redis", "memcached" or "database" default is "database"
+190-type = database
+...
+648:[auth.anonymous]
+649-# enable anonymous access
+650-enabled = false
+...
+1044:[smtp]
+1045-enabled = false
+1046-host = localhost:25
+...
+1712:[rendering]
+...
+1715-server_url =
+```
+
+This is why some subsystems "claim success" and others look disabled or skipped: everything that needs only local resources (SQLite store, migrations, built-in plugins, alerting scheduler, HTTP server) starts, while everything that depends on external infrastructure or an opt-in setting (mail server, renderer, Redis/Memcached, anonymous or external auth) stays off until it is explicitly configured. The `error`-level renderer and external-plugin lines on the first start are not fatal; they only mean `data/plugins` was missing at that moment.
 
 ---
 
 Stopping and Restarting (Second Run)
 
 ```
-$ kill 12847
-$ ./bin/grafana-server --homepath=/app &
-[PID 12923]
+$ kill 79
+$ ./bin/grafana server --homepath=/app > /tmp/run2.log 2>&1 &
+$ grep -E 'Starting Grafana|Connecting to DB|Creating SQLite|migrations completed|Created default|renderer|Failed to load external|Plugins loaded|HTTP Server Listen|backgroundinstaller|installer.fs|Plugin registered' /tmp/run2.log | sed -E 's/ t=[0-9-]+T([0-9:]+)\.[0-9]+Z/ t=\1/; s/ compiled=[^ ]+//'
+logger=settings t=22:29:47 level=info msg="Starting Grafana" version=11.5.0-pre commit=4550cfb5b72886782d9a3e6cf995f8dbd57ca4ff branch=main
+logger=sqlstore t=22:29:47 level=info msg="Connecting to DB" dbtype=sqlite3
+logger=migrator t=22:29:47 level=info msg="migrations completed" performed=0 skipped=626 duration=608.028µs
+logger=plugins.registration t=22:29:47 level=info msg="Plugin registered" pluginId=grafana-lokiexplore-app
+logger=plugin.store t=22:29:47 level=info msg="Plugins loaded" count=55 duration=128.633827ms
+logger=resource-migrator t=22:29:47 level=info msg="migrations completed" performed=0 skipped=18 duration=23.04µs
+logger=http.server t=22:29:47 level=info msg="HTTP Server Listen" address=[::]:3000 protocol=http subUrl= socket=
 
-logger=settings t=2025-12-15T14:25:11.102Z level=info msg="Starting Grafana" version=11.5.0-pre
-logger=sqlstore t=2025-12-15T14:25:11.143Z level=info msg="Connecting to DB" dbtype=sqlite3
-logger=migrator t=2025-12-15T14:25:11.156Z level=info msg="Starting DB migrations"
-logger=migrator t=2025-12-15T14:25:11.187Z level=info msg="migrations completed" performed=0 skipped=294 duration=31ms
-logger=plugin.store t=2025-12-15T14:25:11.312Z level=info msg="Plugins loaded" count=55 duration=125ms
-logger=http.server t=2025-12-15T14:25:11.401Z level=info msg="HTTP Server Listen" address=[::]:3000 protocol=http
+$ curl -s -X POST http://localhost:3000/login -H "Content-Type: application/json" -d "{\"user\":\"admin\",\"password\":\"admin\"}" -w "\nHTTP Status: %{http_code}\n"
+{"message":"Logged in","redirectUrl":"/"}
+HTTP Status: 200
+
+$ python3 -c "import sqlite3; c=sqlite3.connect(\"/app/data/grafana.db\"); print(c.execute(\"select count(*) from user\").fetchone()); print(c.execute(\"select count(*), sum(success) from migration_log\").fetchone())"
+(1,)
+(626, 626)
 ```
 
-Key Differences on Second Run:
-
-| Aspect | First Run | Second Run |
+| Aspect | First run | Second run |
 |--------|-----------|------------|
-| Database creation | `Creating SQLite database file` logged | No creation message |
-| Migrations | `performed=294 skipped=0 duration=1.181s` | `performed=0 skipped=294 duration=31ms` |
-| Admin user | `Created default admin user=admin` | **No admin creation message** |
-| Plugin download | `Installing plugin pluginId=grafana-lokiexplore-app` | **No download message** |
-| Plugin count | 54 | 55 (includes downloaded lokiexplore-app) |
+| Database file | `Creating SQLite database file` | no creation message, existing file reused |
+| Migrations | `performed=626 skipped=0 duration=359.946737ms` | `performed=0 skipped=626 duration=608.028µs` |
+| Default admin / org | `Created default admin`, `Created default organization` | no message, still exactly 1 user |
+| External plugins | load fails (`data/plugins` missing), 54 plugins | lokiexplore-app registered from disk, 55 plugins |
+| Background download | lokiexplore-app downloaded from grafana.com | nothing to install |
+| Renderer lookup | error, plugins path missing | no error (still no renderer, so still unavailable) |
 
-The second run is faster (31ms vs 1181ms for migrations) because:
-1. Database already exists - no file creation
-2. All migrations already recorded in `migration_log` table - all skipped
-3. Admin user already exists (user count > 0) - creation logic bypassed
-4. Preinstalled plugin already present - no download needed
+Why the behaviour differs, from the code:
 
----
+- Migrations are tracked: the migrator reads the `migration_log` table (`GetMigrationLog()` in `pkg/services/sqlstore/migrator/migrator.go`) and only runs migrations whose id is not recorded there, then logs `migrations completed performed=… skipped=…`. On the second run all 626 ids are already recorded, so all are skipped.
+- Admin creation is skipped once users exist: `ensureMainOrgAndAdminUser()` in `pkg/services/sqlstore/sqlstore.go` runs `SELECT COUNT(id) AS Count FROM "user"` and returns early when the count is above 0; only otherwise (and only if `disable_initial_admin_creation` is false) does it create the admin from `[security] admin_user`/`admin_password`/`admin_email` and log `Created default admin`. Changing `admin_password` in the config after the first run therefore has no effect on the existing account.
+- The preinstalled plugin is already on disk under `data/plugins/`, so the background installer has nothing to do.
 
-Database State Verification
-
-Querying the SQLite database directly:
-
-```
-$ sqlite3 /app/data/grafana.db "SELECT id, login, email, is_admin FROM user;"
-1|admin|admin@localhost|1
-
-$ sqlite3 /app/data/grafana.db "SELECT id, name FROM org;"
-1|Main Org.
-
-$ sqlite3 /app/data/grafana.db "SELECT COUNT(*) FROM migration_log;"
-294
-```
-
-This confirms:
-- One admin user with login `admin`, email `admin@localhost`
-- One organization named `Main Org.` with id `1`
-- 294 migrations recorded as completed
+All of this state lives in `data/`, so deleting that directory is what returns Grafana to the first-run behaviour. If grafana.com cannot be reached, the background installer logs `Failed to install plugin` for grafana-lokiexplore-app and tries again on every start until the download succeeds.
 
 ---
 
-Plugin System Analysis
+Plugin and Data Source Bootstrap
 
-Core Plugins (Compiled Into Binary)
+What the API exposes after the first run (50 entries; `internal` = shipped with Grafana):
 
-These datasources are compiled directly into the Grafana binary and require no installation. From `pkg/plugins/backendplugin/coreplugin/registry.go`:
-
-- `prometheus`
-- `loki`
-- `elasticsearch`
-- `graphite`
-- `influxdb`
-- `cloudwatch`
-- `stackdriver` (Cloud Monitoring)
-- `grafana-azure-monitor-datasource`
-- `mysql`
-- `grafana-postgresql-datasource`
-- `mssql`
-- `opentsdb`
-- `tempo`
-- `grafana-testdata-datasource`
-- `grafana-pyroscope-datasource`
-- `parca`
-- `zipkin`
-
-Bundled Frontend Plugins
-
-Located in `public/app/plugins/`:
-- `public/app/plugins/datasource/` - Frontend code for datasources
-- `public/app/plugins/panel/` - All panel types (graph, table, stat, gauge, etc.)
-
-Externally Downloaded Plugins
-
-Located in `data/plugins/`:
-- `grafana-lokiexplore-app` - Auto-downloaded from preinstall list defined in `pkg/setting/setting_plugins.go` lines 30-33
-
-Verifying via API:
 ```
-$ curl -s -b cookies.txt http://localhost:3000/api/plugins | jq '.[].id' | head -20
-"alertlist"
-"annolist"
-"barchart"
-"cloudwatch"
-"elasticsearch"
-"grafana-lokiexplore-app"
-"graphite"
-"loki"
-"prometheus"
+$ curl -s -u admin:admin "http://localhost:3000/api/plugins" | python3 -c "..."   # id, type, signature, signatureType
+50
+alertlist panel internal
+alertmanager datasource internal
 ...
+grafana-lokiexplore-app app valid grafana
+...
+zipkin datasource internal
+
+$ curl -s -u admin:admin "http://localhost:3000/api/plugins?core=0" | python3 -c "..."
+1
+grafana-lokiexplore-app
+
+$ curl -s -u admin:admin http://localhost:3000/api/datasources
+[]
 ```
+
+There are three sources:
+
+1. Core plugins shipped with Grafana (`signature: internal`). Their frontends live in `public/app/plugins/` (`public/app/plugins/datasource/` and `public/app/plugins/panel/`) and are built into `public/build`. The data sources with a Go backend are compiled into the `grafana` binary and registered in `pkg/plugins/backendplugin/coreplugin/registry.go`: `cloudwatch`, `stackdriver` (Cloud Monitoring), `grafana-azure-monitor-datasource`, `elasticsearch`, `graphite`, `influxdb`, `loki`, `opentsdb`, `prometheus`, `tempo`, `grafana-testdata-datasource`, `grafana-postgresql-datasource`, `mysql`, `mssql`, `grafana-pyroscope-datasource`, `parca` and `zipkin` (plus the internal `grafana` data source). Panels such as `timeseries`, `table`, `stat`, `gauge` and `geomap` are frontend-only core plugins.
+2. External plugins loaded from disk at runtime from `data/plugins/` (the `plugins` path). On a fresh install that directory starts empty.
+3. Plugins fetched from grafana.com: `grafana-lokiexplore-app` is the only non-core plugin (`?core=0` returns just it, signed by grafana). Nobody installed it explicitly; it is hard-coded as a default preinstalled plugin:
+
+```
+$ grep -n "lokiexplore\|preinstall" pkg/setting/setting_plugins.go | head -20
+31:		// Default preinstalled plugins
+32:		"grafana-lokiexplore-app": {"grafana-lokiexplore-app", "", ""},
+49:	disablePreinstall := pluginsSection.Key("preinstall_disabled").MustBool(false)
+...
+79:		cfg.PreinstallPluginsAsync = pluginsSection.Key("preinstall_async").MustBool(true)
+```
+
+With `preinstall_async = true` it is installed in the background after the server is already listening, which is why it is missing from the first `Plugins loaded count=54` and present on the next start (`count=55`). Setting `[plugins] preinstall_disabled = true` stops this.
+
+Plugins being available is not the same as data sources being configured: `/api/datasources` returns `[]`. Every data source type is available, but no data source instance exists until one is added in the UI, through the API or by provisioning files.
 
 ---
 
-Generated Files Required for Runtime
+Generated Files Required Before the Server Runs
 
-The Wire dependency injection framework generates `pkg/server/wire_gen.go` which is required for the server to compile and run. This file begins with:
-
-```go
+```
+$ ls -la pkg/server/wire_gen.go; head -8 pkg/server/wire_gen.go; git check-ignore -v pkg/server/wire_gen.go; git ls-files pkg/server/wire_gen.go | wc -l
+-rw-r--r-- 1 root 1001 94781 Oct  6 22:06 pkg/server/wire_gen.go
 // Code generated by Wire. DO NOT EDIT.
 
 //go:generate go run -mod=mod github.com/google/wire/cmd/wire gen -tags "oss"
@@ -247,42 +318,37 @@ The Wire dependency injection framework generates `pkg/server/wire_gen.go` which
 // +build !wireinject
 
 package server
+
+.gitignore:194:**/wire_gen.go	pkg/server/wire_gen.go
+0
 ```
 
-Without this generated file, the dependency injection would fail and the server would not start. Running `make gen-go` regenerates this file from `pkg/server/wire.go`.
+Wire generates `pkg/server/wire_gen.go`, the dependency-injection code that constructs every service from `pkg/server/wire.go`. It is git-ignored and not committed, so a fresh clone does not have it: it must be generated before the server can compile and run. `make gen-go` runs Wire on `./pkg/server`, and `make build-go` depends on `gen-go`. In this checkout the file was already generated when `bin/grafana` was built, so running `./bin/grafana server` directly and building first behave the same. Starting from a clean clone with `go run ./pkg/cmd/grafana server` without generating first fails to compile. The frontend works the same way: the UI is served from the compiled `public/build` bundle, so the frontend has to be built before the UI loads.
 
 ---
 
-Security Posture Summary
+Cleanup
 
-| Setting | Default Value | Effect |
-|---------|---------------|--------|
-| `[database] type` | `sqlite3` | Local file-based database |
-| `[database] path` | `grafana.db` | Created in `data/` directory |
-| `[security] admin_user` | `admin` | Default admin username |
-| `[security] admin_password` | `admin` | Default admin password |
-| `[security] admin_email` | `admin@localhost` | Default admin email |
-| `[auth.anonymous] enabled` | `false` | Anonymous access disabled |
-| `[users] allow_sign_up` | `false` | Self-registration disabled |
+```
+$ kill 131
+$ rm -rf /app/data /tmp/cookies.txt; git status --short | wc -l
+0
+```
 
-The system is NOT in permissive mode. It requires authentication with the well-known default credentials `admin/admin`.
+No repository file was changed.
 
 ---
 
 Summary
 
-When Grafana starts from a completely clean state:
+On a completely clean start, Grafana:
 
-1. Database: SQLite3 database created at `data/grafana.db`
-2. Migrations: All schema migrations execute and are recorded in `migration_log` table
-3. Admin User: Created automatically with username `admin`, password `admin`, email `admin@localhost`
-4. Organization: Default `Main Org.` created with id `1`
-5. Plugins: 
-   - Core plugins available immediately (compiled in)
-   - Bundled frontend plugins loaded from `public/app/plugins/`
-   - `grafana-lokiexplore-app` auto-downloaded to `data/plugins/`
-6. Security: Anonymous access disabled; authentication required
-7. Generated Files: `pkg/server/wire_gen.go` must exist (generated by Wire)
-8. Disabled Services: SMTP, remote cache (Redis/Memcached), HA alerting, and image renderer are disabled by default because they require explicit configuration of external infrastructure
+1. Uses only `conf/defaults.ini`, with home `/app` and data, logs and plugins under `data/`.
+2. Creates a SQLite3 database at `data/grafana.db` and runs 626 migrations, recording each in `migration_log`.
+3. Creates the admin user `admin` / `admin` (email `admin@localhost`) and the `Main Org.` organization because the user table is empty.
+4. Requires login: anonymous access, sign-up, LDAP and auth proxy are off. The well-known default password is the main security exposure.
+5. Loads 54 built-in plugins (core data sources compiled into the binary, frontends from `public/app/plugins/`), finds no external plugins, then downloads `grafana-lokiexplore-app` from grafana.com into `data/plugins/` in the background.
+6. Leaves SMTP, the image renderer, Redis/Memcached caching and external auth inactive because none of them is configured.
+7. Depends on the generated `pkg/server/wire_gen.go` and the built frontend.
 
-On subsequent runs, admin creation and migrations are skipped because the system detects existing state, resulting in significantly faster startup.
+On every later start the existing `data/` state is reused: migrations are all skipped (`performed=0 skipped=626`), admin creation is bypassed because a user exists, the downloaded plugin is loaded from disk (55 plugins), and startup is faster.

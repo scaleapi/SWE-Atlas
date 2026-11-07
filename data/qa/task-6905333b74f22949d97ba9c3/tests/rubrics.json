@@ -9,7 +9,7 @@
   },
   {
     "id": "581f0cea90ea65d3952ed37866711a0f",
-    "title": "1.2: Shows the TCP checksum value inside a packet hex dump at bytes 36\u201337 (e.g., 0x6F16 at bytes 36-37)",
+    "title": "1.2: Shows the TCP checksum value inside a packet hex dump at bytes 36-37 (e.g., 0x6F16 at bytes 36-37)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "961e3b3bb06a92d346d7f7d121d0c0e4",
-    "title": "1.11: Shows that manually assigned checksum value 0xAAAA survives into the final wire bytes. ",
+    "title": "1.11: Shows that manually assigned checksum value 0xAAAA survives into the final wire bytes.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

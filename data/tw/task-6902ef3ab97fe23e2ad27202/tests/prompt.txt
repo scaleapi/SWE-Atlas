@@ -5,4 +5,4 @@ The buildAPIURL function constructs API endpoint URLs from component parts (endp
 3. Handling the case when the resource type parameter is empty
 4. Handling the case when the repo name parameter is empty
 
-I need 4 unit test total
+I need 4 unit tests total.

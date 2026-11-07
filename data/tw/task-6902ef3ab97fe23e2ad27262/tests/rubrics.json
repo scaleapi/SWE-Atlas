@@ -44,16 +44,8 @@
       "type": "positive hli verifier",
       "importance": "must have"
     },
-    "id": "7286285ad9e2f6fa362ede7861a50954",
-    "title": "1.6: Tests a quoted destination path where the first character after the b/ prefix is represented via a backslash-octal escape (\\NNN), asserting the extracted repo-relative path begins with the decoded Unicode character(s)"
-  },
-  {
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    },
     "id": "91b1a83f903601d6e0758aa2d8b37772",
-    "title": "1.7: Tests a quoted destination path that includes backslash-octal escapes and whose decoded final path segment (filename after the last /) contains at least one literal space, asserting the returned path preserves that space in the filename"
+    "title": "1.6: Tests a quoted destination path that combines backslash-octal escapes with literal spaces, asserting the returned path preserves both the decoded characters and the spaces"
   },
   {
     "annotations": {
@@ -69,6 +61,6 @@
       "importance": "nice to have"
     },
     "id": "0a13a5c82fc89a2ee4f3ac87b3fa599f",
-    "title": "3.1: The added binary path parsing test is a Go unit test function with signature func TestXxx(t *testing.T) using Go\u2019s standard testing package"
+    "title": "3.1: The added binary path parsing test is a Go unit test function with signature func TestXxx(t *testing.T) using Go's standard testing package"
   }
 ]

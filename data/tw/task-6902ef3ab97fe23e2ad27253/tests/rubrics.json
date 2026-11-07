@@ -29,7 +29,7 @@
       "importance": "must have"
     },
     "id": "a5b39de2b23ccda76368d863e37f28bb",
-    "title": "1.4: Includes a file-path based image load test with deterministic byte expectations"
+    "title": "1.4: Includes a file-path based image load test that asserts the loaded bytes equal the file contents"
   },
   {
     "annotations": {
@@ -85,7 +85,7 @@
       "importance": "must have"
     },
     "id": "7e2b889f1b10aa9425cb00ee5e31df87",
-    "title": "1.11: Includes an invalid PNG test that asserts the error code is EBADPNG"
+    "title": "1.11: Includes an invalid PNG test that asserts loading the bad data fails with an error"
   },
   {
     "annotations": {
@@ -101,7 +101,7 @@
       "importance": "must have"
     },
     "id": "8a27ed2ea7a5f39d5dfe1898e08685c5",
-    "title": "1.13: Includes a chunked image load test using client numbers (I=) with deterministic byte expectations"
+    "title": "1.13: Includes a chunked image load test using client numbers (I=) that asserts the stored bytes equal the concatenated chunks"
   },
   {
     "annotations": {
@@ -117,7 +117,7 @@
       "importance": "must have"
     },
     "id": "fc98653e0256b86b09c16ff947bec804",
-    "title": "1.15: Includes a delete operation test that deletes an image by client number (I=) that asserts a state change"
+    "title": "1.15: Includes a delete operation test that deletes an image by client number (I=) that asserts the image is removed"
   },
   {
     "annotations": {
@@ -189,7 +189,7 @@
       "importance": "must have"
     },
     "id": "a0ca642f95976ea10559afe3e83ecf78",
-    "title": "1.24: Includes an animation control test that changes the current frame that asserts current_frame_index changes deterministically"
+    "title": "1.24: Includes an animation control test that changes the current frame that asserts the current frame index moves to the selected frame"
   },
   {
     "annotations": {

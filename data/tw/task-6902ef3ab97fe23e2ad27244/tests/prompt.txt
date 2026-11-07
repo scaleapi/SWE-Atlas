@@ -1,6 +1,6 @@
-We're lacking test coverage for kitty's hyperlink management. the code's working fine but we're missing acceptance tests that validate the end-to-end hyperlink workflow.
+We're lacking test coverage for kitty's hyperlink management. The code's working fine but we're missing acceptance tests that validate the end-to-end hyperlink workflow.
 
-Generate one comprehensive acceptence test that covers: 
+Generate one comprehensive acceptance test that covers:
 
  1. creating hyperlinks with OSC 8 escape sequences and verifying they're assigned to the correct screen positions
  2. reusing the same hyperlink ID when identical URL and ID combinations appear multiple times

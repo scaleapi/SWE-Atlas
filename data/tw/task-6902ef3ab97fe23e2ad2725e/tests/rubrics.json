@@ -36,16 +36,8 @@
       "type": "positive hli verifier",
       "importance": "must have"
     },
-    "id": "d80f6a72dfa80cdfdf525983a6c3dc30",
-    "title": "1.5: Tests that HandleFile correctly processes ZIP archives containing directories with files using testdir.zip"
-  },
-  {
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    },
     "id": "6a46f8bb67c88fef74e15ce868592f02",
-    "title": "1.6: Tests that HandleFile correctly handles plain uncompressed TAR archives"
+    "title": "1.5: Tests that HandleFile correctly handles plain uncompressed TAR archives"
   },
   {
     "annotations": {

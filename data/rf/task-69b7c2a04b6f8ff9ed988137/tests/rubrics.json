@@ -1,6 +1,6 @@
 [
   {
-    "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    "id": "2a44453de1b6196e964f97de547c06a9",
     "title": "1: Code Maintainability",
     "annotations": {
       "type": "high level intent",
@@ -8,7 +8,7 @@
     }
   },
   {
-    "id": "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7",
+    "id": "7ddbebdb77b5fc53c41c0bad88c02947",
     "title": "1.1: Changes decoder function signatures to return int status code",
     "annotations": {
       "type": "positive hli verifier",
@@ -16,7 +16,7 @@
     }
   },
   {
-    "id": "c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8",
+    "id": "ccc0350a93b32e5872db2ad23948c1e5",
     "title": "1.2: Updates decoder declarations in the header file",
     "annotations": {
       "type": "positive hli verifier",
@@ -24,15 +24,15 @@
     }
   },
   {
-    "id": "d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9",
-    "title": "1.3: Returns failure status code on decoding errors",
+    "id": "2fb5316b2c0ff9b2ff3a7c09f2b4076a",
+    "title": "1.3: Returns failure status code when a packet is shorter than the decoder's fixed minimum header length, the header pointer is NULL, or a header decode call fails (anomalies found after that and only flagged with an event, such as oversized GRE optional headers, may still return success)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+    "id": "6fdb34b3b968dd2435565d02e947ccac",
     "title": "1.4: Returns success status code on successful decoding",
     "annotations": {
       "type": "positive hli verifier",
@@ -40,7 +40,7 @@
     }
   },
   {
-    "id": "f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1",
+    "id": "88125f98c5092b2c5deb5ed23de45846",
     "title": "1.5: Returns failed tunnel packets to packet pool",
     "annotations": {
       "type": "positive hli verifier",
@@ -48,7 +48,7 @@
     }
   },
   {
-    "id": "a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2",
+    "id": "21f00bceb20506974089712de8422ac2",
     "title": "1.6: Consolidates tunnel packet setup pattern into helper function",
     "annotations": {
       "type": "positive hli verifier",
@@ -56,15 +56,15 @@
     }
   },
   {
-    "id": "b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3",
-    "title": "1.7: Does not modify original fragment packet on defrag decode failure",
+    "id": "bce7ba812463226f47746474c7f8f175",
+    "title": "1.7: Skips marking the original fragment packet as a tunnel packet and disabling its payload inspection when decoding the reassembled packet fails",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4",
+    "id": "2d23671bf4d70c0ce86f2991b5c3436f",
     "title": "1.8: Adds warn_unused_result attribute to DecodeTunnel",
     "annotations": {
       "type": "positive hli verifier",
@@ -72,7 +72,7 @@
     }
   },
   {
-    "id": "d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5",
+    "id": "180ed372f172428e113393780a9e8801",
     "title": "1.9: Updates DecodeTunnel to return int status code",
     "annotations": {
       "type": "positive hli verifier",
@@ -80,7 +80,7 @@
     }
   },
   {
-    "id": "e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6",
+    "id": "eb9be5a142bbff5a7079ed6fcf54f752",
     "title": "1.10: Updates Defrag function signature to accept PacketQueue",
     "annotations": {
       "type": "positive hli verifier",
@@ -88,7 +88,7 @@
     }
   },
   {
-    "id": "f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7",
+    "id": "53923c0f79c10a049a37e5895b561b30",
     "title": "2: Documentation Maintainability",
     "annotations": {
       "type": "high level intent",
@@ -96,7 +96,7 @@
     }
   },
   {
-    "id": "a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8",
+    "id": "2ec2a5edf3fdd6c3fbd79cb6f4e0368d",
     "title": "2.1: Updates function documentation for Teredo decoder return value",
     "annotations": {
       "type": "positive hli verifier",
@@ -104,7 +104,7 @@
     }
   },
   {
-    "id": "b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9",
+    "id": "4401e94267051612dd12510b7b81cf12",
     "title": "3: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
@@ -112,7 +112,7 @@
     }
   },
   {
-    "id": "c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0",
+    "id": "b205531f3331de4f1338190d5f00b7a5",
     "title": "3.1: Removes redundant DecodeTunnel calls from tunnel decoders",
     "annotations": {
       "type": "positive hli verifier",
@@ -120,15 +120,7 @@
     }
   },
   {
-    "id": "d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1",
-    "title": "3.2: Removes unreachable control flow after return in DecodeIPV6",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
-    "id": "e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2",
+    "id": "bea55b6a9e1df7d737c7a880f5c69dbd",
     "title": "4: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
@@ -136,7 +128,7 @@
     }
   },
   {
-    "id": "c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6",
+    "id": "5c73d96db97422ac967b977ae1d074b7",
     "title": "4.1: Marks parent fragment packet as tunnel on defrag decode failure",
     "annotations": {
       "type": "negative hli verifier",
@@ -144,7 +136,7 @@
     }
   },
   {
-    "id": "d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7",
+    "id": "d07d5faedb24679301b30d0b7b991312",
     "title": "4.2: Removes decoder functions from public API in decode.h",
     "annotations": {
       "type": "negative hli verifier",

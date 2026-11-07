@@ -2,7 +2,7 @@ Hey, I need help adding integration tests for the SFTP permission enforcement sy
 
 The permission checking is working correctly, but we're missing integration tests that verify users cannot perform operations when they lack the required permissions. We need tests that confirm the SFTP server properly denies access for unauthorized operations.
 
-Write integration test for:
+Write integration tests for:
 
 1. Testing that a user without list permission cannot read directory contents or stat files
 2. Testing that a user without download permission cannot retrieve files from the server, even if they can upload and delete

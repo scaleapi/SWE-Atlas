@@ -25,31 +25,45 @@ Meaning Scapy identifies itself as version `2.5.0.dev87` at startup.
 
 1.2 Banner text (startup console behavior)
 
-The banner printed at console startup is assembled inside `scapy.main.interact()`. Under typical terminal width with fancy prompt enabled, Scapy shows an ASCII art logo and a block containing “Welcome to Scapy,” the version, repo URL, “Have fun!”, and a random quote from `QUOTES`. A conceptual representation of the banner text looks like this:
+The banner printed at console startup is assembled inside `scapy.main.interact()`. I started the console with `./run_scapy` in a 120-column pseudo-terminal, so the fancy prompt is enabled. After the import-time messages, Scapy shows an ASCII art logo next to a block containing “Welcome to Scapy,” the version, repo URL, “Have fun!”, and a random quote from `QUOTES`. The console output up to the prompt was:
 
 ```text
-   | Welcome to Scapy
-   | Version 2.5.0.dev87
-   |
-   | https://github.com/secdev/scapy
-   |
-   | Have fun!
-   |
-   | <wrapped random quote here>
-   |              -- <author>
-   |
+INFO: Can't import PyX. Won't be able to use psdump() or pdfdump().
+WARNING: Interface lo: unknown address family (0)
+WARNING: Interface eth0: unknown address family (0)
+WARNING: Interface eth0: unknown address family (0)
+INFO: No IPv6 support in kernel
+/app/scapy/layers/ipsec.py:573: CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 48.0.0.
+  cipher=algorithms.TripleDES,
+/app/scapy/layers/ipsec.py:577: CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 48.0.0.
+  cipher=algorithms.TripleDES,
+
+                     aSPY//YASa
+             apyyyyCY//////////YCa       |
+            sY//////YSpcs  scpCY//Pp     | Welcome to Scapy
+ ayp ayyyyyyySCP//Pp           syY//C    | Version 2.5.0.dev87
+ AYAsAYYYYYYYY///Ps              cY//S   |
+         pCCCCY//p          cSSps y//Y   | https://github.com/secdev/scapy
+         SPPPP///a          pP///AC//Y   |
+              A//A            cyP////C   | Have fun!
+              p///Ac            sC///a   |
+              P////YCpc           A//A   | Craft me if you can.
+       scccccp///pSP///p          p//Y   |                   -- IPv6 layer
+      sY/////////y  caa           S//P   |
+       cayCyayP//Ya              pY/Ya
+        sY/PsY////YCc          aC//Yp
+         sc  sccaCY//PCypaapyCP//YSs
+                  spCPY//////YPSps
+                       ccaacs
+                                       using IPython 9.4.0
 ```
 
-If fancy prompts are disabled (`-H`), the banner becomes:
+The quote is picked at random on every start. In this run it was “Craft me if you can.” attributed to “IPv6 layer”. IPython is installed in this environment, so the banner ends with the IPython version.
+
+If fancy prompts are disabled (`./run_scapy -H`), the banner becomes:
 
 ```text
-Welcome to Scapy (2.5.0.dev87)
-```
-
-And when inside IPython, Scapy prints something like:
-
-```text
-Welcome to Scapy (2.5.0.dev87) using IPython 8.18.1
+Welcome to Scapy (2.5.0.dev87) using IPython 9.4.0
 ```
 
 

@@ -1,5 +1,5 @@
 diff --git a/cmd/sts-handlers_test.go b/cmd/sts-handlers_test.go
-index 0de49d49c..47b8aa8bb 100644
+index 47b8aa8bb..68cd01dc4 100644
 --- a/cmd/sts-handlers_test.go
 +++ b/cmd/sts-handlers_test.go
 @@ -41,7 +41,11 @@ func runAllIAMSTSTests(suite *TestSuiteIAM, c *check) {
@@ -311,7 +311,7 @@ index 0de49d49c..47b8aa8bb 100644
 +
 +	// Validate that the client cannot remove any objects
 +	err = minioClient.RemoveObject(ctx, bucket, "someobject", minio.RemoveObjectOptions{})
-+	if err.Error() != "Access Denied." {
++	if err == nil || err.Error() != "Access Denied." {
 +		c.Fatalf("unexpected non-access-denied err: %v", err)
 +	}
 +}
@@ -411,7 +411,7 @@ index 0de49d49c..47b8aa8bb 100644
 +
 +	// Validate that the client cannot remove any objects
 +	err = minioClient.RemoveObject(ctx, bucket, "someobject", minio.RemoveObjectOptions{})
-+	if err.Error() != "Access Denied." {
++	if err == nil || err.Error() != "Access Denied." {
 +		c.Fatalf("unexpected non-access-denied err: %v", err)
 +	}
 +}

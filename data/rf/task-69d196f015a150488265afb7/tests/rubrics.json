@@ -144,7 +144,7 @@
     }
   },
   {
-    "id": "a7f3c2d1e8b94560123456789abcdef0",
+    "id": "a6a0c5f0bef06ab9d3a7718c91f43e3d",
     "title": "1.18: Replaces the len_options callback with lambda pkt: pkt.length in all 4 PCO classes that used it (PCO_QoS_Rules_With_Support_Indicator, PCO_QoS_Flow_Descriptions_With_Support_Indicator, PCO_Qos_Rules, PCO_QoS_Flow_Descriptions) in scapy/contrib/gtp_v2.py",
     "annotations": {
       "type": "positive hli verifier",
@@ -209,7 +209,7 @@
   },
   {
     "id": "6280ab7f10536462142ebb608c54c5b0",
-    "title": "4.3: Removes existing IE class definitions that were present before the refactor",
+    "title": "4.3: Removes existing IE class definitions that were present before the refactor, other than renaming IE_IPv4 to IE_IP_Address",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

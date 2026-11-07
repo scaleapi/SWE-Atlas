@@ -41,7 +41,7 @@
   },
   {
     "id": "3c37daed8c9becb02be2d04db80a9c4e",
-    "title": "1.6: Explains that Python kittens require the fast_data_types bridge to function. ",
+    "title": "1.6: Explains that Python kittens require the fast_data_types bridge to function.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "544248e96abb96d948e3c11c49fb6b78",
-    "title": "1.8: Explains that the Python/C architecture is tightly coupled by design.",
+    "title": "1.7: Explains that the Python/C architecture is tightly coupled by design.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "382163fac97f8f018da61ce37a845e4f",
-    "title": "1.9: Explains that Python handles orchestration tasks (e.g configuration parsing).",
+    "title": "1.8: Explains that Python handles orchestration tasks (e.g configuration parsing).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "dfbc5ffeebe640297e125822eb10a616",
-    "title": "1.10: Explains that Go kittens operate independently of the C extension (e.g., as standalone binaries using escape sequences or remote control protocol).",
+    "title": "1.9: Explains that Go kittens operate independently of the C extension (e.g., as standalone binaries using escape sequences or remote control protocol).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

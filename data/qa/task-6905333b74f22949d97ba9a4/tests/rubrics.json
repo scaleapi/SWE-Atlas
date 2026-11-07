@@ -17,7 +17,7 @@
   },
   {
     "id": "6b4a20c49f4e3e9ce6c88b72104e1432",
-    "title": "1.3: Reports log messages indicating the application is ready to accept requests (e.g., server listening or ready-state log output).",
+    "title": "1.3: Reports the log messages printed when the application is actually started and ready to accept requests (e.g., server listening, ready-state or startup-banner output), even if none explicitly announces readiness.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "e37d09ae68370d6816ad50db5244bfe8",
-    "title": "1.9: Reports whether background jobs, schedulers, or workers start automatically at startup, including confirming their absence if none start. ",
+    "title": "1.9: Reports whether background jobs, schedulers, or workers start automatically at startup, including confirming their absence if none start.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

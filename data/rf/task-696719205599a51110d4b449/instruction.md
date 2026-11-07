@@ -17,3 +17,5 @@ Use the below Interface:
 - Input: `basePWD *url.URL, arg string, data []byte`
 - Output: `module, error`
 - Description: Resolves and caches a module from pre-loaded data. Resolves the specifier, checks the cache, and if not cached, compiles the data and stores the result. Used internally by RunSourceData.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

@@ -136,9 +136,9 @@ def serialize_alias_info_v2(alias_info: AliasInfo) -> dict:
 To see the actual API response, I made a POST request with authentication:
 
 curl -X POST http://localhost:7777/api/alias/random/new \
-1. H "Authentication: api_key_abc123" \
-2. H "Content-Type: application/json" \
-3.d '{"note": "Test alias for runtime demo"}'
+  -H "Authentication: api_key_abc123" \
+  -H "Content-Type: application/json" \
+  -d '{"note": "Test alias for runtime demo"}'
 
 Output (HTTP 201 Created):
 {

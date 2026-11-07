@@ -33,7 +33,7 @@ The build produces three key native components: the `kitty` launcher (36KB), the
 I launched Kitty with remote control enabled:
 
 ```bash
-$ ./kitty/launcher/kitty --listen-on unix:/tmp/kitty-test.sock &
+$ ./kitty/launcher/kitty -o allow_remote_control=yes --listen-on unix:/tmp/kitty-test.sock &
 ```
 
 ------------------------------------------------------------------------
@@ -67,13 +67,49 @@ libbrotlidec.so.1 => /lib/x86_64-linux-gnu/libbrotlidec.so.1 (0x00007ff3c9760000
 libpcre2-8.so.0 => /lib/x86_64-linux-gnu/libpcre2-8.so.0 (0x00007ff3c96c6000)
 ```
 
-This reveals the rendering stack: `libpython3.12.so` for the Python runtime, `libharfbuzz.so.0` and `libfreetype.so.6` for font shaping and rasterization, `libpng16.so.16` for image handling, and `liblcms2.so.2` for color management. The absence of Go runtime libraries (no `libgo.so`) confirms Go is not embedded in the main process.
+This reveals the rendering stack: `libpython3.12.so` for the Python runtime, `libharfbuzz.so.0` and `libfreetype.so.6` for font shaping and rasterization, `libpng16.so.16` for image handling, and `liblcms2.so.2` for color management.
+
+ldd only lists the extension's dependencies, so I also checked what the running Kitty process actually has mapped:
+
+```bash
+$ awk '{print $6}' /proc/$KITTY_PID/maps | grep -E 'fast_data_types|glfw-|harfbuzz|freetype|fontconfig|libGL|gallium|libpython' | sort -u
+```
+
+Output:
+
+```
+/app/kitty/fast_data_types.so
+/app/kitty/glfw-x11.so
+/usr/lib/x86_64-linux-gnu/libGL.so.1.7.0
+/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
+/usr/lib/x86_64-linux-gnu/libGLX_mesa.so.0.0.0
+/usr/lib/x86_64-linux-gnu/libGLdispatch.so.0.0.0
+/usr/lib/x86_64-linux-gnu/libfontconfig.so.1.12.1
+/usr/lib/x86_64-linux-gnu/libfreetype.so.6.20.1
+/usr/lib/x86_64-linux-gnu/libgallium-24.2.8-1ubuntu1~24.04.1.so
+/usr/lib/x86_64-linux-gnu/libharfbuzz.so.0.60830.0
+/usr/lib/x86_64-linux-gnu/libpython3.12.so.1.0
+/var/cache/fontconfig/cb6837c09f0a995c916a42480c4bfbd2-le64.cache-9
+/var/cache/fontconfig/d589a48862398ed80a3d6066f4f56f4c-le64.cache-9
+```
+
+```bash
+$ awk '{print $6}' /proc/$KITTY_PID/maps | grep -c -i -E 'kitten|libgo'
+```
+
+Output:
+
+```
+0
+```
+
+The live process has `fast_data_types.so`, the X11 GLFW backend (`glfw-x11.so`; `glfw-wayland.so` is not loaded), HarfBuzz, FreeType, Fontconfig, the Python runtime and Mesa's OpenGL stack (`libGLX_mesa`, `libgallium`) mapped. Nothing from kitten or a Go runtime is mapped, so Go is not embedded in the main process.
 
 ------------------------------------------------------------------------
 
 ## Stress Testing Script
 
-I created a stress test script to generate rapid colored output:
+I created a stress test script to generate rapid colored output for 40 seconds:
 
 ```python
 #!/usr/bin/env python3
@@ -84,24 +120,43 @@ import time
 colors = [f"\033[38;5;{i}m" for i in range(16, 232)]
 reset = "\033[0m"
 
-for cycle in range(3):
+end = time.time() + 40
+cycle = 0
+while time.time() < end:
     for i, color in enumerate(colors):
         line = f"{color}{'█' * 80}{reset}"
         print(line)
         if i % 50 == 0:
             sys.stdout.flush()
-    print(f"\n--- Cycle {cycle + 1} complete ---\n")
+    cycle += 1
+    print(f"\n--- Cycle {cycle} complete ---\n")
 
 print("Stress test complete.")
 ```
 
-Running this script while simultaneously performing scrollback traversal (Shift+PageUp/PageDown), window resizing, and tab switching placed sustained rendering pressure on Kitty.
+I started two copies in their own tabs through the control socket and, at the same time, ran a loop that resized the OS window, switched tabs and scrolled the scrollback every 0.5 seconds:
 
 ```bash
-$ python3 /tmp/test_stress.py
+$ ./kitty/launcher/kitten @ --to unix:/tmp/kitty-test.sock launch --type=tab --tab-title stress1 python3 /tmp/test_stress.py
+$ ./kitty/launcher/kitten @ --to unix:/tmp/kitty-test.sock launch --type=tab --tab-title stress2 python3 /tmp/test_stress.py
+$ cat /tmp/churn.sh
 ```
 
-Under this load, rendering updates arrived in visible batches with occasional redraw deferrals during heavy output. This demonstrates that rendering, parsing, and presentation are decoupled and throttled rather than executed synchronously per write.
+Output:
+
+```
+#!/bin/bash
+for i in $(seq 1 60); do
+  xdotool windowsize 2097164 $((600 + (i % 10) * 40)) $((400 + (i % 10) * 30))
+  /app/kitty/launcher/kitten @ --to unix:/tmp/kitty-test.sock focus-tab --match index:$((i % 3)) >/dev/null 2>&1
+  /app/kitty/launcher/kitten @ --to unix:/tmp/kitty-test.sock scroll-window 10- >/dev/null 2>&1
+  sleep 0.5
+done
+```
+
+```bash
+$ /tmp/churn.sh > /tmp/churn.log 2>&1 &
+```
 
 ------------------------------------------------------------------------
 
@@ -143,138 +198,158 @@ The child monitor uses `poll()` for multiplexed I/O and handles `SIGCHLD` for ch
 
 ## Thread Activity: Idle vs Stress Comparison
 
-To observe how thread activity changes under load, I captured thread states during idle and stress conditions using `ps -T`:
+To observe how thread activity changes under load, I measured the CPU ticks (utime + stime from `/proc/$KITTY_PID/task/*/stat`, 100 ticks per second) each thread used over a 5-second window with a small helper script, `/tmp/ticks.sh <pid> <seconds>`, and took a `top -H` sample.
 
 **Idle state (no output activity):**
 
 ```bash
-$ ps -T -p $KITTY_PID -o tid,comm,stat,%cpu
+$ /tmp/ticks.sh $KITTY_PID 5
 ```
 
 Output:
 
 ```
-    TID COMMAND         STAT %CPU
-  12345 kitty           Sl    0.2
-  12346 KittyChildMon   Sl    0.0
-  12347 KittyWriteStdin Sl    0.0
-  12348 KittyPeerMon    Sl    0.0
-  12349 threaded-ml     Sl    0.0
+TID    COMM           TICKS/5s
+611    kitty          1
+613    llvmpipe-0     2
+614    llvmpipe-1     2
+615    llvmpipe-2     2
+616    llvmpipe-3     2
+617    kitty          0
+618    kitty          0
+619    kitty          0
+620    kitty          0
+621    kitty:disk$0   0
+622    KittyPeerMon   0
+623    KittyChildMon  0
 ```
 
-During idle, all threads show minimal CPU usage (0.0-0.2%) with `Sl` status (sleeping, interruptible, multi-threaded). The main `kitty` thread handles occasional GUI events while the dedicated C threads (`KittyChildMon`, `KittyWriteStdin`, `KittyPeerMon`) remain blocked on `poll()`.
+At idle every thread is close to zero. The main `kitty` thread (TID 611, the process itself) only handles occasional GUI events, and `KittyChildMon` and `KittyPeerMon` sit blocked in `poll()`. The four `llvmpipe-N` threads are Mesa's software rasterizer, and the four unnamed `kitty` threads plus `kitty:disk$0` are Mesa worker threads (their stacks are in `libgallium`, see the gdb snapshot below). `KittyWriteStdin` does not appear at runtime in this session.
 
-**Under stress (running test_stress.py with rapid colored output):**
+**Under stress (two stress tabs plus the resize/tab/scroll loop):**
 
 ```bash
-$ ps -T -p $KITTY_PID -o tid,comm,stat,%cpu
+$ /tmp/ticks.sh $KITTY_PID 5
 ```
 
 Output:
 
 ```
-    TID COMMAND         STAT %CPU
-  12345 kitty           Rl   45.3
-  12346 KittyChildMon   Sl   12.8
-  12347 KittyWriteStdin Sl    0.1
-  12348 KittyPeerMon    Sl    0.0
-  12349 threaded-ml     Rl    8.2
+TID    COMM           TICKS/5s
+611    kitty          271
+613    llvmpipe-0     48
+614    llvmpipe-1     42
+615    llvmpipe-2     59
+616    llvmpipe-3     58
+617    kitty          0
+618    kitty          0
+619    kitty          0
+620    kitty          0
+621    kitty:disk$0   0
+622    KittyPeerMon   3
+623    KittyChildMon  436
 ```
 
-Under stress, the main `kitty` thread jumps to 45.3% CPU with `Rl` status (running, multi-threaded), indicating active rendering work. `KittyChildMon` increases to 12.8% as it processes PTY output from the stress script. The `threaded-ml` thread (Mesa llvmpipe software renderer) shows 8.2% CPU handling OpenGL operations in this headless environment. `KittyWriteStdin` and `KittyPeerMon` remain low since no keyboard input or remote commands were active.
+```bash
+$ top -H -b -d 2 -n 2 -p $KITTY_PID | awk '/^top -/{n++} n==2' | head -20
+```
 
-This demonstrates the workload distribution: rendering pressure activates the main thread and child monitor while I/O-bound threads remain idle until their specific events occur.
+Output (second sample):
+
+```
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+  623 root      20   0 1080216 363384      0 R  86.0   0.1   0:08.94 KittyChil+
+  611 root      20   0 1080216 363384      0 R  55.5   0.1   0:06.07 kitty
+  615 root      20   0 1080216 363384      0 S  14.5   0.1   0:01.35 llvmpipe-2
+  616 root      20   0 1080216 363384      0 S  13.0   0.1   0:01.28 llvmpipe-3
+  613 root      20   0 1080216 363384      0 S   8.5   0.1   0:01.02 llvmpipe-0
+  614 root      20   0 1080216 363384      0 S   5.5   0.1   0:00.84 llvmpipe-1
+```
+
+Under stress `KittyChildMon` jumps from 0 to 436 ticks in 5 seconds (about 87% of a core, matching top's 86.0%) as it reads and parses the PTY output of the stress scripts. The main `kitty` thread goes from 1 to 271 ticks (about 54%, top 55.5%, state `R`) doing the rendering work, and the four `llvmpipe` threads go from 2 to 42-59 ticks each as they rasterize the OpenGL frames in software. `KittyPeerMon` only wakes for the remote-control commands of the loop (3 ticks). A second 5-second window later in the run gave the same picture (kitty 241, KittyChildMon 433, llvmpipe 40-72), and once both stress scripts had exited every thread was back to 0 ticks.
+
+This demonstrates the workload distribution: PTY output pressure lands on the C I/O thread, rendering pressure on the main thread and the Mesa rasterizer threads, while the remote-control thread stays idle until a command arrives.
 
 ------------------------------------------------------------------------
 
 ## Stack-Level Snapshot During Stress
 
-To capture a stack-level snapshot during the stress run, I used `gdb` to attach to the running Kitty process:
+To capture a stack-level snapshot during the stress run (both stress scripts were still running, `ps` showed them in state `Rs` with 10 seconds elapsed), I used `gdb` to attach to the running Kitty process:
 
 ```bash
-$ gdb -p $KITTY_PID -batch -ex "thread apply all bt 3"
+$ gdb -p $KITTY_PID -batch -ex 'thread apply all bt 8'
 ```
 
-Output:
+Output (trimmed: one of the four llvmpipe threads, which have no symbols, and one of the four identical Mesa worker threads 5-8 are shown, `...` marks elided frames, and thread 4 is left out):
 
 ```
-Thread 5 (Thread 0x7f8a1c000700 (LWP 12349) "threaded-ml"):
-#0  0x00007f8a2b4e5d7a in __futex_abstimed_wait_common64 () from /lib/x86_64-linux-gnu/libc.so.6
-#1  0x00007f8a2b4e8998 in pthread_cond_wait@@GLIBC_2.3.2 () from /lib/x86_64-linux-gnu/libc.so.6
-#2  0x00007f8a2a1f4c12 in llvmpipe_rasterize_triangles () from /usr/lib/x86_64-linux-gnu/dri/swrast_dri.so
+Thread 12 (Thread 0x2b6c224a26c0 (LWP 613) "llvmpipe-0"):
+#0  0x00002b6c237f283e in ?? ()
+#1  0x00002b6c237f1889 in ?? ()
+#2  0x0000000000000000 in ?? ()
 
-Thread 4 (Thread 0x7f8a1c800700 (LWP 12348) "KittyPeerMon"):
-#0  0x00007f8a2b5a3e2e in __GI___poll () from /lib/x86_64-linux-gnu/libc.so.6
-#1  0x00007f8a2c234a89 in peer_monitor_loop () at kitty/child-monitor.c:1850
-#2  0x00007f8a2b4e7ac3 in start_thread () from /lib/x86_64-linux-gnu/libc.so.6
+Thread 8 (Thread 0x2b6c22ca66c0 (LWP 617) "kitty"):
+#0  0x00002b6c1340fe51 in __futex_abstimed_wait_common64 (private=11116, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x55ee2fedd840) at ./nptl/futex-internal.c:57
+...
+#4  ___pthread_cond_wait (cond=0x55ee2fedd818, mutex=0x55ee2fedd7f0) at ./nptl/pthread_cond_wait.c:627
+#5  0x00002b6c15c3040d in ?? () from /lib/x86_64-linux-gnu/libgallium-24.2.8-1ubuntu1~24.04.1.so
 
-Thread 3 (Thread 0x7f8a1d000700 (LWP 12347) "KittyWriteStdin"):
-#0  0x00007f8a2b5a56de in __GI___select () from /lib/x86_64-linux-gnu/libc.so.6
-#1  0x00007f8a2c231f45 in write_to_child_loop () at kitty/child-monitor.c:967
-#2  0x00007f8a2b4e7ac3 in start_thread () from /lib/x86_64-linux-gnu/libc.so.6
+Thread 3 (Thread 0x2b6c237ec6c0 (LWP 622) "KittyPeerMon"):
+#0  0x00002b6c1349279d in __GI___poll (fds=0x2b6c237eb640, nfds=2, timeout=-1) at ../sysdeps/unix/sysv/linux/poll.c:29
+#1  0x00002b6c13afcf10 in talk_loop () from /app/kitty/launcher/../../kitty/fast_data_types.so
+#2  0x00002b6c13413b84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#3  0x00002b6c134a0ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
 
-Thread 2 (Thread 0x7f8a1d800700 (LWP 12346) "KittyChildMon"):
-#0  0x00007f8a2b5a3e2e in __GI___poll () from /lib/x86_64-linux-gnu/libc.so.6
-#1  0x00007f8a2c2356b2 in child_monitor_main () at kitty/child-monitor.c:1509
-#2  0x00007f8a2b4e7ac3 in start_thread () from /lib/x86_64-linux-gnu/libc.so.6
+Thread 2 (Thread 0x2b6c23cfe6c0 (LWP 623) "KittyChildMon"):
+#0  0x00002b6c13492d6a in __GI___libc_read (nbytes=938800, buf=0x55ee340eb290, fd=13) at ../sysdeps/unix/sysv/linux/read.c:26
+#1  __GI___libc_read (fd=13, buf=0x55ee340eb290, nbytes=938800) at ../sysdeps/unix/sysv/linux/read.c:24
+#2  0x00002b6c13af9280 in io_loop () from /app/kitty/launcher/../../kitty/fast_data_types.so
+#3  0x00002b6c13413b84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#4  0x00002b6c134a0ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
 
-Thread 1 (Thread 0x7f8a2c800740 (LWP 12345) "kitty"):
-#0  0x00007f8a2c0f8a21 in hb_shape () from /lib/x86_64-linux-gnu/libharfbuzz.so.0
-#1  0x00007f8a2c1a3f78 in shape_run () at kitty/fonts.c:813
-#2  0x00007f8a2c1a5234 in render_line () at kitty/fonts.c:892
+Thread 1 (Thread 0x2b6c136bc840 (LWP 611) "kitty"):
+#0  0x00002b6c1340fe51 in __futex_abstimed_wait_common64 (private=3, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x55ee30594358) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=3, abstime=0x0, clockid=0, expected=0, futex_word=0x55ee30594358) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x55ee30594358, expected=expected@entry=0, clockid=clockid@entry=0, abstime=abstime@entry=0x0, private=private@entry=0) at ./nptl/futex-internal.c:139
+#3  0x00002b6c134128cd in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x55ee30594308, cond=0x55ee30594330) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_wait (cond=0x55ee30594330, mutex=0x55ee30594308) at ./nptl/pthread_cond_wait.c:627
+#5  0x00002b6c15c3040d in ?? () from /lib/x86_64-linux-gnu/libgallium-24.2.8-1ubuntu1~24.04.1.so
+#6  0x00002b6c162cc9db in ?? () from /lib/x86_64-linux-gnu/libgallium-24.2.8-1ubuntu1~24.04.1.so
+#7  0x00002b6c162c82e8 in ?? () from /lib/x86_64-linux-gnu/libgallium-24.2.8-1ubuntu1~24.04.1.so
 ```
 
 This stack trace provides direct runtime evidence of the thread responsibilities:
 
-- **Thread 1 (main kitty)**: Caught inside `hb_shape()` from libharfbuzz, called from `shape_run()` in `fonts.c:813`. This confirms the main thread executes text shaping in C during rendering.
-- **Thread 2 (KittyChildMon)**: Blocked in `poll()` at `child-monitor.c:1509`, waiting for PTY events from child processes.
-- **Thread 3 (KittyWriteStdin)**: Blocked in `select()` at `child-monitor.c:967`, waiting for stdin data to write to child processes.
-- **Thread 4 (KittyPeerMon)**: Blocked in `poll()` at `child-monitor.c:1850`, waiting for remote control connections.
-- **Thread 5 (threaded-ml)**: Mesa's llvmpipe software renderer thread, blocked in `pthread_cond_wait` between render batches.
+- **Thread 1 (main kitty)**: Caught inside Mesa's `libgallium` driver, waiting on a condition variable. The main thread issued OpenGL work and is waiting for the software rasterizer to finish it.
+- **Thread 2 (KittyChildMon)**: Inside `read()` on fd 13 from `io_loop()` in `fast_data_types.so`, pulling up to 938800 bytes of stress output from a child's PTY.
+- **Thread 3 (KittyPeerMon)**: Blocked in `poll()` in `talk_loop()` in `fast_data_types.so`, waiting for remote control connections.
+- **Threads 5-8 and 4 (kitty, kitty:disk$0)**: Mesa worker threads parked in `pthread_cond_wait` inside `libgallium`.
+- **Threads 9-12 (llvmpipe-N)**: Mesa's llvmpipe rasterizer threads, running JIT-generated code without symbols.
 
-The stack trace confirms that rendering work (HarfBuzz shaping) executes in C on the main thread, while dedicated C threads handle I/O multiplexing via `poll()` and `select()`. No Python frames appear in the rendering path.
+The captured frames (eight per thread) show the PTY I/O running in C in `fast_data_types.so` and the frame drawing running through Mesa on the main thread and the llvmpipe threads.
 
 ------------------------------------------------------------------------
 
 ## Live State via Kitty Remote Control
 
-Using Kitty's control interface during stress testing:
+Using Kitty's control interface during stress testing (both stress tabs running, resize loop active):
 
 ```bash
-$ kitten @ --to unix:/tmp/kitty-test.sock ls
+$ time ./kitty/launcher/kitten @ --to unix:/tmp/kitty-test.sock ls > /tmp/ls.json; python3 -c "import json; d=json.load(open('/tmp/ls.json')); [print('os_window', w['id'], 'tab', t['id'], repr(t['title']), 'active' if t['is_active'] else '', '| window', x['id'], 'pid', x['pid'], x['cmdline'], '%dx%d' % (x['columns'], x['lines'])) for w in d for t in w['tabs'] for x in t['windows']]"
 ```
 
-Output (example):
+Output:
 
-```json
-[
-  {
-    "id": 1,
-    "is_focused": true,
-    "tabs": [
-      {
-        "id": 1,
-        "is_focused": true,
-        "layout": "stack",
-        "title": "kitty",
-        "windows": [
-          {
-            "id": 1,
-            "is_focused": true,
-            "is_self": false,
-            "lines": 24,
-            "columns": 80,
-            "pid": 12345,
-            "title": "bash"
-          }
-        ]
-      }
-    ]
-  }
-]
+```
+real	0m0.023s
+user	0m0.000s
+sys	0m0.000s
+os_window 1 tab 1 '/app'  | window 1 pid 624 ['/bin/bash', '--posix'] 106x36
+os_window 1 tab 2 'stress1' active | window 2 pid 719 ['/usr/bin/python3', '/tmp/test_stress.py'] 106x36
+os_window 1 tab 3 'stress2'  | window 3 pid 727 ['/usr/bin/python3', '/tmp/test_stress.py'] 106x36
 ```
 
-The control interface remained responsive during rendering pressure, confirming that Python-level state (tabs, windows, layouts) remains accessible independently of rendering throughput. The remote control implementation is in Python:
+The control interface answered in 23 ms during rendering pressure, with the live state: the tab the loop had just switched to (`stress1` active), the window size after the latest resize (106x36) and the PID and command line of each child. Python-level state (tabs, windows, layouts) remains accessible independently of rendering throughput. The remote control implementation is in Python:
 
 ```bash
 $ ls /app/kitty/rc/*.py | head -5
@@ -290,7 +365,28 @@ Output:
 /app/kitty/rc/close_window.py
 ```
 
-This shows remote control commands are implemented as Python modules under `kitty/rc/`.
+This shows remote control commands are implemented as Python modules under `kitty/rc/`. To confirm that this Python code is what serves a command at runtime, I traced a fresh Kitty instance (main thread 629, `KittyPeerMon` 640) while sending its first two remote-control commands:
+
+```bash
+$ strace -f -tt -p $KITTY_PID -e trace=openat,accept,accept4,recvfrom,sendto,read,write,newfstatat,stat -s 80 -o /tmp/st_rc.txt &
+$ ./kitty/launcher/kitten @ --to unix:/tmp/kitty-test.sock ls > /dev/null
+$ ./kitty/launcher/kitten @ --to unix:/tmp/kitty-test.sock set-window-title rc-probe
+$ grep -n -E 'rc/|\.py|accept|kitty-test' /tmp/st_rc.txt | head -60
+```
+
+Output (excerpt):
+
+```
+1:640   17:11:05.960527 accept(6, NULL, NULL) = 11
+9:629   17:11:05.961937 openat(AT_FDCWD, "/app/kitty/launcher/../../kitty/__pycache__/remote_control.cpython-312.opt-2.pyc", O_RDONLY|O_CLOEXEC) = 12
+18:629   17:11:05.963634 openat(AT_FDCWD, "/app/kitty/launcher/../../kitty/rc/__pycache__/__init__.cpython-312.opt-2.pyc", O_RDONLY|O_CLOEXEC) = 12
+27:629   17:11:05.964896 openat(AT_FDCWD, "/app/kitty/launcher/../../kitty/rc/__pycache__/base.cpython-312.opt-2.pyc", O_RDONLY|O_CLOEXEC) = 12
+33:629   17:11:05.968357 openat(AT_FDCWD, "/app/kitty/launcher/../../kitty/rc/__pycache__/ls.cpython-312.opt-2.pyc", O_RDONLY|O_CLOEXEC) = 12
+94:640   17:11:05.992962 accept(6, NULL, NULL) = 11
+102:629   17:11:05.994312 openat(AT_FDCWD, "/app/kitty/launcher/../../kitty/rc/__pycache__/set_window_title.cpython-312.opt-2.pyc", O_RDONLY|O_CLOEXEC) = 12
+```
+
+The C thread `KittyPeerMon` accepts the connection on the control socket (fd 6). Within a few milliseconds the main thread loads the Python bytecode for `kitty/remote_control.py`, `kitty/rc/base.py` and the module for that exact command (`rc/ls.py`, then `rc/set_window_title.py` for the second command). The command itself is executed by Python code on the main thread.
 
 ------------------------------------------------------------------------
 
@@ -299,11 +395,51 @@ This shows remote control commands are implemented as Python modules under `kitt
 Running the icat kitten to display an image:
 
 ```bash
-$ ./kitty/launcher/kitty +kitten icat /tmp/test_image.png &
-$ ps aux | grep kitten
+$ ./kitty/launcher/kitten @ --to unix:/tmp/kitty-test.sock launch --type=tab --tab-title icat ./kitty/launcher/kitty +kitten icat --hold /tmp/test_image.png
+$ ps -eo pid,ppid,comm,args | grep -E 'kitt' | grep -v grep
 ```
 
-This produces a separate `kitten` process with its own PID, not loaded into the main Kitty process.
+Output:
+
+```
+  611    17 kitty           ./kitty/launcher/kitty -o allow_remote_control=yes --listen-on unix:/tmp/kitty-test.sock
+ 1890   611 kitten          kitten icat --hold /tmp/test_image.png
+```
+
+```bash
+$ ls -la /proc/1890/exe; grep -E '^(Name|PPid|Threads)' /proc/1890/status
+$ awk '{print $6}' /proc/1890/maps | sort -u | grep /
+$ ls -la /proc/1890/fd
+$ grep -c kitten /proc/$KITTY_PID/maps
+```
+
+Output:
+
+```
+lrwxrwxrwx 1 root root 0 Oct 30 17:04 /proc/1890/exe -> /app/kitty/launcher/kitten
+Name:	kitten
+PPid:	611
+Threads:	8
+
+/app/kitty/launcher/kitten
+/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+/usr/lib/x86_64-linux-gnu/libc.so.6
+
+lrwxrwxrwx 1 root root 0 Oct 30 17:04 0 -> /dev/pts/4
+lrwxrwxrwx 1 root root 0 Oct 30 17:04 1 -> /dev/pts/4
+lrwxrwxrwx 1 root root 0 Oct 30 17:04 2 -> /dev/pts/4
+lrwxrwxrwx 1 root root 0 Oct 30 17:04 3 -> /dev/tty
+lrwxrwxrwx 1 root root 0 Oct 30 17:04 4 -> anon_inode:[eventpoll]
+lrwxrwxrwx 1 root root 0 Oct 30 17:04 5 -> anon_inode:[eventfd]
+lrwxrwxrwx 1 root root 0 Oct 30 17:04 6 -> pipe:[592]
+lrwxrwxrwx 1 root root 0 Oct 30 17:04 7 -> pipe:[592]
+lrwxrwxrwx 1 root root 0 Oct 30 17:04 8 -> pipe:[593]
+lrwxrwxrwx 1 root root 0 Oct 30 17:04 9 -> pipe:[593]
+
+0
+```
+
+`kitty +kitten icat` runs as a separate `kitten` process (PID 1890) whose parent is the main Kitty process (PID 611): Kitty launched it in the new tab's PTY. Its executable is `/app/kitty/launcher/kitten`, its only mappings are that binary, libc and the loader, and the kitten binary is not mapped into Kitty (count 0). Its file descriptors are its terminal (`/dev/pts/4`, `/dev/tty`) plus an eventpoll, an eventfd and two internal pipes; it has no socket to Kitty's control interface.
 
 Binary inspection of the kitten executable:
 
@@ -350,7 +486,7 @@ Output:
 go1.23.4
 ```
 
-This confirms kitten was compiled with Go 1.23.4 and runs as a separate process communicating with Kitty via the control socket.
+This confirms kitten was compiled with Go 1.23.4 and runs as a separate process: icat talks to Kitty through the terminal it runs in, while `kitten @` connects to Kitty's control socket, where `KittyPeerMon` accepts it.
 
 ------------------------------------------------------------------------
 
@@ -426,7 +562,34 @@ GLFWAPI void glfwRunMainLoop(GLFWtickcallback callback, void *data)
 }
 ```
 
-This confirms the main event loop executes in platform-specific C code, not Python.
+This confirms the main event loop executes in platform-specific C code, not Python. The running process shows the same layering:
+
+```bash
+$ py-spy dump --native --pid $KITTY_PID
+```
+
+Output:
+
+```
+Process 629: ./kitty/launcher/kitty -o allow_remote_control=yes --listen-on unix:/tmp/kitty-test.sock
+Python v3.12.3 (/app/kitty/launcher/kitty)
+
+Thread 629 (idle): "MainThread"
+    ppoll (libc.so.6)
+    glfwRunMainLoop (kitty/glfw-x11.so)
+    main_loop.lto_priv.0 (kitty/fast_data_types.so)
+    _run_app (kitty/main.py:234)
+    __call__ (kitty/main.py:252)
+    _main (kitty/main.py:518)
+    main (kitty/main.py:526)
+    main (kitty/entry_points.py:195)
+    <module> (__main__.py:7)
+    _run_code (<frozen runpy>:88)
+    _run_module_as_main (<frozen runpy>:198)
+    0x2b8b144f71ca (libc.so.6)
+```
+
+Python starts Kitty (`kitty/main.py:_run_app`) and calls once into `main_loop` in `fast_data_types.so`, and from then on the loop runs in `glfwRunMainLoop` in `glfw-x11.so`. Python only runs again when C calls back into it, as for the remote-control commands above.
 
 ------------------------------------------------------------------------
 
@@ -434,15 +597,15 @@ This confirms the main event loop executes in platform-specific C code, not Pyth
 
 Based on the runtime artifacts collected:
 
-| Responsibility                              | Language   | Evidence                                      |
-|---------------------------------------------|------------|-----------------------------------------------|
-| Configuration, orchestration, remote control| Python     | 109 .py files in kitty/, rc/ module           |
-| Event loop, VT parsing, screen buffer       | C          | child-monitor.c poll(), glfwRunMainLoop       |
-| Font shaping and rasterization              | C          | hb_shape in fonts.c, FT_* symbols             |
-| OpenGL rendering                            | C          | GLFW extensions (glfw-x11.so, glfw-wayland.so)|
-| Kitten utilities                            | Go         | 81 .go files in kittens/, 255 in tools/       |
+| Responsibility                              | Language   | Runtime evidence                                                       |
+|---------------------------------------------|------------|------------------------------------------------------------------------|
+| Startup, orchestration, remote control      | Python     | py-spy: `_run_app` calls `main_loop`; strace: `rc/ls.py` loaded per command |
+| Event loop, PTY I/O and parsing             | C          | py-spy/gdb: `glfwRunMainLoop`, `io_loop`; KittyChildMon 436 ticks/5 s    |
+| Font shaping and rasterization              | C          | HarfBuzz/FreeType mapped in the process; `hb_*`/`FT_*` imports          |
+| OpenGL rendering                            | C (Mesa)   | `libgallium` mapped, llvmpipe threads busy, main thread in `libgallium` |
+| Kitten utilities                            | Go         | separate `kitten` process (PID 1890), Go sections, `go1.23.4`           |
 
-The source file counts confirm this distribution:
+The source file counts are consistent with this distribution:
 
 ```bash
 $ find /app/kitty -name "*.py" | wc -l && find /app/kitty -name "*.c" | wc -l
@@ -471,23 +634,22 @@ Output:
 ## Ruled-Out Interpretations
 
 **1. "Python performs rendering"** - Ruled out by:
-- C-only symbols (`hb_shape`, `FT_*`) in fast_data_types.so
-- Main loop in `glfwRunMainLoop` which is pure C
-- Child monitor using `poll()` in C for I/O multiplexing
-- No Python bytecode execution in rendering hot path
+- C-only symbols (`hb_shape`, `FT_*`) in fast_data_types.so, with HarfBuzz and FreeType mapped into the running process
+- py-spy shows the main thread's loop is `glfwRunMainLoop` (C), entered once from Python's `_run_app`
+- Under stress the load sits in C and Mesa threads (KittyChildMon 436 ticks, llvmpipe 207 ticks per 5 s), and the stress-time gdb snapshot caught the main thread inside `libgallium` and the PTY reader in `io_loop`
+- Python code was only observed being loaded for remote-control commands (`rc/ls.py`, `rc/set_window_title.py`), not for drawing
 
 **2. "Go participates in main process rendering"** - Ruled out by:
 - No Go runtime libraries in `ldd fast_data_types.so`
-- kitten is a separate process (own PID, separate ldd output)
-- kitten communicates via socket, not shared memory
+- kitten is a separate process (own PID 1890, parent PID 611, separate ldd output)
+- kitten's only open files are its terminal, an eventpoll, an eventfd and pipes, and its only mappings are the kitten binary, libc and the loader
 - Go sections (.gosymtab, etc.) only in kitten binary, not kitty
 
 ------------------------------------------------------------------------
 
 ## Portability vs Performance Tradeoff
 
-The GLFW layer demonstrates a clear port:%y+
-uability-performance tradeoff:
+The GLFW and OpenGL layers demonstrate a clear portability-performance tradeoff:
 
 ```bash
 $ ls -la /app/kitty/glfw-*.so
@@ -500,13 +662,11 @@ Output:
 -rwxr-xr-x 1 root root 357592 Jan 16 03:30 /app/kitty/glfw-x11.so
 ```
 
-Kitty compiles separate GLFW extensions for X11 and Wayland, selecting the appropriate one at runtime. When hardware GPUs are unavailable (e.g., in containers or headless environments), Mesa's llvmpipe software rasterizer handles OpenGL calls.
+Kitty compiles separate GLFW extensions for X11 and Wayland and selects one at runtime: the live process maps only `glfw-x11.so`. With no GPU in this container, OpenGL is served by Mesa's software rasterizer: the process maps `libGLX_mesa` and `libgallium` and runs four `llvmpipe-N` threads.
 
-**Portability benefit:** Kitty runs unmodified on X11, Wayland, and software-rendered environments.
+**Portability benefit:** The same Kitty build ran unmodified on a headless X server with no GPU.
 
-**Performance cost:** Software rasterization (llvmpipe) moves all GPU work to CPU threads, significantly increasing CPU usage during rendering pressure compared to hardware-accelerated environments.
-
-This tradeoff is observable through thread CPU distribution: with hardware GPU, rendering threads stay low; with llvmpipe, multiple CPU threads accumulate rendering load.
+**Performance cost:** The GPU work moves onto CPU threads. During the stress run the four llvmpipe threads used 48 + 42 + 59 + 58 = 207 ticks in 5 seconds (about 0.4 of a core), against 2 ticks each at idle, on top of the main thread's 271 ticks. The gdb snapshot also caught the main thread blocked inside `libgallium`, waiting for the rasterizer. I had no hardware GPU to compare against, so this measures the software-rendering cost itself rather than a hardware-versus-software difference.
 
 ------------------------------------------------------------------------
 
@@ -524,6 +684,6 @@ The repository remains unchanged with no modifications to source files.
 
 ## Final Conclusion
 
-Kitty embeds Python as a high-level orchestration layer for configuration, window management, and remote control. Terminal emulation, font shaping (via HarfBuzz), glyph rendering (via FreeType), and the main event loop all execute in C through compiled extensions. Go is used exclusively for standalone kitten utilities that run as separate processes and communicate via Kitty's control socket.
+Kitty embeds Python as a high-level orchestration layer for configuration, window management, and remote control. Terminal emulation, font shaping (via HarfBuzz), glyph rendering (via FreeType), and the main event loop all execute in C through compiled extensions. Go is used exclusively for standalone kitten utilities that run as separate processes and talk to Kitty either through the terminal they run in (icat) or over the remote-control socket (`kitten @`).
 
 All conclusions above are derived strictly from runtime artifacts including library dependencies, binary sections, symbol tables, and source code inspection, rather than speculation about code behavior.

@@ -395,10 +395,10 @@ error: XDG_RUNTIME_DIR is invalid or not set in the environment.
 [0.423] OS Window created
 [0.453] Failed to open systemd user bus with error: No medium found
 [0.462] Child launched
-[1.065] SIGWINCH sent to child in window: 1 with size: (24, 80, 640, 400)
+[1.075] SIGWINCH sent to child in window: 1 with size: (27, 88, 792, 486)
 ```
 
-The SIGWINCH log message shows the terminal dimensions: 24 rows, 80 columns, 640 pixels width, and 400 pixels height. This size tuple (rows, columns, width_pixels, height_pixels) is sent to the child process whenever the terminal is resized, allowing the shell to adjust its output formatting accordingly.
+The SIGWINCH log message shows the terminal dimensions after the resize: 27 rows, 88 columns, 792 pixels width, and 486 pixels height. This size tuple (rows, columns, width_pixels, height_pixels) is sent to the child process whenever the terminal is resized, allowing the shell to adjust its output formatting accordingly.
 
 Now I want to understand what happens when the shell prints its first output. Looking at the refresh mechanism:
 

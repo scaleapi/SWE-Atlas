@@ -140,3 +140,5 @@ I've already taken care of all changes to the test files. Do NOT modify any test
 - Input: `BUFFER *wb, const char *key, const char *value`
 - Output: `void`
 - Description: URL encodes the value and appends key=encoded_value to the buffer.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

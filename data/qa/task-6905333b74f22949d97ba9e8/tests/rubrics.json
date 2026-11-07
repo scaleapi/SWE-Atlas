@@ -17,7 +17,7 @@
   },
   {
     "id": "8c68b89c669d8819ab0ffb7975a8621e",
-    "title": "1.3: Reports the HTTP status code returned when accessing privileged operations with only a browser session (e.g., HTTP 440, status 440, custom 440 code)",
+    "title": "1.3: Reports the HTTP status code returned when accessing privileged operations with only a browser session (e.g., HTTP 500, status 500 Internal Server Error; the custom 440 is returned only when the request carries an API key without sudo mode)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -25,7 +25,7 @@
   },
   {
     "id": "d2e40faa40e5a07384311293af435051",
-    "title": "1.4: Reports the exact error message text returned when accessing privileged operations with only a browser session (e.g., {\"error\": \"Need sudo\"}, \"Need sudo\" error, sudo required message)",
+    "title": "1.4: Reports the exact error message text returned when accessing privileged operations with only a browser session (e.g., {\"error\": \"Internal error\"}, \"Internal error\" from the generic error handler; the \"Need sudo\" message is returned only when the request carries an API key without sudo mode)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "740c89b4d7ff5d1c8c79b6898b2ddfb3",
-    "title": "1.9: Reports the fate of custom X-headers during email forwarding (e.g., X-headers pass through unchanged, custom headers preserved, X-headers not stripped)",
+    "title": "1.9: Reports the fate of custom X-headers during email forwarding (e.g., incoming custom X-headers stripped, custom headers removed, the original X-headers not present in the forwarded message)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -105,7 +105,7 @@
   },
   {
     "id": "89c44343a6127136e1e1addd671fcb52",
-    "title": "1.14: Reports the fate of Received headers during email forwarding (e.g., Received headers preserved, Received headers kept, routing headers maintained)",
+    "title": "1.14: Reports the fate of Received headers during email forwarding (e.g., incoming Received headers stripped, Received headers removed, original routing headers not present in the forwarded message)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

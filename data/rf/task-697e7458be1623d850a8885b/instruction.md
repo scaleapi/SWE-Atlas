@@ -10,3 +10,5 @@ Use the below interface for your solution:
 - Input: `state State, log log.Logger`
 - Output: `*State`
 - Description: Retrieves an existing State from the cache if one with the same OrgID, AlertRuleUID, and CacheID already exists. If no matching state is found, adds the provided state to the cache and returns a pointer to it. Handles creation of intermediate map levels (org-level and rule-level) as needed. Thread-safe via the cache mutex.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

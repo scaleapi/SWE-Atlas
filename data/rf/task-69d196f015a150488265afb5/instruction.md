@@ -51,3 +51,5 @@ Input: N/A
 Output: N/A
 
 Description: Expanded site-contextual plan type consolidating pricing, product identification, discount/cost, billing interval, coupon, introductory offer, current plan/subscription, and trial availability fields. The id field type changes from string | null to number | null. Uses SiteContextualPlanCostOverride\[\] for cost_overrides.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

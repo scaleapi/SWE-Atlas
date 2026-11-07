@@ -1,14 +1,14 @@
-The k6 load testing tool is written in the Go programming language. To understand how k6 behaves I first had to create the binaries of k6, that is done by building it with the Go toolchain.
+The k6 load testing tool is written in the Go programming language. To understand how k6 behaves I first had to create the k6 binary, which is done by building the repository with the Go toolchain.
 
-The following command compiles the source code in the `k6/` directory into an executable that can be named `k6.exe`:
+The following command, run from the repository root, compiles the source code into an executable named `k6`:
 
-```powershell
-go build -o k6.exe
+```bash
+go build -o k6 .
 ```
 
-This command invokes the Go compiler, which reads the `main` package (located in the root `k6/main.go` file) and its dependencies to produce a binary file.
+This command invokes the Go compiler, which reads the `main` package (located in the root `main.go` file) and its dependencies to produce a binary file.
 
-A JavaScript test file named `simple_test.js` was created to serve as a test. This script imports the `http` module from k6 and defines a function that executes a single GET request.
+A JavaScript test file named `simple_test.js` was created to serve as a test. This script imports the `http` module from k6 and defines a function that executes a single GET request. It also defines a `handleSummary()` function that writes the aggregated results to a `summary.json` file and renders the console summary through the `textSummary` helper from the jslib utility library:
 
 ```javascript
 import http from 'k6/http';
@@ -26,10 +26,10 @@ export function handleSummary(data) {
 }
 ```
 
-The built binary `k6.exe` executed the script using the `run` command flags were added to generate JSON and CSV reports, and the script itself included a `handleSummary` function to generate a custom summary file.
+The built binary `k6` executed the script using the `run` command. Flags were added to generate JSON and CSV reports, and the script itself included the `handleSummary` function to generate a custom summary file:
 
-```powershell
-./k6.exe run simple_test.js --out json=results.json --out csv=results.csv
+```bash
+./k6 run simple_test.js --out json=results.json --out csv=results.csv
 ```
 
 The command produced the following output, providing a summary of the test execution:
@@ -48,49 +48,47 @@ The command produced the following output, providing a summary of the test execu
      scenarios: (100.00%) 1 scenario, 1 max VUs, 10m30s max duration (incl. graceful stop):
               * default: 1 iterations for each of 1 VUs (maxDuration: 10m0s, gracefulStop: 30s)
 
-
-     data_received..................: 12 kB  8.8 kB/s
-     data_sent......................: 1.2 kB 841 B/s
-     http_req_blocked...............: avg=580.08ms min=578.85ms med=580.08ms max=581.32ms p(90)=581.07ms p(95)=581.2ms
-     http_req_connecting............: avg=108.49ms min=87.91ms  med=108.49ms max=129.06ms p(90)=124.94ms p(95)=127ms
-     http_req_duration..............: avg=109.36ms min=88.67ms  med=109.36ms max=130.04ms p(90)=125.91ms p(95)=127.98ms
-       { expected_response:true }...: avg=109.36ms min=88.67ms  med=109.36ms max=130.04ms p(90)=125.91ms p(95)=127.98ms
-     http_req_failed................: 0.00%  0 out of 2
-     http_req_receiving.............: avg=0s       min=0s       med=0s       max=0s       p(90)=0s       p(95)=0s
-     http_req_sending...............: avg=259.35µs min=0s       med=259.35µs max=518.7µs  p(90)=466.83µs p(95)=492.76µs
-     http_req_tls_handshaking.......: avg=120.5ms  min=92.19ms  med=120.5ms  max=148.82ms p(90)=143.15ms p(95)=145.98ms
-     http_req_waiting...............: avg=109.1ms  min=88.67ms  med=109.1ms  max=129.53ms p(90)=125.44ms p(95)=127.48ms
-     http_reqs......................: 2      1.450445/s
-     iteration_duration.............: avg=1.37s    min=1.37s    med=1.37s    max=1.37s    p(90)=1.37s    p(95)=1.37s
-     iterations.....................: 1      0.725223/s
-
-running (00m01.4s), 0/1 VUs, 1 complete and 0 interrupted iterations                                                               
-default ✓ [======================================] 1 VUs  00m01.4s/10m0s  1/1 iters, 1 per VU  
+     data_received..................: 13 kB  36 kB/s
+     data_sent......................: 1.1 kB 3.1 kB/s
+     http_req_blocked...............: avg=120.85ms min=14.78ms  med=120.85ms max=226.92ms p(90)=205.71ms p(95)=216.32ms
+     http_req_connecting............: avg=55.2ms   min=1.03ms   med=55.2ms   max=109.36ms p(90)=98.53ms  p(95)=103.94ms
+     http_req_duration..............: avg=56.25ms  min=2.68ms   med=56.25ms  max=109.81ms p(90)=99.1ms   p(95)=104.46ms
+       { expected_response:true }...: avg=56.25ms  min=2.68ms   med=56.25ms  max=109.81ms p(90)=99.1ms   p(95)=104.46ms
+     http_req_failed................: 0.00%  ✓ 0        ✗ 2
+     http_req_receiving.............: avg=102.83µs min=95.4µs   med=102.83µs max=110.26µs p(90)=108.78µs p(95)=109.52µs
+     http_req_sending...............: avg=266.73µs min=253.91µs med=266.73µs max=279.55µs p(90)=276.98µs p(95)=278.27µs
+     http_req_tls_handshaking.......: avg=56.8ms   min=3.22ms   med=56.8ms   max=110.39ms p(90)=99.67ms  p(95)=105.03ms
+     http_req_waiting...............: avg=55.88ms  min=2.33ms   med=55.88ms  max=109.42ms p(90)=98.71ms  p(95)=104.07ms
+     http_reqs......................: 2      5.642207/s
+     iteration_duration.............: avg=354.35ms min=354.35ms med=354.35ms max=354.35ms p(90)=354.35ms p(95)=354.35ms
+     iterations.....................: 1      2.821104/s
+running (00m00.4s), 0/1 VUs, 1 complete and 0 interrupted iterations
+default ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
 ```
 
-Metrics and Reporting: 
+Metrics and Reporting:
 
-k6 reports several key metrics that summarize network performance and test execution. The output is represented by `data_received` (12 kB) and `data_sent` (1.2 kB), which show the volume of data transferred during the test. Latency and timing are captured through metrics such as `http_req_duration`, which indicates the total time for the request (avg 109.36ms). Other timing metrics include `http_req_blocked`, which tracks time spent blocked before sending, and `http_req_connecting`, which measures the time to establish the TCP connection. The HTTPS was used in `http_req_tls_handshaking` (avg 149.22ms), while `http_req_waiting` measures the time waiting for the first byte of the response (TTFB).
+k6 reports several key metrics that summarize network performance and test execution. The output is represented by `data_received` (13 kB) and `data_sent` (1.1 kB), which show the volume of data transferred during the test. Latency and timing are captured through metrics such as `http_req_duration`, which indicates the total time for the request (avg 56.25ms). Other timing metrics include `http_req_blocked`, which tracks time spent blocked before sending, and `http_req_connecting`, which measures the time to establish the TCP connection. HTTPS was used, which is visible in `http_req_tls_handshaking` (avg 56.8ms), while `http_req_waiting` measures the time waiting for the first byte of the response (TTFB).
 
-Workload volume is tracked by counts such as `http_reqs` (2) and `iterations` (1). The number of virtual users is configured in the test options or command line (1 VU in this case).
+Workload volume is tracked by counts such as `http_reqs` (2) and `iterations` (1). The single `http.get()` to https://test.k6.io received a 302 redirect that k6 followed automatically, which is why one iteration produced two HTTP requests. The number of virtual users is configured in the test options or command line (1 VU in this case).
 
-Units and Protocols: 
+Units and Protocols:
 
-Time values are reported in milliseconds (`ms`), microseconds (`µs`), and seconds (`s`). Data volumes are reported in kilobytes (`kB`) and bytes (`B`). The protocol used was HTTPS, in the `http_req_tls_handshaking` metric.
+Time values are reported in milliseconds (`ms`), microseconds (`µs`), and seconds (`s`). Data volumes are reported in kilobytes (`kB`); k6 scales these units automatically (bytes `B`, `kB`, `MB`) depending on magnitude. The requests were made over HTTPS: the TLS handshake shows up in the `http_req_tls_handshaking` metric, the negotiated TLS version is reported as `tls1.3`, and the server spoke HTTP/2.0 (the `proto` tag in the detailed outputs).
 
 Output Files and Artifacts:
 
-Based on the execution flags and script configuration, three distinct output files were created. The first is `results.json`, a line-delimited JSON file containing detailed metrics for every data point collected. Its format is JSON Lines (NDJSON), and each line represents a metric sample with fields for type,  data, metric, time, value, and tags.
+Based on the execution flags and script configuration, three distinct output files were created. The first is `results.json`, a line-delimited JSON file containing detailed metrics for every data point collected. Its format is JSON Lines (NDJSON): each line is either a metric declaration (`"type":"Metric"`) or an individual sample (`"type":"Point"`) with fields for the metric name, type, and a data object holding time, value, and tags.
 
-Output of the command:
+A sample `Point` entry from `results.json` (pretty-printed):
 
 ```json
 {
   "metric": "http_req_duration",
   "type": "Point",
   "data": {
-    "time": "2025-11-25T16:39:54.2575497-06:00",
-    "value": 185.049,
+    "time": "2026-08-25T20:10:30.436669361Z",
+    "value": 2.684527,
     "tags": {
       "expected_response": "true",
       "group": "",
@@ -106,35 +104,35 @@ Output of the command:
 }
 ```
 
-The second file is `results.csv`, a  file containing the same metric data in a tabular format. Its columns include metric name, timestamp, metric value, and various tag columns like method, status, and URL.
+The second file is `results.csv`, a file containing the same metric data in a tabular format. Its columns include metric name, timestamp, metric value, and various tag columns like method, status, and URL. Header and first rows:
 
 ```csv
 metric_name,timestamp,metric_value,check,error,error_code,expected_response,group,method,name,proto,scenario,service,status,subproto,tls_version,url,extra_tags,metadata
-http_reqs,1764110394,1.000000,,,,true,,GET,https://test.k6.io,HTTP/2.0,default,,302,,tls1.3,https://test.k6.io,,
-http_req_duration,1764110394,185.049000,,,,true,,GET,https://test.k6.io,HTTP/2.0,default,,302,,tls1.3,https://test.k6.io,,
-http_req_blocked,1764110394,431.318400,,,,true,,GET,https://test.k6.io,HTTP/2.0,default,,302,,tls1.3,https://test.k6.io,,
+http_reqs,1787688630,1.000000,,,,true,,GET,https://test.k6.io,HTTP/2.0,default,,302,,tls1.3,https://test.k6.io,,
+http_req_duration,1787688630,2.684527,,,,true,,GET,https://test.k6.io,HTTP/2.0,default,,302,,tls1.3,https://test.k6.io,,
+http_req_blocked,1787688630,14.789327,,,,true,,GET,https://test.k6.io,HTTP/2.0,default,,302,,tls1.3,https://test.k6.io,,
 ```
 
-The third file is `summary.json`, a single JSON file containing the aggregated test summary statistics, similar to the console output. This file is created by the `handleSummary()` function defined in the test script and contains aggregated data for metrics like `http_req_duration` and test state information.
+The third file is `summary.json`, a single JSON file containing the aggregated test summary statistics, similar to the console output. This file is created by the `handleSummary()` function defined in the test script and contains aggregated data for metrics like `http_req_duration` and test state information. An excerpt:
 
 ```json
 {
     "metrics": {
         "http_req_duration": {
-            "type": "trend",
-            "contains": "time",
             "values": {
-                "avg": 138.5976,
-                "min": 92.1462,
-                "med": 138.5976,
-                "max": 185.049,
-                "p(90)": 175.75872,
-                "p(95)": 180.40386
-            }
+                "max": 109.818205,
+                "p(90)": 99.1048372,
+                "p(95)": 104.4615211,
+                "avg": 56.251366000000004,
+                "min": 2.684527,
+                "med": 56.251366000000004
+            },
+            "type": "trend",
+            "contains": "time"
         }
     }
 }
 ```
 
 
-The tool did not require any environment variables or external configuration files. The JavaScript file `simple_test.js` was accepted as-is without requiring a project file. Note that k6 validates JavaScript syntax and module imports, but does not require any special project structure or configuration files beyond the test script itself.
+The tool did not require any environment variables or external configuration files. The JavaScript file `simple_test.js` was accepted as-is without requiring a project file. Note that k6 validates JavaScript syntax and module imports, but does not require any special project structure or configuration files beyond the test script itself. After the run, the temporary artifacts (`simple_test.js`, the built `k6` binary, `results.json`, `results.csv`, and `summary.json`) were deleted so the repository was left unchanged.

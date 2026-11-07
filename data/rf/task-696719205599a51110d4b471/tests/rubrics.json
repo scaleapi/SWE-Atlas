@@ -32,7 +32,7 @@
     }
   },
   {
-    "id": "7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
+    "id": "5f0ab21ebbadf4d6a18cd373b87cf3ad",
     "title": "1.4: Sets a source port on the TCP underlayer when SOCKS request payload is attached in scapy/contrib/socks.py",
     "annotations": {
       "type": "positive hli verifier",
@@ -40,7 +40,7 @@
     }
   },
   {
-    "id": "8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e",
+    "id": "67e53385b5578a68ba472d38b4162ac2",
     "title": "1.5: Sets a destination port on the TCP underlayer when SOCKS reply payload is attached in scapy/contrib/socks.py",
     "annotations": {
       "type": "positive hli verifier",
@@ -48,7 +48,7 @@
     }
   },
   {
-    "id": "1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b",
+    "id": "b023fe58783ac3250f3b2e83e4254064",
     "title": "1.6: Adds a description to the [testenv:spell] section in tox.ini",
     "annotations": {
       "type": "positive hli verifier",
@@ -56,7 +56,7 @@
     }
   },
   {
-    "id": "2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b",
+    "id": "991d876c05e41a025a4e8973631eef0f",
     "title": "1.7: Configures the [testenv:spell] section in tox.ini to skip package installation",
     "annotations": {
       "type": "positive hli verifier",
@@ -64,16 +64,8 @@
     }
   },
   {
-    "id": "2a8f6c4e0b9d3a7f5c1e8b2d6f4a9c3e",
-    "title": "2: Documentation Maintainability",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "nice to have"
-    }
-  },
-  {
-    "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d7",
-    "title": "3: Artifact Cleanup",
+    "id": "71b7032df2b10cddb7517cb7fc73868a",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -81,39 +73,39 @@
   },
   {
     "id": "2f7c4a1e9b6d3f8a5c2e0b7d4f9a6c1e",
-    "title": "3.1: Removes the unused TCP import from scapy/contrib/openflow3.py",
+    "title": "2.1: Removes the unused TCP import from scapy/contrib/openflow3.py",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f9",
-    "title": "4: Negative Rubrics",
+    "id": "6fadfc0fa882c001c3152f48056fe752",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
     }
   },
   {
-    "id": "d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8aa",
-    "title": "4.1: Removes or modifies the existing bind_bottom_up calls in scapy/contrib/openflow.py",
+    "id": "747c3d2bf3cb7d4ba49507860cddc894",
+    "title": "3.1: Removes or modifies the existing bind_bottom_up calls in scapy/contrib/openflow.py",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9bb",
-    "title": "4.2: Removes TCP import from scapy/contrib/openflow.py",
+    "id": "11feafc9a25d3557b08010fda02f412a",
+    "title": "3.2: Removes TCP import from scapy/contrib/openflow.py",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1dd",
-    "title": "4.3: Modifies files that the prompt designates as test files (such as scapy/contrib/openflow.uts, scapy/contrib/openflow3.uts, or scapy/contrib/socks.uts)",
+    "id": "204822f1d5681db5fdb67176aab2b9cf",
+    "title": "3.3: Modifies files that the prompt designates as test files (such as scapy/contrib/openflow.uts, scapy/contrib/openflow3.uts, or scapy/contrib/socks.uts)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

@@ -16,7 +16,7 @@ For the TruffleHog configuration, set the concurrency placeholder to use the sys
 
 Finally, add Azure Repos to the list of enterprise sources in the source selection menu.
 
-I've already taken care of all changes to the test files. This means you DON'T have to modify the testing logic or any of the tests in any way!
+I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way.
 
 Your task is to make the minimal changes to non-tests files in the working directory to ensure the task is satisfied.
 
@@ -49,3 +49,5 @@ Use the below Interface:
 - Input: NA
 - Output: `map[string]textinputs.Input`
 - Description: Returns inputs with special handling for GitHub's OR operation semantics. When exactly one of org/repo is default (IsDefault differs), removes the default one from the map. When both are default or both are user-provided, returns both.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

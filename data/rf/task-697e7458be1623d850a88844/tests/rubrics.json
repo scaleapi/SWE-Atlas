@@ -25,15 +25,15 @@
   },
   {
     "id": "5173a9727cbdaffcf289ded0a13e72f6",
-    "title": "1.3: Extracts the verification logic out of FromData into a separate function or method in all 11 detectors, including verifyAbbysale, verifyAbstract, verifyAbuseIPDB, verifyAccuweather, verifyAdafruitIO, verifyAdzuna, ...",
+    "title": "1.3: Extracts the verification logic out of FromData into a separate function or method in all 11 detectors, including abbysale, abstract, abuseipdb, accuweather, adafruitio, adzuna, ...",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
-    "title": "1.4: Ensures all 11 extracted verification functions return both a verification outcome and an error, including verifyAbbysale, verifyAbstract, verifyAbuseIPDB, verifyAccuweather, verifyAdafruitIO, verifyAdzuna, ...",
+    "id": "ccdc910707041d3ea1da1b583de61df8",
+    "title": "1.4: Ensures the extracted verification function returns both a verification outcome and an error in all 11 detectors, including abbysale, abstract, abuseipdb, accuweather, adafruitio, adzuna, ...",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "ab2c2499d68192dc48d637c48c40008a",
-    "title": "1.7: Defines all 9 API base URL constants (abbysaleURL, abstractURL, abuseipdbURL, accuweatherURL, adafruitioURL, adzunaURL, aeroworkflowURL, agoraURL, alibabaURL) instead of inline string literals",
+    "title": "1.7: Defines the API base URL as a constant instead of an inline string literal in all 9 detectors with a fixed endpoint (abbysale, abstract, abuseipdb, accuweather, adafruitio, adzuna, aeroworkflow, agora, alibaba)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -121,15 +121,15 @@
   },
   {
     "id": "ed3b6ee22d9cb56e515d380b7f6ff21c",
-    "title": "4.1: Removes or modifies existing public Scanner method signatures (FromData, Keywords, or Type)",
+    "title": "2.1: Removes or modifies existing public Scanner method signatures (FromData, Keywords, or Type)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
     }
   },
   {
-    "id": "f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6",
-    "title": "4.2: Modifies test files",
+    "id": "e29f51f1f4fec7a12f168eeb9e6aaa07",
+    "title": "2.2: Modifies test files",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

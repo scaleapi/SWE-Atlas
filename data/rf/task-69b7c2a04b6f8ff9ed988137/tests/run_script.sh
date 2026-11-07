@@ -311,30 +311,6 @@ build_suricata() {
     fi
 
     if [[ -f Makefile ]]; then
-        local _rust_bak=""
-        if [[ -d rust/target ]] || [[ -d rust/gen ]]; then
-            _rust_bak=$(mktemp -d)
-            [[ -d rust/target ]] && mv rust/target "$_rust_bak/target"
-            [[ -d rust/gen ]]    && mv rust/gen    "$_rust_bak/gen"
-        fi
-
-        log "Suricata: running make clean before build..."
-        [[ -f config.h.in ]] || { touch config.h.in; log "Suricata: created config.h.in placeholder for clean"; }
-        for _sentinel in aclocal.m4 configure config.status config.h.in config.h \
-                          Makefile.in Makefile src/Makefile.in src/Makefile; do
-            touch "$_sentinel" 2>/dev/null || true
-        done
-        make SHELL="$build_shell" clean > "${BUILD_LOG_DIR}/make_clean.log" 2>&1 || {
-            log "WARNING: make clean returned non-zero — continuing"
-        }
-
-        if [[ -n "$_rust_bak" ]]; then
-            [[ -d "$_rust_bak/target" ]] && mv "$_rust_bak/target" rust/target
-            [[ -d "$_rust_bak/gen" ]]    && mv "$_rust_bak/gen"    rust/gen
-            rm -rf "$_rust_bak"
-            log "Suricata: restored rust/target/ + rust/gen/ (Cargo cache preserved)"
-        fi
-
         if [[ "$sh_usable" == true ]]; then
             log "Suricata: re-bootstrapping build system for current source tree..."
             rm -f Makefile src/Makefile config.h config.status config.h.in
@@ -361,15 +337,37 @@ build_suricata() {
         fi
     fi
 
+    # The image ships src/*.o compiled from another Suricata version than the checked-out
+    # source, and dependency tracking is off, so make keeps any object newer than its .c.
+    # Clean src/ only, after configure, so every object is built from the current tree with
+    # the config.h generated above. Never clean libhtp/: its prebuilt objects have no
+    # sources in this image and cannot be rebuilt.
+    if [[ -f src/Makefile ]]; then
+        log "Suricata: cleaning src/ objects before build..."
+        make SHELL="$build_shell" -C src clean > "${BUILD_LOG_DIR}/make_clean.log" 2>&1 || {
+            log "WARNING: make -C src clean returned non-zero — continuing"
+        }
+    fi
+
     ensure_suricata_siocgstamp_workaround
     export CARGO_HTTP_MULTIPLEXING=false
     unset BASH_ENV ENV
 
     log "Running make -j${nproc_val}..."
-    make SHELL="$build_shell" -j"${nproc_val}" > "${BUILD_LOG_DIR}/make.log" 2>&1 || {
-        log "ERROR: make failed (see ${BUILD_LOG_DIR}/make.log)"
-        exit 1
-    }
+    if ! make SHELL="$build_shell" -j"${nproc_val}" > "${BUILD_LOG_DIR}/make.log" 2>&1; then
+        # The tests only run src/suricata. The top-level make also builds scripts/suricatasc,
+        # whose setup.py imports distutils, which the Python 3.12 venv first on PATH no longer
+        # has; that peripheral failure must not stop the tests. Build src on its own; a
+        # failure there is a real one.
+        log "WARNING: make failed (see ${BUILD_LOG_DIR}/make.log); retrying with make -C src..."
+        if ! make SHELL="$build_shell" -C src -j"${nproc_val}" > "${BUILD_LOG_DIR}/make_src.log" 2>&1; then
+            log "ERROR: make -C src failed (see ${BUILD_LOG_DIR}/make_src.log)"
+            log "--- last 40 lines of make_src.log ---"
+            tail -n 40 "${BUILD_LOG_DIR}/make_src.log" || true
+            log "--- end of make_src.log ---"
+            exit 1
+        fi
+    fi
 
     log "=== Suricata build complete ==="
 }
@@ -418,6 +416,14 @@ failed_count = 0
 error_lines = []
 
 ansi_escape = re.compile(r'\x1b\[[0-9;?]*[ -/]*[@-~]')
+# UtRunTests prints "Test <name> : " then, after the test ran, "pass"/"FAILED\n". Stdout is
+# block-buffered here while log lines go to stderr, so the verdict may land on a later
+# line, and a test that prints without a trailing newline leaves it glued to its own text
+# ("signature didn't alert: pass"). The verdict is therefore the trailing token of a line.
+verdict_re = re.compile(r'(?:^|\W)(pass|FAILED)$')
+
+def record(name, verdict):
+    (passed_tests if verdict == 'pass' else failed_tests).append({"name": name})
 
 for line in lines:
     line = ansi_escape.sub('', line).rstrip('\r\n')
@@ -430,25 +436,21 @@ for line in lines:
         rest = m.group(2).strip()
 
         # Check if result is on same line
-        if rest == 'pass':
-            passed_tests.append({"name": test_name})
-            current_test_name = None
-        elif rest == 'FAILED':
-            failed_tests.append({"name": test_name})
+        vm = verdict_re.search(rest)
+        if vm:
+            record(test_name, vm.group(1))
             current_test_name = None
         else:
             # Result will be on a subsequent line (debug output in between)
             current_test_name = test_name
         continue
 
-    # Check for result on its own line (for tests with debug output)
+    # Check for the result on a later line (tests with debug output)
     stripped = line.strip()
     if current_test_name is not None:
-        if stripped == 'pass':
-            passed_tests.append({"name": current_test_name})
-            current_test_name = None
-        elif stripped == 'FAILED':
-            failed_tests.append({"name": current_test_name})
+        vm = verdict_re.search(stripped)
+        if vm:
+            record(current_test_name, vm.group(1))
             current_test_name = None
 
     # Extract summary counts (last occurrence wins)
@@ -459,7 +461,10 @@ for line in lines:
     if fm:
         failed_count = int(fm.group(1))
 
-    if re.search(r'(^|\b)(ERROR|No such file or directory|not found|cannot execute)(\b|:)', line, re.IGNORECASE):
+    # Suricata's own log lines ("[pid] d/m/y -- ... <Error> ...") are emitted by the tests
+    # themselves (e.g. parsing an invalid rule on purpose) and are not runner errors.
+    if not re.match(r'^\[\d+\] \d+/\d+/\d+ -- ', line) and \
+            re.search(r'(^|\b)(ERROR|No such file or directory|not found|cannot execute)(\b|:)', line, re.IGNORECASE):
         error_lines.append(line.strip())
 
 # Fall back to parsed names if the summary footer is absent.

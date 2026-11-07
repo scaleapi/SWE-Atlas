@@ -6,7 +6,6 @@ export PIP_BREAK_SYSTEM_PACKAGES=1
 
 build_project() {
     echo "Building project..."
-    # Allow unused functions to avoid errors when skeleton code removes callers
     export CFLAGS="${CFLAGS:+$CFLAGS }-Wno-error=unused-function"
     python setup.py build --verbose
     echo "Build complete."

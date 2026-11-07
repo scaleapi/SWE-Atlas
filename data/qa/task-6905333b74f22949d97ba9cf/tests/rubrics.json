@@ -1,7 +1,7 @@
 [
   {
     "id": "1b2c268b8fa38421719fc47540cb1371",
-    "title": "1.1: Constructs three test packets with explicit code: a baseline Ether/IP/TCP (e.g., `Ether()/IP()/TCP()`), one with short payload (~10 bytes, e.g., `Raw(load=b'A'*10)`), and one with unknown EtherType (e.g., `Ether(type=0x9000)`). ",
+    "title": "1.1: Constructs three test packets with explicit code: a baseline Ether/IP/TCP (e.g., `Ether()/IP()/TCP()`), one with short payload (~10 bytes, e.g., `Raw(load=b'A'*10)`), and one with unknown EtherType (e.g., `Ether(type=0x9000)`).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -9,7 +9,7 @@
   },
   {
     "id": "9d93bdbf3b09d38fbd5983f24b60b0cf",
-    "title": "1.2: Reports concrete raw byte length measurements (e.g., 54 bytes for Ether/IP/TCP) and explicitly references or compares against the `conf.min_pkt_size` configuration variable (default 60 bytes). ",
+    "title": "1.2: Reports concrete raw byte length measurements (e.g., 54 bytes for Ether/IP/TCP) and explicitly references or compares against the `conf.min_pkt_size` configuration variable (default 60 bytes).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

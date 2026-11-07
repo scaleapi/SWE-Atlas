@@ -1,1 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_QnA_drakkan_sftpgo_1.1@sha256:b26b205750f440c77bf42603b95b8d03d2c793fefc24b1418c220a136a7162a1
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:qa-6905333b74f22949d97baa2d-4463421-v1.01.99@sha256:b78ca367c77d5ed9f061c7261cae75a685e825d2cc2199c5375fd75e5dddb082

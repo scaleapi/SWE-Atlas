@@ -109,7 +109,7 @@
       "importance": "must have"
     },
     "id": "afa2e5ea20dbcabc88f8b8ea5eddeb42",
-    "title": "1.15: Tests that Parse rejects multipart-like ETags containing multiple dashes in the suffix (e.g., '-2-1')"
+    "title": "1.14: Tests that Parse rejects multipart-like ETags containing multiple dashes in the suffix (e.g., '-2-1')"
   },
   {
     "annotations": {

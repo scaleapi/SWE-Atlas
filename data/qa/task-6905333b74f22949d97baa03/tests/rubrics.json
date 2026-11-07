@@ -41,7 +41,7 @@
   },
   {
     "id": "b752acd621719061b5d8fcf4e1612411",
-    "title": "1.7: Reports key constants or modifier values observed at runtime (e.g., GLFW key codes, modifier flags, or action constants)",
+    "title": "1.6: Reports key constants or modifier values observed at runtime (e.g., GLFW key codes, modifier flags, or action constants)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "2b5f66c7bb1feeee1feca92ba0191f24",
-    "title": "1.8: Reports modifier key encoding behavior from runtime (e.g., Ctrl combinations producing control codes, Alt combinations with escape prefix)",
+    "title": "1.7: Reports modifier key encoding behavior from runtime (e.g., Ctrl combinations producing control codes, Alt combinations with escape prefix)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

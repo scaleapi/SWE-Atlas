@@ -25,7 +25,7 @@
   },
   {
     "id": "a3f7c91d2e4b8a06d5c1e9f3b7d24a81",
-    "title": "1.3: Restores original page state on failure during page relocation",
+    "title": "1.3: Restores original page state on failure while preparing a page relocation (before the page contents are copied)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -96,16 +96,8 @@
     }
   },
   {
-    "id": "c6642a9807f00b7614004c35d9f752bf",
-    "title": "2: Documentation Maintainability",
-    "annotations": {
-      "type": "high level intent",
-      "importance": "nice to have"
-    }
-  },
-  {
     "id": "02ac6e6d0924c6a25576302676259010",
-    "title": "3: Artifact Cleanup",
+    "title": "2: Artifact Cleanup",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -113,7 +105,7 @@
   },
   {
     "id": "935142da7bafab0edf2854e22014dcc2",
-    "title": "3.1: Refactors xdes_get_state() to use uint32_t with combined declaration-assignment for the state variable",
+    "title": "2.1: Refactors xdes_get_state() to use uint32_t with combined declaration-assignment for the state variable",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -121,7 +113,7 @@
   },
   {
     "id": "2f523aef8c6c83245b75294f10626988",
-    "title": "3.2: Tracks extent state to identify free and used extents",
+    "title": "2.2: Tracks extent state to identify free and used extents",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -129,7 +121,7 @@
   },
   {
     "id": "e18f718e8a308efcba757a48c8d9b11e",
-    "title": "3.3: Traverses B-tree levels to relocate pages",
+    "title": "2.3: Traverses B-tree levels to relocate pages",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -137,7 +129,7 @@
   },
   {
     "id": "2a9a4051a3a8c21680f4c81814bd08f0",
-    "title": "3.4: Adds dict_sys_t::is_sys_table() to distinguish system tables from user tables",
+    "title": "2.4: Adds dict_sys_t::is_sys_table() to distinguish system tables from user tables",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -145,7 +137,7 @@
   },
   {
     "id": "05bd955acc57a670a4b174c9e1814c08",
-    "title": "3.5: Implements atomic list manipulation for extent descriptor operations",
+    "title": "2.5: Implements atomic list manipulation for extent descriptor operations",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -153,7 +145,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "3: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -161,7 +153,7 @@
   },
   {
     "id": "d8e4b12c7f9a3e56c0d1f8a4b6e29c73",
-    "title": "4.1: Breaks existing tablespace truncation logic in fsp_system_tablespace_truncate()",
+    "title": "3.1: Breaks the existing shrink steps in fsp_system_tablespace_truncate() (such as extent traversal, free-list shrinking, extent descriptor reset, or the redo log size rollback)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

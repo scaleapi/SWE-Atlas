@@ -16,6 +16,6 @@ I've already taken care of all changes to the test files. Do NOT modify any test
 
 ## Interface
 
-No interface changes required for this task.
+No interface changes are required for this task. The OverviewCard component retains its existing public API (props: title, heading, description, icon, link, disabled, intent, isLoading) and default export. The refactor only relocates the component and updates consumer import paths without modifying the component's interface.
 
-The OverviewCard component retains its existing public API (props: title, heading, description, icon, link, disabled, intent, isLoading) and default export. The refactor only relocates the component and updates consumer import paths without modifying the component's interface.
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

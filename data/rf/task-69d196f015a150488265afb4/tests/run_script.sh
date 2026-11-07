@@ -76,10 +76,37 @@ EXIT_CODE=0
 # Set environment variables for tests
 export GITHUB_ACTIONS_TEST=true
 
+# Pick the interpreter that has the project's dependencies. The image puts /opt/venv/bin first
+# on PATH, but that venv has no pytest ("/opt/venv/bin/python3: No module named pytest"), so a
+# bare `python3 -m pytest` runs nothing. The project deps (alembic, pytest, ...) live in the
+# environment `poetry run` selects (poetry is configured with virtualenvs.create=false), which is
+# what the migration step above already uses. Fall back to installing pytest there if missing.
+PY=()
+if command -v poetry >/dev/null 2>&1 && poetry run python -c "import pytest" >/dev/null 2>&1; then
+    PY=(poetry run python)
+elif python3 -c "import pytest" >/dev/null 2>&1; then
+    PY=(python3)
+else
+    echo "pytest not importable in the poetry environment or python3; installing it..."
+    if command -v poetry >/dev/null 2>&1; then
+        poetry run python -m pip install -q "pytest>=7,<8" >/dev/null 2>&1 \
+            || poetry run python -m pip install -q --break-system-packages "pytest>=7,<8" >/dev/null 2>&1 \
+            || true
+        poetry run python -c "import pytest" >/dev/null 2>&1 && PY=(poetry run python)
+    fi
+    if [[ ${#PY[@]} -eq 0 ]]; then
+        python3 -m pip install -q "pytest>=7,<8" >/dev/null 2>&1 \
+            || python3 -m pip install -q --break-system-packages "pytest>=7,<8" >/dev/null 2>&1 \
+            || true
+        PY=(python3)
+    fi
+fi
+echo "Using interpreter: ${PY[*]} -> $("${PY[@]}" -c 'import sys; print(sys.executable)' 2>/dev/null)"
+
 # Run pytest with verbose output
 echo "Running tests: ${TEST_TARGETS[*]}"
 set +e
-CONFIG=tests/test.env python3 -m pytest "${TEST_TARGETS[@]}" \
+CONFIG=tests/test.env "${PY[@]}" -m pytest "${TEST_TARGETS[@]}" \
     --tb=short \
     -v \
     --color=no \

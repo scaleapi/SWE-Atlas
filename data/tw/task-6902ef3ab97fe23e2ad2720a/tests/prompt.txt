@@ -8,4 +8,4 @@ The behavior is implemented and working, but we're missing unit tests that cover
 4. When an alias has no display name and is on a custom domain that has no display name, the recipient display should be the alias email only.
 5. When an alias has no display name but is on a custom domain that has a display name, the recipient display should use the custom domain's default name in the standard formatted form, with guidance for the from header.
 
- Write one unit test for each scenario above.
+Write one unit test for each scenario above.

@@ -101,7 +101,7 @@
       "importance": "nice to have"
     },
     "id": "30bf1d120f8d92985ef1c84149672e14",
-    "title": "4.2: The bottom-margin test asserts that scrolling affects scrollback/history (e.g., `str(s.historybuf)` is non-empty or equals a non-empty expected string) after repeated draw + line-movement operations.\n"
+    "title": "4.2: The bottom-margin test asserts that scrolling affects scrollback/history (e.g., `str(s.historybuf)` is non-empty or equals a non-empty expected string) after repeated draw + line-movement operations."
   },
   {
     "annotations": {
@@ -109,7 +109,7 @@
       "importance": "nice to have"
     },
     "id": "c5e531062a58e4f3abc0fb6e12ac2816",
-    "title": "4.3: The top-margin test asserts that scrollback/history is unchanged/empty (e.g., `str(s.historybuf)` equals `''`) after repeated draw + line-movement operations.\n"
+    "title": "4.3: The top-margin test asserts that scrollback/history is unchanged/empty (e.g., `str(s.historybuf)` equals `''`) after repeated draw + line-movement operations."
   },
   {
     "annotations": {
@@ -117,6 +117,6 @@
       "importance": "nice to have"
     },
     "id": "136297eaaba03a7cf6e694be560642da",
-    "title": "4.4: The top-and-bottom-margins test asserts that scrollback/history is unchanged/empty (e.g., `str(s.historybuf)` equals `''`) after repeated draw + line-movement operations.\n"
+    "title": "4.4: The top-and-bottom-margins test asserts that scrollback/history is unchanged/empty (e.g., `str(s.historybuf)` equals `''`) after repeated draw + line-movement operations."
   }
 ]

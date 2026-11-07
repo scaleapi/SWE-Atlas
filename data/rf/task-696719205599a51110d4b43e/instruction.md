@@ -31,3 +31,5 @@ Use the below Interface:
 - Input: `src, filename string, commonJSWrap bool`
 - Output: `*ast.Program, string, error`
 - Description: Internal implementation of Parse. The third parameter (previously named `wrap`) should be renamed to match the public API for consistency.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

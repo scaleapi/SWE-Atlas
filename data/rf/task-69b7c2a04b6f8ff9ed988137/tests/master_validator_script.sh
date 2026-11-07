@@ -1,6 +1,19 @@
 #!/bin/bash
  
 set -e
+
+# Every git call ignores configuration the agent could have planted in the repository
+# or in the home directory: hooks, fsmonitor, filters, diff drivers, includes.
+# test.sh sanitises .git/config before calling this script; this is the second layer.
+# (git 2.30 ignores GIT_CONFIG_GLOBAL, hence the empty HOME.)
+GIT_SAFE_HOME="${GIT_SAFE_HOME:-$(mktemp -d)}"
+[ -f "$GIT_SAFE_HOME/.gitconfig" ] || printf '[safe]\n\tdirectory = *\n' > "$GIT_SAFE_HOME/.gitconfig"
+export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL="$GIT_SAFE_HOME/.gitconfig" GIT_TERMINAL_PROMPT=0
+git() {
+    HOME="$GIT_SAFE_HOME" XDG_CONFIG_HOME="$GIT_SAFE_HOME" command git --no-pager \
+        -c core.hooksPath=/dev/null -c core.fsmonitor= -c core.attributesFile=/dev/null \
+        -c core.excludesFile=/dev/null -c 'safe.directory=*' "$@"
+}
  
 # ==============================================================================
 # Master Validator Script - Refactor Project
@@ -98,8 +111,6 @@ INSTANCE_COMMIT_FILE="${ARTIFACT_DIR}/instance_commit.txt"
  
 # Helper scripts (mounted)
 RUN_SCRIPT="./run_script.sh"
-# PARSING_SCRIPT is no longer needed - run_script outputs JSON directly
-# PARSING_SCRIPT="./parsing_script.py"
 COMPARE_SCRIPT="./compare_test_runs.py"
 
 # Build configuration (can be overridden via environment)
@@ -741,11 +752,44 @@ build_autotools() {
 
     # Suricata: full clean before every build. Incremental make across base/mutation
     # checkouts can leave stale .o/.a linked with a different tree and cause segfaults in tests.
+    # The build of scripts/suricatasc runs setup.py, which imports distutils. Python 3.12
+    # dropped that module from the standard library, and this image ships a Python new
+    # enough for the import to fail, so make stops there. Both the distribution package
+    # and setuptools, which carries a distutils shim, restore it; try each in turn.
+    if [[ "$is_suricata" == true ]]; then
+        if ! "${VERIFIER_PYTHON:-python3}" -I -S -B -c "import distutils" >/dev/null 2>&1; then
+            log "Suricata: distutils is missing; trying to provide it..."
+            {
+                if command -v apt-get &>/dev/null; then
+                    apt-get update -qq && apt-get install -y -qq python3-distutils python3-setuptools
+                fi
+                "${VERIFIER_PYTHON:-python3}" -I -S -B -c "import distutils" >/dev/null 2>&1 ||
+                    python3 -m pip install --quiet --disable-pip-version-check \
+                        --break-system-packages setuptools
+                "${VERIFIER_PYTHON:-python3}" -I -S -B -c "import distutils" >/dev/null 2>&1 ||
+                    python3 -m pip install --quiet --disable-pip-version-check setuptools
+            } > "${ARTIFACT_DIR}/distutils_install.log" 2>&1 || true
+            if "${VERIFIER_PYTHON:-python3}" -I -S -B -c "import distutils" >/dev/null 2>&1; then
+                log "Suricata: distutils is available now."
+            else
+                log "WARNING: distutils is still missing (see ${ARTIFACT_DIR}/distutils_install.log)"
+                log "--- last 20 lines of distutils_install.log ---"
+                tail -n 20 "${ARTIFACT_DIR}/distutils_install.log" || true
+                log "--- end of distutils_install.log ---"
+            fi
+        fi
+    fi
+
     if [[ "$is_suricata" == true ]] && [[ -f Makefile ]]; then
         log "Suricata: running make clean before build..."
         make clean > "${ARTIFACT_DIR}/make_clean.log" 2>&1 || {
-            log "ERROR: make clean failed (see ${ARTIFACT_DIR}/make_clean.log)"
-            exit 1
+            # `make clean` asks config.status to recheck the configuration, which re-runs
+            # configure and fails here because the bundled libhtp submodule is missing
+            # from this image, unlike the other three suricata images in the dataset.
+            # Removing the objects by hand is worse than leaving them: the tree cannot be
+            # reconfigured, so a full rebuild cannot succeed, while an incremental build
+            # over the existing objects does. Continue instead.
+            log "WARNING: make clean failed (see ${ARTIFACT_DIR}/make_clean.log); building incrementally instead"
         }
     fi
 
@@ -757,7 +801,31 @@ build_autotools() {
     log "Running make -j${nproc_val}..."
     make -j"${nproc_val}" > "${ARTIFACT_DIR}/make.log" 2>&1 || {
         log "ERROR: make failed (see ${ARTIFACT_DIR}/make.log)"
-        exit 1
+        # The artifact directory does not leave the sandbox, so echo the tail of the log
+        # to stdout, which is collected, to make the failure diagnosable.
+        log "--- last 50 lines of make.log ---"
+        tail -n 50 "${ARTIFACT_DIR}/make.log" || true
+        log "--- end of make.log ---"
+
+        # The tests only ever run src/suricata, so a failure in one of the peripheral
+        # subdirectories, such as the Python helper in scripts/suricatasc, does not stop
+        # them. Rebuild src on its own: it compiles from the current tree, so the binary
+        # under test still reflects the checkout, and only the parts nothing reads are
+        # left out. A failure in src itself is a real one and still aborts.
+        if [[ "$is_suricata" == true ]]; then
+            log "Suricata: retrying with make -C src, which is all the tests need..."
+            if make -C src -j"${nproc_val}" > "${ARTIFACT_DIR}/make_src.log" 2>&1; then
+                log "SUCCESS: src built; continuing without the peripheral subdirectories."
+            else
+                log "ERROR: make -C src also failed (see ${ARTIFACT_DIR}/make_src.log)"
+                log "--- last 50 lines of make_src.log ---"
+                tail -n 50 "${ARTIFACT_DIR}/make_src.log" || true
+                log "--- end of make_src.log ---"
+                exit 1
+            fi
+        else
+            exit 1
+        fi
     }
     
     log "Build complete."
@@ -814,6 +882,11 @@ build_make() {
     log "Running make -j${nproc_val}..."
     make -j"${nproc_val}" > "${ARTIFACT_DIR}/make.log" 2>&1 || {
         log "ERROR: make failed (see ${ARTIFACT_DIR}/make.log)"
+        # The artifact directory does not leave the sandbox, so echo the tail of the log
+        # to stdout, which is collected, to make the failure diagnosable.
+        log "--- last 50 lines of make.log ---"
+        tail -n 50 "${ARTIFACT_DIR}/make.log" || true
+        log "--- end of make.log ---"
         exit 1
     }
     
@@ -864,26 +937,12 @@ _progress_monitor() {
 
 run_tests_and_parse() {
     local output_prefix="$1"
-    local test_list_file="${2:-}"  # Optional: JSON file with test files to run
     local stdout_log="${output_prefix}_stdout.log"
     local stderr_log="${output_prefix}_stderr.log"
     local output_json="${output_prefix}_results.json"
     local start_time=$(date +%s)
     
-    # Optional: restrict run_script to specific test files (master validator does not pass this)
-    local test_files_args=()
-    if [[ -n "$test_list_file" && -f "$test_list_file" ]]; then
-        log "Reading test file list from ${test_list_file}..." >&2
-        # Extract file names from JSON: {"files": [{"name": "path/to/test.py"}, ...]}
-        test_files_args=($(python3 -c "import json; data=json.load(open('$test_list_file')); print(' '.join([f['name'] for f in data.get('files', [])]))" 2>/dev/null)) || true
-        if [[ ${#test_files_args[@]} -gt 0 ]]; then
-            log "Running ${#test_files_args[@]} specific test file(s)" >&2
-        else
-            log "WARNING: No test files found in ${test_list_file}, running all tests" >&2
-        fi
-    else
-        log "Running full test suite (all tests)" >&2
-    fi
+    log "Running full test suite (all tests)" >&2
     
     log "Running tests (logs: ${stdout_log})..." >&2
 
@@ -896,12 +955,14 @@ run_tests_and_parse() {
     _progress_monitor "$stdout_log" "$start_time" 10 &
     local monitor_pid=$!
 
-    if [[ ${#test_files_args[@]} -gt 0 ]]; then
-        PYTHONUNBUFFERED=1 bash "$RUN_SCRIPT" "$output_json" "${test_files_args[@]}" \
-            </dev/null >"$stdout_log" 2>"$stderr_log" || true
-    else
-        PYTHONUNBUFFERED=1 bash "$RUN_SCRIPT" "$output_json" \
-            </dev/null >"$stdout_log" 2>"$stderr_log" || true
+    # Each run is capped at TEST_TIMEOUT_SEC; the exit code is kept for the gate (124/137 = truncated).
+    local cap="${TEST_TIMEOUT_SEC:-900}" rc=0 to=()
+    command -v timeout >/dev/null 2>&1 && to=(timeout -k 30 "$cap")
+    PYTHONUNBUFFERED=1 ${to[@]+"${to[@]}"} bash "$RUN_SCRIPT" "$output_json" \
+        </dev/null >"$stdout_log" 2>"$stderr_log" && rc=0 || rc=$?
+    printf '%s' "$rc" > "${output_prefix}_runner_rc.txt"
+    if [[ "$rc" -eq 124 || "$rc" -eq 137 ]]; then
+        log "Runner hit TEST_TIMEOUT_SEC (${cap}s), rc=${rc}: partial results" >&2
     fi
 
     kill "$monitor_pid" 2>/dev/null
@@ -954,7 +1015,7 @@ validate_relevant_tests_in_run_outputs() {
     local relevant_names_json="$3"
     local label="$4"
 
-    python3 - "$baseline_json" "$mutation_json" "$relevant_names_json" "$label" << 'PYEOF'
+    "${VERIFIER_PYTHON:-python3}" -I -S -B - "$baseline_json" "$mutation_json" "$relevant_names_json" "$label" << 'PYEOF'
 import json
 import sys
 
@@ -1061,7 +1122,7 @@ validate_relevant_tests_in_comparison() {
     local relevant_names_json="$2"
     local label="${3:-relevant}"
 
-    python3 - "$comparison_json" "$relevant_names_json" "$label" << 'PYEOF'
+    "${VERIFIER_PYTHON:-python3}" -I -S -B - "$comparison_json" "$relevant_names_json" "$label" << 'PYEOF'
 import json
 import sys
 
@@ -1119,7 +1180,7 @@ PYEOF
 validate_strict_forbidden_transitions() {
     local comparison_json="$1"
 
-    python3 - "$comparison_json" << 'PYEOF'
+    "${VERIFIER_PYTHON:-python3}" -I -S -B - "$comparison_json" << 'PYEOF'
 import json
 import sys
 
@@ -1173,7 +1234,7 @@ PYEOF
 display_comparison() {
     local comparison_file="$1"
     
-    python3 -c "
+    "${VERIFIER_PYTHON:-python3}" -I -S -B -c "
 import json
 c = json.load(open('$comparison_file'))
  
@@ -1402,11 +1463,15 @@ run_reference_mode() {
     # Baseline: checkout at base commit
     # ---------------------------------------------------------
     log "=== Running BASELINE tests (base commit) ==="
+    if fs_baseline "${ARTIFACT_DIR}/ref_baseline"; then
+        BASELINE_JSON="${ARTIFACT_DIR}/ref_baseline_results.json"
+    else
     clean_workspace
     checkout_commit "$BASE_COMMIT" "base commit"
     build_project
     
     BASELINE_JSON=$(run_tests_and_parse "${ARTIFACT_DIR}/ref_baseline")
+    fi
     log "SUCCESS: Baseline complete."
     echo ""
 
@@ -1433,7 +1498,8 @@ run_reference_mode() {
 
     build_project
     
-    MUTATION_JSON=$(run_tests_and_parse "${ARTIFACT_DIR}/ref_mutation")
+    fs_mutation "${ARTIFACT_DIR}/ref_mutation" oracle
+    MUTATION_JSON="$FS_MUTATION_JSON"
     log "SUCCESS: Mutation complete."
     echo ""
 
@@ -1447,7 +1513,7 @@ run_reference_mode() {
     # ---------------------------------------------------------
     log "=== Comparing results ==="
     COMPARISON_JSON="${ARTIFACT_DIR}/ref_comparison_results.json"
-    python3 "$COMPARE_SCRIPT" "$BASELINE_JSON" "$MUTATION_JSON" "$COMPARISON_JSON"
+    "${VERIFIER_PYTHON:-python3}" -I -S -B "$COMPARE_SCRIPT" "$BASELINE_JSON" "$MUTATION_JSON" "$COMPARISON_JSON"
     
     display_comparison "$COMPARISON_JSON"
 
@@ -1506,11 +1572,15 @@ run_agent_mode() {
     # Baseline: checkout at base commit (no patches)
     # ---------------------------------------------------------
     log "=== Running BASELINE tests (base commit, no patches) ==="
+    if fs_baseline "${ARTIFACT_DIR}/agent_baseline"; then
+        BASELINE_JSON="${ARTIFACT_DIR}/agent_baseline_results.json"
+    else
     clean_workspace
     checkout_commit "$BASE_COMMIT" "base commit"
     build_project
     
     BASELINE_JSON=$(run_tests_and_parse "${ARTIFACT_DIR}/agent_baseline")
+    fi
     log "SUCCESS: Baseline complete."
     echo ""
 
@@ -1537,7 +1607,8 @@ run_agent_mode() {
 
     build_project
     
-    MUTATION_JSON=$(run_tests_and_parse "${ARTIFACT_DIR}/agent_mutation")
+    fs_mutation "${ARTIFACT_DIR}/agent_mutation" agent
+    MUTATION_JSON="$FS_MUTATION_JSON"
     log "SUCCESS: Mutation complete."
     echo ""
 
@@ -1551,7 +1622,7 @@ run_agent_mode() {
     # ---------------------------------------------------------
     log "=== Comparing results ==="
     COMPARISON_JSON="${ARTIFACT_DIR}/agent_comparison_results.json"
-    python3 "$COMPARE_SCRIPT" "$BASELINE_JSON" "$MUTATION_JSON" "$COMPARISON_JSON"
+    "${VERIFIER_PYTHON:-python3}" -I -S -B "$COMPARE_SCRIPT" "$BASELINE_JSON" "$MUTATION_JSON" "$COMPARISON_JSON"
     
     display_comparison "$COMPARISON_JSON"
 
@@ -1619,11 +1690,15 @@ run_instance_validation_mode() {
     # Baseline: checkout at base commit
     # ---------------------------------------------------------
     log "=== Running BASELINE tests (base commit) ==="
+    if fs_baseline "${ARTIFACT_DIR}/iv_baseline"; then
+        BASELINE_JSON="${ARTIFACT_DIR}/iv_baseline_results.json"
+    else
     clean_workspace
     checkout_commit "$BASE_COMMIT" "base commit"
     build_project
 
     BASELINE_JSON=$(run_tests_and_parse "${ARTIFACT_DIR}/iv_baseline")
+    fi
     log "SUCCESS: Baseline complete."
     echo ""
 
@@ -1643,7 +1718,8 @@ run_instance_validation_mode() {
 
     build_project
 
-    MUTATION_JSON=$(run_tests_and_parse "${ARTIFACT_DIR}/iv_mutation")
+    fs_mutation "${ARTIFACT_DIR}/iv_mutation" oracle
+    MUTATION_JSON="$FS_MUTATION_JSON"
     log "SUCCESS: Mutation complete."
     echo ""
 
@@ -1652,7 +1728,7 @@ run_instance_validation_mode() {
     # ---------------------------------------------------------
     log "=== Comparing results ==="
     COMPARISON_JSON="${ARTIFACT_DIR}/iv_comparison_results.json"
-    python3 "$COMPARE_SCRIPT" "$BASELINE_JSON" "$MUTATION_JSON" "$COMPARISON_JSON"
+    "${VERIFIER_PYTHON:-python3}" -I -S -B "$COMPARE_SCRIPT" "$BASELINE_JSON" "$MUTATION_JSON" "$COMPARISON_JSON"
 
     display_comparison "$COMPARISON_JSON"
 
@@ -1784,6 +1860,11 @@ fi
 # ==============================================================================
 # Execute Selected Mode
 # ==============================================================================
+
+
+# Full-suite grading hooks (baked baseline + patched-phase cap); no-op when FULL_SUITE_BASE=live.
+. "${FS_UTIL:-/tests}/fs_hooks.sh"
+fs_init
 
 case "$MODE" in
     reference)

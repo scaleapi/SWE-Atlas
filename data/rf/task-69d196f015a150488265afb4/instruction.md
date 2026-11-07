@@ -19,3 +19,5 @@ Use the below Interface:
 - Input: `user: User, mailbox_id: int`
 - Output: `Mailbox`
 - Description: Sets the given mailbox as the user's default mailbox. Validates ownership and verification status before updating.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

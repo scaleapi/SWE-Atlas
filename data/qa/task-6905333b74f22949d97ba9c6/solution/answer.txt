@@ -86,14 +86,26 @@ $ cat > test_payload_guess.py << 'EOF'
 from scapy.all import *
 
 print("Ether.payload_guess (what Ether uses to decide next layer):")
-for fval, cls in Ether.payload_guess[:4]:
-    print(f"  If {fval} -> {cls.__name__}")
+print("First 4 entries in registration order:")
+for i, (fval, cls) in enumerate(Ether.payload_guess[:4]):
+    print(f"  [{i}] If {fval} -> {cls.__name__}")
 
 print(f"\nTotal Ether bindings: {len(Ether.payload_guess)}")
 
+print("\nWell-known EtherType bindings and their positions in the list:")
+for i, (fval, cls) in enumerate(Ether.payload_guess):
+    if fval.get('type') in (2048, 34525, 2054):
+        print(f"  [{i}] If {fval} -> {cls.__name__}")
+
 print("\nIP.payload_guess (what IP uses to decide next layer):")
-for fval, cls in IP.payload_guess[:4]:
-    print(f"  If {fval} -> {cls.__name__}")
+print("First 4 entries in registration order:")
+for i, (fval, cls) in enumerate(IP.payload_guess[:4]):
+    print(f"  [{i}] If {fval} -> {cls.__name__}")
+
+print("\nWell-known IP protocol bindings and their positions:")
+for i, (fval, cls) in enumerate(IP.payload_guess):
+    if fval.get('proto') in (1, 6, 17, 47):
+        print(f"  [{i}] If {fval} -> {cls.__name__}")
 EOF
 
 $ python3 test_payload_guess.py
@@ -101,19 +113,34 @@ $ python3 test_payload_guess.py
 Output:
 ```
 Ether.payload_guess (what Ether uses to decide next layer):
-  If {'type': 2048} -> IP
-  If {'type': 34525} -> IPv6
-  If {'type': 2054} -> ARP
-  If {'type': 33024} -> Dot1Q
+First 4 entries in registration order:
+  [0] If {'type': 122} -> LLC
+  [1] If {'type': 34928} -> LLC
+  [2] If {'type': 33024} -> Dot1Q
+  [3] If {'type': 34984} -> Dot1AD
 
 Total Ether bindings: 16
 
+Well-known EtherType bindings and their positions in the list:
+  [5] If {'type': 2054} -> ARP
+  [7] If {'type': 2048} -> IP
+  [8] If {'type': 34525} -> IPv6
+
 IP.payload_guess (what IP uses to decide next layer):
-  If {'frag': 0, 'proto': 6} -> TCP
-  If {'frag': 0, 'proto': 17} -> UDP
-  If {'frag': 0, 'proto': 1} -> ICMP
-  If {'frag': 0, 'proto': 47} -> GRE
+First 4 entries in registration order:
+  [0] If {'frag': 0, 'proto': 4} -> IP
+  [1] If {'frag': 0, 'proto': 1} -> ICMP
+  [2] If {'frag': 0, 'proto': 6} -> TCP
+  [3] If {'frag': 0, 'proto': 17} -> UDP
+
+Well-known IP protocol bindings and their positions:
+  [1] If {'frag': 0, 'proto': 1} -> ICMP
+  [2] If {'frag': 0, 'proto': 6} -> TCP
+  [3] If {'frag': 0, 'proto': 17} -> UDP
+  [4] If {'frag': 0, 'proto': 47} -> GRE
 ```
+
+Each entry pairs a dict of field conditions with the layer class to instantiate when those conditions match. The list is ordered by registration, not by importance: the earliest Ether entries come from LLC/802.1Q-related modules loaded first, while the familiar EtherType bindings sit further down the list (ARP at index 5 via type=2054, IP at index 7 via type=2048, IPv6 at index 8 via type=34525). On the IP side, ICMP (proto=1), TCP (proto=6), UDP (proto=17), and GRE (proto=47) all appear with a frag=0 condition, so fragmented IP packets are not handed to the upper-layer parser. During dissection, guess_payload_class walks this list and returns the first class whose conditions match the current field values.
 
 The bindings are created using bind_layers calls in the layer definition files. I verified this by searching the source:
 

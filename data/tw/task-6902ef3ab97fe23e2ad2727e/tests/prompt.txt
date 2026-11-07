@@ -1,4 +1,4 @@
-I need five integration tests for the document exporter in paperless-ng. The export functionality works but we're missing some key tests. The test class with setUp and helpers is already in place. Let's reuse that
+I need five integration tests for the document exporter in paperless-ngx. The export functionality works but we're missing some key tests. The test class with setUp and helpers is already in place. Let's reuse that.
 
 Write 1 integration test for each scenario:
 

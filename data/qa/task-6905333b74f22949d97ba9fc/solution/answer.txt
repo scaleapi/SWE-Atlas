@@ -262,23 +262,41 @@ ButtonEvent fields: ('mouse_event', 'timestamp')
 
 The Handler class provides 34 public methods with 16 event callbacks that Python kitten code can override. The ButtonEvent named tuple stores mouse_event and timestamp fields for click detection.
 
-The KittenUI class provides remote control capabilities that cross process boundaries. The remote_control method shows how kittens communicate back to the main kitty process:
+Remote control provides kittens a channel that crosses process boundaries back into the main kitty process. The mechanism is DCS escape sequences: a remote control command is serialized as JSON and framed as a @kitty-cmd DCS by encode_send:
 
 ```python
-# From kittens/tui/ui.py
-def remote_control(self, cmd: str | Sequence[str], **kw: Any) -> Any:
-    if not self.allow_remote_control:
-        raise ValueError('Remote control is not enabled')
-    prefix = [kitten_exe(), '@']
-    r = -1
-    pass_fds = list(kw.get('pass_fds') or ())
-    try:
-        if self.rc_fd > -1:
-            pass_fds.append(self.rc_fd)
-        if self.password and self.rc_fd > -1:
-            r, w = safe_pipe(False)
-            os.write(w, self.password.encode())
-            os.close(w)
+# From kitty/remote_control.py lines 308-310
+def encode_send(send: Any) -> bytes:
+    es = ('@kitty-cmd' + json.dumps(send)).encode('ascii')
+    return b'\x1bP' + es + b'\x1b\\'
+```
+
+On the receiving side, Boss._handle_remote_command in kitty/boss.py gates the command on whether the sending window or peer is allowed to issue it before parsing:
+
+```python
+# From kitty/boss.py lines 590-601
+def _handle_remote_command(self, cmd: memoryview, window: Optional[Window] = None, peer_id: int = 0) -> RCResponse:
+    from .remote_control import is_cmd_allowed, parse_cmd, remote_control_allowed
+    response = None
+    window = window or None
+    from_socket = peer_id > 0
+    is_fd_peer = from_socket and peer_id in self.peer_data_map
+    window_has_remote_control = bool(window and window.allow_remote_control)
+    if not window_has_remote_control and not is_fd_peer:
+        if self.allow_remote_control == 'n':
+            return {'ok': False, 'error': 'Remote control is disabled'}
+        if self.allow_remote_control == 'socket-only' and not from_socket:
+            return {'ok': False, 'error': 'Remote control is allowed over a socket only'}
+```
+
+The response travels back to the kitten as another @kitty-cmd DCS, which the TUI loop decodes and hands to the handler's on_kitty_cmd_response callback:
+
+```python
+# From kittens/tui/loop.py lines 288-291
+def _on_dcs(self, dcs: str) -> None:
+    if dcs.startswith('@kitty-cmd'):
+        import json
+        self.handler.on_kitty_cmd_response(json.loads(dcs[len('@kitty-cmd'):]))
 ```
 
 Race conditions emerge under specific timing scenarios. The button event queue maintains a deque with bounded size to prevent unbounded growth under rapid mouse activity:

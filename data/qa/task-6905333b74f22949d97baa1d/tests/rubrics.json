@@ -57,7 +57,7 @@
   },
   {
     "id": "e104e8c02bb453af2bda891116d3a612",
-    "title": "1.8: Reports the \u201ccannot forge signed session ID\u201d constraint using runtime observations (e.g., tamper_exception=BadSignature or tampered_cookie_keys=[]).",
+    "title": "1.8: Reports the 'cannot forge signed session ID' constraint using runtime observations (e.g., tamper_exception=BadSignature or tampered_cookie_keys=[]).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

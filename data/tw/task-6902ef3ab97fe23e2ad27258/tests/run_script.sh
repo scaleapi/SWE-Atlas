@@ -1,11 +1,8 @@
 #!/bin/bash
-### COMMON SETUP; DO NOT MODIFY ###
 set -e
 
 # Change to the app directory
 cd /app
-
-# --- CONFIGURE THIS SECTION ---
 
 start_services() {
     echo "Starting PostgreSQL and Redis services..."
@@ -212,9 +209,6 @@ run_selected_tests() {
     
     return 0
 }
-# --- END CONFIGURATION SECTION ---
-
-### COMMON EXECUTION; DO NOT MODIFY ###
 
 # No args is all tests
 if [ $# -eq 0 ]; then

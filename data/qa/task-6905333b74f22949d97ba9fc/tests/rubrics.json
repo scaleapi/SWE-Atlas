@@ -41,7 +41,7 @@
   },
   {
     "id": "64d1671a0268422566ed600563d40b3f",
-    "title": "1.7: Reports timing mechanisms for event correlation (e.g., monotonic function, ButtonEvent timestamp tracking)",
+    "title": "1.6: Reports timing mechanisms for event correlation (e.g., monotonic function, ButtonEvent timestamp tracking)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "3a8c401e1ad8d141fd39ca561f64b5b0",
-    "title": "1.8: Identifies bounded queue, buffer mechanisms preventing unbounded growth (e.g., button event deque with size limit of 5)",
+    "title": "1.7: Identifies bounded queue, buffer mechanisms preventing unbounded growth (e.g., button event deque with size limit of 5)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "365eff3aa5b4bc1592015ae1c60bd956",
-    "title": "1.9: States reference counting for object ownership (e.g., INCREF_CHILD, DECREF_CHILD macros, Py_CLEAR usage)",
+    "title": "1.8: States reference counting for object ownership (e.g., INCREF_CHILD, DECREF_CHILD macros, Py_CLEAR usage)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

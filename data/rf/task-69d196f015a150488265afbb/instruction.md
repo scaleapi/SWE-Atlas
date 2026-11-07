@@ -86,3 +86,5 @@ Use the below interface for your solution:
 - Input: `RequestArg`
 - Output: `WebhookResponse`
 - Description: Mutation endpoint to create a repository webhook via POST. Renamed from connectPostRepositoryWebhook.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

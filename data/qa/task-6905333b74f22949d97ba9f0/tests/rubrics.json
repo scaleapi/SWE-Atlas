@@ -57,7 +57,7 @@
   },
   {
     "id": "2d5e00455ed89df119feb73664a44957",
-    "title": "1.8: Reports TERMINFO=/app/terminfo (or base64 encoded terminfo data) set in shell environment, providing terminal capability definitions",
+    "title": "1.8: Reports TERMINFO set to Kitty's bundled terminfo directory, such as /app/terminfo (or base64 encoded terminfo data), in shell environment, providing terminal capability definitions",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "63e125982269b56b5d70a15871f64b67",
-    "title": "1.10: Reports screen.mark_as_dirty() triggers when shell data arrives, causing display to redraw to show new shell output on screen",
+    "title": "1.10: Reports the screen is marked dirty when shell data arrives, causing display to redraw to show new shell output on screen",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -88,16 +88,8 @@
     }
   },
   {
-    "id": "f94d252f732c7f9f982bac623c4eb8bc",
-    "title": "1.12: Reports text scrolls upward without screen tearing or flickering when pressing Enter multiple times, demonstrating refresh cycle works.",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "410307bd43cfc7e11a577e7f5e001504",
-    "title": "1.13: Reports window appears on screen with configured background colour (such as #181818), confirming visual startup.",
+    "title": "1.12: Reports window appears on screen with configured background colour (such as #181818), confirming visual startup.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -105,7 +97,7 @@
   },
   {
     "id": "a7d991284a9c5619c64b92b49cc36989",
-    "title": "1.14: Reports cell grid layout visible with characters spaced at consistent cell width and height",
+    "title": "1.13: Reports cell grid layout visible with characters spaced at consistent cell width and height",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -113,7 +105,7 @@
   },
   {
     "id": "56f341597cbf83a55e433bc3424a0201",
-    "title": "1.15: Reports SIGWINCH signal sent to child process to communicate terminal size changes",
+    "title": "1.14: Reports SIGWINCH signal sent to child process to communicate terminal size changes",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

@@ -503,19 +503,16 @@ EOF
 
 echo "test aaaaaaaaaaaaaaaaaaaaaa" > test_input.txt
 
-echo "Starting scan at $(date)"
-./trufflehog filesystem test_input.txt --custom-detectors=test_complex_regex.yaml 2>&1
-exit_code=$?
-echo "Scan ended at $(date) with exit code $exit_code"
+./trufflehog --config=test_complex_regex.yaml filesystem test_input.txt 2>&1
 ```
 
-```
-Starting scan at Fri Jan 24 10:15:32 UTC 2026
-TruffleHog. Unearth your secrets.
+Custom detectors are loaded through the global `--config` flag (there is no `--custom-detectors` flag; the config file is passed before the `filesystem` subcommand):
 
-2026-01-24T10:15:34Z    info-0  trufflehog  running source  {"source_manager_worker_id": "FFRgn", "with_units": true}
-2026-01-24T10:15:34Z    info-0  trufflehog  finished scanning   {"chunks": 1, "bytes": 28, "verified_secrets": 0, "unverified_secrets": 0, "scan_duration": "37.070583ms", "trufflehog_version": "dev"}
-Scan ended at Fri Jan 24 10:15:34 UTC 2026 with exit code 0
+```
+🐷🔑🐷  TruffleHog. Unearth your secrets. 🐷🔑🐷
+
+2026-08-25T16:49:58Z	info-0	trufflehog	running source	{"source_manager_worker_id": "tbYeQ", "with_units": true}
+2026-08-25T16:49:58Z	info-0	trufflehog	finished scanning	{"chunks": 1, "bytes": 28, "verified_secrets": 0, "unverified_secrets": 0, "scan_duration": "1.570968ms", "trufflehog_version": "dev", "verification_caching": {"Hits":0,"Misses":0,"HitsWasted":0,"AttemptsSaved":0,"VerificationTimeSpentMS":0}}
 ```
 
 Interestingly, the scan completed almost instantly despite using a pattern that would cause catastrophic backtracking in PCRE-based regex engines. The pattern ([a-z]+)+$ is a classic ReDoS example because in backtracking engines, the nested quantifiers create exponential time complexity when matching fails. However, TruffleHog uses Go's regexp package, which implements the RE2 algorithm. RE2 guarantees linear time complexity by using a finite automaton approach instead of backtracking. This is a significant security advantage because it means malicious regex patterns cannot be used to cause denial of service through CPU exhaustion. I verified this behavior:
@@ -563,11 +560,11 @@ Input length 100: 2.333µs
 Linear time, not exponential. Notice how the execution time stays roughly constant regardless of input length, this is the hallmark of RE2's linear time guarantee. In a backtracking engine like PCRE, the same pattern with a 100-character input could take minutes or hours to complete. Go's RE2 provides inherent protection against ReDoS attacks, which is particularly important for a tool like TruffleHog that processes untrusted input and allows user-defined regex patterns. However, TruffleHog also provides an additional safety mechanism through a configurable detector timeout (default 10 seconds) that can be set via `--detector-timeout`:
 
 ```bash
-./trufflehog filesystem test_input.txt --custom-detectors=test_complex_regex.yaml --detector-timeout=1s 2>&1 | grep -i timeout
+./trufflehog --config=test_complex_regex.yaml --detector-timeout=1s filesystem test_input.txt 2>&1 | grep -i timeout
 ```
 
 ```
-2026-01-24T10:16:21Z    info-0  trufflehog  Setting detector timeout    {"timeout": "1s"}
+2026-08-25T16:49:59Z	info-0	trufflehog	Setting detector timeout	{"timeout": "1s"}
 ```
 
 I also checked what validation exists for regex syntax:
@@ -583,11 +580,11 @@ detectors:
     verify: []
 EOF
 
-./trufflehog filesystem test_input.txt --custom-detectors=test_invalid.yaml 2>&1
+./trufflehog --config=test_invalid.yaml filesystem test_input.txt 2>&1
 ```
 
 ```
-error parsing regexp: missing closing ]: `[unclosed`
+2026-08-25T16:50:01Z	error	trufflehog	error parsing the provided configuration file	{"error": "regex 'value': error parsing regexp: missing closing ]: `[unclosed`"}
 ```
 
 Invalid syntax gets rejected at load time. The ValidateRegex function in validation.go calls regexp.Compile on each pattern and returns an error if compilation fails. This validation only checks syntax, not semantic complexity but since RE2 guarantees linear time regardless of pattern complexity, there's no need to analyze patterns for potential performance issues. This is a clean design that leverages Go's built-in regex safety guarantees rather than trying to implement custom complexity analysis.

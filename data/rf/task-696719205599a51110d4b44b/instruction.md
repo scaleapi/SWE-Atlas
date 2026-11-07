@@ -155,3 +155,5 @@ Use the below Interface:
 \- Output: NA
 
 \- Description: Test case struct for HTTP module tests. Has new fields logger (logrus.FieldLogger) and hook (\*testutils.SimpleLogrusHook) for capturing log output within the test case.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

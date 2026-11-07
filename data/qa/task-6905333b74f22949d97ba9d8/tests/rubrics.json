@@ -17,7 +17,7 @@
   },
   {
     "id": "08cca7077d2e0331baac2023328c6afe",
-    "title": "1.4: Identifies that RasterisedDocumentParser invokes OCR via ocrmypdf.ocr() Python API as the OCR invocation method",
+    "title": "1.3: Identifies that RasterisedDocumentParser invokes OCR via ocrmypdf.ocr() Python API as the OCR invocation method",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -25,7 +25,7 @@
   },
   {
     "id": "a3c8085e6486005d1008ff1ad6540e93",
-    "title": "1.6: Identifies that DirectoriesMixin setUp() calls setup_directories() to create isolated temporary directories for test isolation",
+    "title": "1.4: Identifies that DirectoriesMixin setUp() calls setup_directories() to create isolated temporary directories for test isolation",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "db29adbbd23b7a92cac8feff70c7dce4",
-    "title": "1.7: Reports that training occurs before document consumption in the test setup when train_classifier() is called for training timing",
+    "title": "1.5: Reports that training occurs after the training-document inserts in the test setup, through an explicit train_classifier() or DocumentClassifier.train() call (e.g., test_one_correspondent_predict_manydocs creates its documents with Document.objects.create() and only then calls self.classifier.train())",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "00f555a072387e1759bcf1616acc73b6",
-    "title": "1.8: Lists OCR parameters passed to ocrmypdf: language, output_type, use_threads, jobs, progress_bar, and skip_text/force_ocr based on OCR_MODE for the OCR configuration ",
+    "title": "1.6: Lists OCR parameters passed to ocrmypdf: language, output_type, use_threads, jobs, progress_bar, and skip_text/force_ocr based on OCR_MODE for the OCR configuration",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "78d251e258dc44c6b643874b0ae6cf08",
-    "title": "1.9: Reports that mime type is detected via magic.from_file(path, mime=True) before parsing as the mime type detection method",
+    "title": "1.7: Reports that mime type is detected via magic.from_file(path, mime=True) before parsing as the mime type detection method",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "0444c18a1ec9de91e4c7531dc59d36dc",
-    "title": "1.11: Identifies that pytest.mark.skip decorator is ignored by Django's unittest test runner, causing test_load_classifier_cached to execute unexpectedly as a source of non-deterministic test behavior",
+    "title": "1.8: Identifies that pytest.mark.skip decorator is ignored by Django's unittest test runner, causing test_load_classifier_cached to execute unexpectedly as a source of non-deterministic test behavior",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "6e89a1c68e701103cf0af5a06220ec54",
-    "title": "1.12: Reports that 2 documents are created from a PDF with one separator barcode (patch-code-t-middle.pdf) and 3 documents from a PDF with two separator barcodes (several-patcht-codes.pdf) for barcode splitting behavior",
+    "title": "1.9: Reports that 2 documents are created from a PDF with one separator barcode (patch-code-t-middle.pdf) and 3 documents from a PDF with two separator barcodes (several-patcht-codes.pdf) for barcode splitting behavior",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "69f989e944a7c9c915fdd61c36e12c69",
-    "title": "1.13: Identifies 'PATCHT' as the default barcode string value from CONSUMER_BARCODE_STRING setting that triggers document splitting\n",
+    "title": "1.10: Identifies 'PATCHT' as the default barcode string value from CONSUMER_BARCODE_STRING setting that triggers document splitting",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "36c778a3039518a498374d3d7bcdbd8b",
-    "title": "1.15: Explains that barcode splitting affects classifier training data by creating multiple Document records from a single input file, each consumed separately with its own OCR-extracted content\n",
+    "title": "1.11: Explains that barcode splitting changes the classifier's training data because one input file becomes several Document records, each consumed separately with its own OCR-extracted content (e.g., a PDF with two separator barcodes yields 3 training documents instead of 1, which changes the training data hash)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

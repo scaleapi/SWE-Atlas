@@ -71,7 +71,7 @@ index c81425be7..d547363d7 100644
 +				socket.send("test")
 +			})
 +			socket.on("message", function (data) {
-+				if (!data=="test") {
++				if (data != "test") {
 +					throw new Error ("echo'd data doesn't match our message!");
 +				}
 +				socket.close()

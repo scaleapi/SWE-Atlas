@@ -1,43 +1,54 @@
-To observe the server's idle behavior, my approach was to start the Grafana server in development mode and observe the logs during the idle state.
-First, I started the Grafana server using the pre-built binary. 
+To observe the server's idle behavior, I started the Grafana server from the pre-built binary with a fresh data directory, sent no requests to it, and left it running for more than ten minutes while writing its output to a log file.
 ```
-$ ./bin/linux-amd64/grafana-server --homepath=. --config=./conf/defaults.ini
+$ /app/bin/grafana server --homepath /app > /tmp/grafana1.log 2>&1 &
 ```
+The HTTP server started listening at 01:01:44:
+```
+logger=http.server t=2026-11-03T01:01:44.299588227Z level=info msg="HTTP Server Listen" address=[::]:3000 protocol=http subUrl= socket=
+```
+Right at startup the alert scheduler and the update checkers log once:
+```
+logger=ngalert.state.manager t=2026-11-03T01:01:44.296767567Z level=info msg="Warming state cache for startup"
+logger=ngalert.multiorg.alertmanager t=2026-11-03T01:01:44.296895571Z level=info msg="Starting MultiOrg Alertmanager"
+logger=plugins.update.checker t=2026-11-03T01:01:44.329666504Z level=info msg="Update check succeeded" duration=32.968934ms
+logger=grafana.update.checker t=2026-11-03T01:01:44.334444145Z level=info msg="Update check succeeded" duration=37.734847ms
+logger=ngalert.state.manager t=2026-11-03T01:01:44.342997586Z level=info msg="State cache has been initialized" states=0 duration=46.229628ms
+logger=ngalert.scheduler t=2026-11-03T01:01:44.343042314Z level=info msg="Starting scheduler" tickInterval=10s maxAttempts=3
+logger=ticker t=2026-11-03T01:01:44.343142265Z level=info msg=starting first_tick=2026-11-03T01:01:50Z
+```
+After the server has been running for at least 60 seconds with no user requests, these are the log entries that appeared (the complete log output from 01:02 to 01:14):
+1. Usage Stats Ready Report
+```
+logger=infra.usagestats t=2026-11-03T01:02:26.2989413Z level=info msg="Usage stats are ready to report"
+```
+2. Cleanup Service, Plugin Update Checker (with a SQLite lock retry while the cleanup ran)
+```
+logger=cleanup t=2026-11-03T01:11:44.339320534Z level=info msg="Completed cleanup jobs" duration=32.036996ms
+logger=sqlstore.transactions t=2026-11-03T01:11:44.345856363Z level=info msg="Database locked, sleeping then retrying" error="database is locked" retry=0 code="database is locked"
+logger=plugins.update.checker t=2026-11-03T01:11:44.364962356Z level=info msg="Update check succeeded" duration=34.39241ms
+```
+3. Alert Scheduler
+The scheduler ticks every 10 seconds (tickInterval=10s, first tick at 01:01:50) but logs nothing per tick on this fresh instance: the state cache holds 0 states and no alert rule exists, so no `ngalert.sender.router "Sending alerts to local notifier"` lines appear; those appear only once a firing alert rule exists.
 
-After the server has been running for at least 60 seconds with no user requests these are the recurring log entries that appear:
-1.  Alert Scheduler Notifications 
-```
-logger=ngalert.sender.router rule_uid=bfaadce6ktyioe org_id=1 t=2026-01-16T02:18:30.036545956Z level=info msg="Sending alerts to local notifier" count=1
-logger=ngalert.sender.router rule_uid=bfaadce6ktyioe org_id=1 t=2026-01-16T02:20:30.029301485Z level=info msg="Sending alerts to local notifier" count=1
-logger=ngalert.sender.router rule_uid=bfaadce6ktyioe org_id=1 t=2026-01-16T02:22:30.030411293Z level=info msg="Sending alerts to local notifier" count=1
-logger=ngalert.sender.router rule_uid=bfaadce6ktyioe org_id=1 t=2026-01-16T02:23:30.032073902Z level=info msg="Sending alerts to local notifier" count=1
-logger=ngalert.sender.router rule_uid=bfaadce6ktyioe org_id=1 t=2026-01-16T02:25:30.011585276Z level=info msg="Sending alerts to local notifier" count=1
-logger=ngalert.sender.router rule_uid=bfaadce6ktyioe org_id=1 t=2026-01-16T02:26:30.021786702Z level=info msg="Sending alerts to local notifier" count=1
-```
-2. Usage Stats Ready Report 
-```
-logger=infra.usagestats t=2026-01-16T02:18:49.12054112Z level=info msg="Usage stats are ready to report"
-```
-3. Cleanup Service
-```
-logger=cleanup t=2026-01-16T02:28:08.075495217Z level=info msg="Completed cleanup jobs" duration=5.282763ms
-```
-4. Plugin Update Checker
-```
-logger=plugins.update.checker t=2026-01-16T02:28:08.800307365Z level=info msg="Update check succeeded" duration=352.471324ms
-```
-The alert scheduler ticker starts with a 10 second interval, managing background tasks like alert state evaluation. The state cache initializes with 0 states since no user dashboards exist yet, and the usage stats collector becomes ready after approximately 38 seconds of idle time.
+The cleanup service and the plugin update checker are the recurring entries: both run on a 10-minute ticker (time.NewTicker(time.Minute * 10) in pkg/services/cleanup/cleanup.go and pkg/services/updatechecker/plugins.go), which matches the plugin check at 01:01:44 and again at 01:11:44, ten minutes apart, with the cleanup completing at 01:11:44. The usage stats line is logged once, by SetReadyToReport in pkg/infra/usagestats/service/service.go, 42 seconds after the HTTP server started listening (01:01:44 to 01:02:26).
 
-To get runtime evidence of the database migration check, I examined the server startup logs. When the server starts, Grafana runs migrations and logs their progress. I captured the specific output:
+To get runtime evidence of the database migration check, I examined the server startup logs. On the first start against the empty database, Grafana ran every migration:
 ```
-logger=migrator t=2026-01-15T22:21:03.294132778Z level=info msg="Starting DB migrations"
-logger=migrator t=2026-01-15T22:21:03.295164581Z level=info msg="Executing migration" id="create migration_log table"
-logger=migrator t=2026-01-15T22:21:03.296112924Z level=info msg="Migration successfully executed" id="create migration_log table" duration=945.688µs
+logger=migrator t=2026-11-03T01:01:43.511491398Z level=info msg="Starting DB migrations"
+logger=migrator t=2026-11-03T01:01:43.511729028Z level=info msg="Executing migration" id="create migration_log table"
+logger=migrator t=2026-11-03T01:01:43.511953248Z level=info msg="Migration successfully executed" id="create migration_log table" duration=224.25µs
 ...
-logger=migrator t=2026-01-15T22:21:09.190990522Z level=info msg="migrations completed" performed=626 skipped=0 duration=5.895942523s
-logger=migrator t=2026-01-15T22:21:09.192134289Z level=info msg="Unlocking database"
+logger=migrator t=2026-11-03T01:01:44.147539297Z level=info msg="migrations completed" performed=626 skipped=0 duration=635.828328ms
+logger=migrator t=2026-11-03T01:01:44.147660791Z level=info msg="Unlocking database"
 ```
-This confirms that 626 migrations were performed with 0 skipped, taking about 5.9 seconds. When the schema is already up to date on subsequent starts, the output would show performed=0 skipped=626 instead, confirming the schema is current.
+I then stopped the server and started it again on the same database. This is the specific output that confirms the schema version is up to date:
+```
+logger=migrator t=2026-11-03T01:14:39.236876922Z level=info msg="Locking database"
+logger=migrator t=2026-11-03T01:14:39.236894228Z level=info msg="Starting DB migrations"
+logger=migrator t=2026-11-03T01:14:39.241340085Z level=info msg="migrations completed" performed=0 skipped=626 duration=380.327µs
+logger=migrator t=2026-11-03T01:14:39.241459245Z level=info msg="Unlocking database"
+```
+performed=0 skipped=626 shows that all 626 migrations are already recorded in migration_log, so nothing was applied and the schema is current. The unified storage migrator logged the same pattern (logger=resource-migrator, performed=18 skipped=0 on the first start and performed=0 skipped=18 on the restart).
 
 Next, I verified the current build information by querying the API endpoints of the running instance.
 ```
@@ -48,7 +59,7 @@ The health endpoint returned:
 {
   "database": "ok",
   "version": "11.5.0-pre",
-  "commit": "4550cfb5b72"
+  "commit": "4550cfb5b72886782d9a3e6cf995f8dbd57ca4ff"
 }
 ```
 
@@ -61,9 +72,9 @@ The buildInfo from the frontend settings API returned:
   "hideVersion": false,
   "version": "11.5.0-pre",
   "versionString": "Grafana v11.5.0-pre (4550cfb5b7)",
-  "commit": "4550cfb5b72",
+  "commit": "4550cfb5b72886782d9a3e6cf995f8dbd57ca4ff",
   "commitShort": "4550cfb5b7",
-  "buildstamp": 1734099722,
+  "buildstamp": 1793667703,
   "edition": "Open Source",
   "latestVersion": "",
   "hasUpdate": false,
@@ -74,83 +85,100 @@ The value of versionString reported by the API is "Grafana v11.5.0-pre (4550cfb5
 
 Now for the dashboard scene architecture investigation, I needed to understand the initialization logic during the transition from the dashboard view to the panel editor, specifically whether the datasource picker automatically resolves to the datasource already defined in the panel queries.
 
-I wrote a Jest test to simulate the V2 dashboard scenario and observe the pickle behavior. The test creates a V2 dashboard with a panel configured to use the prom-ds datasource, but sets up local storage to return a different datasource.
+I wrote a temporary Jest test that builds a V2 dashboard whose only panel query uses the gdev-prometheus datasource, while the "last used datasource" entry in local storage points at gdev-testdata, then opens the panel editor. The test file starts with the imports and the mocks of the existing public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataQueriesTab.test.tsx (its first 265 lines: the getDataSourceSrv mock that resolves gdev-testdata and gdev-prometheus, the app/core/store mock and the deactivators list), followed by these extra imports and this test:
 
 ```
-$ cat > public/app/features/dashboard-scene/panel-edit/PanelDataPane/test_v2_ds_picker.test.ts << 'EOF'
-// V2 Dashboard with panel queries configured for prometheus datasource
-const v2Spec: DashboardV2Spec = {
-  id: 1, title: 'Test V2 Dashboard', /* ... */
-  elements: {
-    panel1: {
-      kind: 'Panel',
-      spec: {
-        uid: 'panel1', title: 'Test Panel',
-        data: {
-          kind: 'QueryGroup',
-          spec: {
-            queries: [{
-              kind: 'PanelQuery',
-              spec: { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-ds' }, hidden: false,
-                query: { kind: 'prometheus', spec: { expr: 'up' } } },
-            }],
-            queryOptions: {}, transformations: [],
-          },
-        },
-        /* ... */
-      },
-    },
-  },
-  /* ... */
-};
+$ D=public/app/features/dashboard-scene/panel-edit/PanelDataPane
+$ { cat /tmp/v2_imports.ts; head -n 265 $D/PanelDataQueriesTab.test.tsx; cat /tmp/v2_test.ts; } > $D/v2_ds_picker.test.tsx
+```
+```typescript
+// /tmp/v2_imports.ts
+import { cloneDeep } from 'lodash';
+import { DashboardV2Spec, PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
+import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
+import { DashboardLayoutManager } from '../../scene/types';
+import { getQueryRunnerFor } from '../../utils/utils';
 
-describe('PanelDataQueriesTab V2 Datasource Picker Bug', () => {
-  it('demonstrates V2 datasource picker bug', async () => {
-    // Setup: local storage returns a DIFFERENT datasource than what's in the panel queries
-    store.getObject.mockImplementation((k: string, d: unknown) =>
-      k === PANEL_EDIT_LAST_USED_DATASOURCE ? { dashboardUid: 'dash1', datasourceUid: 'other-ds' } : d
+// /tmp/v2_test.ts
+describe('V2 dashboard panel editor datasource picker', () => {
+  afterEach(() => {
+    deactivators.forEach((deactivate) => deactivate());
+    deactivators = [];
+  });
+
+  it('picker shows the datasource defined in the panel queries', async () => {
+    store.exists.mockReturnValue(true);
+    store.getObject.mockImplementation((key: string, def: unknown) =>
+      key === PANEL_EDIT_LAST_USED_DATASOURCE ? { dashboardUid: 'dashboard-uid', datasourceUid: 'gdev-testdata' } : def
     );
 
-    const scene = transformSaveModelSchemaV2ToScene(cloneDeep(v2Dashboard));
+    const spec = cloneDeep(handyTestingSchema);
+    spec.variables = [];
+    const panelKind = spec.elements['test-panel-uid'] as PanelKind;
+    panelKind.spec.data.spec.queries[0].spec.datasource = { type: 'grafana-prometheus-datasource', uid: 'gdev-prometheus' };
+
+    const scene = transformSaveModelSchemaV2ToScene({
+      kind: 'DashboardWithAccessInfo',
+      metadata: { name: 'dashboard-uid', namespace: 'default', labels: {}, resourceVersion: '', creationTimestamp: '' },
+      spec,
+      access: {},
+      apiVersion: 'v2',
+    });
     const panel = (scene.state.body as DashboardLayoutManager).getVizPanels()[0];
-    const queryRunner = getQueryRunnerFor(panel);
-    
-    console.log('Query datasource uid:', queryRunner!.state.queries[0].datasource?.uid);
+    const queryRunner = getQueryRunnerFor(panel)!;
+    process.stdout.write(`Panel-level datasource: ${JSON.stringify(queryRunner.state.datasource)}\n`);
+    process.stdout.write(`Query A datasource uid: ${queryRunner.state.queries[0].datasource?.uid}\n`);
 
-    const editor = buildPanelEditScene(panel);
-    scene.setState({ editPanel: editor });
-    scene.activate(); editor.activate();
-    await new Promise((r) => setTimeout(r, 100));
+    const panelEditor = buildPanelEditScene(panel);
+    scene.setState({ editPanel: panelEditor });
+    deactivators.push(scene.activate());
+    deactivators.push(panelEditor.activate());
+    const queriesTab = panelEditor.state.dataPane!.state.tabs[0] as PanelDataQueriesTab;
+    deactivators.push(queriesTab.activate());
+    await new Promise((r) => setTimeout(r, 0));
 
-    const tab = editor.state.dataPane!.state.tabs[0] as PanelDataQueriesTab;
-    tab.activate();
-    
-    console.log('Tab dsSettings uid:', tab.state.dsSettings?.uid);
-    console.log('Expected: prom-ds, Actual:', tab.state.dsSettings?.uid);
+    process.stdout.write(`Picker dsSettings uid: ${queriesTab.state.dsSettings?.uid}\n`);
+    process.stdout.write(`Query runner datasource after opening the editor: ${JSON.stringify(queriesTab.queryRunner.state.datasource)}\n`);
+    expect(queriesTab.state.dsSettings?.uid).toBe('gdev-prometheus');
   });
 });
-EOF
-$ yarn test:ci public/app/features/dashboard-scene/panel-edit/PanelDataPane/test_v2_ds_picker.test.ts
 ```
-Running the test produced this output:
+The values are written with process.stdout.write because the repository's jest-fail-on-console setup fails any test that calls console.log.
 ```
-FAIL public/app/features/dashboard-scene/panel-edit/PanelDataPane/test_v2_ds_picker.test.ts
-  PanelDataQueriesTab V2 Datasource Picker Bug
-    ✕ demonstrates V2 datasource picker bug
+$ FORCE_COLOR=0 yarn test:ci $D/v2_ds_picker.test.tsx
+```
+Test output (jest-haste-map duplicate-mock warnings omitted):
+```
+FAIL public/app/features/dashboard-scene/panel-edit/PanelDataPane/v2_ds_picker.test.tsx
+  ● V2 dashboard panel editor datasource picker › picker shows the datasource defined in the panel queries
 
-    Query datasource uid: prom-ds
-    Tab dsSettings uid: other-ds
-    QueryRunner datasource: other-ds
-    
-    === BUG ANALYSIS ===
-    Expected dsSettings.uid: prom-ds (from query)
-    Actual dsSettings.uid: other-ds
+    expect(received).toBe(expected) // Object.is equality
 
+    Expected: "gdev-prometheus"
+    Received: "gdev-testdata"
+
+      310 |     process.stdout.write(`Picker dsSettings uid: ${queriesTab.state.dsSettings?.uid}\n`);
+      311 |     process.stdout.write(`Query runner datasource after opening the editor: ${JSON.stringify(queriesTab.queryRunner.state.datasource)}\n`);
+    > 312 |     expect(queriesTab.state.dsSettings?.uid).toBe('gdev-prometheus');
+          |                                              ^
+      313 |   });
+      314 | });
+      315 |
+
+      at Object.<anonymous> (public/app/features/dashboard-scene/panel-edit/PanelDataPane/v2_ds_picker.test.tsx:312:46)
+
+Panel-level datasource: undefined
+Query A datasource uid: gdev-prometheus
+Picker dsSettings uid: gdev-testdata
+Query runner datasource after opening the editor: {"uid":"gdev-testdata","type":"grafana-testdata-datasource"}
 Test Suites: 1 failed, 1 total
 Tests:       1 failed, 1 total
-
+Snapshots:   0 total
+Time:        4.083 s
+Ran all test suites matching /public\/app\/features\/dashboard-scene\/panel-edit\/PanelDataPane\/v2_ds_picker.test.tsx/i.
 ```
-The runtime evidence confirms the bug. The panel's queries are correctly configured with datasource.uid: prom-ds, but when the panel editor is opened, the PanelDataQueriesTab shows dsSettings.uid: other-ds from local storage instead. 
+The runtime evidence confirms the bug. The V2 panel has no panel-level datasource (undefined) while its query carries datasource uid gdev-prometheus, yet once the panel editor opens, the PanelDataQueriesTab picker shows dsSettings.uid gdev-testdata, the last used datasource from local storage, and the query runner is switched to gdev-testdata as well. The picker does not resolve to the datasource defined in the panel queries.
 
 The root cause lies in public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataQueriesTab.tsx. Looking at the loadDataSource method:
 ```typescript
@@ -169,72 +197,102 @@ private async loadDataSource() {
     let dsSettings: DataSourceInstanceSettings | undefined;
 
     if (!datasourceToLoad) {
-      // BUG: Falls through to local storage when datasource is undefined
       const dashboardScene = getDashboardSceneFor(this);
       const dashboardUid = dashboardScene.state.uid ?? '';
       const lastUsedDatasource = getLastUsedDatasourceFromStorage(dashboardUid!);
-      // ...uses lastUsedDatasource instead of checking queries
-    }
+
+      // do we have a last used datasource for this dashboard
+      if (lastUsedDatasource?.datasourceUid !== null) {
+        // get datasource from dashbopard uid
+        dsSettings = getDataSourceSrv().getInstanceSettings({ uid: lastUsedDatasource?.datasourceUid });
+        if (dsSettings) {
+          datasource = await getDataSourceSrv().get({
+            uid: lastUsedDatasource?.datasourceUid,
+            type: dsSettings.type,
+          });
+
+          this.queryRunner.setState({
+            datasource: {
+              ...getDataSourceRef(dsSettings),
+              uid: lastUsedDatasource?.datasourceUid,
+            },
+          });
+        }
+      }
+    } else {
 ```
-The issue is that in V2 dashboards, the panel level datasource may be undefined because each query carries it's own datasource. When this happens, the code falls back to local storage's "last used" data source instead of inspecting the actual queries.
+The issue is that in V2 dashboards the panel level datasource is undefined whenever all queries share one datasource, because getPanelDataSource in public/app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene.ts returns a datasource only for mixed panels and each query carries its own datasource. When this happens, the code falls back to local storage's "last used" data source instead of inspecting the actual queries.
 
 I investigated the alerting API's rule creation process to determine if the backend's rule definition populates the frontend query state when the edit view is opened for the Data Source Recording Rules.
 
-I wrote a Jest test to verify the form hydration behavior for cloud recording rules
+I wrote a temporary Jest test that passes a cloud (data source managed) recording rule, as the ruler API returns it, through the rule-to-form conversion used when the edit view opens:
 
 ```
-$ cat > public/app/features/alerting/unified/utils/test_recording_rule.test.ts << 'EOF'
+$ cat > public/app/features/alerting/unified/utils/recording_rule_form.test.ts << 'EOF'
 import { RuleFormType } from '../types/rule-form';
+
 import { rulerRuleToFormValues } from './rule-form';
 
-describe('Cloud Recording Rule Form Hydration Bug', () => {
-  it('demonstrates that queries array is NOT populated for cloud recording rules', () => {
-    const mockRecordingRule = {
+describe('Cloud recording rule form hydration', () => {
+  it('populates the queries array for a cloud recording rule', () => {
+    const recordingRule = {
       record: 'my_recording_metric',
       expr: 'sum(rate(http_requests_total[5m]))',
       labels: { severity: 'info' },
     };
 
-    const mockRuleWithLocation = {
+    const formValues = rulerRuleToFormValues({
       ruleSourceName: 'mimir-datasource',
       namespace: 'test-namespace',
-      group: { name: 'test-group', interval: '1m', rules: [mockRecordingRule] },
-      rule: mockRecordingRule,
-    };
+      group: { name: 'test-group', interval: '1m', rules: [recordingRule] },
+      rule: recordingRule,
+    } as any);
 
-    const formValues = rulerRuleToFormValues(mockRuleWithLocation as any);
-
-    console.log('Rule type:', formValues.type);
-    console.log('Expression field:', formValues.expression);
-    console.log('Queries array length:', formValues.queries.length);
-    console.log('Queries content:', JSON.stringify(formValues.queries, null, 2));
+    process.stdout.write(`Rule type: ${formValues.type}\n`);
+    process.stdout.write(`Expression field: ${formValues.expression}\n`);
+    process.stdout.write(`Queries array length: ${formValues.queries.length}\n`);
+    process.stdout.write(`Queries content: ${JSON.stringify(formValues.queries)}\n`);
 
     expect(formValues.type).toBe(RuleFormType.cloudRecording);
     expect(formValues.expression).toBe('sum(rate(http_requests_total[5m]))');
-    expect(formValues.queries.length).toBe(0); // BUG: should be 1
+    expect(formValues.queries.length).toBe(1);
   });
 });
 EOF
-$ yarn test:ci public/app/features/alerting/unified/utils/test_recording_rule.test.ts
+$ FORCE_COLOR=0 yarn test:ci public/app/features/alerting/unified/utils/recording_rule_form.test.ts
 ```
-Running this test produced this output:
+Test output (jest-haste-map duplicate-mock warnings omitted):
 ```
-FAIL public/app/features/alerting/unified/utils/test_recording_rule.test.ts
-  Cloud Recording Rule Form Hydration Bug
-    ✕ demonstrates that queries array is NOT populated for cloud recording rules
+FAIL public/app/features/alerting/unified/utils/recording_rule_form.test.ts
+  ● Cloud recording rule form hydration › populates the queries array for a cloud recording rule
 
-    Rule type: cloud-recording
-    Expression field: sum(rate(http_requests_total[5m]))
-    Queries array length: 0
-    Queries content: []
-    
-    === BUG EVIDENCE ===
-    The expression is populated but queries array is EMPTY
-    This causes the query builder UI to show nothing/0 count
+    expect(received).toBe(expected) // Object.is equality
 
+    Expected: 1
+    Received: 0
+
+      25 |     expect(formValues.type).toBe(RuleFormType.cloudRecording);
+      26 |     expect(formValues.expression).toBe('sum(rate(http_requests_total[5m]))');
+    > 27 |     expect(formValues.queries.length).toBe(1);
+         |                                       ^
+      28 |   });
+      29 | });
+      30 |
+
+      at Object.<anonymous> (public/app/features/alerting/unified/utils/recording_rule_form.test.ts:27:39)
+
+Rule type: cloud-recording
+Expression field: sum(rate(http_requests_total[5m]))
+Queries array length: 0
+Queries content: []
 Test Suites: 1 failed, 1 total
 Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        4.014 s, estimated 16 s
+Ran all test suites matching /public\/app\/features\/alerting\/unified\/utils\/recording_rule_form.test.ts/i.
 ```
+The type and expression assertions pass and only the queries assertion fails.
+
 The runtime evidence tells us that there is a bug. The backend sends the rule with expr: 'sum(rate(http_requests_total[5m]))', and the form correctly receives the expression in the expression field but the queries array remain empty with length 0. The query builder component depends on this array to render its fields so users see an empty editor.
 
 I examined the rule-to-form mapping utility in public/app/features/alerting/unified/utils/rule-form.ts. The relevant function is rulerRuleToFormValues which handles the conversion from ruler rule format to the React form state.

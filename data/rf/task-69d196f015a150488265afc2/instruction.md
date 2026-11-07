@@ -14,3 +14,5 @@ Use the interface below:
 - Input: `extracts: ExtractResults[]`
 - Output: `void`
 - Description: Mutates the given array of extract results by removing package files from secondary managers that are superseded by a primary manager, preserving entries that have lock files.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

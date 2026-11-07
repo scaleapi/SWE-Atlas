@@ -38,8 +38,8 @@ from app.email_utils import parse_id_from_bounce, get_verp_info_from_email
 
 print("=== TESTING OLD FORMAT PARSER ===")
 old_format_addresses = [
-    "bounce+1+@simplelogin.co",
-    "bounce+12345+@simplelogin.co",
+    "bounce+1+@sl.local",
+    "bounce+12345+@sl.local",
     "bounce+99999+@attacker-controlled.com",
     "bounce+54321+@evil.example",
 ]
@@ -56,8 +56,8 @@ for addr in old_format_addresses:
 
 print("=== TESTING NEW FORMAT PARSER ===")
 new_format_addresses = [
-    "bounce+1+@simplelogin.co",  # Old format - should fail HMAC
-    "verp.AAAA.BBBB@simplelogin.co",  # Fake signed - should fail HMAC
+    "bounce+1+@sl.local",  # Old format - should fail HMAC
+    "verp.AAAA.BBBB@sl.local",  # Fake signed - should fail HMAC
 ]
 
 for addr in new_format_addresses:
@@ -73,11 +73,11 @@ Running the script:
 ```
 $ python test_verp_parsing.py
 === TESTING OLD FORMAT PARSER ===
-Address: bounce+1+@simplelogin.co
+Address: bounce+1+@sl.local
   Extracted ID: 1
   Validation performed: NONE
 
-Address: bounce+12345+@simplelogin.co
+Address: bounce+12345+@sl.local
   Extracted ID: 12345
   Validation performed: NONE
 
@@ -90,11 +90,11 @@ Address: bounce+54321+@evil.example
   Validation performed: NONE
 
 === TESTING NEW FORMAT PARSER ===
-Address: bounce+1+@simplelogin.co
+Address: bounce+1+@sl.local
   HMAC validation result: None
   Valid signature: NO
 
-Address: verp.AAAA.BBBB@simplelogin.co
+Address: verp.AAAA.BBBB@sl.local
   HMAC validation result: None
   Valid signature: NO
 ```
@@ -116,12 +116,12 @@ print()
 
 print("=== TESTING PATTERN MATCHING ===")
 test_addresses = [
-    "bounce+12345+@simplelogin.co",
+    "bounce+12345+@sl.local",
     "bounce+1+@attacker.com",
-    "bounces+12345+@simplelogin.co",  # Note: bounceS
+    "bounces+12345+@sl.local",  # Note: bounceS
     "random@email.com",
-    "bounce+abc+@simplelogin.co",  # Non-numeric
-    "bounce++@simplelogin.co",  # Empty ID
+    "bounce+abc+@sl.local",  # Non-numeric
+    "bounce++@sl.local",  # Empty ID
 ]
 
 for addr in test_addresses:
@@ -139,31 +139,31 @@ Running the script:
 $ python test_pattern_matching.py
 === BOUNCE ADDRESS PATTERN CONFIGURATION ===
 BOUNCE_PREFIX: 'bounce+'
-BOUNCE_SUFFIX: '+@simplelogin.co'
+BOUNCE_SUFFIX: '+@sl.local'
 
 === TESTING PATTERN MATCHING ===
-Address: bounce+12345+@simplelogin.co
+Address: bounce+12345+@sl.local
   Starts with 'bounce+': True
-  Ends with '+@simplelogin.co': True
+  Ends with '+@sl.local': True
   MATCHES BOUNCE PATTERN: True
 
 Address: bounce+1+@attacker.com
   Starts with 'bounce+': True
-  Ends with '+@simplelogin.co': False
+  Ends with '+@sl.local': False
   MATCHES BOUNCE PATTERN: False
 
-Address: bounces+12345+@simplelogin.co
+Address: bounces+12345+@sl.local
   Starts with 'bounce+': False
-  Ends with '+@simplelogin.co': True
+  Ends with '+@sl.local': True
   MATCHES BOUNCE PATTERN: False
 
 Address: random@email.com
   Starts with 'bounce+': False
-  Ends with '+@simplelogin.co': False
+  Ends with '+@sl.local': False
   MATCHES BOUNCE PATTERN: False
 ```
 
-The BOUNCE_SUFFIX configuration value is `+@{EMAIL_DOMAIN}` which dynamically includes the deployment's email domain (in this case `simplelogin.co`). This means the old format pattern matching requires BOTH the correct prefix AND the correct domain suffix. An attacker cannot use an arbitrary domain like `attacker.com`, they must send to the target domain. However, this is trivially achievable since the attacker simply sends emails to `bounce+<id>+@<target_domain>`. To understand exactly how bounce addresses are detected in the actual handler, I traced the conditions in email_handler.py:
+The BOUNCE_SUFFIX configuration value is `+@{EMAIL_DOMAIN}` which dynamically includes the deployment's email domain (in this case `sl.local`). This means the old format pattern matching requires BOTH the correct prefix AND the correct domain suffix. An attacker cannot use an arbitrary domain like `attacker.com`, they must send to the target domain. However, this is trivially achievable since the attacker simply sends emails to `bounce+<id>+@<target_domain>`. To understand exactly how bounce addresses are detected in the actual handler, I traced the conditions in email_handler.py:
 
 ```python
 # test_handler_logic.py
@@ -311,7 +311,7 @@ print("  email_log_id = (verp_info and verp_info[1]) or parse_id_from_bounce(rcp
 print()
 
 # Simulate the OR logic with old format address
-test_addr = "bounce+12345+@simplelogin.co"
+test_addr = "bounce+12345+@sl.local"
 
 # Step 1: Try new format parser
 verp_info = get_verp_info_from_email(test_addr)
@@ -345,13 +345,13 @@ $ python test_or_fallback.py
 The handler code does:
   email_log_id = (verp_info and verp_info[1]) or parse_id_from_bounce(rcpt_tos[0])
 
-Step 1: get_verp_info_from_email('bounce+12345+@simplelogin.co')
+Step 1: get_verp_info_from_email('bounce+12345+@sl.local')
   Result: None
   Has valid HMAC: NO
 
 Step 2: Since verp_info is None, OR triggers fallback:
   (verp_info and verp_info[1]) = None
-  Fallback: parse_id_from_bounce('bounce+12345+@simplelogin.co')
+  Fallback: parse_id_from_bounce('bounce+12345+@sl.local')
   Result: 12345
 
 Final email_log_id: 12345
@@ -379,7 +379,7 @@ print("""
 ATTACK METHODOLOGY:
 1. Attacker sends SMTP with: MAIL FROM:<>
 2. Email has: Content-Type: multipart/report
-3. Recipient: bounce+<probed_id>+@target.simplelogin.co
+3. Recipient: bounce+<probed_id>+@sl.local
 4. Observe SMTP response code
 """)
 
@@ -390,7 +390,7 @@ print("=== PROBING SIMULATION ===")
 print()
 
 for probe_id in probe_ids:
-    addr = f"bounce+{probe_id}+@simplelogin.co"
+    addr = f"bounce+{probe_id}+@sl.local"
     
     # Step 1: HMAC validation (will fail for old format)
     verp_info = get_verp_info_from_email(addr)
@@ -436,30 +436,30 @@ ENUMERATION ATTACK DEMONSTRATION
 ATTACK METHODOLOGY:
 1. Attacker sends SMTP with: MAIL FROM:<>
 2. Email has: Content-Type: multipart/report
-3. Recipient: bounce+<probed_id>+@target.simplelogin.co
+3. Recipient: bounce+<probed_id>+@sl.local
 4. Observe SMTP response code
 
 === PROBING SIMULATION ===
 
-Probe: bounce+1+@simplelogin.co
+Probe: bounce+1+@sl.local
   HMAC validation: BYPASSED (old format)
   Extracted ID: 1
   If ID exists in DB: Response = 250 SL E211 Bounce Forward phase handled or 250 SL E212 Bounce Reply phase handled
   If ID not in DB:    Response = 550 SL E512 No such email log
 
-Probe: bounce+2+@simplelogin.co
+Probe: bounce+2+@sl.local
   HMAC validation: BYPASSED (old format)
   Extracted ID: 2
   If ID exists in DB: Response = 250 SL E211 Bounce Forward phase handled or 250 SL E212 Bounce Reply phase handled
   If ID not in DB:    Response = 550 SL E512 No such email log
 
-Probe: bounce+100+@simplelogin.co
+Probe: bounce+100+@sl.local
   HMAC validation: BYPASSED (old format)
   Extracted ID: 100
   If ID exists in DB: Response = 250 SL E211 Bounce Forward phase handled or 250 SL E212 Bounce Reply phase handled
   If ID not in DB:    Response = 550 SL E512 No such email log
 
-Probe: bounce+99999+@simplelogin.co
+Probe: bounce+99999+@sl.local
   HMAC validation: BYPASSED (old format)
   Extracted ID: 99999
   If ID exists in DB: Response = 250 SL E211 Bounce Forward phase handled or 250 SL E212 Bounce Reply phase handled

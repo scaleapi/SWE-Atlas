@@ -25,3 +25,5 @@ Use the below interface for your solution:
 - Input: `{ title: TranslateResult, items: ChecklistCardItem[] }`
 - Output: `JSX.Element`
 - Description: Reusable card component that renders a titled list of icon and text items. Exported as a named export.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

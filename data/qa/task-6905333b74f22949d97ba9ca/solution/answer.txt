@@ -17,16 +17,15 @@ ls -la /app/scapy/contrib/isotp/
 
 Output:
 ```text
-total 72
-drwxr-xr-x  3 root root  4096 Dec 29 17:07 .
-drwxr-xr-x  5 root root  4096 Dec 29 17:07 ..
--rw-r--r--  1 root root  1282 Dec 29 17:07 __init__.py
-drwxr-xr-x  2 root root  4096 Dec 29 18:06 __pycache__
--rw-r--r--  1 root root  5699 Dec 29 17:07 isotp_native_socket.py
--rw-r--r--  1 root root  8344 Dec 29 17:07 isotp_packet.py
--rw-r--r--  1 root root  8405 Dec 29 17:07 isotp_scanner.py
--rw-r--r--  1 root root 27348 Dec 29 17:07 isotp_soft_socket.py
--rw-r--r--  1 root root  9553 Dec 29 17:07 isotp_utils.py
+total 102
+drwxr-sr-x 1 root 1001   197 Aug 26  2025 .
+drwxr-sr-x 1 root 1001  2077 Aug 26  2025 ..
+-rw-r--r-- 1 root 1001  1642 Aug 26  2025 __init__.py
+-rw-r--r-- 1 root 1001 17047 Aug 26  2025 isotp_native_socket.py
+-rw-r--r-- 1 root 1001 10930 Aug 26  2025 isotp_packet.py
+-rw-r--r-- 1 root 1001 22558 Aug 26  2025 isotp_scanner.py
+-rw-r--r-- 1 root 1001 35021 Aug 26  2025 isotp_soft_socket.py
+-rw-r--r-- 1 root 1001 11974 Aug 26  2025 isotp_utils.py
 ```
 
 The ISO-TP implementation is split across several files: `isotp_packet.py` contains the packet definitions and fragmentation logic, `isotp_soft_socket.py` handles the software-based socket implementation with timeouts and state management, and `isotp_utils.py` provides helper utilities like the message builder.

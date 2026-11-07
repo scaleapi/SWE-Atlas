@@ -29,7 +29,7 @@
       "importance": "must have"
     },
     "id": "e8f183e81c3a48e4efa1da39f7a91933",
-    "title": "1.4: Tests that HealObject returns ObjectNotFound error when too many disks are missing in multi-pool setup"
+    "title": "1.4: Tests that HealObject returns ObjectNotFound error or leaves the object not found when too many disks are missing in multi-pool setup"
   },
   {
     "annotations": {

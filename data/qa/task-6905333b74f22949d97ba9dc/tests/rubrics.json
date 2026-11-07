@@ -25,7 +25,7 @@
   },
   {
     "id": "b2146b6d1e51b85eede953b281f2fbcc",
-    "title": "1.7: Reports the log messages along with the document processing stage it represents after uploading the document. For example: `Consuming test_multipage.pdf` represents the initial ingestion stage, `Parser: RasterisedDocumentParser` represents parser selection stage, etc.",
+    "title": "1.4: Reports the log messages along with the document processing stage it represents after uploading the document. For example: `Consuming test_multipage.pdf` represents the initial ingestion stage, `Parser: RasterisedDocumentParser` represents parser selection stage, etc.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "f5152e65a836a5cfafe604c428e72989",
-    "title": "1.8: Specifies the archive PDF filename pattern observed in media storage uses a 7-digit zero-padded document ID (e.g., 0000003.pdf).",
+    "title": "1.5: Specifies the archive PDF filename pattern observed in media storage uses a 7-digit zero-padded document ID (e.g., 0000003.pdf).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "b75ebad9a8398a2cad02334a18c90325",
-    "title": "1.9: Specifies the thumbnail filename pattern observed in media storage uses a 7-digit zero-padded document ID with .png extension (e.g., 0000003.png).",
+    "title": "1.6: Specifies the thumbnail filename pattern observed in media storage uses a 7-digit zero-padded document ID with .png extension (e.g., 0000003.png).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "6ad63da3595ef169e2916319b7a785ca",
-    "title": "1.10: Identifies that the database content field stores OCR-extracted text from document pages.",
+    "title": "1.7: Identifies that the database content field stores OCR-extracted text from document pages.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

@@ -1,15 +1,11 @@
 #!/bin/bash
-### COMMON SETUP; DO NOT MODIFY ###
 set -e
 
-# --- CONFIGURE THIS SECTION ---
-# Replace this with your command to run all tests
 run_all_tests() {
   echo "Running all tests..."
   go test -timeout 120s -v ./... || true
 }
 
-# Replace this with your command to run specific test files
 run_selected_tests() {
   local test_files=("$@")
   echo "Running selected tests: ${test_files[@]}"
@@ -36,9 +32,7 @@ run_selected_tests() {
     done
   done
 }
-# --- END CONFIGURATION SECTION ---
 
-### COMMON EXECUTION; DO NOT MODIFY ###
 if [ $# -eq 0 ]; then
   run_all_tests
   exit $?

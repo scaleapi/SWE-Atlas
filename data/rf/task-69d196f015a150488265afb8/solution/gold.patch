@@ -1,5 +1,5 @@
 diff --git a/scapy/layers/dot11.py b/scapy/layers/dot11.py
-index 89e9f489..88fd30a8 100644
+index 89e9f489..dfeeca91 100644
 --- a/scapy/layers/dot11.py
 +++ b/scapy/layers/dot11.py
 @@ -30,13 +30,35 @@ from scapy.data import ETHER_ANY, DLT_IEEE802_11, DLT_PRISM_HEADER, \
@@ -110,7 +110,7 @@ index 89e9f489..88fd30a8 100644
          ByteField("len", None),
          LEShortField("version", 1),
          PacketField("group_cipher_suite", RSNCipherSuite(), RSNCipherSuite),
-@@ -884,8 +895,17 @@ class Dot11EltRSN(Dot11Elt):
+@@ -884,8 +895,26 @@ class Dot11EltRSN(Dot11Elt):
              PacketField("pmkids", None, PMKIDListPacket),
              lambda pkt: (
                  0 if pkt.len is None else
@@ -126,11 +126,20 @@ index 89e9f489..88fd30a8 100644
 +        ConditionalField(
 +            PacketField("group_management_cipher_suite",
 +                        RSNCipherSuite(cipher=0x6), RSNCipherSuite),
-+            lambda pkt: pkt.mfp_capable == 1
++            lambda pkt: (
++                0 if pkt.len is None else
++                pkt.mfp_capable == 1 and
++                pkt.len - (
++                    12 +
++                    pkt.nb_pairwise_cipher_suites * 4 +
++                    pkt.nb_akm_suites * 4 +
++                    (len(pkt.pmkids) if pkt.pmkids is not None else 0)
++                ) >= 4
++            )
          )
      ]
  
-@@ -906,7 +926,7 @@ class Dot11EltCountry(Dot11Elt):
+@@ -906,7 +935,7 @@ class Dot11EltCountry(Dot11Elt):
      name = "802.11 Country"
      match_subclass = True
      fields_desc = [
@@ -139,7 +148,7 @@ index 89e9f489..88fd30a8 100644
          ByteField("len", None),
          StrFixedLenField("country_string", b"\0\0\0", length=3),
          PacketListField(
-@@ -924,46 +944,11 @@ class Dot11EltCountry(Dot11Elt):
+@@ -924,46 +953,11 @@ class Dot11EltCountry(Dot11Elt):
      ]
  
  
@@ -187,7 +196,7 @@ index 89e9f489..88fd30a8 100644
          ByteField("len", None),
          FieldListField(
              "rates",
-@@ -978,12 +963,44 @@ class Dot11EltVendorSpecific(Dot11Elt):
+@@ -978,12 +972,44 @@ class Dot11EltVendorSpecific(Dot11Elt):
      name = "802.11 Vendor Specific"
      match_subclass = True
      fields_desc = [
@@ -215,7 +224,7 @@ index 89e9f489..88fd30a8 100644
 +                    # MS WPS IE TODO
 +                    # return Dot11EltWPS
 +                    pass
-+                return Dot11EltVendorSpecific
++            return Dot11EltVendorSpecific
 +        return cls
 +
 +

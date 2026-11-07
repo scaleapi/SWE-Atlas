@@ -49,7 +49,7 @@
   },
   {
     "id": "3ed61d43556533b63a6eb5b32f5dbc4d",
-    "title": "1.8: Explains that the rewrap function signature lacks a parameter for history wrap state.",
+    "title": "1.7: Explains that the rewrap function signature lacks a parameter for history wrap state.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "1d522b0dee13c92d3a03ba89455ba4da",
-    "title": "1.9: Explains that cursor positions are tracked through the rewrap via coordinate parameters.",
+    "title": "1.8: Explains that cursor positions are tracked through the rewrap via coordinate parameters.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

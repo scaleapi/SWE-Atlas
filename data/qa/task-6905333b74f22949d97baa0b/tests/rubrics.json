@@ -49,7 +49,7 @@
   },
   {
     "id": "03b59a0c0d11e73edf6cc000948fed8d",
-    "title": "1.7: Identifies that CLI flags such as `--verify`, `--include-detectors`, and `--exclude-detectors` modify detector behavior when constructing `engine.Config`, since these flags directly control verification and filtering at runtime.",
+    "title": "1.7: Identifies that CLI flags such as `--no-verification`, `--include-detectors`, and `--exclude-detectors` modify detector behavior when constructing `engine.Config`, since these flags directly control verification and filtering at runtime.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "c36423a7ff9637704d8b76e35f0c4e23",
-    "title": "1.10: Identifies that the engine\u2019s notifier workers are responsible for result deduplication, since duplicate findings are filtered at the notifier stage before final reporting.",
+    "title": "1.10: Identifies that the engine's notifier workers are responsible for result deduplication, since duplicate findings are filtered at the notifier stage before final reporting.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "d1a858792d5e4a1d042e3399f0b1ee74",
-    "title": "1.11: Identifies that the engine\u2019s notifier workers update result metrics and counts, since metric calculation occurs in the notifier pipeline after filtering.",
+    "title": "1.11: Identifies that the engine's notifier workers update result metrics and counts, since metric calculation occurs in the notifier pipeline after filtering.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "9718b5e1ce9623006e1b6850051cf9c0",
-    "title": "1.12: Explains that bypassing the engine\u2019s notifier workers by directly consuming `ResultsChan` prevents deduplication and metric updates from executing, since the notifier pipeline performs these post-processing steps.",
+    "title": "1.12: Explains that bypassing the engine's notifier workers by directly consuming `ResultsChan` prevents deduplication and metric updates from executing, since the notifier pipeline performs these post-processing steps.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -137,7 +137,7 @@
   },
   {
     "id": "65b47882d2800ce65e38d2db29e70247",
-    "title": "1.19: Identifies specific configuration fields in the minimal Go API program that differ from CLI defaults, since missing or misconfigured fields cause runtime behavior differences.",
+    "title": "1.18: Identifies specific configuration fields in the minimal Go API program that differ from CLI defaults, since missing or misconfigured fields cause runtime behavior differences.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

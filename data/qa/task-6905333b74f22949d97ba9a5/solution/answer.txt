@@ -23,124 +23,219 @@ def check_suffix_signature(signed_suffix: str) -> Optional[str]:
         return None
 ```
 
-This immediately explained why tampered and expired suffixes produce the same behavior. The itsdangerous library raises BadSignature for both cases, whether the signature is invalid or the timestamp exceeds 600 seconds. Since check_suffix_signature catches BadSignature and returns None, the API endpoint sees None for both expired and tampered signatures, resulting in the same 412 response with the expired message. The except Exception block in the endpoint only catches exceptions that are not BadSignature, which would be unusual edge cases.
+This immediately explained why tampered and expired suffixes produce the same behavior. The signer is an itsdangerous.TimestampSigner (app/alias_suffix.py line 11). Its unsign(..., max_age=600) raises a BadSignature subclass for both cases: SignatureExpired when the embedded timestamp exceeds 600 seconds, and BadSignature/BadTimeSignature when the signature bytes don't verify. Since check_suffix_signature catches itsdangerous.BadSignature and returns None, the API endpoint sees None for both expired and tampered signatures, resulting in the same 412 response with the expired message. The except Exception block in the endpoint only catches exceptions that are not BadSignature, which would be unusual edge cases.
 
-I started the server by running python server.py in a terminal, and it came up listening on localhost:7777. I created a test user and obtained an API key, then fetched valid signed suffixes by calling the alias options endpoint:
+To run this for real I provisioned PostgreSQL 15 in the image, applied the Alembic migrations, added the built-in SimpleLogin domain row for EMAIL_DOMAIN (sl.local), created an activated test user (User 2, test@example.com) with a verified mailbox (id 2), and generated an API key for it directly in the database. I then started the server with `python server.py` and it came up listening on localhost:7777. In the curl commands below, API_KEY is that 60-character key generated in-DB for the test user (real value begins `xysgqmhvoqucygvjhriz...`).
+
+I fetched valid signed suffixes by calling the alias options endpoint:
 
 ```
-curl -H "Authentication: your-api-key" http://localhost:7777/api/v5/alias/options
+curl -H "Authentication: $API_KEY" http://localhost:7777/api/v5/alias/options
 ```
 
-The response included an array of suffixes with their signed versions, each containing a timestamp-based signature that expires after 600 seconds.
+```
+{
+  "can_create": true,
+  "prefix_suggestion": "",
+  "suffixes": [
+    {
+      "is_custom": false,
+      "is_premium": false,
+      "signed_suffix": ".test889@sl.local.ao3wQA.jC_vEU7m0ZEvlASNUM4LNTwqQWw",
+      "suffix": ".test889@sl.local"
+    }
+  ]
+}
+```
 
-To test an expired signature, I waited beyond the 10-minute window and resubmitted the same signed suffix:
+Each signed_suffix has the shape `<suffix>.<url-safe-timestamp>.<hmac-signature>` and expires after 600 seconds. I used the app's own signer to reproduce the three failure inputs deterministically: an expired suffix (a validly-signed suffix whose timestamp I back-dated 700 seconds), a tampered suffix (a valid signed suffix with its last signature character flipped), and a wrong-domain suffix (a validly-signed `@evil.com`). Calling check_suffix_signature() on each in a shell confirmed the expired one returned None (age > 600), the tampered one returned None (BadSignature), and the wrong-domain one returned the decoded `@evil.com` (valid signature, so it passes the signature stage and fails later at domain validation).
+
+To test an expired signature, I submitted the back-dated signed suffix:
 
 ```
 curl -X POST http://localhost:7777/api/v3/alias/custom/new \
-  -H "Authentication: your-api-key" \
+  -H "Authentication: $API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"alias_prefix":"test123","signed_suffix":".abc123@sl.local.XyZ789...expired...","mailbox_ids":[1]}' \
+  -d '{"alias_prefix":"test123","signed_suffix":".test889@sl.local.ao3t-w.D7uTmMNf6BjqZvHkMkSB7HDL9wI","mailbox_ids":[2]}' \
   -i
 ```
 
 ```
-HTTP/1.1 412 PRECONDITION FAILED
+HTTP/1.0 412 PRECONDITION FAILED
 Content-Type: application/json
+Content-Length: 62
 Access-Control-Allow-Origin: *
-Content-Length: 61
+Vary: Cookie
+Set-Cookie: slapp=eyJfZnJlc2giOmZhbHNlLCJfcGVybWFuZW50Ijp0cnVlfQ.ao3w4Q.zGCyDy9YPgFYY5E_D1J3jxQ4q9Q; Expires=Tue, 01-Sep-2026 19:45:37 GMT; HttpOnly; Path=/; SameSite=Lax
+Server: Werkzeug/1.0.1 Python/3.10.18
+Date: Tue, 25 Aug 2026 19:45:37 GMT
 
-{"error":"Alias creation time is expired, please retry"}
+{
+  "error": "Alias creation time is expired, please retry"
+}
 ```
 
-The server console showed:
+The server console showed (the app uses its own SimpleLogin log format, not the Python-default `WARNING:app:` style):
 
 ```
-WARNING:app:Alias creation time expired for <User 1 (test@example.com)>
+2026-08-25 19:45:37,594 - SL - WARNING - 592 - "/app/app/api/views/new_custom_alias.py:187" - new_custom_alias_v3() -  - Alias creation time expired for <User 2 Test test@example.com>
 ```
 
 I then tested with a tampered signature by taking a valid signed suffix and flipping the last character:
 
 ```
 curl -X POST http://localhost:7777/api/v3/alias/custom/new \
-  -H "Authentication: your-api-key" \
+  -H "Authentication: $API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"alias_prefix":"test456","signed_suffix":".xyz789@sl.local.ValidSig...X","mailbox_ids":[1]}' \
+  -d '{"alias_prefix":"test456","signed_suffix":".test889@sl.local.ao3wtw.Wel8eKNdADmAlraZe8ly15ygv4A","mailbox_ids":[2]}' \
   -i
 ```
 
 ```
-HTTP/1.1 412 PRECONDITION FAILED
+HTTP/1.0 412 PRECONDITION FAILED
 Content-Type: application/json
+Content-Length: 62
 Access-Control-Allow-Origin: *
-Content-Length: 61
+Vary: Cookie
+Set-Cookie: slapp=eyJfZnJlc2giOmZhbHNlLCJfcGVybWFuZW50Ijp0cnVlfQ.ao3w4Q.zGCyDy9YPgFYY5E_D1J3jxQ4q9Q; Expires=Tue, 01-Sep-2026 19:45:37 GMT; HttpOnly; Path=/; SameSite=Lax
+Server: Werkzeug/1.0.1 Python/3.10.18
+Date: Tue, 25 Aug 2026 19:45:37 GMT
 
-{"error":"Alias creation time is expired, please retry"}
+{
+  "error": "Alias creation time is expired, please retry"
+}
 ```
 
 The server console showed the same warning:
 
 ```
-WARNING:app:Alias creation time expired for <User 1 (test@example.com)>
+2026-08-25 19:45:37,690 - SL - WARNING - 592 - "/app/app/api/views/new_custom_alias.py:187" - new_custom_alias_v3() -  - Alias creation time expired for <User 2 Test test@example.com>
 ```
 
-This confirms that tampering and expiry produce the exact same 412 status code and error message in the current implementation, which matches the unexpected behavior being debugged.
+This confirms that tampering and expiry produce the exact same 412 status code and error message in the current implementation, which matches the unexpected behavior being debugged. (A tampered token whose structure is corrupted enough to raise a non-BadSignature exception would instead take the except-branch and return HTTP 400 "Tampered suffix"; a valid token with a single flipped signature byte reproducibly raises BadSignature and returns 412.)
 
-I checked every response for rate-limiting headers by examining the full header output. Across all responses including 201 success, 400 errors, 412 precondition failed, and 429 rate limited, the responses contained standard headers like Content-Type, Access-Control-Allow-Origin, and Set-Cookie, but there were no rate-limiting headers whatsoever. No Retry-After, no X-RateLimit-Limit, no X-RateLimit-Remaining, no X-RateLimit-Reset, and no RateLimit-Policy headers appeared in any response.
+I checked every response for rate-limiting headers by examining the full header output. Across all responses including 201 success, 400 errors, 412 precondition failed, and 429 rate limited, the responses contained standard headers like Content-Type, Content-Length, Access-Control-Allow-Origin, Vary, Set-Cookie, Server, and Date, but there were no rate-limiting headers whatsoever. No Retry-After, no X-RateLimit-Limit, no X-RateLimit-Remaining, no X-RateLimit-Reset, and no RateLimit-Policy headers appeared in any response (see the 429 header block below for a representative example).
 
-To test domain validation failures, I created a signed suffix for a domain the user does not have access to and submitted it:
+To test domain validation failures, I submitted a validly-signed suffix for a domain the user does not have access to:
 
 ```
 curl -X POST http://localhost:7777/api/v3/alias/custom/new \
-  -H "Authentication: your-api-key" \
+  -H "Authentication: $API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"alias_prefix":"evil","signed_suffix":"@unauthorized-domain.com.ValidSig","mailbox_ids":[1]}' \
+  -d '{"alias_prefix":"evil","signed_suffix":"@evil.com.ao3wtw.lcAcaQqHZ-JMU6xCbTFWJ36sksY","mailbox_ids":[2]}' \
   -i
 ```
 
 ```
-HTTP/1.1 400 BAD REQUEST
+HTTP/1.0 400 BAD REQUEST
 Content-Type: application/json
-Content-Length: 42
+Content-Length: 46
+Access-Control-Allow-Origin: *
+Vary: Cookie
+Set-Cookie: slapp=eyJfZnJlc2giOmZhbHNlLCJfcGVybWFuZW50Ijp0cnVlfQ.ao3w4Q.zGCyDy9YPgFYY5E_D1J3jxQ4q9Q; Expires=Tue, 01-Sep-2026 19:45:37 GMT; HttpOnly; Path=/; SameSite=Lax
+Server: Werkzeug/1.0.1 Python/3.10.18
+Date: Tue, 25 Aug 2026 19:45:37 GMT
 
-{"error":"wrong alias prefix or suffix"}
+{
+  "error": "wrong alias prefix or suffix"
+}
 ```
 
 The server console logged this at ERROR level from the verify_prefix_suffix function in app/alias_suffix.py at line 61:
 
 ```
-ERROR:app:wrong alias suffix @unauthorized-domain.com, user <User 1 (test@example.com)>
+2026-08-25 19:45:37,802 - SL - ERROR - 592 - "/app/app/alias_suffix.py:61" - verify_prefix_suffix() -  - wrong alias suffix @evil.com, user <User 2 Test test@example.com>
 ```
 
-For rate limiting, I rapidly sent multiple requests in succession to exceed the endpoint limit. The ALIAS_LIMIT configuration at line 448 of app/config.py defaults to 100/day;50/hour;5/minute. After the fifth request within a minute:
+For rate limiting, I rapidly sent multiple requests in succession to exceed the endpoint limit. The ALIAS_LIMIT configuration at line 448 of app/config.py defaults to 100/day;50/hour;5/minute. After the fifth request within a minute, the sixth returned:
 
 ```
-HTTP/1.1 429 TOO MANY REQUESTS
+HTTP/1.0 429 TOO MANY REQUESTS
 Content-Type: application/json
-Content-Length: 33
+Content-Length: 37
+Access-Control-Allow-Origin: *
+Vary: Cookie
+Set-Cookie: slapp=eyJfZnJlc2giOmZhbHNlLCJfcGVybWFuZW50Ijp0cnVlfQ.ao3w_Q.qvRF2oAW_VtZ01Qz5ThXY3UXIP4; Expires=Tue, 01-Sep-2026 19:46:05 GMT; HttpOnly; Path=/; SameSite=Lax
+Server: Werkzeug/1.0.1 Python/3.10.18
+Date: Tue, 25 Aug 2026 19:46:05 GMT
 
-{"error":"Rate limit exceeded"}
+{
+  "error": "Rate limit exceeded"
+}
 ```
 
-The server console logged this from the 429 error handler in server.py at lines 362 through 372:
+This header block is representative of every response: no Retry-After or X-RateLimit-* headers are present. The server console logged this from the 429 error handler in server.py at lines 362 through 372. Note the Flask-Limiter decorator fires before require_api_auth loads the user, so get_current_user() returns the anonymous user object at this point rather than the authenticated user:
 
 ```
-WARNING:app:Client hit rate limit on path /api/v3/alias/custom/new, user:<User 1 (test@example.com)>
+2026-08-25 19:46:05,059 - SL - WARNING - 592 - "/app/server.py:364" - rate_limited() -  - Client hit rate limit on path /api/v3/alias/custom/new, user:<flask_login.mixins.AnonymousUserMixin object at 0x7ffff48ebbb0>
 ```
 
-To test the free-plan quota limit, I created aliases until reaching the maximum. The MAX_NB_EMAIL_FREE_PLAN setting defaults to 5 as shown in app/config.py at lines 121 through 124. After creating five aliases, the next creation attempt returned:
+To test the free-plan quota limit, I used a second activated user (User 3, quota@example.com) that already held five aliases, the free-account maximum. The MAX_NB_EMAIL_FREE_PLAN setting defaults to 5 as shown in app/config.py at lines 121 through 124. The next creation attempt returned:
 
 ```
-HTTP/1.1 400 BAD REQUEST
+HTTP/1.0 400 BAD REQUEST
 Content-Type: application/json
-Content-Length: 142
+Content-Length: 146
+Access-Control-Allow-Origin: *
+Vary: Cookie
+Set-Cookie: slapp=eyJfZnJlc2giOmZhbHNlLCJfcGVybWFuZW50Ijp0cnVlfQ.ao3xJA.3TvDR5Ws71SNjh60ZkBlFyC1onM; Expires=Tue, 01-Sep-2026 19:46:44 GMT; HttpOnly; Path=/; SameSite=Lax
+Server: Werkzeug/1.0.1 Python/3.10.18
+Date: Tue, 25 Aug 2026 19:46:44 GMT
 
-{"error":"You have reached the limitation of a free account with the maximum of 5 aliases, please upgrade your plan to create more aliases"}
+{
+  "error": "You have reached the limitation of a free account with the maximum of 5 aliases, please upgrade your plan to create more aliases"
+}
 ```
 
 The server console logged this at DEBUG level from line 138 in the new_custom_alias_v3 function:
 
 ```
-DEBUG:app:user <User 1 (test@example.com)> cannot create any custom alias
+2026-08-25 19:46:44,045 - SL - DEBUG - 592 - "/app/app/api/views/new_custom_alias.py:138" - new_custom_alias_v3() -  - user <User 3 Quota quota@example.com> cannot create any custom alias
+```
+
+For a successful creation (User 2, below the quota, with a fresh valid signed suffix), the endpoint returned HTTP 201 with the created alias details, and no quota log line was emitted:
+
+```
+curl -X POST http://localhost:7777/api/v3/alias/custom/new \
+  -H "Authentication: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"alias_prefix":"myaliasone","signed_suffix":".test889@sl.local.ao3wtw.Wel8eKNdADmAlraZe8ly15ygv4M","mailbox_ids":[2]}' \
+  -i
+```
+
+```
+HTTP/1.0 201 CREATED
+Content-Type: application/json
+Content-Length: 546
+...
+
+{
+  "alias": "myaliasone.test889@sl.local",
+  "creation_date": "2026-08-25 19:46:04+00:00",
+  "creation_timestamp": 1787687164,
+  "disable_pgp": false,
+  "email": "myaliasone.test889@sl.local",
+  "enabled": true,
+  "id": 3,
+  "latest_activity": null,
+  "mailbox": {
+    "email": "test@example.com",
+    "id": 2
+  },
+  "mailboxes": [
+    {
+      "email": "test@example.com",
+      "id": 2
+    }
+  ],
+  "name": null,
+  "nb_block": 0,
+  "nb_forward": 0,
+  "nb_reply": 0,
+  "note": null,
+  "pinned": false,
+  "support_pgp": false
+}
 ```
 
 The quota check is performed by the User.can_create_new_alias method in app/models.py at lines 867 through 884:
@@ -166,9 +261,9 @@ def can_create_new_alias(self) -> bool:
         )
 ```
 
-This method first checks if the user account is active and not disabled. If the user has a lifetime subscription or active paid subscription, they are allowed unlimited aliases. Otherwise, the method counts existing aliases and compares against the free account maximum. When this check passes successfully, no log entry is emitted. The debug log only appears when the check fails and creation is denied.
+This method first checks if the user account is active and not disabled. If the user has a lifetime subscription or active paid subscription, they are allowed unlimited aliases. Otherwise, the method counts existing aliases and compares against the free account maximum. When this check passes successfully, no log entry is emitted (as observed in the 201 case above). The debug log only appears when the check fails and creation is denied.
 
-For successful alias creation attempts, there is an additional rate-limiting layer inside the Alias.create method at lines 1627 through 1641 in app/models.py:
+For successful alias creation attempts, there is an additional rate-limiting layer inside the Alias.create method at lines 1628 through 1641 in app/models.py:
 
 ```python
 @classmethod
@@ -188,12 +283,14 @@ def create(cls, **kw):
         rate_limiter.check_bucket_limit(key, limit[0], limit[1])
 ```
 
-This bucket-based rate limiter requires Redis to be configured. The limits for free users default to 10 aliases per 900 seconds and 50 per 3600 seconds, while paid users get 50 per 900 seconds and 200 per 3600 seconds, as configured at lines 554 through 559 in app/config.py. When Redis is not available, the check_bucket_limit function in app/rate_limiter.py simply returns early at line 29 without enforcing any limit. When Redis is configured and the limit is exceeded, the function logs at INFO level at line 33:
+This bucket-based rate limiter requires Redis to be configured. The limits for free users default to 10 aliases per 900 seconds and 50 per 3600 seconds, while paid users get 50 per 900 seconds and 200 per 3600 seconds, as configured at lines 554 through 559 in app/config.py. When Redis is not available (as in this environment), the check_bucket_limit function in app/rate_limiter.py returns early at line 29 (`if not lock_redis: return`) without enforcing any limit, which is why my successful creations were not affected by it. When Redis is configured and the limit is exceeded, the function logs at INFO level from the LOG.i statement at line 33:
 
+```python
+LOG.i(
+    f"Rate limit hit for {lock_name} (bucket id {bucket_id}) -> {value}/{max_hits}"
+)
 ```
-Rate limit hit for alias_create_900d:1 (bucket id 1702500000) -> 11/10
-```
 
-And then raises a TooManyRequests exception at line 40.
+and then raises a TooManyRequests exception at line 40.
 
-The execution path for alias creation flows through several layers. Incoming requests first hit the Flask-Limiter decorator enforcing the ALIAS_LIMIT rate, returning 429 if exceeded. The require_api_auth decorator then validates the API key and loads the user context, followed by the parallel_limiter.lock preventing concurrent creation for the same user. Inside the handler, can_create_new_alias checks if the user is active, not disabled, and either has a subscription or hasn't exceeded the free quota, returning 400 if denied. The check_suffix_signature function verifies the signed suffix, returning None for any BadSignature which triggers 412. The verify_prefix_suffix function validates domain access, returning 400 on mismatch. If all pass, Alias.create performs bucket rate limiting when Redis is available, then inserts the record, returning 201 on success or 409 if the alias exists.
+The execution path for alias creation flows through several layers. Incoming requests first hit the Flask-Limiter decorator enforcing the ALIAS_LIMIT rate, returning 429 if exceeded. The require_api_auth decorator then validates the API key and loads the user context, followed by the parallel_limiter.lock preventing concurrent creation for the same user. Inside the handler, can_create_new_alias is checked first and returns 400 if the user is inactive, disabled, or over the free quota. The check_suffix_signature function then verifies the signed suffix, returning None for any BadSignature which triggers 412. After that, the verify_prefix_suffix function validates domain access, returning 400 on mismatch. If all pass, Alias.create performs bucket rate limiting when Redis is available, then inserts the record, returning 201 on success or 409 if the alias exists.

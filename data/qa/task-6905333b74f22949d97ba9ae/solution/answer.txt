@@ -1,6 +1,6 @@
 I started by examining the SimpleLogin codebase to understand how inbound email replies are resolved to contacts, focusing on the `handle_reply()` function and the `reply_email` lookup mechanism. My goal is to trace the actual runtime values involved in reply resolution, observe how contacts are looked up, and determine whether race conditions or uniqueness assumptions could cause replies to be routed to the wrong user.
 
-First, I need to understand how the reply email address is derived from the inbound message. Looking at the email handler, I can see that when an email arrives, the system extracts the recipient address from the SMTP envelope. Let me trace this code flow by examining the relevant source files.
+First, I looked at how the reply email address is derived from the inbound message. In the email handler, when an email arrives, the system extracts the recipient address from the SMTP envelope. I traced this code flow through the relevant source files.
 
 ```
 grep -n "def handle" /app/email_handler.py | head -5
@@ -16,7 +16,7 @@ Output:
 1432:def handle_bounce_forward_phase(msg: Message, email_log: EmailLog):
 ```
 
-The main entry point is `handle()` which I need to find. Let me examine how it extracts recipients from the envelope:
+The main entry point is `handle()`, which extracts recipients from the envelope:
 
 ```
 sed -n '1945,1955p' /app/email_handler.py
@@ -38,7 +38,7 @@ def handle(envelope: Envelope, msg: Message) -> str:
     if headers.CONTENT_TRANSFER_ENCODING not in msg:
 ```
 
-This shows that `envelope.rcpt_tos` contains the recipient addresses from the SMTP RCPT TO command. The recipients are sanitized and then processed. Let me see how these recipients are routed to `handle_reply()`:
+This shows that `envelope.rcpt_tos` contains the recipient addresses from the SMTP RCPT TO command. The recipients are sanitized and then processed. They are routed to `handle_reply()` here:
 
 ```
 sed -n '2180,2200p' /app/email_handler.py
@@ -72,7 +72,7 @@ Output:
 
 This shows that for each recipient in `rcpt_tos`, if `is_reverse_alias(rcpt_to)` returns True, the system calls `handle_reply(envelope, copy_msg, rcpt_to)`. The `rcpt_to` is the message recipient from the SMTP envelope.
 
-Now let me examine `handle_reply()` to see how it uses this recipient:
+`handle_reply()` uses this recipient as follows:
 
 ```
 sed -n '966,995p' /app/email_handler.py
@@ -115,7 +115,7 @@ def handle_reply(envelope, msg: Message, rcpt_to: str) -> (bool, str):
 
 This code shows that at line 972, `reply_email = rcpt_to`, meaning the reply_email IS the message recipient from the SMTP envelope. At line 984, it is normalized with `normalize_reply_email()`. At line 986, the contact lookup is performed using `Contact.get_by(reply_email=reply_email)`. At line 994, the forwarding destination is derived from the resolved contact's alias.
 
-Now I need to verify the database schema to understand whether duplicate reply_email values are permitted. Let me check the Contact model definition:
+Next, I checked the Contact model definition to see whether the database schema permits duplicate reply_email values:
 
 ```
 grep -n "class Contact" /app/app/models.py
@@ -127,7 +127,7 @@ Output:
 1863:class Contact(Base, ModelMixin):
 ```
 
-Let me examine the Contact model's constraints:
+The Contact model's constraints:
 
 ```
 sed -n '1863,1905p' /app/app/models.py
@@ -183,7 +183,7 @@ class Contact(Base, ModelMixin):
 
 This output reveals critical information. At line 1875, the only unique constraint is `UniqueConstraint("alias_id", "website_email", name="uq_contact")`. At line 1899, `reply_email` is defined with `index=True` but NOT with `unique=True`. This means the database permits multiple contacts to share the same `reply_email` value.
 
-Let me verify this by checking the migration file that created the reply_email index:
+The migration file that created the reply_email index confirms this:
 
 ```
 grep -n "ix_contact_reply_email" /app/migrations/versions/2021_071310_78403c7b8089_.py
@@ -198,7 +198,7 @@ Output:
 
 The index was explicitly created with `unique=False`, confirming there is no database-level uniqueness enforcement on `reply_email`. This is direct evidence that duplicate `reply_email` values are permitted by the schema.
 
-Now let me examine the `get_by()` method to understand what happens when multiple contacts share the same reply_email:
+The `get_by()` method shows what happens when multiple contacts share the same reply_email:
 
 ```
 sed -n '82,85p' /app/app/models.py
@@ -215,7 +215,7 @@ Output:
 
 The `get_by()` method uses `.first()` which returns only the first matching record. If multiple contacts share the same `reply_email`, only one is returned and the others are silently ignored. This is the justification for why only one contact is returned when duplicates exist.
 
-Now I need to trace the TOCTOU race condition in `generate_reply_email()`. Let me examine this function:
+The TOCTOU race condition is in `generate_reply_email()`:
 
 ```
 sed -n '1103,1155p' /app/app/email_utils.py
@@ -281,7 +281,7 @@ def generate_reply_email(contact_email: str, alias: Alias) -> str:
 
 This shows the check-then-use pattern. At line 1150, the function checks `available_sl_email(reply_email)` and if True, returns the email for later use. But no lock or atomic operation ensures the email remains available between the check and the eventual database insert.
 
-Let me examine the `available_sl_email()` function:
+The `available_sl_email()` function:
 
 ```
 sed -n '1425,1433p' /app/app/models.py
@@ -303,434 +303,314 @@ def available_sl_email(email: str) -> bool:
 
 This function performs a simple database read without acquiring any lock. Concurrent processes can both observe the email as "available" before either has written their contact record, leading to duplicate `reply_email` values.
 
-Now let me write a test script to demonstrate the runtime behavior. This script will simulate the scenario and show the exact values involved:
+Whether a wrongly resolved reply is actually sent also depends on the anti-spoofing check that runs after the alias is taken from the contact:
 
 ```
-cat > /tmp/test_reply_resolution.py << 'EOF'
-#!/usr/bin/env python3
-"""
-Test script to demonstrate reply email resolution behavior.
-This script simulates the code flow without requiring database connections.
-"""
-from datetime import datetime
-
-# Simulated contact data (representing race condition outcome)
-contacts_db = [
-    {"id": 7, "user_id": 5, "alias_id": 11, "reply_email": "race_test_abc123@sl.local"},
-    {"id": 8, "user_id": 6, "alias_id": 12, "reply_email": "race_test_abc123@sl.local"},
-]
-
-def get_by_reply_email(reply_email):
-    """Simulates Contact.get_by(reply_email=X) - returns first match only"""
-    for contact in contacts_db:
-        if contact["reply_email"] == reply_email:
-            return contact
-    return None
-
-def normalize_reply_email(reply_email):
-    """Simulates normalize_reply_email() - returns unchanged for valid emails"""
-    return reply_email
-
-def simulate_handle_reply(rcpt_to, expected_user_id, event_num):
-    """Simulates the handle_reply() function flow"""
-    timestamp = datetime.now().isoformat()
-    
-    print("=" * 70)
-    print(f"REPLY EVENT #{event_num}")
-    print("=" * 70)
-    print(f"Timestamp: {timestamp}")
-    print()
-    print(f"User{expected_user_id} sends a reply to their contact's reverse-alias:")
-    print(f"  SMTP RCPT TO: {rcpt_to}")
-    print()
-    
-    # Line 972: reply_email = rcpt_to
-    reply_email = rcpt_to
-    print("In handle_reply():")
-    print(f"  reply_email = rcpt_to  # Line 972")
-    print(f"  reply_email = '{reply_email}'")
-    
-    # Line 984: normalize
-    reply_email = normalize_reply_email(reply_email)
-    print(f"  reply_email = normalize_reply_email(reply_email)  # Line 984")
-    
-    # Line 986: contact lookup
-    print(f"  contact = Contact.get_by(reply_email='{reply_email}')  # Line 986")
-    print()
-    
-    contact = get_by_reply_email(reply_email)
-    
-    if contact:
-        print(f"RESULT: Contact id={contact['id']}, user_id={contact['user_id']}, alias_id={contact['alias_id']}")
-        if contact['user_id'] != expected_user_id:
-            print(f"  -> This is User{contact['user_id']}'s contact, NOT User{expected_user_id}'s contact!")
-        print()
-        print("Forwarding destination derived:")
-        print(f"  alias = contact.alias  # Line 994")
-        print(f"  alias = Alias(id={contact['alias_id']}, user_id={contact['user_id']})")
-        print(f"  user = alias.user")
-        print(f"  user = User(id={contact['user_id']})")
-        print()
-        if contact['user_id'] != expected_user_id:
-            print(f"IMPACT: User{expected_user_id}'s reply is forwarded to User{contact['user_id']}'s contact!")
-    else:
-        print("RESULT: contact = None")
-        print("  -> No contact exists with this reply_email")
-        print()
-        print("Bounce/Rejection behavior (lines 987-989):")
-        print("  if not contact:  # True, contact is None")
-        print(f'      LOG.w("No contact with {reply_email} as reverse alias")')
-        print("      return False, status.E502")
-        print()
-        print("Return value: (False, '550 SL E502 Email not exist')")
-        print()
-        print("IMPACT:")
-        print("  - The email is NOT delivered (return False)")
-        print("  - SMTP status E502 (550 error) is returned to the sending server")
-        print("  - The sender receives a bounce notification")
-    
-    return contact, timestamp
-
-# Main execution
-print("Setup - Two contacts exist with the SAME reply_email (due to race condition):")
-print(f"  Contact1: id=7, user_id=5, alias_id=11, reply_email='race_test_abc123@sl.local'")
-print(f"  Contact2: id=8, user_id=6, alias_id=12, reply_email='race_test_abc123@sl.local'")
-print()
-print("Database verification: 2 contacts share this reply_email")
-for c in contacts_db:
-    print(f"  - Contact id={c['id']}, user_id={c['user_id']}")
-print()
-
-# Event 1: User6 replies (expects their contact id=8)
-shared_reply_email = "race_test_abc123@sl.local"
-contact1, ts1 = simulate_handle_reply(shared_reply_email, expected_user_id=6, event_num=1)
-print()
-
-import time
-time.sleep(0.5)
-
-# Event 2: User5 replies (expects their contact id=7)
-contact2, ts2 = simulate_handle_reply(shared_reply_email, expected_user_id=5, event_num=2)
-print()
-
-# Summary
-print("=" * 70)
-print("SUMMARY OF TWO REPLY EVENTS")
-print("=" * 70)
-print()
-print("Database contains two contacts with same reply_email:")
-print("  Contact id=7, user_id=5, alias_id=11")
-print("  Contact id=8, user_id=6, alias_id=12")
-print()
-print(f"Event #1 at {ts1}:")
-print(f"  reply_email: {shared_reply_email}")
-print(f"  Contact.get_by() returned: Contact id={contact1['id']}, user_id={contact1['user_id']}")
-print(f"  Expected contact: Contact id=8, user_id=6 (User6's contact)")
-print(f"  Actual contact: Contact id={contact1['id']}, user_id={contact1['user_id']} (User5's contact)")
-print(f"  -> WRONG USER DELIVERY!")
-print()
-print(f"Event #2 at {ts2}:")
-print(f"  reply_email: {shared_reply_email}")
-print(f"  Contact.get_by() returned: Contact id={contact2['id']}, user_id={contact2['user_id']}")
-print(f"  Expected contact: Contact id=7, user_id=5 (User5's contact)")
-print(f"  Actual contact: Contact id={contact2['id']}, user_id={contact2['user_id']} (User5's contact)")
-print(f"  -> Correct delivery (by coincidence)")
-print()
-print("Key Observation:")
-print(f"  Both events resolved to the SAME contact (id={contact1['id']}, user_id={contact1['user_id']})")
-print("  because Contact.get_by() returns only the first matching record.")
-print("  Contact id=8 (user_id=6) is completely INVISIBLE!")
-
-# Test None case
-print()
-print()
-simulate_handle_reply("nonexistent_reply_xyz789@sl.local", expected_user_id=99, event_num=3)
-EOF
-```
-
-Running this script:
-
-```
-python3 /tmp/test_reply_resolution.py
+sed -n '1018,1050p' /app/email_handler.py
 ```
 
 Output:
 
 ```
-Setup - Two contacts exist with the SAME reply_email (due to race condition):
-  Contact1: id=7, user_id=5, alias_id=11, reply_email='race_test_abc123@sl.local'
-  Contact2: id=8, user_id=6, alias_id=12, reply_email='race_test_abc123@sl.local'
+    # Anti-spoofing
+    mailbox = get_mailbox_from_mail_from(mail_from, alias)
+    if not mailbox:
+        if alias.disable_email_spoofing_check:
+            # ignore this error, use default alias mailbox
+            LOG.w(
+                "ignore unknown sender to reverse-alias %s: %s -> %s",
+                mail_from,
+                alias,
+                contact,
+            )
+            mailbox = alias.mailbox
+        else:
+            # only mailbox can send email to the reply-email
+            handle_unknown_mailbox(envelope, msg, reply_email, user, alias, contact)
+            # return 2** to avoid Postfix sending out bounces and avoid backscatter issue
+            return False, status.E214
 
-Database verification: 2 contacts share this reply_email
-  - Contact id=7, user_id=5
-  - Contact id=8, user_id=6
+    if ENFORCE_SPF and mailbox.force_spf and not alias.disable_email_spoofing_check:
+        if not spf_pass(envelope, mailbox, user, alias, contact.website_email, msg):
+            # cannot use 4** here as sender will retry.
+            # cannot use 5** because that generates bounce report
+            return True, status.E201
 
-======================================================================
-REPLY EVENT #1
-======================================================================
-Timestamp: 2026-02-23T12:23:09.055239
-
-User6 sends a reply to their contact's reverse-alias:
-  SMTP RCPT TO: race_test_abc123@sl.local
-
-In handle_reply():
-  reply_email = rcpt_to  # Line 972
-  reply_email = 'race_test_abc123@sl.local'
-  reply_email = normalize_reply_email(reply_email)  # Line 984
-  contact = Contact.get_by(reply_email='race_test_abc123@sl.local')  # Line 986
-
-RESULT: Contact id=7, user_id=5, alias_id=11
-  -> This is User5's contact, NOT User6's contact!
-
-Forwarding destination derived:
-  alias = contact.alias  # Line 994
-  alias = Alias(id=11, user_id=5)
-  user = alias.user
-  user = User(id=5)
-
-IMPACT: User6's reply is forwarded to User5's contact!
-
-======================================================================
-REPLY EVENT #2
-======================================================================
-Timestamp: 2026-02-23T12:23:09.555976
-
-User5 sends a reply to their contact's reverse-alias:
-  SMTP RCPT TO: race_test_abc123@sl.local
-
-In handle_reply():
-  reply_email = rcpt_to  # Line 972
-  reply_email = 'race_test_abc123@sl.local'
-  reply_email = normalize_reply_email(reply_email)  # Line 984
-  contact = Contact.get_by(reply_email='race_test_abc123@sl.local')  # Line 986
-
-RESULT: Contact id=7, user_id=5, alias_id=11
-
-Forwarding destination derived:
-  alias = contact.alias  # Line 994
-  alias = Alias(id=11, user_id=5)
-  user = alias.user
-  user = User(id=5)
-
-
-======================================================================
-SUMMARY OF TWO REPLY EVENTS
-======================================================================
-
-Database contains two contacts with same reply_email:
-  Contact id=7, user_id=5, alias_id=11
-  Contact id=8, user_id=6, alias_id=12
-
-Event #1 at 2026-02-23T12:23:09.055239:
-  reply_email: race_test_abc123@sl.local
-  Contact.get_by() returned: Contact id=7, user_id=5
-  Expected contact: Contact id=8, user_id=6 (User6's contact)
-  Actual contact: Contact id=7, user_id=5 (User5's contact)
-  -> WRONG USER DELIVERY!
-
-Event #2 at 2026-02-23T12:23:09.555976:
-  reply_email: race_test_abc123@sl.local
-  Contact.get_by() returned: Contact id=7, user_id=5
-  Expected contact: Contact id=7, user_id=5 (User5's contact)
-  Actual contact: Contact id=7, user_id=5 (User5's contact)
-  -> Correct delivery (by coincidence)
-
-Key Observation:
-  Both events resolved to the SAME contact (id=7, user_id=5)
-  because Contact.get_by() returns only the first matching record.
-  Contact id=8 (user_id=6) is completely INVISIBLE!
-
-
-======================================================================
-REPLY EVENT #3
-======================================================================
-Timestamp: 2026-02-23T12:23:09.556032
-
-User99 sends a reply to their contact's reverse-alias:
-  SMTP RCPT TO: nonexistent_reply_xyz789@sl.local
-
-In handle_reply():
-  reply_email = rcpt_to  # Line 972
-  reply_email = 'nonexistent_reply_xyz789@sl.local'
-  reply_email = normalize_reply_email(reply_email)  # Line 984
-  contact = Contact.get_by(reply_email='nonexistent_reply_xyz789@sl.local')  # Line 986
-
-RESULT: contact = None
-  -> No contact exists with this reply_email
-
-Bounce/Rejection behavior (lines 987-989):
-  if not contact:  # True, contact is None
-      LOG.w("No contact with nonexistent_reply_xyz789@sl.local as reverse alias")
-      return False, status.E502
-
-Return value: (False, '550 SL E502 Email not exist')
-
-IMPACT:
-  - The email is NOT delivered (return False)
-  - SMTP status E502 (550 error) is returned to the sending server
-  - The sender receives a bounce notification
+    email_log = EmailLog.create(
+        contact_id=contact.id,
+        alias_id=contact.alias_id,
+        is_reply=True,
+        user_id=contact.user_id,
+        mailbox_id=mailbox.id,
+        message_id=msg[headers.MESSAGE_ID],
+        commit=True,
+    )
 ```
 
-This output demonstrates all the key behaviors. Two separate reply handling events occurred at different timestamps. Both events resolved to the same contact (id=7, user_id=5) because `Contact.get_by()` returns only the first matching record. Event #1 resulted in wrong-user delivery where User6's reply was forwarded to User5's contact. Event #3 shows what happens when `Contact.get_by()` returns None - the email is rejected with E502 status and the sender receives a bounce notification.
+So `user = alias.user` and the `EmailLog` (`user_id=contact.user_id`, `alias_id=contact.alias_id`) both come from whichever contact `Contact.get_by()` returned. The sender's mailbox is only checked against that contact's alias: if it does not match, the alias owner of the resolved contact is notified (E214); if that alias has `disable_email_spoofing_check` on, the reply is sent through it.
 
-Now let me write another test script to demonstrate the TOCTOU race condition:
-
-```
-cat > /tmp/test_toctou.py << 'EOF'
-#!/usr/bin/env python3
-"""
-Test script to demonstrate the TOCTOU race condition in generate_reply_email().
-"""
-from datetime import datetime
-
-# Simulated database state
-contacts_db = []
-
-def available_sl_email(email):
-    """Simulates available_sl_email() - checks if email is in use"""
-    for contact in contacts_db:
-        if contact["reply_email"] == email:
-            return False
-    return True
-
-def create_contact(user_id, alias_id, website_email, reply_email):
-    """Simulates Contact.create()"""
-    contact = {
-        "id": len(contacts_db) + 1,
-        "user_id": user_id,
-        "alias_id": alias_id,
-        "website_email": website_email,
-        "reply_email": reply_email
-    }
-    contacts_db.append(contact)
-    return contact
-
-# Demonstrate the TOCTOU window
-print("TOCTOU Race Condition Demonstration")
-print("=" * 70)
-print()
-
-reply_email = "shared_sender_at_external_com_abc123@sl.local"
-
-print("1. STEP 1: generate_reply_email called for User1")
-print(f"   Generated reply_email: {reply_email}")
-# At this point, available_sl_email would return True
-print(f"   At this point, available_sl_email({reply_email}) = True")
-print("   (No contact exists yet with this reply_email)")
-print()
-
-print("   === TOCTOU WINDOW OPENS ===")
-print("   Between available_sl_email() returning True and contact creation,")
-print("   another process could also check and get True.")
-print()
-
-# Simulate another process checking during the window
-print("   [Process B checks during window]")
-print(f"   Process B: available_sl_email({reply_email}) = True")
-print("   Process B also thinks the email is available!")
-print()
-
-# Process A creates contact
-contact1 = create_contact(
-    user_id=5,
-    alias_id=11,
-    website_email="sender@external.com",
-    reply_email=reply_email
-)
-print(f"   Process A creates Contact: id={contact1['id']}, user_id={contact1['user_id']}")
-print("   === TOCTOU WINDOW CLOSES for Process A ===")
-print()
-
-print("2. STEP 2: Process B also creates contact with SAME reply_email")
-contact2 = create_contact(
-    user_id=6,
-    alias_id=12,
-    website_email="sender@external.com",
-    reply_email=reply_email
-)
-print(f"   Process B creates Contact: id={contact2['id']}, user_id={contact2['user_id']}")
-print()
-
-print(f"3. STEP 3: Now available_sl_email({reply_email}) = False")
-print("   But it's too late - both contacts already exist!")
-print()
-
-print("Result: Two contacts with SAME reply_email:")
-for c in contacts_db:
-    print(f"  - Contact id={c['id']}, user_id={c['user_id']}, reply_email={c['reply_email']}")
-print()
-
-print("TOCTOU Window Explanation:")
-print("  The generate_reply_email() function checks available_sl_email(reply_email)")
-print("  and then returns the email for later use. But no lock or atomic operation")
-print("  ensures the email remains available between the check and the database insert.")
-print("  Concurrent processes can both observe the email as 'available' before either")
-print("  has written their contact record, leading to duplicate reply_email values.")
-EOF
-```
-
-Running this script:
+To observe the real values I ran SimpleLogin's own code against a scratch PostgreSQL database in the container. I started the bundled PostgreSQL and Redis, created a database from the test template, and made a PKCS#1 copy of the test DKIM key in /tmp, because `local_data/dkim.key` is PKCS#8 and dkimpy cannot parse it (the repository file is not touched; the script points `DKIM_PRIVATE_KEY_PATH` at the copy):
 
 ```
-python3 /tmp/test_toctou.py
+cd /app
+git rev-parse HEAD && git status --short | md5sum
+pg_ctlcluster 15 main start && redis-server --daemonize yes --save "" --appendonly no
+runuser -u postgres -- createdb -O test -T test sl_reply_obs
+head -1 local_data/dkim.key && openssl rsa -in local_data/dkim.key -traditional -out /tmp/reply_obs_dkim.key && head -1 /tmp/reply_obs_dkim.key
 ```
 
 Output:
 
 ```
-TOCTOU Race Condition Demonstration
-======================================================================
-
-1. STEP 1: generate_reply_email called for User1
-   Generated reply_email: shared_sender_at_external_com_abc123@sl.local
-   At this point, available_sl_email(shared_sender_at_external_com_abc123@sl.local) = True
-   (No contact exists yet with this reply_email)
-
-   === TOCTOU WINDOW OPENS ===
-   Between available_sl_email() returning True and contact creation,
-   another process could also check and get True.
-
-   [Process B checks during window]
-   Process B: available_sl_email(shared_sender_at_external_com_abc123@sl.local) = True
-   Process B also thinks the email is available!
-
-   Process A creates Contact: id=1, user_id=5
-   === TOCTOU WINDOW CLOSES for Process A ===
-
-2. STEP 2: Process B also creates contact with SAME reply_email
-   Process B creates Contact: id=2, user_id=6
-
-3. STEP 3: Now available_sl_email(shared_sender_at_external_com_abc123@sl.local) = False
-   But it's too late - both contacts already exist!
-
-Result: Two contacts with SAME reply_email:
-  - Contact id=1, user_id=5, reply_email=shared_sender_at_external_com_abc123@sl.local
-  - Contact id=2, user_id=6, reply_email=shared_sender_at_external_com_abc123@sl.local
-
-TOCTOU Window Explanation:
-  The generate_reply_email() function checks available_sl_email(reply_email)
-  and then returns the email for later use. But no lock or atomic operation
-  ensures the email remains available between the check and the database insert.
-  Concurrent processes can both observe the email as 'available' before either
-  has written their contact record, leading to duplicate reply_email values.
+2cd6ee777f8c2d3531559588bcfb18627ffb5d2c
+dbda2bc8a60f6295e263e53cbe655027  -
+Removed stale pid file.
+-----BEGIN PRIVATE KEY-----
+writing RSA key
+-----BEGIN RSA PRIVATE KEY-----
 ```
 
-This output demonstrates the TOCTOU window. Between the availability check returning True and the contact creation completing, another process could perform the same check and also receive True, leading to duplicate `reply_email` values.
-
-Based on these exact code paths and runtime observations, the expected behavior is:
-
-Race condition occurs: Two concurrent contact creation requests for different users can both pass the `available_sl_email()` check and both successfully insert contacts with the same `reply_email`. This is possible because the `reply_email` column has no unique constraint (confirmed by examining line 1899 in `app/models.py` which shows `index=True` but not `unique=True`, and line 22 in the migration file which shows `unique=False`).
-
-Wrong user delivery: When `handle_reply()` receives an email to that `reply_email`, it calls `Contact.get_by(reply_email=X)` which returns only the first contact (by database ordering due to `.first()` at line 84 in `app/models.py`), so the email is delivered to that contact's user regardless of which user should actually receive it.
-
-No error raised: Because there is no unique constraint on `reply_email`, neither insert fails with IntegrityError, and the system operates with corrupted state silently. The only unique constraint is on `(alias_id, website_email)` as shown at line 1875 in `app/models.py`.
-
-The root cause is the lack of a UNIQUE constraint on `reply_email` combined with the check-then-use pattern in `generate_reply_email()`. This TOCTOU race condition explains why a reply ends up being delivered to a different user than the alias owner.
-
-Cleaning up the temporary test scripts:
+The observation script has three roles. `setup` creates two users with one alias each. `forward` sends one inbound email from newsletter@shop.example to a user's alias through `email_handler.handle()`, so the contact and its reverse alias are created by the normal forward path (`get_or_create_contact()` -> `create_contact()` -> `generate_reply_email()`). Two `forward` processes run at the same time. To make both processes draw the same reverse-alias candidate deterministically, the script pins `random_string()` to one value, and it holds each process right after its `available_sl_email()` check until the other process has also checked, which is the window between the check and `Contact.create()`. `replies` then sends replies to the reverse alias through `email_handler.handle()`, prints every `Contact.get_by(reply_email=...)` call made inside `handle_reply()` with a timestamp, and prints the resulting SMTP status, the reply `EmailLog` rows and the emails SimpleLogin produced (captured with `mail_sender.store_emails_instead_of_sending()` instead of sending them).
 
 ```
-rm /tmp/test_reply_resolution.py /tmp/test_toctou.py
+cat > /tmp/reply_obs.py <<'EOF'
+import os, sys, json, time, logging
+from datetime import datetime
+os.environ.update(CONFIG="/app/tests/test.env", DB_URI="postgresql://test:test@localhost:5432/sl_reply_obs", MEM_STORE_URI="redis://localhost/15", DKIM_PRIVATE_KEY_PATH="/tmp/reply_obs_dkim.key")
+sys.path.insert(0, "/app")
+from email.message import EmailMessage
+from email.utils import make_msgid
+from aiosmtpd.smtp import Envelope
+from server import create_app
+from init_app import add_sl_domains
+from app.db import Session
+from app.email import headers
+from app.mail_sender import mail_sender
+from app.models import User, Alias, Contact, EmailLog
+import app.email_utils as email_utils
+import email_handler
+
+logging.getLogger("SL").setLevel(logging.WARNING)
+
+SENDER = "newsletter@shop.example"
+STATE = "/tmp/reply_obs_state"
+now = lambda: datetime.now().strftime("%H:%M:%S.%f")
+fmt = lambda c: f"Contact id={c.id}, user_id={c.user_id}, alias_id={c.alias_id}" if c else "None"
+
+def message(frm, to, subject):
+    msg = EmailMessage()
+    msg[headers.FROM], msg[headers.TO], msg[headers.SUBJECT] = frm, to, subject
+    msg[headers.MESSAGE_ID] = make_msgid()
+    msg.set_content(subject)
+    return msg
+
+def deliver(mail_from, rcpt_to, msg):
+    env = Envelope()
+    env.mail_from, env.rcpt_tos = mail_from, [rcpt_to]
+    mail_sender.purge_stored_emails()
+    smtp_status = email_handler.handle(env, msg)
+    return smtp_status, mail_sender.get_stored_emails()
+
+role = sys.argv[1]
+app = create_app()
+with app.app_context():
+    mail_sender.store_emails_instead_of_sending()
+    if role == "setup":
+        add_sl_domains()
+        os.makedirs(STATE, exist_ok=True)
+        ids = {}
+        for name in ("alice", "bob"):
+            user = User.create(email=f"{name}@mailbox.test", name=name, password="password", activated=True, lifetime=True)
+            Session.commit()
+            alias = Alias.create_new_random(user)
+            Session.commit()
+            ids[name] = dict(user_id=user.id, alias_id=alias.id, alias=alias.email, mailbox=user.email)
+            print(f"{name}: user_id={user.id}, alias_id={alias.id}, alias={alias.email}, mailbox={user.email}")
+        json.dump(ids, open(f"{STATE}/ids.json", "w"))
+
+    elif role == "forward":
+        name = sys.argv[2]
+        me = json.load(open(f"{STATE}/ids.json"))[name]
+        email_utils.random_string = lambda length=10, include_digits=False: "kqzvtrwmhxbnpdlsyfgjcaeuoi"
+        check = email_utils.available_sl_email
+        def available_sl_email(email):
+            free = check(email)
+            print(f"[{now()}] pid={os.getpid()} {name}: available_sl_email({email}) -> {free}", flush=True)
+            open(f"{STATE}/{name}.checked", "w").close()
+            while not all(os.path.exists(f"{STATE}/{n}.checked") for n in ("alice", "bob")):
+                time.sleep(0.01)
+            return free
+        email_utils.available_sl_email = available_sl_email
+        status, sent = deliver(SENDER, me["alias"], message(f"Shop <{SENDER}>", me["alias"], f"Order update for {name}"))
+        contact = Contact.get_by(alias_id=me["alias_id"], website_email=SENDER)
+        print(f"[{now()}] pid={os.getpid()} {name}: forward {SENDER} -> {me['alias']}: {status}; created {fmt(contact)}, reply_email={contact.reply_email}")
+        for s in sent:
+            print(f"    forwarded to {s.envelope_to}, From: {s.msg[headers.FROM]}")
+
+    elif role == "replies":
+        ids = json.load(open(f"{STATE}/ids.json"))
+        by_user = {v["user_id"]: k for k, v in ids.items()}
+        dupes = Contact.filter_by(website_email=SENDER).order_by(Contact.id).all()
+        reply_email = dupes[0].reply_email
+        print(f"contacts with website_email={SENDER}:")
+        for c in dupes:
+            print(f"    {fmt(c)} ({by_user[c.user_id]}), reply_email={c.reply_email}")
+        print(f"Contact.filter_by(reply_email=...).count() = {Contact.filter_by(reply_email=reply_email).count()}")
+        print(f"Contact.get_by(reply_email=...) -> {fmt(Contact.get_by(reply_email=reply_email))}")
+
+        get_by = Contact.get_by.__func__
+        def traced_get_by(cls, **kw):
+            result = get_by(cls, **kw)
+            if "reply_email" in kw and sys._getframe(1).f_code.co_name == "handle_reply":
+                print(f"    [{now()}] handle_reply: Contact.get_by(reply_email={kw['reply_email']}) -> {fmt(result)}")
+            return result
+        Contact.get_by = classmethod(traced_get_by)
+
+        def reply(event, name, rcpt_to):
+            me = ids[name]
+            print(f"\nREPLY EVENT {event}: {name} (user_id={me['user_id']}, alias_id={me['alias_id']}) replies from {me['mailbox']} to {rcpt_to}")
+            before = EmailLog.filter_by(is_reply=True).count()
+            status, sent = deliver(me["mailbox"], rcpt_to, message(me["mailbox"], rcpt_to, f"Reply from {name}"))
+            print(f"    handle() -> {status}")
+            for log in EmailLog.filter_by(is_reply=True).order_by(EmailLog.id).all()[before:]:
+                print(f"    EmailLog id={log.id}: is_reply=True, user_id={log.user_id}, alias_id={log.alias_id}, contact_id={log.contact_id}, mailbox_id={log.mailbox_id}")
+            for s in sent:
+                print(f"    sent to {s.envelope_to}, From: {s.msg[headers.FROM]}, Subject: {s.msg[headers.SUBJECT]}")
+            time.sleep(0.5)
+
+        owner = by_user[Contact.get_by(reply_email=reply_email).user_id]
+        other = "bob" if owner == "alice" else "alice"
+        reply(1, other, reply_email)
+        reply(2, owner, reply_email)
+        alias = Alias.get(ids[owner]["alias_id"])
+        alias.disable_email_spoofing_check = True
+        Session.commit()
+        print(f"\n{owner} turns on disable_email_spoofing_check for alias_id={alias.id}")
+        reply(3, other, reply_email)
+        reply(4, other, "ra+nonexistentxyz@sl.local")
+EOF
 ```
 
-No repository source files were modified. Temporary test scripts were created to observe behavior and cleaned up afterward, leaving the repository unchanged.
+Running it (startup banner and DEBUG log lines omitted):
+
+```
+export PYTHONDONTWRITEBYTECODE=1
+venv/bin/python /tmp/reply_obs.py setup
+```
+
+Output:
+
+```
+alice: user_id=1, alias_id=2, alias=word_test014@sl.local, mailbox=alice@mailbox.test
+bob: user_id=2, alias_id=4, alias=word_test000@sl.local, mailbox=bob@mailbox.test
+```
+
+```
+venv/bin/python /tmp/reply_obs.py forward alice & venv/bin/python /tmp/reply_obs.py forward bob & wait
+```
+
+Output:
+
+```
+[22:05:51.740098] pid=75 alice: available_sl_email(newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local) -> True
+[22:05:51.740853] pid=76 bob: available_sl_email(newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local) -> True
+2026-10-31 22:05:51,760 - SL - WARNING - 76 - "/app/email_handler.py:857" - forward_email_to_mailbox() -  - missing date header, create one
+2026-10-31 22:05:51,767 - SL - WARNING - 75 - "/app/email_handler.py:857" - forward_email_to_mailbox() -  - missing date header, create one
+[22:05:51.768993] pid=76 bob: forward newsletter@shop.example -> word_test000@sl.local: 250 Message accepted for delivery; created Contact id=1, user_id=2, alias_id=4, reply_email=newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local
+    forwarded to bob@mailbox.test, From: "Shop - newsletter at shop.example" <newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local>
+[22:05:51.775491] pid=75 alice: forward newsletter@shop.example -> word_test014@sl.local: 250 Message accepted for delivery; created Contact id=2, user_id=1, alias_id=2, reply_email=newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local
+    forwarded to alice@mailbox.test, From: "Shop - newsletter at shop.example" <newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local>
+```
+
+Both processes saw the same reverse alias as available (about 1 ms apart, in different processes) and both inserted a contact with it. Neither insert failed, because the only unique constraint is `(alias_id, website_email)` and the two contacts belong to different aliases. The database confirms it:
+
+```
+psql postgresql://test:test@localhost:5432/sl_reply_obs -c "SELECT id, user_id, alias_id, website_email, reply_email FROM contact WHERE website_email = 'newsletter@shop.example'"
+```
+
+Output:
+
+```
+ id | user_id | alias_id |      website_email      |                          reply_email                           
+----+---------+----------+-------------------------+----------------------------------------------------------------
+  1 |       2 |        4 | newsletter@shop.example | newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local
+  2 |       1 |        2 | newsletter@shop.example | newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local
+(2 rows)
+```
+
+Now the reply events:
+
+```
+venv/bin/python /tmp/reply_obs.py replies
+```
+
+Output:
+
+```
+contacts with website_email=newsletter@shop.example:
+    Contact id=1, user_id=2, alias_id=4 (bob), reply_email=newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local
+    Contact id=2, user_id=1, alias_id=2 (alice), reply_email=newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local
+Contact.filter_by(reply_email=...).count() = 2
+Contact.get_by(reply_email=...) -> Contact id=1, user_id=2, alias_id=4
+
+REPLY EVENT 1: alice (user_id=1, alias_id=2) replies from alice@mailbox.test to newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local
+    [22:05:54.150163] handle_reply: Contact.get_by(reply_email=newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local) -> Contact id=1, user_id=2, alias_id=4
+2026-10-31 22:05:54,160 - SL - WARNING - 103 - "/app/email_handler.py:1393" - handle_unknown_mailbox() -  - Reply email can only be used by mailbox. Actual mail_from: alice@mailbox.test. msg from header: alice@mailbox.test, reverse-alias newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local, <Alias 4 word_test000@sl.local> <User 2 bob bob@mailbox.test> <Contact 1 newsletter@shop.example 4>
+    handle() -> 250 SL E214 Unauthorized for using reverse alias
+    sent to bob@mailbox.test, From: "noreply@sl.local" <noreply@sl.local>, Subject: Attempt to use your alias word_test000@sl.local from alice@mailbox.test
+
+REPLY EVENT 2: bob (user_id=2, alias_id=4) replies from bob@mailbox.test to newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local
+    [22:05:54.693158] handle_reply: Contact.get_by(reply_email=newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local) -> Contact id=1, user_id=2, alias_id=4
+2026-10-31 22:05:54,707 - SL - WARNING - 103 - "/app/email_handler.py:1206" - handle_reply() -  - missing date header, add one
+    handle() -> 250 Message accepted for delivery
+    EmailLog id=3: is_reply=True, user_id=2, alias_id=4, contact_id=1, mailbox_id=2
+    sent to newsletter@shop.example, From: word_test000@sl.local, Subject: Reply from bob
+
+bob turns on disable_email_spoofing_check for alias_id=4
+
+REPLY EVENT 3: alice (user_id=1, alias_id=2) replies from alice@mailbox.test to newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local
+    [22:05:55.232038] handle_reply: Contact.get_by(reply_email=newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local) -> Contact id=1, user_id=2, alias_id=4
+2026-10-31 22:05:55,234 - SL - WARNING - 103 - "/app/email_handler.py:1023" - handle_reply() -  - ignore unknown sender to reverse-alias alice@mailbox.test: <Alias 4 word_test000@sl.local> -> <Contact 1 newsletter@shop.example 4>
+2026-10-31 22:05:55,241 - SL - WARNING - 103 - "/app/email_handler.py:1206" - handle_reply() -  - missing date header, add one
+    handle() -> 250 Message accepted for delivery
+    EmailLog id=4: is_reply=True, user_id=2, alias_id=4, contact_id=1, mailbox_id=2
+    sent to newsletter@shop.example, From: word_test000@sl.local, Subject: Reply from alice
+
+REPLY EVENT 4: alice (user_id=1, alias_id=2) replies from alice@mailbox.test to ra+nonexistentxyz@sl.local
+    [22:05:55.760744] handle_reply: Contact.get_by(reply_email=ra+nonexistentxyz@sl.local) -> None
+2026-10-31 22:05:55,760 - SL - WARNING - 103 - "/app/email_handler.py:988" - handle_reply() -  - No contact with ra+nonexistentxyz@sl.local as reverse alias
+    handle() -> 550 SL E502 Email not exist
+```
+
+These runtime values show the whole failure:
+
+- Two contact records share `reply_email=newsletter_at_shop_example_kqzvtrwmhxbnpdlsyfgjcaeuoi@sl.local`: Contact id=1 (user_id=2, bob, alias_id=4) and Contact id=2 (user_id=1, alice, alias_id=2). `Contact.filter_by(reply_email=...).count()` is 2, but `Contact.get_by(reply_email=...)` returns exactly one object, Contact id=1, user_id=2.
+- The extracted reply email (the RCPT TO address) is identical in reply events 1, 2 and 3, and every lookup inside `handle_reply()` resolved it to the same Contact id=1, user_id=2, alias_id=4, at 22:05:54.150, 22:05:54.693 and 22:05:55.232. Alice's own contact (id=2) was never returned, so the lookup is stable but always picks bob's row.
+- Reply event 1: alice (user_id=1), the owner of alias_id=2 and of Contact id=2, replied to her reverse alias. It resolved to Contact id=1, user_id=2, so the forwarding user and alias became bob's (user_id=2, alias_id=4). Her mailbox is not a mailbox of alias 4, so the reply was not sent to the contact. Instead SimpleLogin sent bob@mailbox.test (user_id=2) the alert "Attempt to use your alias word_test000@sl.local from alice@mailbox.test" and returned `250 SL E214 Unauthorized for using reverse alias`. Alice's reply was handled for, and delivered as an alert to, a different user than the owner of her alias.
+- Reply event 2: bob replied to the same address. It resolved to his own contact and was sent normally (`EmailLog id=3: user_id=2, alias_id=4, contact_id=1, mailbox_id=2`, From word_test000@sl.local). For bob the delivery is correct, which is why the problem does not show up for the user whose row happens to come first.
+- Reply event 3: after bob turned on `disable_email_spoofing_check` for alias 4, alice's reply was forwarded. It was logged as `EmailLog id=4: user_id=2, alias_id=4, contact_id=1, mailbox_id=2` and sent to newsletter@shop.example From bob's alias word_test000@sl.local. Alice's reply (alias owner user_id=1) was forwarded under user_id=2 through bob's alias and mailbox.
+- Reply event 4: for ra+nonexistentxyz@sl.local, `Contact.get_by()` inside `handle_reply()` returned None. SimpleLogin logged "No contact with ra+nonexistentxyz@sl.local as reverse alias" and returned `550 SL E502 Email not exist`, so the reply is rejected with a 550 and the sending server bounces it back to the sender. A duplicate does not produce this temporary failure: as long as at least one contact has the reply email, the lookup always succeeds, it just returns the wrong one.
+
+The root cause is the combination of three things in the code shown above:
+
+1. `generate_reply_email()` checks `available_sl_email()` and returns the address, and `create_contact()` inserts it later without a lock or retry. Two concurrent contact creations can both pass the check (shown above by the two processes at 22:05:51.740).
+2. `reply_email` has only a non-unique index (`index=True` at line 1899 of `app/models.py`, `unique=False` in the migration), and the only unique constraint is `(alias_id, website_email)`, so both inserts succeed with no IntegrityError.
+3. `handle_reply()` resolves the contact with `Contact.get_by(reply_email=reply_email)`, which is `.first()` without ordering, and then takes the alias, the user and the `EmailLog` owner from that one contact. Every reply to the shared address is attributed to the same contact (here id=1, user_id=2), so the other user's replies are routed to the wrong user: rejected with an alert sent to the other alias owner, or forwarded through the other user's alias when its spoofing check is disabled.
+
+The routing error comes from the duplicate `reply_email` value and the single-row lookup, not from how the email is parsed: the RCPT TO value and the normalized reply email were the same correct address in every event.
+
+Cleaning up the temporary files and the scratch database, and checking that the repository is unchanged:
+
+```
+rm -rf /tmp/reply_obs.py /tmp/reply_obs_state /tmp/reply_obs_dkim.key && runuser -u postgres -- dropdb sl_reply_obs
+git rev-parse HEAD && git status --short | md5sum
+```
+
+Output:
+
+```
+2cd6ee777f8c2d3531559588bcfb18627ffb5d2c
+dbda2bc8a60f6295e263e53cbe655027  -
+```
+
+The commit and the `git status` fingerprint are the same as before the run, so no repository files were modified.

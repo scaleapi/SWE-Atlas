@@ -17,7 +17,7 @@
   },
   {
     "id": "c8fad7791c66ae4083850ad68dd4b43c",
-    "title": "1.3: States that HMR and API calls are served from a single port (e.g., port 3000 handles both hot reloading and API requests)",
+    "title": "1.3: States that HMR and API calls do not use separate local ports: hot reloading is served from the same single port as the app (e.g., port 3000), and there is no separate local API port (API requests go to the remote WordPress.com REST API rather than to another local port)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

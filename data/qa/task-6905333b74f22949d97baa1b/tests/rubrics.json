@@ -25,7 +25,7 @@
   },
   {
     "id": "737fa4a3e843d8d497464ceb558e281b",
-    "title": "1.4: Reports observed log output when a disk goes offline (e.g., 'taking drive /path/to/disk offline') that includes the full disk path.",
+    "title": "1.4: Reports observed log output when a disk goes offline or becomes inaccessible (e.g., 'taking drive /path/to/disk offline') that includes the full disk path.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

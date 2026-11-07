@@ -210,7 +210,7 @@ Note: This output appears when there are failed tasks. If no tasks have failed, 
 
 To summarize where task state is stored at each stage of the lifecycle:
 
-Pending or waiting tasks are stored in the Redis queue under the key django_q:paperless:q. Active or running tasks are held by the worker process. Completed tasks are persisted to the database in the django_q_task table via the Task model. Successful tasks can be queried via Success.objects.all(). Failed tasks can be queried via Failure.objects.all(). Scheduled recurring tasks are stored in the django_q_schedule table via the Schedule model.
+Pending or waiting tasks are stored in the Redis queue under the key django_q:paperless:q. Active or running tasks are held by the worker process. Completed tasks are persisted to the database in the django_q_task table via the Task model. Success and Failure are proxy models over the same Task model and django_q_task table that filter on its success field, so successful tasks can be queried via Success.objects.all() and failed tasks via Failure.objects.all(). Scheduled recurring tasks are stored in the django_q_schedule table via the Schedule model.
 
 The actual task functions that get executed by workers are defined in dedicated task modules. These functions contain the business logic for document processing, indexing, and other background operations.
 

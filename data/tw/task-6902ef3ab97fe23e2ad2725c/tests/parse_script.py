@@ -73,6 +73,8 @@ ALL_TEST_SYMBOLS: Set[str] = PASS_SYMBOLS | SKIPPED_SYMBOLS | FAIL_SYMBOLS
 GO_PASS_PATTERN = re.compile(r'^---\s*PASS:\s*(\S+)')
 GO_FAIL_PATTERN = re.compile(r'^---\s*FAIL:\s*(\S+)')
 GO_SKIP_PATTERN = re.compile(r'^---\s*SKIP:\s*(\S+)')
+GO_RUN_PATTERN = re.compile(r'^===\s*RUN\s+(\S+)')
+GO_CRASH_MARKERS = ('panic:', 'fatal error:', 'SIGSEGV', 'signal: killed')
 
 # UTscapy output: "passed <HEX> <TIME> <TEST_NAME>" or "failed <HEX> <TIME> <TEST_NAME>"
 UTSCAPY_PATTERN = re.compile(r'^(passed|failed)\s+[0-9A-Fa-f]+\s+[\d.]+s\s+(.+)$')
@@ -99,6 +101,12 @@ PYTEST_STATUS_MAP = {
 
 # Python unittest output: "test_name (module.Class.test_name) ... ok/FAIL/ERROR/skipped 'reason'"
 UNITTEST_PATTERN = re.compile(r'^(\S+)\s+\(([^)]+)\)\s+\.\.\.\s+(ok|FAIL|ERROR|skipped.*)$')
+
+# Jest/Vitest append a duration to file headers and test lines: "(3 ms)",
+# "(1.2 s)". Only that suffix is stripped. Parentheses that belong to the
+# name, such as describe('resemblesUrl()'), stay, so the reported name is the
+# one the agent sees in its file and writes in its manifest.
+DURATION_SUFFIX_PATTERN = re.compile(r'\s*\(\s*\d+(?:\.\d+)?\s*(?:ms|s|m|min|h)\s*\)\s*$')
 
 
 def clean_text(text: str) -> str:
@@ -158,6 +166,35 @@ def parse_go_test_line(stripped: str) -> TestResult | None:
         return TestResult(name=go_skip_match.group(1), status=TestStatus.SKIPPED)
     
     return None
+
+
+def go_tests_lost_to_a_crash(content: str, results: List[TestResult]) -> List[TestResult]:
+    """Go tests that started and never got a verdict because the run died.
+
+    `testing` prints `--- FAIL: TestX` when a test panics on its own
+    goroutine: tRunner recovers, records the failure and re-panics. A panic
+    on a goroutine the test spawned crashes the process first, so the test is
+    never labelled even though it is the one that died. Reporting nothing for
+    it loses a real failure, and a mutation gate then reads the test as
+    having survived the mutant that in fact killed it.
+
+    Only tests Go announced with `=== RUN` are considered, and only when the
+    output carries a crash. A test that simply went unreported without the
+    process dying stays absent.
+    """
+    if not any(marker in content for marker in GO_CRASH_MARKERS):
+        return []
+    reported = {r.name for r in results}
+    lost = []
+    for line in content.splitlines():
+        match = GO_RUN_PATTERN.match(line.strip())
+        if not match:
+            continue
+        name = match.group(1)
+        if name not in reported:
+            reported.add(name)
+            lost.append(TestResult(name=name, status=TestStatus.FAILED))
+    return lost
 
 
 def parse_test_content(content: str) -> List[TestResult]:
@@ -251,7 +288,7 @@ def parse_test_content(content: str) -> List[TestResult]:
         if stripped.startswith("PASS ") or stripped.startswith("FAIL "):
             parts = stripped.split(maxsplit=1)
             if len(parts) > 1:
-                test_file = re.sub(r'\s*\([^)]*\)\s*$', '', parts[1]).strip()
+                test_file = DURATION_SUFFIX_PATTERN.sub('', parts[1]).strip()
             else:
                 test_file = "<unknown>"
             suite_stack = []
@@ -266,7 +303,7 @@ def parse_test_content(content: str) -> List[TestResult]:
             parts = re.split(symbol_pattern, stripped, maxsplit=1)
             
             if len(parts) >= 2:
-                test_name = re.sub(r'\s*\([^)]*\)\s*$', '', parts[1]).strip()
+                test_name = DURATION_SUFFIX_PATTERN.sub('', parts[1]).strip()
                 
                 name_parts = []
                 if test_file:
@@ -283,10 +320,11 @@ def parse_test_content(content: str) -> List[TestResult]:
                 suite_stack.pop()
             
             if stripped and not stripped.startswith(('console.', 'at ', 'Error:', 'Warning:')):
-                suite_name = re.sub(r'\s*\([^)]*\)\s*$', '', stripped).strip()
+                suite_name = DURATION_SUFFIX_PATTERN.sub('', stripped).strip()
                 if suite_name:
                     suite_stack.append((indent, suite_name))
     
+    results.extend(go_tests_lost_to_a_crash(content, results))
     return results
 
 
@@ -354,9 +392,9 @@ def main(stdout_path: Path, stderr_path: Path, output_path: Path) -> None:
         output_path: Path to the output JSON file
     """
     # Read input files
-    with open(stdout_path) as f:
+    with open(stdout_path, errors='replace') as f:
         stdout_content = f.read()
-    with open(stderr_path) as f:
+    with open(stderr_path, errors='replace') as f:
         stderr_content = f.read()
 
     # Parse test results

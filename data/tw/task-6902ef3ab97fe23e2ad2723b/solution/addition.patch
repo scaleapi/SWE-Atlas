@@ -97,7 +97,7 @@ index 870baa16..f90d6e23 100644
 +    for suffix in alias_suffixes:
 +        match = valid_re.match(suffix.suffix)
 +        assert match is not None
-+        if len(match.groups()) >= 1:
++        if match.group(1):
 +            has_prefix += 1
 +    assert has_prefix > 0
 +

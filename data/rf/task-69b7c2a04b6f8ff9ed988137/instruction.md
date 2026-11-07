@@ -216,3 +216,5 @@ All decoder functions have their return type changed from `void` to `int` to pro
 I've already taken care of all changes to the test files. This means you DON'T have to modify the testing logic or any of the tests in any way!
 
 Your task is to make the minimal changes to non-tests files in the working directory to ensure the task is satisfied.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

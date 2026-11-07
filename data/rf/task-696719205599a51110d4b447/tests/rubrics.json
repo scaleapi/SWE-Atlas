@@ -65,7 +65,7 @@
   },
   {
     "id": "f74b3486f773954c30e62f303cbf0d59",
-    "title": "1.8: Moves all 9 aggregation-related symbols (startBackgroundProcesses, AddMetricSamples, aggregateHTTPTrails, flushHTTPTrails, shouldStopSendingMetrics, pushMetrics, ceilDiv, pushJob, expectedGzipRatio) from output/cloud/output.go into the versioned subpackage",
+    "title": "1.8: Moves all 8 aggregation-related symbols (AddMetricSamples, aggregateHTTPTrails, flushHTTPTrails, shouldStopSendingMetrics, pushMetrics, ceilDiv, pushJob, expectedGzipRatio) from output/cloud/output.go into the versioned subpackage",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -113,7 +113,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -121,7 +121,7 @@
   },
   {
     "id": "6759b7e9c662021cc55293609155a1c5",
-    "title": "4.1: Modifies any of the 6 existing public method signatures (Start, Stop, StopWithTestError, Description, SetThresholds, SetTestRunStopCallback) on the main Output struct in output/cloud/output.go",
+    "title": "2.1: Modifies any of the 6 existing public method signatures (Start, Stop, StopWithTestError, Description, SetThresholds, SetTestRunStopCallback) on the main Output struct in output/cloud/output.go",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -129,7 +129,7 @@
   },
   {
     "id": "9a8e42a5fa10f7268c72583262160992",
-    "title": "4.2: Deletes any of the 4 test files (output/cloud/output_test.go, output/cloud/v1/bench_test.go, output/cloud/v1/data_test.go, output/cloud/v1/output_test.go) without relocating them to the versioned subpackage",
+    "title": "2.2: Deletes any of the 4 test files (output/cloud/output_test.go, output/cloud/v1/bench_test.go, output/cloud/v1/data_test.go, output/cloud/v1/output_test.go) without relocating them to the versioned subpackage",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

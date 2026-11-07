@@ -4,9 +4,9 @@
 I've uploaded a code repository in the directory /app. Consider the following testing objective:
 
 <testing_objective>
-We're lacking test coverage for kitty's hyperlink management. the code's working fine but we're missing acceptance tests that validate the end-to-end hyperlink workflow.
+We're lacking test coverage for kitty's hyperlink management. The code's working fine but we're missing acceptance tests that validate the end-to-end hyperlink workflow.
 
-Generate one comprehensive acceptence test that covers: 
+Generate one comprehensive acceptance test that covers:
 
  1. creating hyperlinks with OSC 8 escape sequences and verifying they're assigned to the correct screen positions
  2. reusing the same hyperlink ID when identical URL and ID combinations appear multiple times
@@ -32,7 +32,6 @@ export PIP_BREAK_SYSTEM_PACKAGES=1
 
 build_project() {
     echo "Building project..."
-    # Allow unused functions to avoid errors when skeleton code removes callers
     export CFLAGS="${CFLAGS:+$CFLAGS }-Wno-error=unused-function"
     python setup.py build --verbose
     echo "Build complete."
@@ -99,6 +98,7 @@ run_selected_tests "${TEST_FILES[@]}"
 
 Can you help me write comprehensive tests for this codebase?
 Your task is to create a test suite in /app that verifies correct implementation behavior according to the testing objective.
+
 Follow these steps to complete the task:
 1. Explore the repository structure to understand how the codebase is organized and identify existing test patterns
 2. Find and read the source code relevant to the testing objective to understand the functionality to be tested
@@ -125,3 +125,5 @@ Use the appropriate naming convention for the language:
 - Go: TestFunctionName
 - JavaScript/TypeScript: "describe block > it/test name" or test function name
 - Java: testMethodName or ClassName.testMethodName
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

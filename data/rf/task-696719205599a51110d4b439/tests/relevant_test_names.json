@@ -1,154 +1,154 @@
 {
   "tests": [
     {
-      "name": "TestElementHandleBaseOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestElementHandleBaseOptionsParse"
     },
     {
-      "name": "TestElementHandleBasePointerOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestElementHandleBasePointerOptionsParse"
     },
     {
-      "name": "TestElementHandleClickOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestElementHandleClickOptionsParse"
     },
     {
-      "name": "TestElementHandleDblclickOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestElementHandleDblclickOptionsParse"
     },
     {
-      "name": "TestElementHandleHoverOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestElementHandleHoverOptionsParse"
     },
     {
-      "name": "TestElementHandlePressOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestElementHandlePressOptionsParse"
     },
     {
-      "name": "TestElementHandleScreenshotOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestElementHandleScreenshotOptionsParse"
     },
     {
-      "name": "TestElementHandleSetCheckedOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestElementHandleSetCheckedOptionsParse"
     },
     {
-      "name": "TestElementHandleTapOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestElementHandleTapOptionsParse"
     },
     {
-      "name": "TestElementHandleTypeOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestElementHandleTypeOptionsParse"
     },
     {
-      "name": "TestElementHandleWaitForElementStateOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestElementHandleWaitForElementStateOptionsParse"
     },
     {
-      "name": "TestExportArgNullishHandling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestExportArgNullishHandling"
     },
     {
-      "name": "TestExportArgsNullishHandling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestExportArgsNullishHandling"
     },
     {
-      "name": "TestExportToNullishHandling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestExportToNullishHandling"
     },
     {
-      "name": "TestFilesParseNullishHandling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestFilesParseNullishHandling"
     },
     {
-      "name": "TestFrameBaseOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestFrameBaseOptionsParse"
     },
     {
-      "name": "TestFrameGotoOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestFrameGotoOptionsParse"
     },
     {
-      "name": "TestFrameSetContentOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestFrameSetContentOptionsParse"
     },
     {
-      "name": "TestFrameTapOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestFrameTapOptionsParse"
     },
     {
-      "name": "TestFrameWaitForFunctionOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestFrameWaitForFunctionOptionsParse"
     },
     {
-      "name": "TestFrameWaitForLoadStateOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestFrameWaitForLoadStateOptionsParse"
     },
     {
-      "name": "TestFrameWaitForNavigationOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestFrameWaitForNavigationOptionsParse"
     },
     {
-      "name": "TestFrameWaitForSelectorOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestFrameWaitForSelectorOptionsParse"
     },
     {
-      "name": "TestFrameWaitForURLOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestFrameWaitForURLOptionsParse"
     },
     {
-      "name": "TestMergeWithNullishHandling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestMergeWithNullishHandling"
     },
     {
-      "name": "TestMouseClickOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestMouseClickOptionsParse"
     },
     {
-      "name": "TestMouseDblClickOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestMouseDblClickOptionsParse"
     },
     {
-      "name": "TestMouseDownUpOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestMouseDownUpOptionsParse"
     },
     {
-      "name": "TestMouseMoveOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestMouseMoveOptionsParse"
     },
     {
-      "name": "TestPageEmulateMediaOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestPageEmulateMediaOptionsParse"
     },
     {
-      "name": "TestPageReloadOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestPageReloadOptionsParse"
     },
     {
-      "name": "TestPageScreenshotOptionsParse"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestPageScreenshotOptionsParse"
     },
     {
-      "name": "TestParseContinueOptionsNullishHandling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestParseContinueOptionsNullishHandling"
     },
     {
-      "name": "TestParseFulfillOptionsNullishHandling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestParseFulfillOptionsNullishHandling"
     },
     {
-      "name": "TestParseGetByBaseOptionsNullishHandling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestParseGetByBaseOptionsNullishHandling"
     },
     {
-      "name": "TestParseGetByBaseOptionsWithDoubleQuote"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestParseGetByBaseOptionsWithDoubleQuote"
     },
     {
-      "name": "TestParseGetByBaseOptionsWithRegex"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestParseGetByBaseOptionsWithRegex"
     },
     {
-      "name": "TestParseGetByBaseOptionsWithValidOptions"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestParseGetByBaseOptionsWithValidOptions"
     },
     {
-      "name": "TestParseGetByRoleOptionsNullishHandling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestParseGetByRoleOptionsNullishHandling"
     },
     {
-      "name": "TestParseGetByRoleOptionsWithValidOptions"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestParseGetByRoleOptionsWithValidOptions"
     },
     {
-      "name": "TestParseHeadersNullishHandling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestParseHeadersNullishHandling"
     },
     {
-      "name": "TestParseStrictNullishHandling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestParseStrictNullishHandling"
     },
     {
-      "name": "TestParseWaitForEventOptionsInvalidPredicate"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestParseWaitForEventOptionsInvalidPredicate"
     },
     {
-      "name": "TestParseWaitForEventOptionsNullishHandling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestParseWaitForEventOptionsNullishHandling"
     },
     {
-      "name": "TestParseWaitForEventOptionsUnknownOption"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestParseWaitForEventOptionsUnknownOption"
     },
     {
-      "name": "TestParseWaitForEventOptionsWithObject"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestParseWaitForEventOptionsWithObject"
     },
     {
-      "name": "TestParseWaitForEventOptionsWithPredicate"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestParseWaitForEventOptionsWithPredicate"
     },
     {
-      "name": "TestParseWaitForResponseOptionsNullishHandling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestParseWaitForResponseOptionsNullishHandling"
     },
     {
-      "name": "TestSizeParseNullishHandling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/common/TestSizeParseNullishHandling"
     },
     {
-      "name": "TestSobekEmptyStringNullishHandling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/browser/browser/TestSobekEmptyStringNullishHandling"
     }
   ]
 }

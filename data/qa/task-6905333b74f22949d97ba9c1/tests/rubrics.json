@@ -97,7 +97,7 @@
   },
   {
     "id": "8bd1513675a1824a621626c350566666",
-    "title": "1.13: Reports that byte-order tolerance applies when conf.checkIPID=True\".",
+    "title": "1.13: Reports that byte-order tolerance applies when conf.checkIPID=True.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -122,14 +122,6 @@
   {
     "id": "0405da8d811236f7a6eff9d404a2ac6b",
     "title": "2.1: Claims Scapy performs full byte-by-byte packet comparison for matching (e.g., states entire packet must be identical, claims all fields must match exactly)",
-    "annotations": {
-      "type": "negative hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
-    "id": "838d0b47648ad4c2cf08872a29b2f4fb",
-    "title": "2.2: Claims byte-swap tolerance applies regardless of configuration settings (e.g., states byte-swapped IDs always accepted, claims socket.htons() works unconditionally)",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

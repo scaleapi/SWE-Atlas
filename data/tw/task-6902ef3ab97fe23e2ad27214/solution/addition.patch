@@ -269,7 +269,7 @@ index 5a95e84a7..5780e9e15 100644
 +	if !fileInfoPreHeal1.Equals(fileInfoPostHeal1) {
 +		t.Fatal("HealObject failed")
 +	}
-+	if !fileInfoPreHeal1.Equals(fileInfoPostHeal2) {
++	if !fileInfoPreHeal2.Equals(fileInfoPostHeal2) {
 +		t.Fatal("HealObject failed")
 +	}
 +
@@ -292,7 +292,7 @@ index 5a95e84a7..5780e9e15 100644
 +		t.Fatal(err)
 +	}
 +
-+	fileInfoPostHeal1, err = disk.ReadVersion(context.Background(), "", bucket, object, "", ReadOptions{ReadData: false, Healing: true})
++	fileInfoPostHeal1, err = disk.ReadVersion(context.Background(), "", bucket, object, oi1.VersionID, ReadOptions{ReadData: false, Healing: true})
 +	if err != nil {
 +		t.Fatal(err)
 +	}
@@ -302,7 +302,7 @@ index 5a95e84a7..5780e9e15 100644
 +		t.Fatal("HealObject failed")
 +	}
 +
-+	fileInfoPostHeal2, err = disk.ReadVersion(context.Background(), "", bucket, object, "", ReadOptions{ReadData: false, Healing: true})
++	fileInfoPostHeal2, err = disk.ReadVersion(context.Background(), "", bucket, object, oi2.VersionID, ReadOptions{ReadData: false, Healing: true})
 +	if err != nil {
 +		t.Fatal(err)
 +	}

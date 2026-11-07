@@ -40,16 +40,20 @@ When I ran TruffleHog with verbose logging, the initialization messages showed h
 ```
 $ ./trufflehog filesystem ./test-repo --json --log-level=4 2>&1 | head -20
 
-engine initialized
-setting up aho-corasick core
-set up aho-corasick core
-starting scanner workers     {"count": 12}
-starting detector workers    {"count": 96}
-starting verificationOverlap workers  {"count": 12}
-starting notifier workers    {"count": 12}
+{"level":"info-2","ts":"2026-08-25T17:27:40Z","logger":"trufflehog","msg":"trufflehog dev"}
+{"level":"info-4","ts":"2026-08-25T17:27:40Z","logger":"trufflehog","msg":"default engine options set"}
+{"level":"info-4","ts":"2026-08-25T17:27:40Z","logger":"trufflehog","msg":"engine initialized"}
+{"level":"info-4","ts":"2026-08-25T17:27:40Z","logger":"trufflehog","msg":"setting up aho-corasick core"}
+{"level":"info-4","ts":"2026-08-25T17:27:40Z","logger":"trufflehog","msg":"set up aho-corasick core"}
+{"level":"info-2","ts":"2026-08-25T17:27:40Z","logger":"trufflehog","msg":"starting scanner workers","count":17}
+{"level":"info-2","ts":"2026-08-25T17:27:40Z","logger":"trufflehog","msg":"starting detector workers","count":136}
+{"level":"info-2","ts":"2026-08-25T17:27:40Z","logger":"trufflehog","msg":"starting verificationOverlap workers","count":17}
+{"level":"info-2","ts":"2026-08-25T17:27:40Z","logger":"trufflehog","msg":"starting notifier workers","count":17}
 ```
 
-The worker counts are calculated as multipliers of the --concurrency flag (which defaults to NumCPU). Looking at pkg/engine/engine.go, I found numWorkers := e.concurrency * e.detectorWorkerMultiplier, where the multiplier defaults to 8. This explains why detector workers = 96 on my 12-core system (12 × 8). The higher multiplier for detector workers accounts for network I/O bound verification operations.
+Note what is absent from that sequence: there are no individual per-detector registration messages. Detectors are registered in bulk at startup, so the log records only system-level initialization — `default engine options set`, `engine initialized`, the `setting up aho-corasick core` / `set up aho-corasick core` pair, and the worker-pool counts — and never emits one line per detector, even at `--log-level=4`. The only detector-related line is the aggregate `starting detector workers` count.
+
+Because `--json` is passed, the startup logs are emitted as structured JSON. The worker counts are calculated as multipliers of the --concurrency flag (which defaults to NumCPU). Looking at pkg/engine/engine.go, I found numWorkers := e.concurrency * e.detectorWorkerMultiplier, where the multiplier defaults to 8. This explains why detector workers = 136 on this system (17 × 8); the counts scale with the host core count, so they differ on other machines. The higher multiplier for detector workers accounts for network I/O bound verification operations.
 
 For verification setup, I examined the build dependencies and found HTTP client libraries that confirm network verification. In pkg/common/http.go, there's extensive use of github.com/hashicorp/go-retryablehttp:
 
@@ -122,8 +126,8 @@ From my test scans with verbose logging (--log-level=5), I observed how TruffleH
 ```
 $ ./trufflehog git file:///tmp/test_repo --log-level=5 2>&1 | grep -E "handling|skipping|mime"
 
-handling binary file    {"commit": "f462a44", "path": "binary.dat"}
-dataErrChan closed, all chunks processed    {"path": "binary.dat", "mime": "application/octet-stream"}
+handling binary file	{"source_manager_worker_id": "a9HDZ", "unit_kind": "dir", "unit": "/tmp/gf/test-repo", "commit": "f3d96a1", "path": "binary.dat"}
+dataErrChan closed, all chunks processed	{"source_manager_worker_id": "a9HDZ", "unit_kind": "dir", "unit": "/tmp/gf/test-repo", "commit": "f3d96a1", "path": "binary.dat", "mime": "application/octet-stream", "timeout": 60}
 ```
 
 Binary files are scanned by default - the logs show "handling binary file" with MIME type detection ("application/octet-stream"). When using --force-skip-binaries, the logs instead show:

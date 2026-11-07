@@ -14,6 +14,44 @@ LOG_OUTPUT="$TEMP_DIR/test_output.log"
 
 cd /app
 
+# Interpreter selection.  The image is python:3.8 with the checkout installed into it
+# (/usr/local/lib/python3.8/site-packages/scapy.egg-link plus cryptography, python-can,
+# mock), but PATH starts with /opt/venv/bin, a CPython 3.12 venv that only holds the
+# judge tooling.  A bare `python` therefore resolves to 3.12, and Python >= 3.12 no
+# longer calls the legacy find_module() protocol that the vendored six 1.10.0
+# (scapy/modules/six.py) registers, so every `python -m scapy.tools.UTscapy` dies with
+# "ModuleNotFoundError: No module named 'scapy.modules.six.moves'" before a single test
+# runs.  Use the first interpreter that can actually import the checkout.
+PYTHON=""
+for cand in python python3 python3.8 /usr/local/bin/python3; do
+    if command -v "$cand" >/dev/null 2>&1 && \
+       "$cand" -c 'import scapy.modules.six.moves' >/dev/null 2>&1; then
+        PYTHON="$cand"
+        break
+    fi
+done
+: "${PYTHON:=python}"
+echo "run_script.sh: using $PYTHON ($("$PYTHON" --version 2>&1))"
+
+# Import-time compatibility shim for this checkout.  scapy/arch/__init__.py imports
+# scapy/arch/bpf/core.py on Linux too, and at this commit that module calls
+# ctypes.util.find_library("libc").  On this image (CPython 3.8.20 with gcc installed)
+# the gcc fallback inside ctypes.util raises FileNotFoundError for the non-existent
+# 'liblibc.a', so `from scapy import all` aborts with "[CRITICAL]: Cannot import Scapy"
+# before a single test runs.  Upstream later changed the call to find_library("c");
+# resolve the legacy name the same way through a sitecustomize on PYTHONPATH, leaving
+# the source under test and the test files untouched.
+SHIM_DIR="$TEMP_DIR/pyshim"
+mkdir -p "$SHIM_DIR"
+cat > "$SHIM_DIR/sitecustomize.py" <<'PYSHIM'
+import ctypes.util as _ctypes_util
+_find_library = _ctypes_util.find_library
+def find_library(name):
+    return _find_library("c" if name == "libc" else name)
+_ctypes_util.find_library = find_library
+PYSHIM
+export PYTHONPATH="$SHIM_DIR${PYTHONPATH:+:$PYTHONPATH}"
+
 COMMON_ARGS=(
     -K tshark
     -K vcan_socket
@@ -49,7 +87,7 @@ SCOPED_FILES=(
 
 run_unittest_file() {
     local f="$1"
-    python -m unittest discover -s "$(dirname "$f")" -p "$(basename "$f")" -v \
+    "$PYTHON" -m unittest discover -s "$(dirname "$f")" -p "$(basename "$f")" -v \
         2>&1 | tee -a "$LOG_OUTPUT"
 }
 
@@ -86,7 +124,7 @@ run_uts_file() {
         file_args=("${COMMON_ARGS[@]}")
     fi
 
-    timeout 120 python -m scapy.tools.UTscapy -t "$f" \
+    timeout 120 "$PYTHON" -m scapy.tools.UTscapy -t "$f" \
         -P "load_contrib('${contrib_name}')" \
         "${file_args[@]}" \
         2>&1 | tee -a "$LOG_OUTPUT"
@@ -104,7 +142,7 @@ for f in "$@"; do
         if [[ "$(basename "$f")" == test_* ]]; then
             run_unittest_file "$f"
         else
-            python "$f" 2>&1 | tee -a "$LOG_OUTPUT"
+            "$PYTHON" "$f" 2>&1 | tee -a "$LOG_OUTPUT"
         fi
     else
         run_uts_file "$f"

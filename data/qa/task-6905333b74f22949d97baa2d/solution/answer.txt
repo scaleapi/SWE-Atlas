@@ -1,4 +1,4 @@
-SFTPGo Server Startup Observation - Reference Answer
+SFTPGo Server Startup Observation
 
 I started by building the SFTPGo binary and setting up a test environment to observe the actual runtime behavior. My goal was to capture what really happens when the server starts, how it handles missing components, and what appears in the logs during various scenarios.
 
@@ -73,6 +73,8 @@ Finally, the SFTP server registered its listener, signaling it was ready to acce
 ```
 
 At this point, both servers were running: SFTP on port 2022 (all interfaces) and HTTP on port 8080 (localhost only).
+
+Unlike the SFTP server, the HTTP server logs no explicit listening announcement: its "initializing HTTP server" message is its only startup log line, after which it loads the templates and calls ListenAndServe, so it is ready to accept requests right after that initialization message.
 
 ## Authentication Failure with Non-Existent User
 

@@ -1,7 +1,7 @@
 [
   {
     "id": "e9f635de8b6fb476c77dfda37c5cecf9",
-    "title": "1.1: Reports the target state as Normal and reason code as MissingSeries for stale series\n",
+    "title": "1.1: Reports the target state as Normal and reason code as MissingSeries for stale series",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -25,7 +25,7 @@
   },
   {
     "id": "b6f9a6dbc4c1d5b7cca14b7ead6475cd",
-    "title": "1.4: Explains the NeedsSending evaluation showing how resend delay, resolved retention, and last sent timestamp interact to control notification flow, including the ResolvedRetention duration (e.g., 15 minutes default) that terminates resolution notifications and the comparison logic (LastEvaluationTime.Sub(*ResolvedAt) > resolvedRetention)\n",
+    "title": "1.4: Explains the NeedsSending evaluation showing how resend delay, resolved retention, and last sent timestamp interact to control notification flow, including the ResolvedRetention duration (e.g., 15 minutes default) that terminates resolution notifications and the comparison logic (LastEvaluationTime.Sub(*ResolvedAt) > resolvedRetention)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "c2ce848c05f1ed600458f641a39a4611",
-    "title": "1.5: States that screenshot capture (takeImage) is only triggered for stale series that were previously Alerting (e.g., called for Alerting, not called for Pending/Normal/NoData/Error)\n",
+    "title": "1.5: States that screenshot capture (takeImage) is only triggered for stale series that were previously Alerting (e.g., called for Alerting, not called for Pending/Normal/NoData/Error)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "fc9cfe2151b439124c5d7f73fe3f68ed",
-    "title": "1.6 States that stale series bypass the For duration requirement (e.g., Pending series transitions immediately to Normal without waiting)",
+    "title": "1.6: States that stale series bypass the For duration requirement (e.g., Pending series transitions immediately to Normal without waiting)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

@@ -1,1 +1,1 @@
-FROM ghcr.io/scaleapi/swe-atlas-v1.1:swe_atlas_RF_secdev_scapy_696719205599a51110d4b476_1.1@sha256:c03b53e831d7eeab14d997652ef55adfa451abda1d84ceec7a978b4640ccfd11
+FROM ghcr.io/scaleapi/swe-atlas-v1.1:rf-696719205599a51110d4b476-7c55151-v1.01.99@sha256:05baa0c45f43322cf65bfc2a6bce99175acaeb14baca870c62e29359fdea3b88

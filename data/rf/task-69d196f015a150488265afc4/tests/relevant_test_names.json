@@ -1,16 +1,16 @@
 {
   "tests": [
     {
-      "name": "extracts and exclude android images"
+      "name": "modules/manager/circleci/extract > extractPackageFile() > extracts and exclude android images"
     },
     {
-      "name": "extracts executors"
+      "name": "modules/manager/circleci/extract > extractPackageFile() > extracts executors"
     },
     {
-      "name": "extracts orb definitions"
+      "name": "modules/manager/circleci/extract > extractPackageFile() > extracts orb definitions"
     },
     {
-      "name": "handles registry alias"
+      "name": "modules/manager/circleci/extract > extractPackageFile() > handles registry alias"
     }
   ]
 }

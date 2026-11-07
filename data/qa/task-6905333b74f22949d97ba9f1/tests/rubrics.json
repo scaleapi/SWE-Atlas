@@ -33,7 +33,7 @@
   },
   {
     "id": "10be4c7c35146e6af84341825afc178c",
-    "title": "1.5: Reports a rejected copy-style write attempt by the read-only identity (e.g., CopyObject returning Access Denied)\n",
+    "title": "1.5: Reports a rejected copy-style write attempt by the read-only identity (e.g., CopyObject returning Access Denied)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "4f851b45139043fbd770a1fdab5f8f44",
-    "title": "1.8: Reports storage side-effect verification confirming the delete target was not removed (e.g., object still exists after rejected delete attempt)\n",
+    "title": "1.8: Reports storage side-effect verification confirming the delete target was not removed (e.g., object still exists after rejected delete attempt)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "8a894dbe2b8ff77308a39a9a54d7ba2a",
-    "title": "1.9: Reports what metadata can be learned from listing operations by the read-only identity (e.g., object keys, sizes, ETags, timestamps)\n",
+    "title": "1.9: Reports what metadata can be learned from listing operations by the read-only identity (e.g., object keys, sizes, ETags, timestamps)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

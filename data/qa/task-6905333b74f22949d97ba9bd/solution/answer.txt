@@ -199,10 +199,9 @@ Used compression: False
 ======================================================================
 TEST 2: Loop detection in compression pointers
 ======================================================================
-Self-referencing data: 0474657374c000
-Result with loop: b'test.'
+Self-referencing data: 0464617461c000
+Result with loop: b'data.'
 Used compression: True
-Warning caught: DNS decompression loop detected
 
 ======================================================================
 TEST 3: What happens with out-of-bounds pointers
@@ -276,9 +275,9 @@ processed_pointers.append(pointer)
 continue
 ```
 
-When the check detects a loop, it emits a warning and breaks out of the parsing loop, returning whatever name fragments have been collected so far. This prevents denial-of-service attacks where a malicious packet creates circular references. The data "\x04test\xc0\x00" creates a name that says "test" and then points back to offset 0, which would restart the whole sequence. The parser correctly detects this, emits the warning, and returns "test." with whatever it collected before hitting the loop.
+When the check detects a loop, it emits the warning through Scapy's runtime logger and breaks out of the parsing loop, returning whatever name fragments have been collected so far. This prevents denial-of-service attacks where a malicious packet creates circular references. Note that the simple self-referencing data "\x04test\xc0\x00" does not actually reach this branch: the pointer arithmetic subtracts the 12-byte DNS header offset, so the recomputed pointer (-12) fails the abs(pointer) >= max_length bounds check and parsing stops with the partial name "test." and no warning. The loop warning fires when a recomputed pointer offset repeats, as in the multiple-hop chain shown in the edge cases below.
 
-For out-of-bounds pointers that jump to locations that do not exist or land outside packet boundaries, the bounds check at the top of the loop catches this condition. When a pointer would jump to offset 255 but the packet is only 7 bytes, the abs(pointer) >= max_length check triggers, the info log records the premature end, and parsing stops gracefully.
+For out-of-bounds pointers that jump to locations that do not exist or land outside packet boundaries, the bounds check at the top of the loop catches this condition. When a pointer would jump to offset 255 but the packet is only 7 bytes, the abs(pointer) >= max_length check triggers, the info log records the premature end, and parsing stops gracefully. A negative pointer left by the 12-byte header subtraction is caught by the same abs() check only when its magnitude is at least max_length; a smaller one, such as -8 from \xc0\x04 in a 23-byte buffer, passes the check and Python's negative indexing reads from the end of the buffer instead.
 
 The compression side of the machinery lives in the dns_compress function. When Scapy builds a DNS packet and compresses names to save space, it follows a specific pattern for finding compression opportunities.
 
@@ -679,7 +678,7 @@ print("  ((0xc0 & ~0xc0) << 8) + 0x04 - 12 = -8")
 print("  This would be negative! Let me check the code again...")
 
 print("\nThe code uses abs(pointer) >= max_length for bounds check")
-print("So negative pointers get caught by the abs() check")
+print("So a negative pointer is caught only when abs(pointer) >= max_length; -8 here is not")
 
 print()
 print("=" * 70)
@@ -785,8 +784,6 @@ Byte breakdown:
 Result: b'test.'
 End index: 7
 Used compression: True
-Warning message: 'DNS decompression loop detected'
-Warning category: UserWarning
 
 ======================================================================
 EDGE CASE 2: Multiple-hop chain before loop
@@ -803,7 +800,7 @@ Actual pointer math in code:
   So \xc0\x0c actually jumps to offset 0 after the -12 adjustment!
 
 Result: b'test.test.'
-Warning: 'DNS decompression loop detected'
+WARNING: DNS decompression loop detected
 
 ======================================================================
 EDGE CASE 3: Understanding the -12 offset in detail

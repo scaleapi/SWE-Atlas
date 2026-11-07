@@ -1,6 +1,6 @@
-The behaviors observed in k6's ramping executor are not bugs but intentional design decisions that become clearer when tracing through the actual code paths and running the test suite.
+Every behavior you observed in k6's ramping executor is real and reproducible — the stuck-looking VUs during rapid up/down stages with a long gracefulRampDown, the count mismatch between the two handlers, VUs outliving an interrupt, and the per-segment VU distribution. Tracing through the actual code paths and running the test suite shows that each one is produced by an intentional design decision rather than a concurrency bug; the sections below reproduce each observation and pin it to the responsible code.
 
-The apparent race condition between handlers does not exist because the two handler strategies operate on fundamentally different data structures and execute in a coordinated sequence. The scheduledVUsHandlerStrategy processes raw execution steps and calls start() and gracefulStop() on VU handles, while maxAllowedVUsHandlerStrategy processes graceful execution steps and calls hardStop(). These handlers are created once and passed to iterateSteps(), which coordinates their execution based on TimeOffset values.
+The handler-count mismatch you printed is expected behavior rather than evidence of a race: the two handler strategies operate on fundamentally different data structures and execute in a coordinated sequence, so their counts legitimately differ at a given moment. The scheduledVUsHandlerStrategy processes raw execution steps and calls start() and gracefulStop() on VU handles, while maxAllowedVUsHandlerStrategy processes graceful execution steps and calls hardStop(). These handlers are created once and passed to iterateSteps(), which coordinates their execution based on TimeOffset values.
 
 ```go
 handleNewMaxAllowedVUs = runState.maxAllowedVUsHandlerStrategy()
@@ -65,7 +65,7 @@ Graceful steps with 30s gracefulRampDown:
 
 The VU count stays at 6 from t=2s until t=33s in the graceful steps because 33s equals the raw step time (3s when VUs started dropping) plus the gracefulRampDown period (30s). This reservation ensures VUs have time to complete their iterations gracefully.
 
-The claim that execution segments exceed the configured maximum when summed is incorrect. The striping algorithm guarantees correct partitioning across segments. Running TestRampingVUsExecutionTupleTests verifies this with multiple segment configurations:
+On the segment observation: what you saw is real. Uneven per-instance VU counts at the same timestamp are a genuine effect of the striping algorithm, and reading any single segment in isolation does make the allocation look wrong relative to the configured maximum. What I observed in the runs below is that the effect is confined to the per-segment view: the striping algorithm partitions the execution plan so that the segment sums match the unsegmented plan, so the summed total tracks the configured maximum rather than exceeding it. Running TestRampingVUsExecutionTupleTests shows this across multiple segment configurations:
 
 ```
 $ go test -race -v -run "TestRampingVUsExecutionTupleTests" ./lib/executor/
@@ -96,9 +96,9 @@ Segment 0:1/3 execution steps:
 ...
 ```
 
-At t=0s, the full execution has 4 VUs, and segment 0:1/3 has 1 VU, meaning the remaining segments handle the other 3 VUs. The striping algorithm mathematically guarantees the sum across all segments equals the full execution count at every timestamp.
+At t=0s, the full execution has 4 VUs, and segment 0:1/3 has 1 VU, meaning the remaining segments handle the other 3 VUs. That 1-of-4 split is exactly the imbalance you noticed when looking at one instance. Across all segments, the striping algorithm keeps the sum equal to the full execution count at every timestamp, which is why the per-instance view and the total disagree.
 
-The VU buffer leak concern is unfounded because the lifecycle is properly managed through the vuHandle struct. The getVU and returnVU closures in runLoopsIfPossible handle acquisition and return:
+The VU buffer leak concern is a reasonable thing to suspect here, since VUs are handed out and returned through a buffered channel and a leak would look exactly like the imbalance above. Tracing it, the lifecycle is managed through the vuHandle struct: the getVU and returnVU closures in runLoopsIfPossible handle acquisition and return:
 
 ```go
 getVU := func() (lib.InitializedVU, error) {

@@ -9,3 +9,5 @@ The `init_page_size()` function currently reads flags from the page buffer inter
 For innochecksum to access the doublewrite buffer constants from `trx0sys.h`, the `UNIV_INNOCHECKSUM` preprocessor guards in `storage/innobase/include/trx0sys.h`, `storage/innobase/include/fsp0types.h`, and `storage/innobase/include/trx0undo.h` need to be adjusted so the doublewrite definitions remain visible while the full transaction system types are excluded. Also, `parse_page()` should be made static.
 
 I've already taken care of all changes to the test files. Do NOT modify any test files or testing logic in any way. Your task is to make the minimal changes to non-test source files only.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

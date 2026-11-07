@@ -65,7 +65,7 @@
   },
   {
     "id": "27302c2858b083a5e22c4c51813e4c6e",
-    "title": "1.9: States that the VERP prefix defaults to 'sl', e.g., VERP_PREFIX = os.environ.get('VERP_PREFIX') or 'sl').",
+    "title": "1.9: States that the VERP prefix defaults to 'sl', e.g., VERP_PREFIX = os.environ.get('VERP_PREFIX') or 'sl'.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

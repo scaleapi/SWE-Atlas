@@ -26,3 +26,5 @@ Use the below Interface:
 - Input: NA
 - Output: `RSNCipherSuite`
 - Description: New ConditionalField appended to Dot11EltRSN.fields_desc. Uses RSNCipherSuite with default cipher 0x6 (BIP-CMAC-128). Present only when pkt.mfp_capable == 1.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

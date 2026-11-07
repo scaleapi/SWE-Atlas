@@ -29,7 +29,7 @@ EOF
 
 Command executed to run the test and send SIGINT:
 ```bash
-timeout 10 /tmp/k6 run --log-output=stdout --log-format=raw -v /tmp/test_ramping_sigint.js
+timeout -s INT 10 /tmp/k6 run --log-output=stdout --log-format=raw -v /tmp/test_ramping_sigint.js
 ```
 
 k6 startup banner and scenario configuration:
@@ -48,34 +48,78 @@ k6 startup banner and scenario configuration:
               * ramping_test: Up to 10 looping VUs for 30s over 2 stages (gracefulRampDown: 5s, gracefulStop: 30s)
 ```
 
-Log output when SIGINT is received:
+Log output in the last second before the signal and when SIGINT is received:
 ```
+running (0m08.0s), 08/10 VUs, 18 complete and 0 interrupted iterations
+ramping_test   [  27% ] 08/10 VUs  08.0s/30.0s
+Start
+VU 5 finished iteration 0
+VU 5 starting iteration 1
+VU 7 starting iteration 0
+VU 3 finished iteration 1
+VU 3 starting iteration 2
+VU 6 finished iteration 3
+VU 6 starting iteration 4
+VU 10 finished iteration 2
+VU 10 starting iteration 3
+VU 9 finished iteration 3
+VU 2 finished iteration 3
+VU 8 finished iteration 3
+VU 2 starting iteration 4
+VU 4 finished iteration 3
+VU 8 starting iteration 4
+VU 9 starting iteration 4
+VU 4 starting iteration 4
+
+running (0m09.0s), 09/10 VUs, 26 complete and 0 interrupted iterations
+ramping_test   [  30% ] 09/10 VUs  09.0s/30.0s
 Stopping k6 in response to signal...
 Metrics emission of VUs and VUsMax metrics stopped
-VU 1 finished iteration 4
-VU 3 finished iteration 0
-VU 6 finished iteration 4
-VU 2 finished iteration 1
-VU 10 finished iteration 4
-VU 8 finished iteration 4
-VU 9 finished iteration 3
 Executor finished successfully
 teardown() is not defined or not exported, skipping!
-The test run was interrupted, returning 'test run was aborted because k6 received a 'terminated' signal' instead of '%!s(<nil>)'
+The test run was interrupted, returning 'test run was aborted because k6 received a 'interrupt' signal' instead of '%!s(<nil>)'
 Test finished with an error
 Stopping vus and vux_max metrics emission...
 Releasing signal trap...
+Sending usage report...
+Waiting for metrics and traces processing to finish...
+Metrics and traces processing finished!
+Stopping outputs...
+Stopping 2 outputs...
+Stopping...
+Stopped!
+Generating the end-of-test summary...
 ```
 
 The final summary showed:
 ```
-running (0m09.9s), 00/10 VUs, 26 complete and 9 interrupted iterations
-ramping_test ✗ [======>----------------] 09/10 VUs  09.9s/30.0s
+     iteration_duration...: avg=2s min=2s med=2s max=2s p(90)=2s p(95)=2s
+     iterations...........: 26  2.606529/s
+     vus..................: 9   min=5      max=9 
+     vus_max..............: 10  min=10     max=10
+
+
+running (0m10.0s), 00/10 VUs, 26 complete and 9 interrupted iterations
+ramping_test ✗ [  33% ] 09/10 VUs  10.0s/30.0s
 ```
 
-This log evidence clearly shows that when SIGINT is received, VUs that are mid iteration are allowed to finish their current iteration before being terminated. The messages like "VU 1 finished iteration 4", "VU 3 finished iteration 0", etc. appear after the "Stopping k6 in response to signal..." message, demonstrating that k6 waits for active iterations to complete gracefully. The summary shows "26 complete and 9 interrupted iterations" indicating that some VUs finished their work while others were interrupted.
+This log evidence shows that when the signal is received, VUs that are mid iteration are interrupted rather than allowed to finish their current iteration. Nine VUs had logged "VU N starting iteration M" for an iteration that was still in its 2s sleep when the signal arrived (VU 5, 7, 3, 6, 10, 2, 8, 9 and 4 in the excerpt above), and not one "VU N finished iteration M" line appears after "Stopping k6 in response to signal...". The summary confirms it: "26 complete and 9 interrupted iterations", where the 9 interrupted iterations are exactly those 9 active VUs, and every completed iteration has the full 2s duration (iteration_duration avg=min=max=2s). The signal handler in cmd/run.go aborts the test run and cancels the run context, so the executor stops the VUs without waiting for their iterations to end.
 
-For the gRPC server streaming test with a 30ms graceful ramp down, I started the gRPC server from the examples and created this test script. Note: This test requires running the gRPC example server first with `cd /app && go run ./lib/testutils/grpcservice/cmd/server.go`.
+For the gRPC server streaming test with a 30ms graceful ramp down, I needed a gRPC server exposing the route_guide FeatureExplorer service. The repository ships the service implementation under `lib/testutils/grpcservice` (with `LoadFeatures`, `NewFeatureExplorerServer`, and `RegisterFeatureExplorerServer`) but no runnable main, so I wrote a small server that loads the example features and registers the service:
+```go
+// /app/grpcsrv/main.go
+package main
+import ("log"; "net"; "google.golang.org/grpc"; "go.k6.io/k6/lib/testutils/grpcservice")
+func main() {
+    lis, err := net.Listen("tcp", "127.0.0.1:10000")
+    if err != nil { log.Fatal(err) }
+    s := grpc.NewServer()
+    grpcservice.RegisterFeatureExplorerServer(s, grpcservice.NewFeatureExplorerServer(grpcservice.LoadFeatures("")...))
+    log.Println("grpc listening :10000")
+    log.Fatal(s.Serve(lis))
+}
+```
+built and started with `cd /app && go build -o /tmp/grpcsrv ./grpcsrv && /tmp/grpcsrv &`. Then I created this test script.
 
 First, I created the test script (note: uses absolute path `/app/lib/...` for the proto file):
 ```bash
@@ -260,26 +304,29 @@ export default function() {
 EOF
 ```
 
-Command executed to measure memory with different VU counts:
+Command executed to measure memory with different VU counts (the image's `/usr/bin/time` is BusyBox with no `-v`, so I sampled peak resident set size from `/proc/<pid>/status` while each run was in flight):
 ```bash
-echo "=== Testing with 1 VU ===" && /usr/bin/time -v /tmp/k6 run --vus 1 --duration 5s /tmp/test_csv_memory.js 2>&1 | grep "Maximum resident"
-echo "=== Testing with 5 VUs ===" && /usr/bin/time -v /tmp/k6 run --vus 5 --duration 5s /tmp/test_csv_memory.js 2>&1 | grep "Maximum resident"
-echo "=== Testing with 10 VUs ===" && /usr/bin/time -v /tmp/k6 run --vus 10 --duration 5s /tmp/test_csv_memory.js 2>&1 | grep "Maximum resident"
+for N in 1 5 10; do
+    /tmp/k6 run --vus $N --duration 5s /tmp/test_csv_memory.js >/dev/null 2>&1 & P=$!
+    MAX=0
+    while kill -0 $P 2>/dev/null; do
+        V=$(awk '/VmRSS/{print $2}' /proc/$P/status 2>/dev/null)
+        [ -n "$V" ] && [ "$V" -gt "$MAX" ] && MAX=$V
+        sleep 0.2
+    done
+    wait $P
+    echo "=== $N VU(s): peak RSS ${MAX} kB ==="
+done
 ```
 
 Output:
 ```
-=== Testing with 1 VU ===
-        Maximum resident set size (kbytes): 175604
-
-=== Testing with 5 VUs ===
-        Maximum resident set size (kbytes): 265860
-
-=== Testing with 10 VUs ===
-        Maximum resident set size (kbytes): 416892
+=== 1 VU(s): peak RSS 180172 kB ===
+=== 5 VU(s): peak RSS 284748 kB ===
+=== 10 VU(s): peak RSS 423656 kB ===
 ```
 
-The output tells us that there is a memory leak. With an 11.4MB CSV file, the memory footprint should remain relatively constant regardless of VU count if the SharedArray was working correctly. Instead, memory grows linearly with increasing number of VUs (176MB → 266MB → 417MB), showing that each VU is creating its own copy of the entire dataset.
+The output tells us that there is a memory leak. With an 11.4MB CSV file, the memory footprint should remain relatively constant regardless of VU count if the SharedArray was working correctly. Instead, memory grows linearly with increasing number of VUs (180MB → 285MB → 424MB), showing that each VU is creating its own copy of the entire dataset.
 
 The root cause is in the module.go file at js/modules/k6/experimental/csv/module.go line 126:
 ```go

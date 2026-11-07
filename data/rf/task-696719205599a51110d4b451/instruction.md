@@ -68,3 +68,5 @@ Use the below Interface:
 - Input: NA
 - Output: `uint32`
 - Description: Returns the number of metrics for which thresholds were breached during the last processing phase. Safe to use concurrently.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

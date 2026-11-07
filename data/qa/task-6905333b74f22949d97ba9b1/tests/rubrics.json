@@ -49,7 +49,7 @@
   },
   {
     "id": "d1eae6c72c9c7e8b63b78f214744ba1f",
-    "title": "1.7: Reports database migrations are tracked on subsequent runs \n",
+    "title": "1.7: Reports database migrations are tracked on subsequent runs",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "386ec70b600f0efdf5d36f038a3026cd",
-    "title": "1.8: Identifies plugin paths: public/app/plugins/ for bundled, data/plugins/ for external",
+    "title": "1.8: Identifies plugin paths: public/app/plugins/ for the plugins shipped with Grafana (its core/built-in plugins), data/plugins/ for external",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -73,7 +73,7 @@
   },
   {
     "id": "469ae5c9eb4a03b9c148ae0b11d74e39",
-    "title": "1.10 Explains that subsystems reporting as 'disabled' or 'skipped' (e.g., SMTP, Renderer) remain inactive specifically because they lack explicit configuration",
+    "title": "1.10: Explains that subsystems that are disabled, skipped or otherwise inactive on a default start (e.g., SMTP, Renderer; other accurately explained subsystems also qualify) remain inactive specifically because they lack explicit configuration",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -89,7 +89,7 @@
   },
   {
     "id": "7594fc61992684a752f8dc5a7d7bbb56",
-    "title": "2.3: Claims clean state testing while analyzing existing data/ directory from prior runs",
+    "title": "2.2: Claims clean state testing while analyzing existing data/ directory from prior runs",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -97,7 +97,7 @@
   },
   {
     "id": "1ca9a6e1e17b055e132f5b983789bb13",
-    "title": "2.4: States authentication works without showing login attempt evidence",
+    "title": "2.3: States authentication works without showing login attempt evidence",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

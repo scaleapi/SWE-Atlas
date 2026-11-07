@@ -28,16 +28,8 @@
       "type": "positive hli verifier",
       "importance": "must have"
     },
-    "id": "0936312a1a0faedb571b5ca37bba9148",
-    "title": "1.4: Tests that TimeWheel Add() fires a near-future callback (around 500ms) without being blocked when a far-future callback (very large duration like 90000 hours) was scheduled first"
-  },
-  {
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    },
-    "id": "394e758be18b3def25140248c6b3b89c",
-    "title": "1.5: Tests that TimeWheel Add() fires the callback when scheduling occurs after the wheel has been idle for a brief period (around 500ms sleep before Add)"
+    "id": "7cafdb344682cacfdfc42d3a852f7c6f",
+    "title": "1.4: Tests that TimeWheel Add() fires a near-future callback first, without waiting on a far-future callback that was already scheduled before it"
   },
   {
     "annotations": {

@@ -16,3 +16,5 @@ Use the below interface for your solution:
 - Input: `NA`
 - Output: `NA`
 - Description: Per-thread data for tx loggers. The `store` field changes from a single pointer (`OutputLoggerThreadStore *store`) to a per-protocol array (`OutputLoggerThreadStore *store[ALPROTO_MAX]`), indexed by application protocol. Each slot holds the per-thread store chain for that protocol's loggers.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

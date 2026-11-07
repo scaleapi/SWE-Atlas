@@ -10,3 +10,5 @@ Use the below interface for your solution:
 - Input: `domain: CustomDomain`
 - Output: `None`
 - Description: Schedules deletion of a custom domain by marking it as pending deletion and creating a background job to perform the actual deletion. The function sets `domain.pending_deletion = True` and creates a Job entry to be processed asynchronously.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

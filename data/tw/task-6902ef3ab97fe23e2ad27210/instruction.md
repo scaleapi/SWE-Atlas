@@ -15,7 +15,7 @@ Test 2: New dashboard initialization
 Test 3: Snapshot dashboard scene with specialized variable handling
 - Create a snapshot dashboard scene where templating includes multiple variable types (custom, interval, and adhoc with filters/baseFilters), and verify that all variables are correctly transformed into SnapshotVariable instances with preserved state and configuration.
 Test 4: Panel organization in complex row layouts
-- Organize panels as scene children for dashboards with multiple rows and panels, including: a collapsed row that correctly contains panels and library panels within it, an expanded row that picks up panels by gridPos positioning with both regular and library panels, panels that remain outside of collapsed rows when positioned after them, and empty rows with no children
+- Organize panels as scene children for dashboards with multiple rows and panels, including: a collapsed row that correctly contains panels and library panels within it, an expanded row that picks up panels by gridPos positioning with both regular and library panels, panels that remain outside of collapsed rows when positioned after them, and empty rows with no children.
 </testing_objective>
 
 Your tests MUST be runnable using the following script (be careful if/when you run it as it may run all tests and take a long time):
@@ -126,6 +126,7 @@ exit 0
 
 Can you help me write comprehensive tests for this codebase?
 Your task is to create a test suite in /app that verifies correct implementation behavior according to the testing objective.
+
 Follow these steps to complete the task:
 1. Explore the repository structure to understand how the codebase is organized and identify existing test patterns
 2. Find and read the source code relevant to the testing objective to understand the functionality to be tested
@@ -152,3 +153,5 @@ Use the appropriate naming convention for the language:
 - Go: TestFunctionName
 - JavaScript/TypeScript: "describe block > it/test name" or test function name
 - Java: testMethodName or ClassName.testMethodName
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

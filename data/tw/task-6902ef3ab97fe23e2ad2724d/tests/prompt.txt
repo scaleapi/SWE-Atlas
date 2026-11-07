@@ -4,5 +4,5 @@ The screen margin implementation is working correctly, but we're missing some un
 
 1. Margin behavior when using VT100 origin mode with scroll regions
 2. How content scrolls naturally (through drawing and linefeed operations) when a bottom margin is configured
-3.  Natural scrolling behavior (from content operations) when only a top margin is set
+3. Natural scrolling behavior (from content operations) when only a top margin is set
 4. Natural scroll region behavior (from content overflow) when both margins are set together

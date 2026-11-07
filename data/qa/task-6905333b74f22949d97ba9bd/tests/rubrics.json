@@ -9,7 +9,7 @@
   },
   {
     "id": "4dbda326cfb8068c43fadfd91edd0630",
-    "title": "1.2: Identifies where decompression begins in the parsing process (e.g., DNSStrField.getfield calling dns_get_str). ",
+    "title": "1.2: Identifies where decompression begins in the parsing process (e.g., DNSStrField.getfield calling dns_get_str).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -25,7 +25,7 @@
   },
   {
     "id": "aa7cb37f389399cb9216c2e742f3f864",
-    "title": "1.4: Shows how the 0xc0 marker distinguishes a compression pointer from a normal label length (e.g., high two bits set to 11, values 0x00-0x3f for labels, 0xc0+ for pointers). ",
+    "title": "1.4: Shows how the 0xc0 marker distinguishes a compression pointer from a normal label length (e.g., high two bits set to 11, values 0x00-0x3f for labels, 0xc0+ for pointers).",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "0af651cd5863a9729496593d292d0f5c",
-    "title": "1.6: Explains that abs() in the bounds check catches negative pointer values resulting from small offsets after header subtraction (e.g., abs(pointer) >= max_length check, log_runtime.info for premature end)",
+    "title": "1.6: Explains that abs() in the bounds check catches negative pointer values resulting from small offsets after header subtraction only when their magnitude is at least max_length (e.g., abs(pointer) >= max_length check, log_runtime.info for premature end)",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

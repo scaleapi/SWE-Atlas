@@ -104,16 +104,8 @@
     }
   },
   {
-    "id": "2dfef12fc617c6e553fa72362a612cf3",
-    "title": "1.13: Removes the `NewMemLogger` function from `lib/testutils/logrus_hook.go` that returned `(*logrus.Logger, *SimpleLogrusHook)` with a concrete logger type",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
     "id": "eab74d277113702b38589574540be84a",
-    "title": "1.14: Removes the TODO comment from `lib/test_state.go` that references replacing the Logger type with an interface",
+    "title": "1.13: Removes the TODO comment from `lib/test_state.go` that references replacing the Logger type with an interface",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -121,7 +113,7 @@
   },
   {
     "id": "6735e8bc54cd68c3d193b141c63b7b56",
-    "title": "1.15: Removes the TODO comment from `lib/vu_state.go` that references changing the Logger type to an interface",
+    "title": "1.14: Removes the TODO comment from `lib/vu_state.go` that references changing the Logger type to an interface",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -129,7 +121,7 @@
   },
   {
     "id": "488ec8d58d9a5332a3e75a05212dde33",
-    "title": "4: Negative Rubrics",
+    "title": "2: Negative Rubrics",
     "annotations": {
       "type": "high level intent",
       "importance": "must have"
@@ -137,7 +129,7 @@
   },
   {
     "id": "b8db8602767ed75bf96367f1eb68fd50",
-    "title": "4.1: Removes or changes the signatures of existing `SimpleLogrusHook` methods `Levels`, `Fire`, `Drain`, or `Lines` in `lib/testutils/logrus_hook.go`",
+    "title": "2.1: Removes or changes the signatures of existing `SimpleLogrusHook` methods `Levels`, `Fire`, `Drain`, or `Lines` in `lib/testutils/logrus_hook.go`",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"
@@ -145,7 +137,7 @@
   },
   {
     "id": "27a9cd57b89dcabf456c49260e1f1af3",
-    "title": "4.2: Modifies any existing Go test file (`*_test.go`) as part of the refactoring",
+    "title": "2.2: Modifies any existing Go test file (`*_test.go`) as part of the refactoring",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

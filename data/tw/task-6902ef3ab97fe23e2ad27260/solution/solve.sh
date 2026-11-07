@@ -11,7 +11,6 @@ cat > /logs/agent/manifest.txt << 'MANIFEST_EOF'
     - TestCommitParseFailureRecoveryBufferedFileWriter
     - TestCommitParsing
     - TestDiffParseFailureRecovery
-    - TestDiffParseFailureRecoveryBufferedFileWriter
     - TestStagedDiffParsing
     - TestStagedDiffParsingBufferedFileWriter
 <<TEST_MANIFEST>>

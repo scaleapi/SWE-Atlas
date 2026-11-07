@@ -4,23 +4,20 @@
 I've uploaded a code repository in the directory /app. Consider the following testing objective:
 
 <testing_objective>
-We've identified some gaps in integration test coverage for the automotive diagnostic scanner system-- we're missing some test cases for scanner orchestration and service enumeration scenarios. write tests with multiple sub-test assertions to validate these scenarios:
+We've identified some gaps in integration test coverage for the automotive diagnostic scanner system. We're missing some test cases for scanner orchestration and service enumeration scenarios. Write tests with multiple sub-test assertions to validate these scenarios:
 
-1. complete scan orchestration with state graph construction and transition discovery
-2. data identifier reading service with response categorization and state tracking
-3. error record reading service with negative and positive response handling
-4. communication control service with completion tracking and progress metrics
-5. input/output control service with response detection and state enumeration
+1. Complete scan orchestration with state graph construction, transition discovery, progress metrics and negative-response categorization.
+2. Data identifier reading service with response categorization and state tracking.
+3. ECU reset service with completion and state tracking.
+4. Communication control service with completion tracking and negative and positive response handling.
+5. Input/output control service with response detection and state enumeration.
 </testing_objective>
 
 Your tests MUST be runnable using the following script (be careful if/when you run it as it may run all tests and take a long time):
 <run_script>
 #!/bin/bash
-### COMMON SETUP; DO NOT MODIFY ###
 set -e
 
-# --- CONFIGURE THIS SECTION ---
-# Replace this with your command to run all tests
 run_all_tests() {
   echo "Running all tests..."
   export PIP_BREAK_SYSTEM_PACKAGES=1
@@ -43,7 +40,6 @@ run_all_tests() {
   done
 }
 
-# Replace this with your command to run specific test files
 run_selected_tests() {
   local test_files=("$@")
   echo "Running selected tests: ${test_files[@]}"
@@ -70,9 +66,6 @@ run_selected_tests() {
     fi
   done
 }
-# --- END CONFIGURATION SECTION ---
-
-### COMMON EXECUTION; DO NOT MODIFY ###
 
 # No args is all tests
 if [ $# -eq 0 ]; then
@@ -93,6 +86,7 @@ run_selected_tests "${TEST_FILES[@]}"
 
 Can you help me write comprehensive tests for this codebase?
 Your task is to create a test suite in /app that verifies correct implementation behavior according to the testing objective.
+
 Follow these steps to complete the task:
 1. Explore the repository structure to understand how the codebase is organized and identify existing test patterns
 2. Find and read the source code relevant to the testing objective to understand the functionality to be tested
@@ -119,3 +113,5 @@ Use the appropriate naming convention for the language:
 - Go: TestFunctionName
 - JavaScript/TypeScript: "describe block > it/test name" or test function name
 - Java: testMethodName or ClassName.testMethodName
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

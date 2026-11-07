@@ -10,25 +10,29 @@ First run output:
 ```
 Test Suites: 1 passed, 1 total
 Tests:       9 passed, 9 total
-Time:        67.891 s
+Snapshots:   0 total
+Time:        14.355 s
+Ran all test suites matching /client\/state\/data-layer\/wpcom\/comments\/test/i.
 
-real    1m9.234s
-user    0m4.721s
-sys     0m34.012s
+real    0m19.011s
+user    0m23.660s
+sys     0m10.600s
 ```
 
 Second run (immediately after):
 ```
 Test Suites: 1 passed, 1 total
 Tests:       9 passed, 9 total
-Time:        34.567 s
+Snapshots:   0 total
+Time:        4.598 s, estimated 15 s
+Ran all test suites matching /client\/state\/data-layer\/wpcom\/comments\/test/i.
 
-real    0m36.124s
-user    0m3.698s
-sys     0m9.234s
+real    0m6.207s
+user    0m7.880s
+sys     0m1.700s
 ```
 
-The ratio of first-run to second-run time is approximately 1.9x to 2x - the cold start takes nearly twice as long as subsequent runs. This overhead comes from Jest's transformation pipeline rather than the tests themselves.
+The ratio of first-run to second-run time is approximately 3x - 19.0 seconds versus 6.2 seconds wall clock (Jest itself reports 14.4s versus 4.6s). The cold start takes roughly three times as long as the immediately following run. This overhead comes from Jest's transformation pipeline rather than the tests themselves.
 
 The Jest cache configuration lives in `test/client/jest.config.js`, where the cache directory is explicitly set:
 
@@ -54,15 +58,15 @@ $ ls -la .cache/jest/
 
 Output:
 ```
-total 2648
-drwxr-xr-x   5 user  staff      160 Jan 10 12:00 .
-drwxr-xr-x   3 user  staff       96 Jan 10 11:58 ..
--rw-r--r--   1 user  staff  2621440 Jan 10 12:00 haste-map-a1b2c3d4e5f6...
-drwxr-xr-x  66 user  staff     2112 Jan 10 12:00 jest-transform-cache-a1b2c3d4e5f6...
--rw-r--r--   1 user  staff       66 Jan 10 12:00 perf-cache-a1b2c3d4e5f6...
+total 2622
+drwxr-sr-x 1 root 1001     100 Aug 25 20:15 .
+drwxr-sr-x 1 root 1001      60 Aug 25 20:14 ..
+-rw-r--r-- 1 root 1001 2684319 Aug 25 20:15 haste-map-794f55905cb6a955b3e2127feb4c41b8-8c475912b010a489b7e6c7a00339cff0-0777fb9d061efd2cd77a15f5796140d8
+drwxr-sr-x 1 root 1001    5160 Aug 25 20:15 jest-transform-cache-794f55905cb6a955b3e2127feb4c41b8-79ef2876fae7ca75eedb2aa53dc48338
+-rw-r--r-- 1 root 1001      70 Aug 25 20:15 perf-cache-794f55905cb6a955b3e2127feb4c41b8-da39a3ee5e6b4b0d3255bfef95601890
 ```
 
-This directory contains three main types of cached data. The haste-map file (around 2.5MB) stores a serialized module resolution map that Jest uses to quickly locate files. The jest-transform-cache directory contains pre-compiled JavaScript files organized into subdirectories numbered 00 through ff. The perf-cache file (only 66 bytes) stores timing data that Jest uses to optimize test ordering on subsequent runs.
+This directory contains three main types of cached data. The haste-map file (about 2.7MB, 2,684,319 bytes here) stores a serialized module resolution map that Jest uses to quickly locate files. The jest-transform-cache directory contains pre-compiled JavaScript files organized into subdirectories numbered 00 through ff. The perf-cache file (only 70 bytes) stores timing data that Jest uses to optimize test ordering on subsequent runs.
 
 The transform cache directory holds the output of Babel transformations - TypeScript and JSX converted to plain JavaScript that Node can execute directly. These cached files eliminate the need to re-transform source code on every test run.
 
@@ -100,14 +104,16 @@ Output:
 ```
 Test Suites: 1 passed, 1 total
 Tests:       9 passed, 9 total
-Time:        28.456 s
+Snapshots:   0 total
+Time:        13.647 s
+Ran all test suites matching /client\/state\/data-layer\/wpcom\/comments\/test/i.
 
-real    0m30.123s
-user    0m9.234s
-sys     0m12.456s
+real    0m15.960s
+user    0m24.310s
+sys     0m7.210s
 ```
 
-Interestingly, `--no-cache` is actually faster than the first cached run (approximately 30 seconds versus 69 seconds). This is because `--no-cache` skips cache I/O entirely - it doesn't read from or write to the cache. The first run with caching enabled must both transform files and write those transformations to disk, adding significant overhead. Subsequent runs benefit from reading the cached transformations, which is faster than re-transforming but still involves disk I/O.
+Compared to the previous cached (warm) run, disabling the cache is a large regression: roughly 16.0 seconds versus 6.2 seconds wall clock (Jest-reported 13.6s versus 4.6s), about 2.5x slower. The `--no-cache` time lands close to the cold first run (16.0s versus 19.0s) because it re-does the same Babel transformation work instead of reading cached output; it comes in slightly under the cold run because that first run also had to build the haste map and populate the cache directory from scratch. The user-CPU numbers tell the same story: about 24 seconds of CPU for both the cold and `--no-cache` runs versus about 8 seconds for the warm run - the extra CPU is the transformation work that the warm run avoids.
 
 The most time-consuming transformation step during uncached runs is Babel transpilation. The transformation pipeline configured in `@automattic/calypso-jest` processes every source file through babel-jest:
 
@@ -120,4 +126,4 @@ transform: {
 
 This means every JavaScript, TypeScript, JSX, and TSX file must be processed by Babel before Jest can execute it. The transformation includes converting TypeScript to JavaScript, transforming JSX into React function calls, and converting ES modules to CommonJS format that Node understands. For a codebase the size of wp-calypso, this represents thousands of files that must be processed on a cold start.
 
-The performance characteristics make sense when considering the data flow: first run transforms everything and writes to cache (slow), subsequent runs read from cache (medium), and `--no-cache` transforms without any cache I/O (medium but no benefit on future runs). The cache exists specifically to amortize the expensive Babel transformation cost across multiple test runs during development.
+The performance characteristics make sense when considering the data flow: the cold first run transforms everything, builds the haste map, and writes it all to cache (slowest, 19.0s), `--no-cache` re-transforms every file on each invocation without benefiting from prior work (nearly as slow, 16.0s), and warm cached runs read the pre-transformed output back (fastest, 6.2s - roughly 3x faster than cold). The cache exists specifically to amortize the expensive Babel transformation cost across multiple test runs during development.

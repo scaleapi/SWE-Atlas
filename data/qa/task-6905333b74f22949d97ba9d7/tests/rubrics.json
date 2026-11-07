@@ -33,7 +33,7 @@
   },
   {
     "id": "2c3e50ceed2526ee51029adb5f025556",
-    "title": "1.7: Reports an unauthenticated request to `/api/documents/` returns HTTP `401 Unauthorized`, demonstrating access control is enforced for this endpoint.",
+    "title": "1.5: Reports an unauthenticated request to `/api/documents/` returns HTTP `401 Unauthorized`, demonstrating access control is enforced for this endpoint.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "ea66b615b4ca58d371882fbd5f527c74",
-    "title": "1.8: Reports the unauthenticated response body includes `{\\\\\\\"detail\\\\\\\":\\\\\\\"Authentication credentials were not provided.\\\\\\\"}`, demonstrating the observed failure payload from the live endpoint.",
+    "title": "1.6: Reports the unauthenticated response body includes `{\"detail\":\"Authentication credentials were not provided.\"}`, demonstrating the observed failure payload from the live endpoint.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "9c9c8e0422da28cf81a432ff97899015",
-    "title": "1.9: Identifies the token authentication handler class as `rest_framework.authentication.TokenAuthentication`, demonstrating code tracing to the concrete class that parses the `Authorization` header.",
+    "title": "1.7: Identifies the token authentication handler class as `rest_framework.authentication.TokenAuthentication`, demonstrating code tracing to the concrete class that parses the `Authorization` header.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "0a0c4f83802f8c7ec068bb67467869a2",
-    "title": "1.10:  Identifies the token storage model as `rest_framework.authtoken.models.Token`, demonstrating where token keys are persisted and looked up.",
+    "title": "1.8: Identifies the token storage model as `rest_framework.authtoken.models.Token`, demonstrating where token keys are persisted and looked up.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,15 +65,7 @@
   },
   {
     "id": "7d18e487e357b43ee98801ced1cb81aa",
-    "title": "1.11: Reports `REST_FRAMEWORK[\\\\\\\"DEFAULT_AUTHENTICATION_CLASSES\\\\\\\"]` configuration in `paperless/settings.py` includes `TokenAuthentication`, demonstrating token auth is enabled via the global DRF authentication pipeline.",
-    "annotations": {
-      "type": "positive hli verifier",
-      "importance": "must have"
-    }
-  },
-  {
-    "id": "ee2018c8712f3345b25b8834eb7114c3",
-    "title": "1.12: Reports a concrete user-creation confirmation line such as `User created: True, Username: testuser`, demonstrating a verifiable provisioning outcome for the test user.",
+    "title": "1.9: Reports `REST_FRAMEWORK[\"DEFAULT_AUTHENTICATION_CLASSES\"]` configuration in `paperless/settings.py` includes `TokenAuthentication`, demonstrating token auth is enabled via the global DRF authentication pipeline.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +73,7 @@
   },
   {
     "id": "bee14fa4deb8a3bbc6871c2df11791b0",
-    "title": "1.13: Reports a concrete token-creation output including a token key such as `Token key: 89603c...`, demonstrating a usable token was actually generated for authenticated requests.",
+    "title": "1.10: Reports a concrete token-creation output including a token key such as `Token key: 89603c...`, demonstrating a usable token was actually generated for authenticated requests.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

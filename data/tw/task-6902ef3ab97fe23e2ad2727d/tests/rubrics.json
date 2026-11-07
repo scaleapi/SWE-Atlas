@@ -45,7 +45,7 @@
       "importance": "must have"
     },
     "id": "3c7a500b32ba0cfdac2ff492cadcf436",
-    "title": "1.6: Tests that chtimes operation on subdirectory directory fails when parent directory lacks chtimes permission"
+    "title": "1.6: Tests that chtimes operation on subdirectory fails when parent directory lacks chtimes permission"
   },
   {
     "annotations": {

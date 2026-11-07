@@ -10,4 +10,4 @@ Create tests that cover the following operations:
 - Capacity limits: Behavior when store reaches its configured limit
 - Persistence: Data durability across store re-open
 
-The tests should verify the core integration between the QueueStore methods and ensure the store maintains data integrity across operations
+The tests should verify the core integration between the QueueStore methods and ensure the store maintains data integrity across operations.

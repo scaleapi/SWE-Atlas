@@ -9,7 +9,7 @@
   },
   {
     "id": "c35ed51412defca849298e9eb0ea56b7",
-    "title": "1.2: Identifies a configuration option (e.g., conf.checkIPinIP) that affects packet matching for tunneled traffic, distinct from conf.checkIPsrc and conf.checkIPaddr\n",
+    "title": "1.2: Identifies a configuration option (e.g., conf.checkIPinIP) that affects packet matching for tunneled traffic, distinct from conf.checkIPsrc and conf.checkIPaddr",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"

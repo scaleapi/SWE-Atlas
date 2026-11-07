@@ -1,76 +1,76 @@
 {
   "tests": [
     {
-      "name": "TestBundleEnv"
+      "name": "go.k6.io/k6/internal/js/TestBundleEnv"
     },
     {
-      "name": "TestBundleNotSharable"
+      "name": "go.k6.io/k6/internal/js/TestBundleNotSharable"
     },
     {
-      "name": "TestCompile"
+      "name": "go.k6.io/k6/internal/js/compiler/TestCompile"
     },
     {
-      "name": "TestDNSResolverCache"
+      "name": "go.k6.io/k6/internal/execution/TestDNSResolverCache"
     },
     {
-      "name": "TestExecutionInfoAll"
+      "name": "go.k6.io/k6/internal/execution/TestExecutionInfoAll"
     },
     {
-      "name": "TestExecutionInfoScenarioIter"
+      "name": "go.k6.io/k6/internal/execution/TestExecutionInfoScenarioIter"
     },
     {
-      "name": "TestExecutionInfoVUSharing"
+      "name": "go.k6.io/k6/internal/execution/TestExecutionInfoVUSharing"
     },
     {
-      "name": "TestGlobalTimers"
+      "name": "go.k6.io/k6/internal/js/TestGlobalTimers"
     },
     {
-      "name": "TestMinimalSourceMap"
+      "name": "go.k6.io/k6/internal/js/compiler/TestMinimalSourceMap"
     },
     {
-      "name": "TestNewBundleFromArchive"
+      "name": "go.k6.io/k6/internal/js/TestNewBundleFromArchive"
     },
     {
-      "name": "TestNewJSRunnerWithCustomModule"
+      "name": "go.k6.io/k6/internal/js/TestNewJSRunnerWithCustomModule"
     },
     {
-      "name": "TestNewModuleResolver"
+      "name": "go.k6.io/k6/internal/js/TestNewModuleResolver"
     },
     {
-      "name": "TestNewSchedulerHasWork"
+      "name": "go.k6.io/k6/internal/execution/TestNewSchedulerHasWork"
     },
     {
-      "name": "TestOpen"
+      "name": "go.k6.io/k6/internal/js/TestOpen"
     },
     {
-      "name": "TestRealTimeAndSetupTeardownMetrics"
+      "name": "go.k6.io/k6/internal/execution/TestRealTimeAndSetupTeardownMetrics"
     },
     {
-      "name": "TestRequire"
+      "name": "go.k6.io/k6/internal/js/TestRequire"
     },
     {
-      "name": "TestSchedulerRunCustomConfigNoCrossover"
+      "name": "go.k6.io/k6/internal/execution/TestSchedulerRunCustomConfigNoCrossover"
     },
     {
-      "name": "TestSchedulerRunCustomTags"
+      "name": "go.k6.io/k6/internal/execution/TestSchedulerRunCustomTags"
     },
     {
-      "name": "TestSchedulerRunEnv"
+      "name": "go.k6.io/k6/internal/execution/TestSchedulerRunEnv"
     },
     {
-      "name": "TestSchedulerRunNonDefault"
+      "name": "go.k6.io/k6/internal/execution/TestSchedulerRunNonDefault"
     },
     {
-      "name": "TestSchedulerSystemTags"
+      "name": "go.k6.io/k6/internal/execution/TestSchedulerSystemTags"
     },
     {
-      "name": "TestSetupData"
+      "name": "go.k6.io/k6/api/v1/TestSetupData"
     },
     {
-      "name": "TestSetupDataMarshalling"
+      "name": "go.k6.io/k6/internal/js/modules/k6/TestSetupDataMarshalling"
     },
     {
-      "name": "TestSharedIterationsStable"
+      "name": "go.k6.io/k6/internal/execution/TestSharedIterationsStable"
     }
   ]
 }

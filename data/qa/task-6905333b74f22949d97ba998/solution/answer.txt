@@ -64,13 +64,12 @@ Output (abbreviated):
               |___/|_|                
 
 [build output...]
-webpack built 8a2f3e1c2d4b5a6f in 45231ms
-[INFO] Server running at http://calypso.localhost:3000
+20:13:06.688Z  INFO calypso: wp-calypso booted in 1448ms - http://calypso.localhost:3000
 
 Ready! You can load http://calypso.localhost:3000/ now. Have fun!
 ```
 
-The server successfully started on port 3000 as configured, and the cyan-colored "Ready!" message appeared once webpack finished compiling all assets.
+The server successfully started on port 3000 as configured, and the cyan-colored "Ready!" message appeared once webpack finished compiling all assets. The `INFO calypso: wp-calypso booted in 1448ms - http://calypso.localhost:3000` line is the server's own boot log: `client/server/index.js` line 33 calls `logger.info( 'wp-calypso booted in %dms - %s://%s:%s', Date.now() - start, protocol, host, port )`, and the `start-build` script (`node build/server.js | bunyan -o short`) pipes it through bunyan, which renders it with the `INFO calypso:` prefix.
 
 Next I wanted to understand how to know when the server is fully ready. I searched for the ready message:
 
@@ -166,7 +165,7 @@ Output:
 6:const hotMiddleware = require( 'webpack-hot-middleware' );
 ```
 
-Everything is served from a single port (3000). Hot module reloading uses webpack-hot-middleware which communicates via Server-Sent Events at /__webpack_hmr on the same port, not a separate WebSocket port.
+Everything is served from a single port (3000). Hot module reloading uses webpack-hot-middleware which communicates via Server-Sent Events at /__webpack_hmr on the same port, not a separate WebSocket port. There is no separate local API port either: `client/lib/wp/browser.js` sends API requests through `wpcom-proxy-request` to the remote WordPress.com REST API.
 
 With the server setup understood, I moved on to understanding what API endpoints get called to populate the Reader stream:
 

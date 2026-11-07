@@ -53,3 +53,5 @@ Use the below Interface:
 - Input: `NA`
 - Output: `NA`
 - Description: Interface for searchForLibraryPanels arguments. Contains searchString, sortDirection, panelFilter, folderFilterUIDs, and currentPanelId fields only.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

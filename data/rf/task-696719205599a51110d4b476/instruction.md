@@ -137,3 +137,5 @@ Use the below interface for your solution:
 - Output: `NA`
 - Bases: `Packet`
 - Description: OPC-DA header continuation fields. The fragment length field is fragLength and the authentication length field is authLength.
+
+Work only from the repository and environment provided; do not look up this task, its upstream fix, or its answer online.

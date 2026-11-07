@@ -9,7 +9,7 @@
   },
   {
     "id": "b1d302768dbf86005192a91bd9c3ba67",
-    "title": "1.3:Identifies kitty.fast_data_types load as C extension during test execution to demonstrate understanding of Python import mechanism. ",
+    "title": "1.2: Identifies kitty.fast_data_types load as C extension during test execution to demonstrate understanding of Python import mechanism.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -17,7 +17,7 @@
   },
   {
     "id": "52fa99002f7c6b74b69cf323604a4559",
-    "title": "1.4: Identifies kittens.transfer.rsync load as C extension during test execution to demonstrate understanding of Python import mechanisms.",
+    "title": "1.3: Identifies kittens.transfer.rsync load as C extension during test execution to demonstrate understanding of Python import mechanisms.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -25,7 +25,7 @@
   },
   {
     "id": "f4d326ba665d9c9c7258be2fdc480574",
-    "title": "1.5: Reports that the GLFW modules (kitty/glfw-x11.so and kitty/glfw-wayland.so) are not imported as Python extension modules during test execution.",
+    "title": "1.4: Reports that the GLFW modules (kitty/glfw-x11.so and kitty/glfw-wayland.so) are not imported as Python extension modules during test execution.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -33,7 +33,7 @@
   },
   {
     "id": "7136cbfcc73562c688aaf1d28baabd12",
-    "title": "1.6: Reports removing fast_data_types.so causes ModuleNotFoundError from kitty_tests.init.py blocking all tests to confirm framework initialization dependency. ",
+    "title": "1.5: Reports removing fast_data_types.so causes ModuleNotFoundError from kitty_tests.init.py blocking all tests to confirm framework initialization dependency.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -41,7 +41,7 @@
   },
   {
     "id": "6873a7d3370767b3c6b32cea42ddd80c",
-    "title": "1.7:Reports removing rsync.so causes ModuleNotFoundError from kitty_tests.file_transmission blocking all tests demonstrating the test discovery.\n",
+    "title": "1.6: Reports removing rsync.so causes ModuleNotFoundError from kitty_tests.file_transmission blocking all tests demonstrating the test discovery.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -49,7 +49,7 @@
   },
   {
     "id": "97eb5aa660194e6435b4ded38d0e4f14",
-    "title": "1.8: Reports fast_data_types.so removal result in executing zero tests, identifying it as critical extension.",
+    "title": "1.7: Reports fast_data_types.so removal result in executing zero tests, identifying it as critical extension.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -57,7 +57,7 @@
   },
   {
     "id": "c20fc4d148533b13276103a3ddfe838f",
-    "title": "1.9: Reports rsync.so removal result in executing zero tests, identifying it as critical extension. ",
+    "title": "1.8: Reports rsync.so removal result in executing zero tests, identifying it as critical extension.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -65,7 +65,7 @@
   },
   {
     "id": "30d2fcb7b2141f12fd4be738cb4c3b82",
-    "title": "1.10: Reports GLFW modules missing affects less than 2% of tests, identifying them as optional modules.",
+    "title": "1.9: Reports GLFW modules missing affects less than 2% of tests, identifying them as optional modules.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
@@ -81,7 +81,7 @@
   },
   {
     "id": "2e25ce0a7bd3538257624c1000d879d3",
-    "title": "2.2: Claims GLFW modules are imported as standard Python C extension module during test execution. ",
+    "title": "2.2: Claims GLFW modules are imported as standard Python C extension module during test execution.",
     "annotations": {
       "type": "negative hli verifier",
       "importance": "must have"

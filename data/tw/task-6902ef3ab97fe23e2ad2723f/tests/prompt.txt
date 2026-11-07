@@ -1,6 +1,6 @@
 hey, the object healing functionality in MinIO's erasure storage system needs more integration test coverage!
 
-The healing mechanism works correctly, but we're missing integration tests that validate the HealObject operation under various disk corruption scenarios. 
+The healing mechanism works correctly, but we're missing integration tests that validate the HealObject operation under various disk corruption scenarios.
 
 Can you write 1 integration test for each of the following scenarios:
 

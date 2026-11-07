@@ -25,7 +25,7 @@
   },
   {
     "id": "b431a8f9ce35b8cf7cf5423b66f63d18",
-    "title": "1.4: Reports a verbose output sequence for chunks with both plain and encoded secrets (e.g., UTF8 decoder finding plaintext showing 'Decoder Type: PLAIN', then Base64 decoder finding encoded showing 'Decoder Type: BASE64').",
+    "title": "1.4: Reports scan output showing a plaintext secret found by the UTF8 decoder (e.g., 'Decoder Type: PLAIN') and an encoded secret found by the Base64 decoder (e.g., 'Decoder Type: BASE64'), from one scan or separate scans.",
     "annotations": {
       "type": "positive hli verifier",
       "importance": "must have"
