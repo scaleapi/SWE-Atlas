@@ -30,4 +30,6 @@ agents:
   - name: nop
 
 datasets:
-  - path: data
+  - path: data/qa
+  - path: data/rf
+  - path: data/tw

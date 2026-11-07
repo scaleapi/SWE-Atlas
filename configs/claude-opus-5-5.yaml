@@ -38,4 +38,6 @@ agents:
       disallowed_tools: WebSearch,WebFetch
 
 datasets:
-  - path: data
+  - path: data/qa
+  - path: data/rf
+  - path: data/tw

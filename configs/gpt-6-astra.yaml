@@ -40,4 +40,6 @@ agents:
         model_supports_reasoning_summaries: true
 
 datasets:
-  - path: data
+  - path: data/qa
+  - path: data/rf
+  - path: data/tw

@@ -1,17 +1,28 @@
 #!/usr/bin/env bash
-# SWE Atlas entry point: ./run.sh <config.yaml> [harbor args]
-#   ./run.sh configs/oracle.yaml -i qa-6905333b74f22949d97ba9cc   one reference solution (reward 1)
-#   ./run.sh configs/claude-opus-5-5.yaml                         a model over all 284 tasks
-# Extra arguments go to `harbor run`, e.g. -i 'qa-*' for one lane or -l 20 for 20 tasks.
+# SWE Atlas entry point: ./run.sh <config.yaml> [qa|rf|tw] [harbor args]
+#   ./run.sh configs/claude-opus-5-5.yaml                            all 284 tasks (data/qa, data/rf, data/tw)
+#   ./run.sh configs/claude-opus-5-5.yaml rf                         one lane (data/rf)
+#   ./run.sh configs/oracle.yaml qa -i qa-6905333b74f22949d97ba9cc   one task (reward 1)
+# Extra arguments go to `harbor run`. Task filters (-i, -x, -l) need a lane.
 set -euo pipefail
 
 if [ ! -f "${1:-}" ]; then
-  echo "usage: ./run.sh <config.yaml> [harbor args]" >&2
+  echo "usage: ./run.sh <config.yaml> [qa|rf|tw] [harbor args]" >&2
   echo "configs: $(cd "$(dirname "$0")" && ls configs/*.yaml | tr '\n' ' ')" >&2
   exit 1
 fi
 config="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"; shift
 cd "$(dirname "$0")"
+
+lane=""
+case "${1:-}" in qa|rf|tw) lane="$1"; shift ;; esac
+if [ -z "$lane" ]; then
+  for a in "$@"; do
+    case "$a" in -i|-x|-l|--include-task-name|--exclude-task-name|--n-tasks|-i=*|-x=*|-l=*|--include-task-name=*|--exclude-task-name=*|--n-tasks=*)
+      echo "task filters need a lane: ./run.sh <config.yaml> qa|rf|tw $*" >&2; exit 1 ;;
+    esac
+  done
+fi
 
 [ -f .env ] || { echo "no .env: cp .env.example .env and fill it in" >&2; exit 1; }
 set -a; . ./.env; set +a
@@ -20,6 +31,7 @@ set -a; . ./.env; set +a
   exit 1
 }
 
-# -p data lets -i/-x filter tasks; the job name is the config name plus a timestamp.
-exec harbor run -c "$config" -p data --env-file .env -y \
-  --job-name "$(basename "$config" .yaml)-$(date +%Y%m%d-%H%M%S)" "$@"
+# With a lane, -p data/<lane> replaces the config's datasets and lets -i/-x/-l filter tasks.
+# The job name is the config name, the lane (if any) and a timestamp.
+name="$(basename "$config" .yaml)${lane:+-$lane}-$(date +%Y%m%d-%H%M%S)"
+exec harbor run -c "$config" ${lane:+-p "data/$lane"} --env-file .env -y --job-name "$name" "$@"
