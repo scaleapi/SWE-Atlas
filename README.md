@@ -82,9 +82,14 @@ reasoning effort, web tools off). Each runs 1 attempt per task; raise `n_attempt
 | `configs/claude-opus-5-5.yaml`, `configs/claude-sonnet-5-5.yaml` | claude-code 2.1.293, effort max |
 | `configs/gpt-6.1-sol.yaml`, `configs/gpt-6-astra.yaml` | codex 0.142.1, effort max |
 
+By default a config runs the full dataset, all 284 tasks. Each track can also be run on its own
+by naming it after the config: `qa` (Codebase QnA), `rf` (Refactoring) or `tw` (Test Writing).
+
 ```bash
 ./run.sh configs/claude-opus-5-5.yaml        # the full dataset: all 284 tasks
-./run.sh configs/claude-opus-5-5.yaml rf     # one lane (qa, rf or tw)
+./run.sh configs/claude-opus-5-5.yaml qa     # Codebase QnA only: 124 tasks in data/qa
+./run.sh configs/claude-opus-5-5.yaml rf     # Refactoring only: 70 tasks in data/rf
+./run.sh configs/claude-opus-5-5.yaml tw     # Test Writing only: 90 tasks in data/tw
 ```
 
 - **Network.** The agent runs under an allowlist, so its model API hostname (no `https://`, no
@@ -109,13 +114,14 @@ An agent timeout is graded on the work the agent left; a refusal, an empty answe
 the judge could not rate scores 0. Trials that ended on an infrastructure error are not scores:
 rerun them in place with `harbor jobs resume -p jobs/<job> -f <ErrorType>`.
 
-## 6. Part of the dataset
+## 6. One track or part of it
 
-Without a lane, a config runs all three folders. Name a lane to run one folder; within a lane,
-`-i` and `-x` take glob patterns over task names and `-l` caps the count:
+Without a track, a config runs all three track folders. Name a track (`qa`, `rf` or `tw`) to run
+only that folder; within a track, `-i` and `-x` take glob patterns over task names and `-l` caps
+the count:
 
 ```bash
-./run.sh configs/gpt-6.1-sol.yaml rf                   # one lane: data/rf
+./run.sh configs/gpt-6.1-sol.yaml rf                   # one track: data/rf
 ./run.sh configs/gpt-6.1-sol.yaml qa -l 20             # 20 qa tasks
 ./run.sh configs/gpt-6.1-sol.yaml tw -x 'task-6902ef3ab97fe23e2ad271*'   # tw without 10 matching tasks
 ```
