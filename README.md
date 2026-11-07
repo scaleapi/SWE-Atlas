@@ -21,17 +21,16 @@ the [SWE Atlas leaderboard](https://labs.scale.com/leaderboard/swe-atlas).
 
 ```
 data/
-├── qa/                  124 Codebase QnA tasks
-├── rf/                  70 Refactoring tasks
-└── tw/                  90 Test Writing tasks
-    ├── dataset.toml     harbor dataset manifest for the lane
-    └── task-<id>/
-        ├── task.toml        image, resources, timeouts, network allowlist
-        ├── instruction.md   what the agent is given
-        ├── environment/     Dockerfile: one FROM of a public, digest-pinned image
-        ├── solution/        the reference solution
-        └── tests/           the grader, rubrics and judge prompts
+├── qa/qa-<id>/          124 Codebase QnA tasks
+├── rf/rf-<id>/          70 Refactoring tasks
+└── tw/tw-<id>/          90 Test Writing tasks
+    ├── task.toml        image, resources, timeouts, network allowlist
+    ├── instruction.md   what the agent is given
+    ├── environment/     Dockerfile: one FROM of a public, digest-pinned image
+    ├── solution/        the reference solution
+    └── tests/           the grader, rubrics and judge prompts
 configs/                 one run config per run: oracle, nop and Anthropic and OpenAI leaderboard models
+datasets/                harbor dataset manifests, one per lane
 run.sh                   the entry point: ./run.sh <config.yaml> [qa|rf|tw] [harbor args]
 ```
 
@@ -65,7 +64,7 @@ The `oracle` agent applies each task's reference solution and grades it. One tas
 `reward 1.0`:
 
 ```bash
-./run.sh configs/oracle.yaml qa -i task-6905333b74f22949d97ba9cc
+./run.sh configs/oracle.yaml qa -i qa-6905333b74f22949d97ba9cc
 ```
 
 `./run.sh configs/oracle.yaml` runs all 284 reference solutions; `./run.sh configs/nop.yaml` runs
@@ -115,7 +114,7 @@ Without a lane, a config runs all three folders. Name a lane to run one folder; 
 ```bash
 ./run.sh configs/gpt-6.1-sol.yaml rf                   # one lane: data/rf
 ./run.sh configs/gpt-6.1-sol.yaml qa -l 20             # 20 qa tasks
-./run.sh configs/gpt-6.1-sol.yaml tw -x 'task-6902ef3ab97fe23e2ad271*'   # tw without 10 matching tasks
+./run.sh configs/gpt-6.1-sol.yaml tw -x 'tw-6902*'     # tw without matching tasks
 ```
 
 ## Acknowledgements
