@@ -18,7 +18,7 @@ lane=""
 case "${1:-}" in qa|rf|tw) lane="$1"; shift ;; esac
 if [ -z "$lane" ]; then
   for a in "$@"; do
-    case "$a" in -i|-x|-l|--include-task-name|--exclude-task-name|--n-tasks|-i=*|-x=*|-l=*|--include-task-name=*|--exclude-task-name=*|--n-tasks=*)
+    case "$a" in -i*|-x*|-l*|--include-task-name*|--exclude-task-name*|--n-tasks*)
       echo "task filters need a lane: ./run.sh <config.yaml> qa|rf|tw $*" >&2; exit 1 ;;
     esac
   done

@@ -89,8 +89,10 @@ with (harness, version, reasoning effort, web tools off, 3 attempts per task):
   key that serves only the model under evaluation.
 - **Web tools.** Keep them off: `disallowed_tools: WebSearch,WebFetch` for claude-code,
   `web_search: disabled` for codex.
-- **Your own model or agent.** Copy the closest config and change `name`, `model_name`,
-  `extra_allowed_hosts` and `kwargs` (`harbor agent schema <name>` lists an agent's options).
+- **Your own model or agent.** Copy the closest config (`cp configs/claude-opus-5-5.yaml
+  configs/my-model.yaml`), change `name`, `model_name`, `extra_allowed_hosts` and `kwargs`
+  (`harbor agent schema <name>` lists an agent's options), and run it with
+  `./run.sh configs/my-model.yaml`.
 - **Run shape.** `n_attempts` (pass@k), `n_concurrent_trials` and `retry` are set per config.
 
 ## 5. Results
