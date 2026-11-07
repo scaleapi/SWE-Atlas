@@ -2,7 +2,7 @@
 # SWE Atlas entry point: ./run.sh <config.yaml> [qa|rf|tw] [harbor args]
 #   ./run.sh configs/claude-opus-5-5.yaml                            all 284 tasks (data/qa, data/rf, data/tw)
 #   ./run.sh configs/claude-opus-5-5.yaml rf                         one lane (data/rf)
-#   ./run.sh configs/oracle.yaml qa -i qa-6905333b74f22949d97ba9cc   one task (reward 1)
+#   ./run.sh configs/oracle.yaml qa -i task-6905333b74f22949d97ba9cc one task (reward 1)
 # Extra arguments go to `harbor run`. Task filters (-i, -x, -l) need a lane.
 set -euo pipefail
 

@@ -1,0 +1,509 @@
+# Dataset manifest for scale-ai/swe-atlas-qna
+# Add tasks using: harbor add <org>/<name>
+# Publish using: harbor publish
+
+[dataset]
+name = "scale-ai/swe-atlas-qna"
+description = "SWE-Atlas - Codebase QnA -- A benchmark of deep codebase comprehension and QnA problems for coding agents. Check out https://github.com/scaleapi/SWE-Atlas/ for instructions on running it."
+keywords = []
+[[dataset.authors]]
+name = "Mohit Raghavendra"
+email = "mohit.raghavendra@scale.com"
+
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba998"
+digest = "sha256:b4bac19549c3a79a071e4ec3fa1553c5f9c604496c85540e9ce78be222a733b9"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba999"
+digest = "sha256:e7ac4fbdb45ef457fb1a4b891510493c703b6889a5cecc8ce79d7d67e6a56ecd"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba99a"
+digest = "sha256:ff4a18bdd5b82aec7d388aba621dec273871d84d3e5131d4eafd549ae645beda"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba99b"
+digest = "sha256:c8be0ff3f5a2b5baf7cc70eecec4a28a7e6eff524852ea451263c2adf720c612"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba99d"
+digest = "sha256:10562ed35c57e7335828b3d064c1ba506d8020ea59e82b073d83adebaa7eca05"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba99f"
+digest = "sha256:356773f97b973b344caee077407ee43eed2d36925eaf2205d02dab855b753fce"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9a2"
+digest = "sha256:3634b3e9ccebc1a773f708079c37f272119a569b0ea8eb76ce69dae516b4f76d"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9a3"
+digest = "sha256:dfc5bc421345fb05ddf84fdf2cbc897a41a3b127dc154ebeead7572f5beb8aa9"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9a4"
+digest = "sha256:b198b0101db74019bdbdc33646f51c4717b6a9854f55be2721a5b584d39d104c"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9a5"
+digest = "sha256:67da590257841cc130004083482f9a8e38fe34f22e81936da6c9527ae18527d4"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9a6"
+digest = "sha256:80cda367d7c3543f6b305d4ae234a092021b567f34606dc8f46a17105961a2ac"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9a7"
+digest = "sha256:9942c3b15876f808dba28a6dda996d27e878eecadd14a07dafd421c756e9cba4"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9a8"
+digest = "sha256:aa23a1ba99a1bc61e920ea897352b964f43a0dd9bff1ad42f1a7df557d4dff78"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9a9"
+digest = "sha256:66b8b63f76aa2b591b7af996269049808543a9f25ed58ab12b39f52b7c582031"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9aa"
+digest = "sha256:89d9f1dc3ddbb01ad7802c396474f4dc29595fd79527356aa1c036c94a7ef309"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9ab"
+digest = "sha256:3536f7f39c0c8a80cad499947a0c9208af0e57e809a47160c209f07aaefde50d"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9ac"
+digest = "sha256:2501af71de8424117e08843f114dee7b96f6f1681d7b1a05299dfda3f404bde2"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9ad"
+digest = "sha256:1c3bbc240da8fabe304a673b114efad4e777889aa7081646c6c2d1caf1002207"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9ae"
+digest = "sha256:326a4426f7a9b2b6bda9762df02211057c3c59210e977b764e41d1120cdf37bc"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9af"
+digest = "sha256:45b2f267d063d8c11bf0759dfd9293993c05c8c8201a80a7c9f8eebd39c14b7b"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9b1"
+digest = "sha256:11775c21e540d14992bc6db266c03c4d82ef74102bbcb9f3313d547c832dcec4"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9b2"
+digest = "sha256:eb241e9b43c7cc52b41e9eb456803a2bebd3747813a11fcd1e5ff3fc4a9eca2d"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9b3"
+digest = "sha256:b03ed05637fc2dd8ab3e6e846f0fc462982afd0b4627165088b359ce8bf3dafd"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9b5"
+digest = "sha256:e1a6d9607df48c6404ffce8e6985f6f639f5791b8ba1338a92f97dc8125cf4ba"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9b6"
+digest = "sha256:28cb225295e153ade123c3ec9d13ff642289bf6a6a55ea3e78384c4472549605"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9b7"
+digest = "sha256:ea3b4edad103883e4db4a52275667a14ad72b7f97bf26b0f17a12b04a674c435"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9b8"
+digest = "sha256:f5eb1d40129204ee7abab6ed1b7ee8083226d3b1195998baf7ff68ec478b5e69"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9ba"
+digest = "sha256:22809fadcb81dea72d2a846d4c0d969d1a67ad7e5188afd8c94034d59de0aa05"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9bb"
+digest = "sha256:5c25e4c9e8cae1d44c1363b618865afb373f3c6b7f6b8753fcf30ccbaf67a424"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9bc"
+digest = "sha256:c0681752633c2f03fc9461142dfc6c54b0517383a144ca975633b904e9963ac7"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9bd"
+digest = "sha256:deca20af9e1126924b5908d62d372ba18d90ce28c6c10e79a639dae84e27fad9"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9be"
+digest = "sha256:12061694de0b70219701e2bd06bce34173bf982a55fbf57a74b2085eeb10f319"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9bf"
+digest = "sha256:2878c0f9087f729196167e4d57a895f9dcee5668241d27dab3fd0c1485f365b8"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9c0"
+digest = "sha256:f396b698c85d8da54fdde837977987f8312b6c6b131057e1c055548478d0eb39"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9c1"
+digest = "sha256:8ece27be2f3feb5d8bf3005ac2755a80291b0820b55b922e678e9e71551272c9"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9c2"
+digest = "sha256:276c2ec30e8ac609e0cbda6ee73d3c6c6a142fca517d96146298f7150b78d712"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9c3"
+digest = "sha256:0c3105da4b2a57e683946bddcab27a0120b905441f6c8c5c03636003826a8ae1"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9c4"
+digest = "sha256:e12f389c92fa1dd739b6aca07f5ce284199c25c1c9ead057f1991c82c83d4710"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9c5"
+digest = "sha256:07a5a31b1a9db0facecc251727d077837954432972fdef3eb34f6b558119e48e"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9c6"
+digest = "sha256:91dfd70384223c80472e3511c3a30ec82618a7dd9f402a7fc3ed5b07d25735b4"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9c8"
+digest = "sha256:65616c8ca05afb8496e07b81522a02079d85b3c4ca077b4de2021fcc0604082d"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9c9"
+digest = "sha256:be1b8a8268ed0fea7a423f08add36156943d7b8bddc3790dd33e6c8cb6707319"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9ca"
+digest = "sha256:6bf5a9c79ce85e71a0274471af1790c75a4b8794a0ebe5f69e4b8b9222e29fa4"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9cb"
+digest = "sha256:430e313fd2e7bff0881e472d74a3679f9d264b9d8e77d5a843a068ae0ec24ff3"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9cc"
+digest = "sha256:122fe51356f29ed826d039c16c64dee55750971f58f7ce486a59ed951a072556"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9cd"
+digest = "sha256:edc34774326a89c679293c1c8e31d581f21f09e781afc610df5bf63547c0dae2"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9ce"
+digest = "sha256:c6436ffadd756120ef9f77ae5897a302ec257ee6d594ec6a372aae4f0cb9c118"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9cf"
+digest = "sha256:250703aa1e1f44fbf46ab4a4276ecf292a01a1f280ca7ae86a0b299efab7441a"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9d0"
+digest = "sha256:ca0a152c3b1d8efceacbc2b13e793607fb840151ed1f3851e4b2558a8f7257d2"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9d1"
+digest = "sha256:bde57d0adc932b08190d65d9e9bba3e092fc6e4e8ce0775d2f915a72c834f381"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9d2"
+digest = "sha256:83075b390d23be88dd1151e4cfb877d54cc6568e16d40d87e71e155c397de9ed"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9d3"
+digest = "sha256:f99bbe1cdada89280250e7778db7aebe76d7371800da646c5417aadd0038b3f6"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9d4"
+digest = "sha256:19ecff7771f43fdcf48d30a7e6dfac10c5b5d6ac06c1417b31cd3adec2b1b8bc"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9d5"
+digest = "sha256:259cc9b280126de66686047857cfd88c5ea2ea519b745233b80c924c2ba5a97f"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9d6"
+digest = "sha256:5c51aeba4b7b058ec6ed32a6d77ddf5b8190a66b7c7f2db55f8cfe8ad2fee6d5"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9d7"
+digest = "sha256:e67e00be4a267214607e3331bef68fee50f45165b02802add4adafdb155c3409"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9d8"
+digest = "sha256:e98947066d845562f4d88802afac7ea522f6243c6eb2ac67db6d4f9567ca4b6f"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9d9"
+digest = "sha256:1f07b26251367475152452aa1ca982d9f806c41df17b64c3cd729bbaa5f0ced2"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9db"
+digest = "sha256:9f789a3d4422aae08d52d7739dd2a0e15ce3d0ed7a3baa8678a8e23abb604820"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9dc"
+digest = "sha256:8f903c2b845041a2321bc8cc3c57649df9519fc3f37920ac3ba2c89bd81d334d"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9dd"
+digest = "sha256:7b2fb214f9efb1411da53156b12c6f551821048b848aae3eac03e16fdbd87d03"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9de"
+digest = "sha256:821b97805c8d150f363602299498236479677851c6e18c40be3aa0dc778a7606"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9e0"
+digest = "sha256:36a089571e7e04874197a8aafefd5f3df4afa45c526ad0e6f1098b3921d3e2ef"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9e1"
+digest = "sha256:f97b7b9233aca7be2a53f5153197edbfd076366228e7c6c7e27db5de91f90f4e"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9e3"
+digest = "sha256:ed89669b7890a9c884158da0df755fdc0b4c5eb6409d532458282d70c29915fc"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9e4"
+digest = "sha256:8f91314f056a30a09daf0f585b3f255853d97c258818e31622ba42c0aa9975f7"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9e5"
+digest = "sha256:e973e8bca017c77bc2cf748dcb4908471c871e6f971ca0185b425262d0a35018"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9e7"
+digest = "sha256:85cbacc835cd855a359f71c8c1932a18974cad18f1549c772eba3ef42c83eec1"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9e8"
+digest = "sha256:7e6989845af93a4176d5b959793c9a97ab3911e28f78d7bedbdc6a370de326f4"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9e9"
+digest = "sha256:52cd67a2a081f2f9a72c47c569d6582db7a6b653b1b9fbcf38cea83e95bb1a98"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9eb"
+digest = "sha256:d249bb4fd55a104408c008a7e7227a0e6b5128cc5cc1e94645dd6c344b065984"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9ee"
+digest = "sha256:b96edcb60f304482ff625771a4e252b1d8e95ee06c462a306f994fe2d307d258"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9f0"
+digest = "sha256:93e10b13e82de2cb19a1027237ea71997f91bd351dc9ad81cd431da56262d344"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9f1"
+digest = "sha256:82627ed58b58d6727024042133c6c8c381ff5496ee819bb594b1c9b20102af09"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9f2"
+digest = "sha256:42ab382040aa0c24af23a487439982ef06d0219e20483a372d778772ad2db29f"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9f4"
+digest = "sha256:c167105c9feb149f28e92460c73cd35a94df2d126f47186289ad7f5ede6611e0"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9f5"
+digest = "sha256:6a90a1de0393fa9a0d5d1c1e348f32837ef680052d1e1d239eedd8f08ea52042"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9f7"
+digest = "sha256:46b7ba128a62972406dcc7cb4bdc16a05153db1129c05df7e6fd7a350e0d3751"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9f8"
+digest = "sha256:ee497225de074c0f4a79731db3fc25095fbce196ad9d88bc0f69305efa8f4d48"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9f9"
+digest = "sha256:66ff3da6b671219c4d0effcb883c43f7d1d48c34ca5b960fd26c0168d3d029c4"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9fa"
+digest = "sha256:abdf1f2beddeeb6c4cc516ffdeedb4b6556ebef452949abfbfa12a3a66761c10"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9fb"
+digest = "sha256:8f9d78510bbdd1bb22ace60935ecb4a5d371d6a18eb230ce0ae25b4b5a039042"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9fc"
+digest = "sha256:d120d474a06ffead3f37897886dd1d2e245861def6813332a5f5c85192052767"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9fd"
+digest = "sha256:279f8eb50c08524685cbed5e4b67646ee7997b29e30b09bd08ebb9b471db3197"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97ba9ff"
+digest = "sha256:f6bc35317dd29c12f5365b4106f0736f24dcfd28b6b62c4ae2e286b3ce1ff95b"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa01"
+digest = "sha256:e1db2c736b446dc75210df4ba1ffb8faf01908c3a86956165a51297503d20967"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa02"
+digest = "sha256:7e208da77d4aa49900dcb33b94f462aa7bea0972a3b8d5d6001893da06621918"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa03"
+digest = "sha256:97955b5773995eda9b3296104f6b756dbfdd21d74a858cfc4bd3b384751d8a19"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa04"
+digest = "sha256:2f43bd4c5fd81190fbf74a35e17d6c7687a8bf9ec8f30cf0de8e3abb74459c7c"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa05"
+digest = "sha256:c4b363c7fde06495002e23158e27b9ab39c22214b19bb883e85d3918bb7b6a85"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa06"
+digest = "sha256:465db46fa7d70ebe5c3403cd646db2187dbff58b60d641a721a86787c917ec2a"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa07"
+digest = "sha256:886b8e413b38c63a97e01c118bde4d937e854d5761533d2d73eeb9d91559f158"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa09"
+digest = "sha256:ad565342b4a53bec700b77c1977d9a1a4eb8b7846a03184262ce296e562b6e30"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa0b"
+digest = "sha256:afc5f5a78cdd3e434e0f9035cf48d66f16d9e1d0a9d4728c55456dd8b721b965"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa0c"
+digest = "sha256:7d47b410e27d7b6623040380506e2ef28cc02a1423eaed0c92a312c4e61dfe6a"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa0d"
+digest = "sha256:c9015d11ccd38182c20e6fdbad9d93a3b717416bcca715d73f57ad14ca27684b"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa0f"
+digest = "sha256:27027cd6186d54c4e0cd79e0ade912d2ecc7b7d65f1300324e783aa40e5a42a9"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa10"
+digest = "sha256:e74f2c3a8aec489c9a116530e02bbd6243fe775e6292622856735bfaa1c5b334"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa11"
+digest = "sha256:e3418b368c1dc488b3af9c03215ef3a0480ac328816d77087a31733161944f6b"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa12"
+digest = "sha256:9ec3d4c3e983521b2a5fe5f6288189b513f7e82590f3d8436b867b60ccb72be2"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa14"
+digest = "sha256:07454bc6c7f8f422e4412b5ffe1621c3b91805cd32e1edb60e1f6bd94b9dd800"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa15"
+digest = "sha256:f10db0aac1eb7a1fdd3aaef48ed4f0418bb5f9f5f026c96e6422d551a4237c7f"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa16"
+digest = "sha256:d9f47a7941f19f40e79b14cb46f19b166bac1158cf0272bba2222ae70bd87327"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa17"
+digest = "sha256:251cd95d7aed55e7cc35b0a7d06adde47eff44a3b7364e3833f0208213f768df"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa19"
+digest = "sha256:34c0626d6e7aea041d1ecffa5f5c43bdbdae7d5ce83960dcb3d584209cec1391"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa1a"
+digest = "sha256:491f45731b3a99853586f25a8faeee733fb3596b87561748186f34070a1a65ee"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa1b"
+digest = "sha256:6dd847f10cf13222dd3205a56bf08241d8150c197cf542e2ef64d21dbafdb2d6"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa1c"
+digest = "sha256:ec00f8e57886b6fe404bfcf297bba103660b545949f16a4a733425f62f990be1"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa1d"
+digest = "sha256:98aad2f4e3d1f1eef7f9d42af13941fffb8e63b82362aca9c713d9a507889a12"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa1e"
+digest = "sha256:e16721e88c41d723ff2ed230cf3756a8709c0cb457fcae50d23dca559229162f"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa1f"
+digest = "sha256:a8a169c63f780b756a5dcd32676af73693176beb8669af32c7edccc3a1d49982"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa20"
+digest = "sha256:014553c1173104099fa8df90ae3573371b416b41d16753ee95c6daf762d769c8"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa21"
+digest = "sha256:8b951d57c0f3befa93f8685cd9153417a7716a899b5d63738ea11a4271d56395"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa22"
+digest = "sha256:c741bf6b9297e05fe1d4810205d644ae720f696931e4597aeaa31ca457312e11"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa23"
+digest = "sha256:bc0ebb2cc16766ecad137ccf4f694049bd5de7b576056577175414793e0565b1"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa24"
+digest = "sha256:21731c11282e37376dbebd1aaff355b5c89dbc0138715e656e52832da0f1ddc1"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa25"
+digest = "sha256:41adfee917345c1fadf79acd6f5cb7234dd905bc4aa77447560fce67342d51b9"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa26"
+digest = "sha256:22921831b3a2dc23b5dd068a4bd1f8a9ff2301560ada394f2a99fed35d5720f5"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa27"
+digest = "sha256:6b8a926bff7fcc233207b9106b3aeddd9a304afed96335bf3b9b883e319b3e52"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa28"
+digest = "sha256:ba29c46ad60c32d3473d5ffa7fcbb42718cc99928c9c90c3d7dfc3c649713ca6"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa2a"
+digest = "sha256:c1dabc0a5048fd19676e522ff0cf62072eb8bb1af1fbd32c74e1bca019c41e8e"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa2b"
+digest = "sha256:b766a9cd0d47f34b1baf98fea2a91ea8e34bdbf679cda7531598eb297975da4d"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa2c"
+digest = "sha256:773958e833855b5ef34544e25452a02b2451bbbc5843de51c3230506f28b0eb1"
+
+[[tasks]]
+name = "scale-ai/task-6905333b74f22949d97baa2d"
+digest = "sha256:6f1463c2df77e0fe0887c7a2bde184bc630c50d9cdf63414f590bd4b4ee3b6b9"
+
