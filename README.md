@@ -75,7 +75,7 @@ an agent that does nothing, which should score 0.
 
 The Anthropic and OpenAI leaderboard models each have a config with the settings they were scored
 with on the [SWE Atlas leaderboard](https://labs.scale.com/leaderboard/swe-atlas) (harness, version,
-reasoning effort, web tools off, 3 attempts per task):
+reasoning effort, web tools off). Each runs 1 attempt per task; raise `n_attempts` for more:
 
 | Config | Harness |
 |---|---|

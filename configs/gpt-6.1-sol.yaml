@@ -1,8 +1,8 @@
 # GPT-6.1 Sol on codex, with the leaderboard settings. Keys in .env: OPENAI_API_KEY (OPENAI_BASE_URL for a proxy).
 # The agent runs under a network allowlist: through a proxy, put the proxy's hostname below.
 #   ./run.sh configs/gpt-6.1-sol.yaml
-n_attempts: 3
-n_concurrent_trials: 24
+n_attempts: 1
+n_concurrent_trials: 50
 
 # Only infrastructure failures are retried; the exceptions below (an agent timeout among
 # them) are real outcomes and are graded as they ran.

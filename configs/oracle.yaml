@@ -1,7 +1,7 @@
 # Reference solutions: every task should score 1.
 #   ./run.sh configs/oracle.yaml
 n_attempts: 1
-n_concurrent_trials: 24
+n_concurrent_trials: 50
 
 # Only infrastructure failures are retried; the exceptions below (an agent timeout among
 # them) are real outcomes and are graded as they ran.

@@ -1,7 +1,7 @@
 # An agent that does nothing: every task should score 0.
 #   ./run.sh configs/nop.yaml
 n_attempts: 1
-n_concurrent_trials: 24
+n_concurrent_trials: 50
 
 # Only infrastructure failures are retried; the exceptions below (an agent timeout among
 # them) are real outcomes and are graded as they ran.
