@@ -83,7 +83,8 @@ reasoning effort, web tools off). Each runs 1 attempt per task; raise `n_attempt
 | `configs/gpt-6.1-sol.yaml`, `configs/gpt-6-astra.yaml` | codex 0.142.1, effort max |
 
 ```bash
-./run.sh configs/claude-opus-5-5.yaml
+./run.sh configs/claude-opus-5-5.yaml        # the full dataset: all 284 tasks
+./run.sh configs/claude-opus-5-5.yaml rf     # one lane (qa, rf or tw)
 ```
 
 - **Network.** The agent runs under an allowlist, so its model API hostname (no `https://`, no

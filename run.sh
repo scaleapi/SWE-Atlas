@@ -4,6 +4,8 @@
 #   ./run.sh configs/claude-opus-5-5.yaml rf                         one lane (data/rf)
 #   ./run.sh configs/oracle.yaml qa -i task-6905333b74f22949d97ba9cc one task (reward 1)
 # Extra arguments go to `harbor run`. Task filters (-i, -x, -l) need a lane.
+# Your own model: cp configs/claude-opus-5-5.yaml configs/my-model.yaml, change model_name,
+#   extra_allowed_hosts and kwargs, then ./run.sh configs/my-model.yaml (README, section 4).
 set -euo pipefail
 
 if [ ! -f "${1:-}" ]; then
