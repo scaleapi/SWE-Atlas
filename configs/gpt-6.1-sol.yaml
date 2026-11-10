@@ -26,6 +26,9 @@ retry:
 
 environment:
   type: modal
+  # Each sandbox reserves 0.125 CPU and may use up to the task's cpus (task.toml). Modal bills
+  # max(reserved, used), so idle time while the agent waits on the model costs almost nothing.
+  cpu_enforcement_policy: limit
 
 agents:
   - name: codex
