@@ -53,6 +53,12 @@ GIT_CONFIG_KEY_1 = "protocol.https.allow"
 GIT_CONFIG_VALUE_1 = "always"
 LITELLM_LOCAL_MODEL_COST_MAP = "True"
 UV_CONSTRAINT = "/tmp/harbor-uv-constraints.txt"
+OMP_NUM_THREADS = "4"
+OPENBLAS_NUM_THREADS = "4"
+MKL_NUM_THREADS = "4"
+BLIS_NUM_THREADS = "4"
+ORT_INTRA_OP_NUM_THREADS = "4"
+ORT_INTER_OP_NUM_THREADS = "4"
 
 [environment.healthcheck]
 command = "printf 'litellm<1.106\\n' > /tmp/harbor-uv-constraints.txt"
