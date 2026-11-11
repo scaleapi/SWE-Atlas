@@ -117,6 +117,13 @@ Without a lane, a config runs all three folders. Name a lane to run one folder; 
 ./run.sh configs/gpt-6.1-sol.yaml tw -x 'tw-6902*'     # tw without matching tasks
 ```
 
+## 7. Cost
+
+Sandboxes are billed by use. The configs set `cpu_enforcement_policy: limit`, so each sandbox
+reserves 0.125 CPU and may use up to the task's `cpus`; `memory_mb` in `task.toml` is the memory
+reservation, which Modal does not enforce as a cap. Local Docker enforces `memory_mb` as a hard
+limit: if a task runs out of memory there, raise it with `--override-memory-mb`.
+
 ## Acknowledgements
 
 Thanks to Artificial Analysis and Inductive ML for their contributions to the v1.1 release.
