@@ -26,8 +26,9 @@ retry:
 
 environment:
   type: modal
-  # Each sandbox reserves 0.125 CPU and may use up to the task's cpus (task.toml). Modal bills
-  # max(reserved, used), so idle time while the agent waits on the model costs almost nothing.
+  # Each sandbox reserves 0.125 CPU and may use up to the task's cpus (task.toml); Modal bills
+  # max(reserved, used). Each task sets OMP_NUM_THREADS and the related thread variables to its
+  # cpus, so nproc and thread pools see the same core count as with a full reservation.
   cpu_enforcement_policy: limit
 
 agents:
