@@ -281,7 +281,7 @@ digest = "sha256:4ac8182a2e169070a7d72cc25597bf327f4c2ed291fe9e6001c4ba1f884b7d1
 
 [[tasks]]
 name = "scale-ai/qa-6905333b74f22949d97ba9e7"
-digest = "sha256:541340708b4f992a1d166b980504c04a1b23413f1518c727f28a699e57ca0da5"
+digest = "sha256:8a3b9808b3ef02005d1088c6914ad48900094e254b34ddbcf57e1764a2b05010"
 
 [[tasks]]
 name = "scale-ai/qa-6905333b74f22949d97ba9e8"
@@ -385,7 +385,7 @@ digest = "sha256:b4f4a16a870c7745edad3f7917654b2d3d66ebdde20f6e0e33ea3e6c92c63b6
 
 [[tasks]]
 name = "scale-ai/qa-6905333b74f22949d97baa0b"
-digest = "sha256:3ec850f89091abf8d14294ab829f85c43ce14e369bcdc6af6a4f1d35b68ee84e"
+digest = "sha256:efdcfa2efe3a7069e7b8414bd67e7679fa8d686373b24ce4fb81cd87b9af200c"
 
 [[tasks]]
 name = "scale-ai/qa-6905333b74f22949d97baa0c"

@@ -285,7 +285,7 @@ digest = "sha256:30e48d57d82c22700be1801497b607efa83096b7f7dc276eafb0dac9c96ac74
 
 [[tasks]]
 name = "scale-ai/rf-69d196f015a150488265afc3"
-digest = "sha256:a1423c150870697a09d5ce58e961150941bde4a4a7f6a3bdc2cc60036eb09794"
+digest = "sha256:2b20d9857d88746d11ba53cc14d8ee5d39d67799e1ccca531b6f37134ac453dd"
 
 [[tasks]]
 name = "scale-ai/rf-69d196f015a150488265afc4"
