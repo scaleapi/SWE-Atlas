@@ -13,7 +13,7 @@ email = "mohit.raghavendra@scale.com"
 
 [[tasks]]
 name = "scale-ai/rf-69391d8d1ce51c407be1e531"
-digest = "sha256:c6fe25849315a762653be6d6ea1fe7401fac840c0b28bd95e8e1a17e59af7f64"
+digest = "sha256:31d68892e8fd5f5e900522b3691f5e2b8e16790e97cffa3f98a24071c96fd929"
 
 [[tasks]]
 name = "scale-ai/rf-69391d8d1ce51c407be1e533"
@@ -21,11 +21,11 @@ digest = "sha256:94e664075095a99e67284e4a95049155e177e05f110a4b476a22a28e920a985
 
 [[tasks]]
 name = "scale-ai/rf-694b4b99829f00e24fd11885"
-digest = "sha256:c5ed4caba2f61a8115adfa0a56094a11fc6f663017290f8ae7ef56b2d478c634"
+digest = "sha256:535fa55599ab10f6560377d1724e31f4a8d25f0fadb44aaea69bb8d3ed553d52"
 
 [[tasks]]
 name = "scale-ai/rf-694b4b99829f00e24fd11889"
-digest = "sha256:20abbf80b6df7a1b1cefa62d52efaf27b2c921c55b2e7f7f9f808c263a6d2c67"
+digest = "sha256:326106bbc42120b3aad7d95ad1b320b244143607b21462b3e2ede77732d0a376"
 
 [[tasks]]
 name = "scale-ai/rf-694b4b99829f00e24fd11891"
@@ -57,11 +57,11 @@ digest = "sha256:b396244b552ca00565d03e49a8c626b72dd13c8979bfa0480e86ec5354ce8cc
 
 [[tasks]]
 name = "scale-ai/rf-696719205599a51110d4b435"
-digest = "sha256:b048fa77161c2bba3c4ac156ca16cdb3e188952d31bce9531fe7a6426d1d93c7"
+digest = "sha256:aa78738cdf04e76465ef75dbe4f29c3ae17fff466eb3018933cbf65ffd746282"
 
 [[tasks]]
 name = "scale-ai/rf-696719205599a51110d4b436"
-digest = "sha256:75824e28bca5068077e6fdd262297c8f216b29942e6d3f1d4e0318653218ea67"
+digest = "sha256:4436e0eda3dc0e83ffea5a26d691313e0b7103b48e7949fe87b2580d423e7875"
 
 [[tasks]]
 name = "scale-ai/rf-696719205599a51110d4b439"
@@ -217,7 +217,7 @@ digest = "sha256:6311e27006335cab678642bf6a6b8773c478c3163f08f3ca35418aa2beb38bf
 
 [[tasks]]
 name = "scale-ai/rf-69b7c2a04b6f8ff9ed98813a"
-digest = "sha256:54dd4d85726a2d3bd7dcc8a2428eca3254b2475d6f8ac92888665ba86a6f6fb2"
+digest = "sha256:7a9362f1a71cfc8b4e6ee53d5c4a72f9715c7fcfbe52a3fc1b015e4c3e69520a"
 
 [[tasks]]
 name = "scale-ai/rf-69b7c2a04b6f8ff9ed98813b"
