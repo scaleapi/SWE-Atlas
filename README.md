@@ -119,10 +119,10 @@ Without a lane, a config runs all three folders. Name a lane to run one folder; 
 
 ## 7. Cost
 
-Sandboxes are billed by use. The configs set `cpu_enforcement_policy: limit`, so each sandbox
-reserves 0.125 CPU and may use up to the task's `cpus`; `memory_mb` in `task.toml` is the memory
-reservation, which Modal does not enforce as a cap. Local Docker enforces `memory_mb` as a hard
-limit: if a task runs out of memory there, raise it with `--override-memory-mb`.
+Runs on Modal cost about 80% less than v1.1: CPU is billed by use and each sandbox reserves half
+the memory. Runs are slightly slower (grading about 4% slower at the median). Tasks, prompts and
+grading are unchanged. If you use your own job config, set
+`environment.cpu_enforcement_policy: limit`.
 
 ## Acknowledgements
 
