@@ -122,7 +122,8 @@ Without a lane, a config runs all three folders. Name a lane to run one folder; 
 Runs on Modal cost about 80% less than v1.1: CPU is billed by use and each sandbox reserves half
 the memory. Runs are slightly slower (grading about 4% slower at the median). Tasks, prompts and
 grading are unchanged. If you use your own job config, set
-`environment.cpu_enforcement_policy: limit`.
+`environment.cpu_enforcement_policy: limit`. It applies to Modal runs only; other providers don't
+support it.
 
 ## Acknowledgements
 
