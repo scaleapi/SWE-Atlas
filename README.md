@@ -106,6 +106,21 @@ An agent timeout is graded on the work the agent left; a refusal, an empty answe
 the judge could not rate scores 0. Trials that ended on an infrastructure error are not scores:
 rerun them in place with `harbor jobs resume -p jobs/<job> -f <ErrorType>`.
 
+### Score and 95% confidence interval
+
+The published leaderboard scores a run like this:
+
+- **Track score:** pass@1 (%) over the tasks of a track (lane: Codebase QnA 124, Test Writing 90,
+  Refactoring 70), from one run. With several attempts per task, a task's score is the mean of
+  its attempts.
+- **Overall:** (QnA + Test Writing + Refactoring) / 3, equal weight per track. It is not pooled
+  over the 284 tasks, so QnA's larger task count does not dominate. The mean harbor prints for a
+  run over all three lanes pools all trials; for the overall score, average the three lane scores.
+- **95% CI:** Scale's single-run method, a task-level jackknife, so no repeat runs are needed.
+  Per track, SE = s/√n (s: standard deviation of the per-task scores, n: tasks in the track) and
+  CI = score ± t(n−1)·SE. Overall, SE = √(SE_QnA² + SE_TW² + SE_RF²) / 3 with t(281). Intervals
+  are clipped at 0 and 100.
+
 ## 6. Part of the dataset
 
 Without a lane, a config runs all three folders. Name a lane to run one folder; within a lane,
