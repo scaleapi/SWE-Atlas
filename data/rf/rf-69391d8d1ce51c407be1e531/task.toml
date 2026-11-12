@@ -41,12 +41,18 @@ docker_image = "ghcr.io/scaleapi/swe-atlas-v1.1:rf-69391d8d1ce51c407be1e531-5568
 build_timeout_sec = 1800
 allow_internet = true
 cpus = 4
-memory_mb = 8192
+memory_mb = 16384
 storage_mb = 20480
 
 [environment.env]
 LITELLM_LOCAL_MODEL_COST_MAP = "True"
 UV_CONSTRAINT = "/tmp/harbor-uv-constraints.txt"
+OMP_NUM_THREADS = "4"
+OPENBLAS_NUM_THREADS = "4"
+MKL_NUM_THREADS = "4"
+BLIS_NUM_THREADS = "4"
+ORT_INTRA_OP_NUM_THREADS = "4"
+ORT_INTER_OP_NUM_THREADS = "4"
 
 [environment.healthcheck]
 command = "printf 'litellm<1.106\\n' > /tmp/harbor-uv-constraints.txt"

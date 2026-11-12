@@ -22,7 +22,7 @@ allowed_hosts = []
 docker_image = "ghcr.io/scaleapi/swe-atlas-v1.1:tw-6902ef3ab97fe23e2ad2723e-815df1e-v1.01.99@sha256:76533765270e626c56414db1c7032852984ca3debe64dfff727d9bbfece09420"
 build_timeout_sec = 1800.0
 cpus = 4
-memory_mb = 4096
+memory_mb = 5120
 storage_mb = 20480
 gpus = 0
 allow_internet = true
@@ -46,5 +46,11 @@ OPENAI_API_BASE = "${OPENAI_API_BASE:-}"
 [environment.env]
 LITELLM_LOCAL_MODEL_COST_MAP = "True"
 UV_CONSTRAINT = "/tmp/harbor-uv-constraints.txt"
+OMP_NUM_THREADS = "4"
+OPENBLAS_NUM_THREADS = "4"
+MKL_NUM_THREADS = "4"
+BLIS_NUM_THREADS = "4"
+ORT_INTRA_OP_NUM_THREADS = "4"
+ORT_INTER_OP_NUM_THREADS = "4"
 
 [solution.env]

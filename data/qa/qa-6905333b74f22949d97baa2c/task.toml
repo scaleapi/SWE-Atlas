@@ -98,6 +98,12 @@ OPENAI_API_BASE = "${OPENAI_API_BASE:-}"
 [environment.env]
 LITELLM_LOCAL_MODEL_COST_MAP = "True"
 UV_CONSTRAINT = "/tmp/harbor-uv-constraints.txt"
+OMP_NUM_THREADS = "2"
+OPENBLAS_NUM_THREADS = "2"
+MKL_NUM_THREADS = "2"
+BLIS_NUM_THREADS = "2"
+ORT_INTRA_OP_NUM_THREADS = "2"
+ORT_INTER_OP_NUM_THREADS = "2"
 
 [solution.env]
 

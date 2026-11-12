@@ -25,6 +25,11 @@ retry:
 
 environment:
   type: modal
+  # Modal bills CPU and memory by use: each sandbox reserves 0.125 CPU and 128 MB and is capped at
+  # the task's cpus and memory_mb (the caps Docker always applied). Tasks pin OMP_NUM_THREADS and
+  # the related thread variables to their cpus, so thread pools size to the cpus.
+  cpu_enforcement_policy: limit
+  memory_enforcement_policy: limit
 
 agents:
   - name: nop

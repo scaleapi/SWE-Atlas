@@ -106,6 +106,21 @@ An agent timeout is graded on the work the agent left; a refusal, an empty answe
 the judge could not rate scores 0. Trials that ended on an infrastructure error are not scores:
 rerun them in place with `harbor jobs resume -p jobs/<job> -f <ErrorType>`.
 
+### Score and 95% confidence interval
+
+The published leaderboard scores a run like this:
+
+- **Track score:** pass@1 (%) over the tasks of a track (lane: Codebase QnA 124, Test Writing 90,
+  Refactoring 70), from one run. With several attempts per task, a task's score is the mean of
+  its attempts.
+- **Overall:** (QnA + Test Writing + Refactoring) / 3, equal weight per track. It is not pooled
+  over the 284 tasks, so QnA's larger task count does not dominate. The mean harbor prints for a
+  run over all three lanes pools all trials; for the overall score, average the three lane scores.
+- **95% CI:** Scale's single-run method, a task-level jackknife, so no repeat runs are needed.
+  Per track, SE = s/√n (s: standard deviation of the per-task scores, n: tasks in the track) and
+  CI = score ± t(n−1)·SE. Overall, SE = √(SE_QnA² + SE_TW² + SE_RF²) / 3 with t(281). Intervals
+  are clipped at 0 and 100.
+
 ## 6. Part of the dataset
 
 Without a lane, a config runs all three folders. Name a lane to run one folder; within a lane,
@@ -116,6 +131,21 @@ Without a lane, a config runs all three folders. Name a lane to run one folder; 
 ./run.sh configs/gpt-6.1-sol.yaml qa -l 20             # 20 qa tasks
 ./run.sh configs/gpt-6.1-sol.yaml tw -x 'tw-6902*'     # tw without matching tasks
 ```
+
+## 7. Cost
+
+On Modal, the configs bill CPU and memory by use, which cut the Modal cost of a run by about
+75-80% in our runs: each sandbox reserves 0.125 CPU and 128 MB and is capped at the task's `cpus`
+and `memory_mb` (`cpu_enforcement_policy: limit`, `memory_enforcement_policy: limit`). The CPU
+cap is the same as in v1.1. Memory, a reservation without a cap in v1.1, is now capped like on
+Docker. Grading time is about the same. With your own job config, set both policies. Providers
+without resource limits reject them; there, add `--cpus auto --memory auto`.
+
+`memory_mb` is the v1.1 value on 260 tasks and higher on 24 tasks that needed more under a cap,
+so local Docker runs get at least the memory they had in v1.1. Runs that ignore the job config
+keep the v1.1 behaviour (memory reserved, not capped), so the 24 raised tasks reserve more
+there. All runners now see OMP_NUM_THREADS and the related thread variables pinned to the
+task's `cpus`. Scores remain comparable with v1.1 runs.
 
 ## Acknowledgements
 
