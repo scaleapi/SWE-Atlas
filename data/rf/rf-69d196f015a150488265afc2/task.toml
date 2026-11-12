@@ -41,7 +41,7 @@ build_timeout_sec = 1800
 docker_image = "ghcr.io/scaleapi/swe-atlas-v1.1:rf-69d196f015a150488265afc2-1e745e8-v1.01.99@sha256:35b6c8a22b81a58775216006cce8f1be65a1f457d5e7a072d4e34059e13357d3"
 allow_internet = true
 cpus = 4
-memory_mb = 2048
+memory_mb = 4096
 storage_mb = 20480
 
 [environment.env]
